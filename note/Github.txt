@@ -1,0 +1,23 @@
+git add .
+git commit -m "Mise à jour du projet : DrinkEasy"
+git push
+
+git clone 
+
+Mettre un APK sur GITHUB
+*Générer l’APK
+flutter build apk --release
+Flutter va créer un fichier APK ici : build/app/outputs/flutter-apk/app-release.apk
+
+*Configuration GITHUB
+Va sur ton dépôt GitHub.
+
+Clique sur Releases (dans la colonne droite).
+
+Clique sur Draft a new release.
+
+Donne un titre (exemple : v1.0).
+
+Fais glisser ton fichier app-release.apk dans la zone d’upload.
+
+Clique sur Publish release.

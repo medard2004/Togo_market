@@ -317,8 +317,9 @@ class FavoritesScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ctrl = Get.find<AppController>();
+    final r = R(context);
     return Scaffold(
-        resizeToAvoidBottomInset: true,
+      resizeToAvoidBottomInset: true,
       backgroundColor: AppTheme.background,
       appBar: AppBar(
         title: const Text('Mes Favoris'),
@@ -327,29 +328,59 @@ class FavoritesScreen extends StatelessWidget {
       body: Obx(() {
         final favs = ctrl.favorites;
         if (favs.isEmpty) {
-          return const Center(
+          return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text('❤️', style: TextStyle(fontSize: 48)),
-                SizedBox(height: 12),
-                Text('Aucun favori pour l\'instant',
-                    style: TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.w600)),
+                Text('❤️', style: TextStyle(fontSize: r.s(52))),
+                SizedBox(height: r.s(14)),
+                Text(
+                  'Aucun favori pour l\'instant',
+                  style: TextStyle(
+                    fontSize: r.fs(16),
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.foreground,
+                  ),
+                ),
+                SizedBox(height: r.s(6)),
+                Text(
+                  'Appuie sur ❤️ pour sauvegarder\ntes articles préférés',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: r.fs(13),
+                    color: AppTheme.mutedForeground,
+                    height: 1.5,
+                  ),
+                ),
               ],
             ),
           );
         }
-        return GridView.builder(
-          padding: const EdgeInsets.all(16),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            mainAxisSpacing: 12,
-            crossAxisSpacing: 12,
-            childAspectRatio: 0.65,
-          ),
-          itemCount: favs.length,
-          itemBuilder: (_, i) => ProductCard(product: favs[i]),
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Compteur
+            Padding(
+              padding: EdgeInsets.fromLTRB(r.hPad, r.s(14), r.hPad, r.s(8)),
+              child: Text(
+                '${favs.length} article${favs.length > 1 ? 's' : ''} sauvegardé${favs.length > 1 ? 's' : ''}',
+                style: TextStyle(
+                  fontSize: r.fs(13),
+                  fontWeight: FontWeight.w500,
+                  color: AppTheme.mutedForeground,
+                ),
+              ),
+            ),
+            // Liste tickets
+            Expanded(
+              child: ListView.separated(
+                padding: EdgeInsets.fromLTRB(r.hPad, 0, r.hPad, r.s(24)),
+                itemCount: favs.length,
+                separatorBuilder: (_, __) => SizedBox(height: r.s(10)),
+                itemBuilder: (_, i) => FavoriteTicketCard(product: favs[i]),
+              ),
+            ),
+          ],
         );
       }),
     );

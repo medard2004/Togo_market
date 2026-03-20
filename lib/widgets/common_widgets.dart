@@ -181,6 +181,233 @@ class _PriceBadge extends StatelessWidget {
       );
 }
 
+// ── FavoriteTicketCard ────────────────────────────────────────────────────────
+class FavoriteTicketCard extends StatelessWidget {
+  final Product product;
+  const FavoriteTicketCard({super.key, required this.product});
+
+  // Couleur + emoji par catégorie
+  static const _catColors = {
+    'electronique': Color(0xFF1E6EBF),
+    'mode':         Color(0xFFB0387A),
+    'friperie':     Color(0xFF7B3FB5),
+    'maison':       Color(0xFF2A7A4B),
+    'beaute':       Color(0xFFD44A6A),
+    'services':     Color(0xFF4A7AB5),
+  };
+  static const _catEmojis = {
+    'electronique': '📱',
+    'mode':         '👠',
+    'friperie':     '👗',
+    'maison':       '🏠',
+    'beaute':       '💄',
+    'services':     '🔧',
+  };
+
+  Color _stripeColor() {
+    final base = _catColors[product.category] ?? const Color(0xFFF9591F);
+    return base;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final r = R(context);
+    final ctrl = Get.find<AppController>();
+    final seller = getSellerById(product.sellerId);
+    final stripe = _stripeColor();
+    final emoji = _catEmojis[product.category] ?? '🛍️';
+    final catLabel = {
+      'electronique': 'Électronique',
+      'mode':         'Mode',
+      'friperie':     'Friperie',
+      'maison':       'Maison',
+      'beaute':       'Beauté',
+      'services':     'Services',
+    }[product.category] ?? product.category;
+
+    return GestureDetector(
+      onTap: () => Get.toNamed('/product/${product.id}'),
+      child: Container(
+        height: r.s(92).clamp(80.0, 108.0),
+        decoration: BoxDecoration(
+          color: AppTheme.cardColor,
+          borderRadius: BorderRadius.circular(r.rad(16)),
+          boxShadow: AppTheme.shadowCard,
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // ── Bande colorée gauche ──────────────────────────────────────
+            Container(
+              width: r.s(6),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [stripe, AppTheme.secondary],
+                ),
+              ),
+            ),
+
+            // ── Zone image / emoji ────────────────────────────────────────
+            SizedBox(
+              width: r.s(80).clamp(68.0, 96.0),
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  CachedNetworkImage(
+                    imageUrl: product.image,
+                    fit: BoxFit.cover,
+                    placeholder: (_, __) => Container(
+                      color: stripe.withOpacity(0.12),
+                      child: Center(
+                        child: Text(emoji, style: TextStyle(fontSize: r.s(32))),
+                      ),
+                    ),
+                    errorWidget: (_, __, ___) => Container(
+                      color: stripe.withOpacity(0.12),
+                      child: Center(
+                        child: Text(emoji, style: TextStyle(fontSize: r.s(32))),
+                      ),
+                    ),
+                  ),
+                  // Overlay léger sur l'image
+                  Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
+                        colors: [Colors.transparent, Colors.white.withOpacity(0.08)],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // ── Séparateur pointillé ──────────────────────────────────────
+            Padding(
+              padding: EdgeInsets.symmetric(vertical: r.s(10)),
+              child: SizedBox(
+                width: r.s(14),
+                child: CustomPaint(painter: _DashedLinePainter(color: AppTheme.muted)),
+              ),
+            ),
+
+            // ── Infos produit ─────────────────────────────────────────────
+            Expanded(
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(0, r.s(10), r.s(12), r.s(10)),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // Catégorie
+                    Text(
+                      catLabel.toUpperCase(),
+                      style: TextStyle(
+                        fontSize: r.fs(9),
+                        fontWeight: FontWeight.w700,
+                        color: stripe,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                    // Titre
+                    Text(
+                      product.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: r.fs(13),
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.foreground,
+                        height: 1.25,
+                      ),
+                    ),
+                    // Prix + vendeur
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Text(
+                          formatPrice(product.price),
+                          style: TextStyle(
+                            fontSize: r.fs(14),
+                            fontWeight: FontWeight.w800,
+                            color: AppTheme.primary,
+                          ),
+                        ),
+                        const Spacer(),
+                        if (seller != null)
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.storefront_rounded, size: r.s(10), color: AppTheme.mutedForeground),
+                              SizedBox(width: r.s(3)),
+                              ConstrainedBox(
+                                constraints: BoxConstraints(maxWidth: r.s(72)),
+                                child: Text(
+                                  seller.shopName,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(fontSize: r.fs(9), color: AppTheme.mutedForeground),
+                                ),
+                              ),
+                            ],
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // ── Bouton cœur ───────────────────────────────────────────────
+            Obx(() {
+              final fav = ctrl.isFavorite(product.id);
+              return GestureDetector(
+                onTap: () => ctrl.toggleFavorite(product.id),
+                child: Container(
+                  width: r.s(40),
+                  color: Colors.transparent,
+                  child: Center(
+                    child: Icon(
+                      fav ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                      size: r.s(22),
+                      color: fav ? AppTheme.primary : AppTheme.mutedForeground,
+                    ),
+                  ),
+                ),
+              );
+            }),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// Peintre pour la ligne pointillée verticale
+class _DashedLinePainter extends CustomPainter {
+  final Color color;
+  const _DashedLinePainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    const dashH = 4.0;
+    const gap = 4.0;
+    final paint = Paint()..color = color..strokeWidth = 1.5;
+    double y = 0;
+    while (y < size.height) {
+      canvas.drawLine(Offset(size.width / 2, y), Offset(size.width / 2, (y + dashH).clamp(0, size.height)), paint);
+      y += dashH + gap;
+    }
+  }
+
+  @override
+  bool shouldRepaint(_DashedLinePainter old) => old.color != color;
+}
+
 // ── ShimmerCard ───────────────────────────────────────────────────────────────
 class ShimmerCard extends StatelessWidget {
   const ShimmerCard({super.key});

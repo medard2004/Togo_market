@@ -1,364 +1,66 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:shimmer/shimmer.dart';
 import '../../theme/app_theme.dart';
-import '../../utils/responsive.dart';
 import '../../widgets/bottom_nav.dart';
 import '../../widgets/common_widgets.dart';
 import '../../controllers/app_controller.dart';
 import '../../data/mock_data.dart';
+import '../../utils/responsive.dart';
 
-// ── Messages Screen ───────────────────────────────────────────────────────────
-class MessagesScreen extends StatelessWidget {
-  const MessagesScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final convs = mockConversations;
-    return Scaffold(
-        resizeToAvoidBottomInset: true,
-      backgroundColor: AppTheme.background,
-      appBar: AppBar(
-        title: Text(
-          'Messages (${convs.length})',
-          style:
-              const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-        ),
-        automaticallyImplyLeading: false,
-      ),
-      body: ListView.separated(
-        padding: const EdgeInsets.all(16),
-        itemCount: convs.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 8),
-        itemBuilder: (_, i) {
-          final conv = convs[i];
-          final seller = getSellerById(conv.sellerId);
-          final product = getProductById(conv.productId);
-          return GestureDetector(
-            onTap: () => Get.toNamed('/chat/${conv.id}'),
-            child: Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: AppTheme.cardColor,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: AppTheme.shadowCard,
-              ),
-              child: Row(
-                children: [
-                  Stack(
-                    children: [
-                      CircleAvatar(
-                        radius: 26,
-                        backgroundImage: seller != null
-                            ? CachedNetworkImageProvider(seller.avatar)
-                            : null,
-                      ),
-                      if (conv.unread > 0)
-                        Positioned(
-                          top: 0,
-                          right: 0,
-                          child: Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: const BoxDecoration(
-                              color: AppTheme.primary,
-                              shape: BoxShape.circle,
-                            ),
-                            child: Text(
-                              '${conv.unread}',
-                              style: const TextStyle(
-                                  fontSize: 10,
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w700),
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          seller?.shopName ?? 'Boutique',
-                          style: const TextStyle(
-                              fontSize: 14, fontWeight: FontWeight.w700),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          conv.lastMessage,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                              fontSize: 13, color: AppTheme.mutedForeground),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(
-                        conv.time,
-                        style: const TextStyle(
-                            fontSize: 11, color: AppTheme.mutedForeground),
-                      ),
-                      const SizedBox(height: 4),
-                      if (product != null)
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(6),
-                          child: CachedNetworkImage(
-                            imageUrl: product.image,
-                            width: 36,
-                            height: 36,
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
-      bottomNavigationBar: const BottomNavBar(currentIndex: 3),
-    );
-  }
-}
-
-// ── Order Screen ──────────────────────────────────────────────────────────────
-class OrderScreen extends StatefulWidget {
-  const OrderScreen({super.key});
-
-  @override
-  State<OrderScreen> createState() => _OrderScreenState();
-}
-
-class _OrderScreenState extends State<OrderScreen> {
-  String _deliveryMode = 'retrait';
-  bool _confirmed = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final args = Get.arguments as Map<String, dynamic>?;
-    final product = getProductById(args?['productId'] ?? 'p1');
-
-    if (_confirmed) {
-      return Scaffold(
-          resizeToAvoidBottomInset: true,
-        backgroundColor: AppTheme.background,
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              TweenAnimationBuilder<double>(
-                tween: Tween(begin: 0, end: 1),
-                duration: const Duration(milliseconds: 600),
-                builder: (_, v, __) => Transform.scale(
-                  scale: v,
-                  child: const Text('✅',
-                      style: TextStyle(fontSize: 72)),
-                ),
-              ),
-              const SizedBox(height: 20),
-              const Text(
-                'Commande confirmée !',
-                style: TextStyle(
-                    fontSize: 24, fontWeight: FontWeight.w800),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Le vendeur sera notifié immédiatement.',
-                style: TextStyle(
-                    fontSize: 14, color: AppTheme.mutedForeground),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    return Scaffold(
-        resizeToAvoidBottomInset: true,
-      backgroundColor: AppTheme.background,
-      appBar: AppBar(
-        title: const Text('Commander'),
-        leading: const BackButton(),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Product summary
-            if (product != null)
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: AppTheme.cardColor,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: AppTheme.shadowCard,
-                ),
-                child: Row(
-                  children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(10),
-                      child: CachedNetworkImage(
-                        imageUrl: product.image,
-                        width: 72,
-                        height: 72,
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(product.title,
-                              style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600)),
-                          const SizedBox(height: 4),
-                          Text(
-                            formatPrice(product.price),
-                            style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w800,
-                                color: AppTheme.primary),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: AppTheme.muted,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Text(product.condition,
-                                style: const TextStyle(fontSize: 11)),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            const SizedBox(height: 20),
-            const Text('Mode de récupération',
-                style: TextStyle(
-                    fontSize: 15, fontWeight: FontWeight.w700)),
-            const SizedBox(height: 10),
-            ...[
-              ('livraison', '🛵 Livraison à domicile'),
-              ('retrait', '🤝 Retrait en main propre'),
-            ].map((opt) => GestureDetector(
-                  onTap: () => setState(() => _deliveryMode = opt.$1),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    margin: const EdgeInsets.only(bottom: 10),
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: _deliveryMode == opt.$1
-                          ? AppTheme.primaryLight
-                          : AppTheme.cardColor,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color: _deliveryMode == opt.$1
-                            ? AppTheme.primary
-                            : AppTheme.border,
-                        width: _deliveryMode == opt.$1 ? 2 : 1,
-                      ),
-                    ),
-                    child: Text(opt.$2,
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: _deliveryMode == opt.$1
-                              ? AppTheme.primary
-                              : AppTheme.foreground,
-                        )),
-                  ),
-                )),
-            const SizedBox(height: 10),
-            const Text('Téléphone',
-                style: TextStyle(
-                    fontSize: 15, fontWeight: FontWeight.w700)),
-            const SizedBox(height: 8),
-            const TextField(
-              decoration: InputDecoration(
-                hintText: '+228 90 00 00 00',
-              ),
-            ),
-            if (_deliveryMode == 'livraison') ...[
-              const SizedBox(height: 16),
-              const Text('Adresse de livraison',
-                  style: TextStyle(
-                      fontSize: 15, fontWeight: FontWeight.w700)),
-              const SizedBox(height: 8),
-              const TextField(
-                maxLines: 2,
-                decoration: InputDecoration(
-                  hintText: 'Quartier, rue, repère...',
-                ),
-              ),
-            ],
-            const SizedBox(height: 80),
-          ],
-        ),
-      ),
-      bottomNavigationBar: Container(
-        padding: EdgeInsets.fromLTRB(
-            16, 12, 16, MediaQuery.of(context).padding.bottom + 12),
-        decoration: BoxDecoration(
-          color: AppTheme.cardColor,
-          boxShadow: AppTheme.shadowCardLg,
-        ),
-        child: AppButton(
-          label: '✅ Confirmer la commande',
-          onTap: () {
-            setState(() => _confirmed = true);
-            Future.delayed(const Duration(seconds: 3), () {
-              Get.offAllNamed('/home');
-            });
-          },
-        ),
-      ),
-    );
-  }
-}
-
-// ── Seller Profile Screen ─────────────────────────────────────────────────────
+// ╔══════════════════════════════════════════════════════╗
+// ║  SELLER PROFILE  (Boutique d'Elegance mockup)        ║
+// ╚══════════════════════════════════════════════════════╝
 class SellerScreen extends StatelessWidget {
   const SellerScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final r = R(context);
     final id = Get.parameters['id'] ?? 's1';
     final seller = getSellerById(id);
     if (seller == null) {
       return Scaffold(body: Center(child: Text('Vendeur introuvable')));
     }
-    final products =
-        mockProducts.where((p) => p.sellerId == id).toList();
+    final products = mockProducts.where((p) => p.sellerId == id).toList();
 
     return Scaffold(
-        resizeToAvoidBottomInset: true,
       backgroundColor: AppTheme.background,
       body: CustomScrollView(
         slivers: [
+          // ── AppBar + bannière dégradée ───────────────────────────────────
           SliverAppBar(
-            expandedHeight: 180,
+            expandedHeight: r.s(120),
             pinned: true,
+            backgroundColor: AppTheme.primary,
+            elevation: 0,
             leading: Padding(
-              padding: const EdgeInsets.all(8),
-              child: AppBackButton(),
+              padding: EdgeInsets.all(r.s(8)),
+              child: GestureDetector(
+                onTap: Get.back,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.25),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(Icons.arrow_back, size: r.s(20), color: Colors.white),
+                ),
+              ),
             ),
+            title: Text(seller.shopName,
+                style: TextStyle(fontSize: r.fs(16), fontWeight: FontWeight.w700, color: Colors.white)),
+            actions: [
+              IconButton(
+                icon: Icon(Icons.ios_share_outlined, size: r.s(22), color: Colors.white),
+                onPressed: () {},
+              ),
+            ],
             flexibleSpace: FlexibleSpaceBar(
               background: Container(
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [AppTheme.primary, AppTheme.secondary],
+                    colors: [AppTheme.primary, Color(0xFFFF8C42)],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -366,105 +68,159 @@ class SellerScreen extends StatelessWidget {
               ),
             ),
           ),
+
+          // ── Carte info boutique (chevauche la bannière) ──────────────────
           SliverToBoxAdapter(
-            child: Transform.translate(
-              offset: const Offset(0, -40),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Column(
-                  children: [
-                    // Avatar
-                    Center(
-                      child: Container(
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 4),
-                          boxShadow: AppTheme.shadowCardLg,
-                        ),
-                        child: CircleAvatar(
-                          radius: 44,
-                          backgroundImage:
-                              CachedNetworkImageProvider(seller.avatar),
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(r.s(16), r.s(0), r.s(16), 0),
+              child: Transform.translate(
+                offset: Offset(0, -r.s(1)),
+                child: Container(
+                  padding: EdgeInsets.all(r.s(16)),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(r.rad(20)),
+                    boxShadow: AppTheme.shadowCardLg,
+                  ),
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          // Logo boutique
+                          Container(
+                            width: r.s(64), height: r.s(64),
+                            decoration: BoxDecoration(
+                              color: AppTheme.primaryLight,
+                              borderRadius: BorderRadius.circular(r.rad(14)),
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(r.rad(14)),
+                              child: CachedNetworkImage(
+                                imageUrl: seller.avatar,
+                                fit: BoxFit.cover,
+                                placeholder: (_, __) => Shimmer.fromColors(
+                                  baseColor: AppTheme.muted, highlightColor: Colors.white,
+                                  child: Container(color: AppTheme.muted),
+                                ),
+                              ),
+                            ),
+                          ),
+                          SizedBox(width: r.s(14)),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(seller.shopName,
+                                    style: TextStyle(fontSize: r.fs(18), fontWeight: FontWeight.w800, color: AppTheme.foreground)),
+                                SizedBox(height: r.s(4)),
+                                Row(children: [
+                                  Icon(Icons.star, size: r.s(14), color: Colors.amber),
+                                  SizedBox(width: r.s(4)),
+                                  Text('${seller.rating} (124 avis)',
+                                      style: TextStyle(fontSize: r.fs(13), fontWeight: FontWeight.w600, color: AppTheme.foreground)),
+                                ]),
+                                SizedBox(height: r.s(3)),
+                                Row(children: [
+                                  Icon(Icons.location_on_outlined, size: r.s(13), color: AppTheme.mutedForeground),
+                                  SizedBox(width: r.s(2)),
+                                  Flexible(child: Text(seller.location,
+                                      maxLines: 1, overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(fontSize: r.fs(12), color: AppTheme.mutedForeground))),
+                                ]),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: r.s(14)),
+                      // Bouton Discuter
+                      GestureDetector(
+                        onTap: () => Get.toNamed('/chat/c1'),
+                        child: Container(
+                          width: double.infinity,
+                          height: r.s(48).clamp(44, 54),
+                          decoration: BoxDecoration(
+                            color: AppTheme.primary,
+                            borderRadius: BorderRadius.circular(r.rad(12)),
+                            boxShadow: AppTheme.shadowPrimary,
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.chat_bubble_outline, color: Colors.white, size: r.s(18)),
+                              SizedBox(width: r.s(8)),
+                              Text('Discuter avec le vendeur',
+                                  style: TextStyle(fontSize: r.fs(14), fontWeight: FontWeight.w700, color: Colors.white)),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      seller.shopName,
-                      style: const TextStyle(
-                          fontSize: 22, fontWeight: FontWeight.w800),
-                    ),
-                    Text(
-                      seller.name,
-                      style: const TextStyle(
-                          fontSize: 14, color: AppTheme.mutedForeground),
-                    ),
-                    const SizedBox(height: 6),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: List.generate(
-                        5,
-                        (i) => Icon(
-                          i < seller.rating.floor()
-                              ? Icons.star
-                              : Icons.star_border,
-                          size: 16,
-                          color: Colors.amber,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.location_on,
-                            size: 14, color: AppTheme.mutedForeground),
-                        Text(seller.location,
-                            style: const TextStyle(
-                                fontSize: 13,
-                                color: AppTheme.mutedForeground)),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    AppButton(
-                      label: '💬 Discuter',
-                      onTap: () => Get.toNamed('/chat/c1'),
-                    ),
-                    const SizedBox(height: 16),
-                    // Stats
-                    Row(
-                      children: [
-                        _Stat('${products.length}', 'Annonces'),
-                        _Stat('${(seller.rating * 10).round()}', 'Ventes'),
-                        _Stat(
-                            '${seller.rating}★', 'Note'),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                    const Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text('Produits',
-                          style: TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.w700)),
-                    ),
-                    const SizedBox(height: 12),
-                    GridView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        mainAxisSpacing: 12,
-                        crossAxisSpacing: 12,
-                        childAspectRatio: 0.65,
-                      ),
-                      itemCount: products.length,
-                      itemBuilder: (_, i) =>
-                          ProductCard(product: products[i]),
-                    ),
-                    const SizedBox(height: 40),
-                  ],
+                    ],
+                  ),
                 ),
+              ),
+            ),
+          ),
+
+          // ── Stats ────────────────────────────────────────────────────────
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(r.s(16), r.s(14), r.s(16), 0),
+              child: Row(
+                children: [
+                  _StatBox(label: 'Ventes', value: '1.2k', r: r),
+                  SizedBox(width: r.s(10)),
+                  _StatBox(label: 'Réponse', value: '< 1h', r: r),
+                  SizedBox(width: r.s(10)),
+                  _StatBox(label: 'Actif', value: 'Maintenant', r: r, valueSmall: true),
+                ],
+              ),
+            ),
+          ),
+
+          // ── En-tête Articles + Filtrer ───────────────────────────────────
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(r.s(16), r.s(22), r.s(16), r.s(12)),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('Articles (${products.length})',
+                      style: TextStyle(fontSize: r.fs(18), fontWeight: FontWeight.w700, color: AppTheme.foreground)),
+                  GestureDetector(
+                    onTap: () {},
+                    child: Container(
+                      padding: EdgeInsets.symmetric(horizontal: r.s(14), vertical: r.s(7)),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primaryLight,
+                        borderRadius: BorderRadius.circular(r.rad(20)),
+                      ),
+                      child: Row(children: [
+                        Icon(Icons.tune, size: r.s(14), color: AppTheme.primary),
+                        SizedBox(width: r.s(4)),
+                        Text('Filtrer',
+                            style: TextStyle(fontSize: r.fs(13), fontWeight: FontWeight.w600, color: AppTheme.primary)),
+                      ]),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // ── Grille produits ──────────────────────────────────────────────
+          SliverPadding(
+            padding: EdgeInsets.fromLTRB(r.s(16), 0, r.s(16), r.s(40)),
+            sliver: SliverGrid(
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                mainAxisSpacing: r.s(16),
+                crossAxisSpacing: r.s(12),
+                childAspectRatio: _gridRatio(context),
+              ),
+              delegate: SliverChildBuilderDelegate(
+                (_, i) => _SellerProductCard(product: products[i], r: r),
+                childCount: products.length,
               ),
             ),
           ),
@@ -472,38 +228,897 @@ class SellerScreen extends StatelessWidget {
       ),
     );
   }
+
+  double _gridRatio(BuildContext context) {
+    final r = R(context);
+    final colW = (r.screenW - r.s(16) * 2 - r.s(12)) / 2;
+    final imgH = colW; // carré
+    final infoH = r.s(52);
+    return colW / (imgH + infoH);
+  }
 }
 
-class _Stat extends StatelessWidget {
-  final String value;
-  final String label;
+// ── Stat box ──────────────────────────────────────────────────────────────────
+class _StatBox extends StatelessWidget {
+  final String label, value;
+  final R r;
+  final bool valueSmall;
+  const _StatBox({required this.label, required this.value, required this.r, this.valueSmall = false});
 
-  const _Stat(this.value, this.label);
+  @override
+  Widget build(BuildContext context) => Expanded(
+        child: Container(
+          padding: EdgeInsets.symmetric(vertical: r.s(14)),
+          decoration: BoxDecoration(
+            color: AppTheme.cardColor,
+            borderRadius: BorderRadius.circular(r.rad(14)),
+            boxShadow: AppTheme.shadowCard,
+          ),
+          child: Column(
+            children: [
+              Text(label,
+                  style: TextStyle(fontSize: r.fs(11), color: AppTheme.mutedForeground, fontWeight: FontWeight.w500)),
+              SizedBox(height: r.s(4)),
+              Text(value,
+                  style: TextStyle(
+                    fontSize: valueSmall ? r.fs(14) : r.fs(20),
+                    fontWeight: FontWeight.w800,
+                    color: AppTheme.foreground,
+                  )),
+            ],
+          ),
+        ),
+      );
+}
+
+// ── Seller product card (image carrée + titre + prix primaire) ────────────────
+class _SellerProductCard extends StatelessWidget {
+  final dynamic product;
+  final R r;
+  const _SellerProductCard({required this.product, required this.r});
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        decoration: BoxDecoration(
-          color: AppTheme.cardColor,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        margin: const EdgeInsets.symmetric(horizontal: 4),
+    final ctrl = Get.find<AppController>();
+    return GestureDetector(
+      onTap: () => Get.toNamed('/product/${product.id}'),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Image carrée avec favori + badge NOUVEAU
+          Stack(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(r.rad(14)),
+                child: AspectRatio(
+                  aspectRatio: 1,
+                  child: CachedNetworkImage(
+                    imageUrl: product.image as String,
+                    fit: BoxFit.cover,
+                    placeholder: (_, __) => Shimmer.fromColors(
+                      baseColor: AppTheme.muted, highlightColor: Colors.white,
+                      child: Container(color: AppTheme.muted),
+                    ),
+                  ),
+                ),
+              ),
+              // Badge NOUVEAU si condition == 'Neuf'
+              if (product.condition == 'Neuf')
+                Positioned(
+                  bottom: r.s(8), left: r.s(8),
+                  child: Container(
+                    padding: EdgeInsets.symmetric(horizontal: r.s(8), vertical: r.s(3)),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primary,
+                      borderRadius: BorderRadius.circular(r.rad(6)),
+                    ),
+                    child: Text('NOUVEAU',
+                        style: TextStyle(fontSize: r.fs(9), fontWeight: FontWeight.w700, color: Colors.white)),
+                  ),
+                ),
+              // Bouton cœur
+              Positioned(
+                top: r.s(8), right: r.s(8),
+                child: Obx(() {
+                  final fav = ctrl.isFavorite(product.id as String);
+                  return GestureDetector(
+                    onTap: () => ctrl.toggleFavorite(product.id as String),
+                    child: Container(
+                      width: r.s(32), height: r.s(32),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        boxShadow: AppTheme.shadowCard,
+                      ),
+                      child: Icon(
+                        fav ? Icons.favorite : Icons.favorite_border,
+                        size: r.s(16),
+                        color: fav ? AppTheme.primary : AppTheme.mutedForeground,
+                      ),
+                    ),
+                  );
+                }),
+              ),
+            ],
+          ),
+          SizedBox(height: r.s(8)),
+          Text(product.title as String,
+              maxLines: 1, overflow: TextOverflow.ellipsis,
+              style: TextStyle(fontSize: r.fs(13), fontWeight: FontWeight.w600, color: AppTheme.foreground)),
+          SizedBox(height: r.s(2)),
+          Text(formatPrice(product.price as double),
+              style: TextStyle(fontSize: r.fs(14), fontWeight: FontWeight.w700, color: AppTheme.primary)),
+        ],
+      ),
+    );
+  }
+}
+
+// ╔══════════════════════════════════════════════════════╗
+// ║  MESSAGES LIST  (maquette Body.png)                  ║
+// ╚══════════════════════════════════════════════════════╝
+class MessagesScreen extends StatefulWidget {
+  const MessagesScreen({super.key});
+  @override
+  State<MessagesScreen> createState() => _MessagesScreenState();
+}
+
+class _MessagesScreenState extends State<MessagesScreen> {
+  // Onglets filtre
+  final _tabs = ['Tous', 'Non lus', 'Ventes', 'Achats'];
+  int _tabIndex = 0;
+
+  // Données mock enrichies (noms togolais, messages réalistes)
+  final _mockConvs = [
+    _ConvItem(name: 'Koffi Mensah',   time: '14:20', msg: 'C\'est toujours disponible à Lom...', unread: 1,
+        img: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&h=80&fit=crop&crop=face',
+        productImg: 'https://images.unsplash.com/photo-1508739773434-c26b3d09e071?w=80&h=80&fit=crop'),
+    _ConvItem(name: 'Essi Gado',      time: 'Dim.',  msg: 'Je peux voir d\'autres photos ?',   unread: 1,
+        img: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=80&h=80&fit=crop&crop=face',
+        productImg: 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=80&h=80&fit=crop'),
+    _ConvItem(name: 'Amivi Lawson',   time: 'Hier',  msg: 'Merci, je passe la prendre à 17h.', unread: 0,
+        img: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=80&h=80&fit=crop&crop=face',
+        productImg: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=80&h=80&fit=crop'),
+    _ConvItem(name: 'Kodjo Aziamble', time: 'Lun.',  msg: 'Quel est votre dernier prix svp ?', unread: 0,
+        img: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=80&h=80&fit=crop&crop=face',
+        productImg: 'https://images.unsplash.com/photo-1610945415295-d9bbf067e59c?w=80&h=80&fit=crop'),
+    _ConvItem(name: 'Yao Kouame',     time: '12 Oct.',msg: 'D\'accord, c\'est noté.',           unread: 0,
+        img: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&h=80&fit=crop&crop=face',
+        productImg: null),
+  ];
+
+  List<_ConvItem> get _filtered {
+    if (_tabIndex == 1) return _mockConvs.where((c) => c.unread > 0).toList();
+    return _mockConvs;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final r = R(context);
+    return Scaffold(
+      backgroundColor: AppTheme.background,
+      resizeToAvoidBottomInset: true,
+      body: SafeArea(
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              value,
-              style: const TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w800,
-                color: AppTheme.primary,
+            // ── Header ──────────────────────────────────────────────────────
+            Padding(
+              padding: EdgeInsets.fromLTRB(r.hPad, r.s(20), r.hPad, r.s(14)),
+              child: Text('Messages',
+                  style: TextStyle(fontSize: r.fs(26), fontWeight: FontWeight.w800, color: AppTheme.foreground)),
+            ),
+
+            // ── Barre de recherche ───────────────────────────────────────────
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: r.hPad),
+              child: Container(
+                height: r.s(46).clamp(42.0, 52.0),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(r.rad(14)),
+                  boxShadow: AppTheme.shadowCard,
+                ),
+                child: Row(
+                  children: [
+                    SizedBox(width: r.s(14)),
+                    Icon(Icons.search, size: r.s(19), color: AppTheme.mutedForeground),
+                    SizedBox(width: r.s(8)),
+                    Expanded(
+                      child: TextField(
+                        style: TextStyle(fontSize: r.fs(14), color: AppTheme.foreground),
+                        decoration: InputDecoration(
+                          border: InputBorder.none,
+                          hintText: 'Rechercher une conversation...',
+                          hintStyle: TextStyle(fontSize: r.fs(13), color: AppTheme.mutedForeground),
+                          isDense: true,
+                          contentPadding: EdgeInsets.zero,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
+            SizedBox(height: r.s(14)),
+
+            // ── Onglets filtre ───────────────────────────────────────────────
+            SizedBox(
+              height: r.s(36),
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                padding: EdgeInsets.symmetric(horizontal: r.hPad),
+                itemCount: _tabs.length,
+                separatorBuilder: (_, __) => SizedBox(width: r.s(8)),
+                itemBuilder: (_, i) {
+                  final active = _tabIndex == i;
+                  return GestureDetector(
+                    onTap: () => setState(() => _tabIndex = i),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 180),
+                      padding: EdgeInsets.symmetric(horizontal: r.s(18)),
+                      decoration: BoxDecoration(
+                        color: active ? AppTheme.primary : Colors.white,
+                        borderRadius: BorderRadius.circular(r.rad(20)),
+                        boxShadow: active ? AppTheme.shadowPrimary : AppTheme.shadowCard,
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        _tabs[i],
+                        style: TextStyle(
+                          fontSize: r.fs(13),
+                          fontWeight: FontWeight.w600,
+                          color: active ? Colors.white : AppTheme.foreground,
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+            SizedBox(height: r.s(14)),
+
+            // ── Liste conversations ──────────────────────────────────────────
+            Expanded(
+              child: _filtered.isEmpty
+                  ? Center(child: Text('Aucun message', style: TextStyle(color: AppTheme.mutedForeground, fontSize: r.fs(14))))
+                  : ListView.separated(
+                      padding: EdgeInsets.fromLTRB(r.hPad, 0, r.hPad, r.s(24)),
+                      itemCount: _filtered.length,
+                      separatorBuilder: (_, __) => SizedBox(height: r.s(8)),
+                      itemBuilder: (_, i) => _ConvTile(item: _filtered[i], r: r),
+                    ),
+            ),
+          ],
+        ),
+      ),
+      bottomNavigationBar: const BottomNavBar(currentIndex: 3),
+    );
+  }
+}
+
+// Modèle de données conversation mock
+class _ConvItem {
+  final String name, time, msg, img;
+  final int unread;
+  final String? productImg;
+  const _ConvItem({required this.name, required this.time, required this.msg,
+      required this.img, required this.unread, required this.productImg});
+}
+
+// Tuile d'une conversation
+class _ConvTile extends StatelessWidget {
+  final _ConvItem item;
+  final R r;
+  const _ConvTile({super.key, required this.item, required this.r});
+
+  @override
+  Widget build(BuildContext context) {
+    final hasUnread = item.unread > 0;
+    return GestureDetector(
+      onTap: () => Get.toNamed('/chat/c1'),
+      child: Container(
+        padding: EdgeInsets.all(r.s(12)),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(r.rad(16)),
+          boxShadow: AppTheme.shadowCard,
+        ),
+        child: Row(
+          children: [
+            // Avatar + badge non lu
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                CircleAvatar(
+                  radius: r.s(26),
+                  backgroundImage: CachedNetworkImageProvider(item.img),
+                  backgroundColor: AppTheme.muted,
+                ),
+                if (hasUnread)
+                  Positioned(
+                    bottom: 0, right: 0,
+                    child: Container(
+                      width: r.s(12), height: r.s(12),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primary,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 2),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            SizedBox(width: r.s(12)),
+
+            // Nom + dernier message
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          item.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: r.fs(14),
+                            fontWeight: hasUnread ? FontWeight.w700 : FontWeight.w600,
+                            color: AppTheme.foreground,
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: r.s(8)),
+                      Text(
+                        item.time,
+                        style: TextStyle(
+                          fontSize: r.fs(11),
+                          color: hasUnread ? AppTheme.primary : AppTheme.mutedForeground,
+                          fontWeight: hasUnread ? FontWeight.w600 : FontWeight.w400,
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: r.s(3)),
+                  Text(
+                    item.msg,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: r.fs(13),
+                      color: hasUnread ? AppTheme.foreground : AppTheme.mutedForeground,
+                      fontWeight: hasUnread ? FontWeight.w500 : FontWeight.w400,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Miniature produit
+            if (item.productImg != null) ...[
+              SizedBox(width: r.s(10)),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(r.rad(10)),
+                child: CachedNetworkImage(
+                  imageUrl: item.productImg!,
+                  width: r.s(46), height: r.s(46),
+                  fit: BoxFit.cover,
+                  errorWidget: (_, __, ___) => Container(
+                    width: r.s(46), height: r.s(46),
+                    decoration: BoxDecoration(
+                      color: AppTheme.muted,
+                      borderRadius: BorderRadius.circular(r.rad(10)),
+                    ),
+                    child: Icon(Icons.image_not_supported, size: r.s(18), color: AppTheme.mutedForeground),
+                  ),
+                ),
+              ),
+            ] else ...[
+              SizedBox(width: r.s(10)),
+              Container(
+                width: r.s(46), height: r.s(46),
+                decoration: BoxDecoration(
+                  color: AppTheme.muted,
+                  borderRadius: BorderRadius.circular(r.rad(10)),
+                ),
+                child: Icon(Icons.image_not_supported_outlined, size: r.s(20), color: AppTheme.mutedForeground),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ╔══════════════════════════════════════════════════════╗
+// ║  ORDER SCREEN  — pixel-perfect maquette Frame_7      ║
+// ╚══════════════════════════════════════════════════════╝
+class OrderScreen extends StatefulWidget {
+  const OrderScreen({super.key});
+  @override
+  State<OrderScreen> createState() => _OrderScreenState();
+}
+
+class _OrderScreenState extends State<OrderScreen> {
+  // 'livraison' = côté gauche maquette | 'retrait' = côté droit
+  String _mode = 'livraison';
+  bool _confirmed = false;
+  final _phoneCtrl = TextEditingController(text: '90 00 00 00');
+  final _noteCtrl  = TextEditingController();
+
+  @override
+  void dispose() {
+    _phoneCtrl.dispose();
+    _noteCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final r = R(context);
+    final args = Get.arguments as Map<String, dynamic>?;
+    final product = getProductById(args?['productId'] ?? 'p1');
+
+    // ── Confirmation ─────────────────────────────────────────────────────────
+    if (_confirmed) {
+      return Scaffold(
+        backgroundColor: AppTheme.background,
+        body: Center(
+          child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+            TweenAnimationBuilder<double>(
+              tween: Tween(begin: 0, end: 1),
+              duration: const Duration(milliseconds: 600),
+              builder: (_, v, __) => Transform.scale(
+                scale: v, child: Text('✅', style: TextStyle(fontSize: r.fs(72))),
+              ),
+            ),
+            SizedBox(height: r.s(20)),
+            Text('Commande confirmée !',
+                style: TextStyle(fontSize: r.fs(22), fontWeight: FontWeight.w800, color: AppTheme.foreground)),
+            SizedBox(height: r.s(8)),
+            Text('Le vendeur sera notifié immédiatement.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: r.fs(14), color: AppTheme.mutedForeground)),
+          ]),
+        ),
+      );
+    }
+
+    // ── Montant formaté façon maquette : "745.000 FCFA" ──────────────────────
+    String priceMain = '';
+    if (product != null) {
+      final v = product.price.toStringAsFixed(0);
+      priceMain = v.replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.');
+    }
+
+    return Scaffold(
+      backgroundColor: AppTheme.background,
+      resizeToAvoidBottomInset: true,
+
+      // ── AppBar : bouton ← rond + titre centré ──────────────────────────────
+      appBar: AppBar(
+        backgroundColor: AppTheme.background,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        centerTitle: true,
+        leading: Padding(
+          padding: EdgeInsets.only(left: r.s(12)),
+          child: GestureDetector(
+            onTap: Get.back,
+            child: Container(
+              width: r.s(36), height: r.s(36),
+              margin: EdgeInsets.symmetric(vertical: r.s(8)),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+                boxShadow: AppTheme.shadowCard,
+              ),
+              child: Icon(Icons.arrow_back, size: r.s(18), color: AppTheme.foreground),
+            ),
+          ),
+        ),
+        title: Text('Commander',
+            style: TextStyle(fontSize: r.fs(16), fontWeight: FontWeight.w700, color: AppTheme.foreground)),
+      ),
+
+      // ── Body scrollable ───────────────────────────────────────────────────
+      body: SingleChildScrollView(
+        padding: EdgeInsets.fromLTRB(r.hPad, r.s(8), r.hPad, r.s(160)),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+
+            // ── 1. Carte produit ─────────────────────────────────────────────
+            if (product != null)
+              Container(
+                padding: EdgeInsets.all(r.s(12)),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(r.rad(16)),
+                  border: Border.all(color: AppTheme.border),
+                ),
+                child: Row(
+                  children: [
+                    // Image produit
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(r.rad(10)),
+                      child: CachedNetworkImage(
+                        imageUrl: product.image,
+                        width: r.s(64), height: r.s(64),
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                    SizedBox(width: r.s(12)),
+                    // Titre + prix (prix = chiffres en gras + FCFA petit)
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(product.title,
+                              maxLines: 2, overflow: TextOverflow.ellipsis,
+                              style: TextStyle(fontSize: r.fs(13), fontWeight: FontWeight.w600,
+                                  color: AppTheme.foreground)),
+                          SizedBox(height: r.s(5)),
+                          RichText(
+                            text: TextSpan(
+                              children: [
+                                TextSpan(
+                                  text: '$priceMain ',
+                                  style: TextStyle(fontSize: r.fs(15), fontWeight: FontWeight.w800,
+                                      color: AppTheme.primary, fontFamily: 'PlusJakartaSans'),
+                                ),
+                                TextSpan(
+                                  text: 'FCFA',
+                                  style: TextStyle(fontSize: r.fs(11), fontWeight: FontWeight.w600,
+                                      color: AppTheme.primary, fontFamily: 'PlusJakartaSans'),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Badge quantité
+                    Container(
+                      width: r.s(32), height: r.s(32),
+                      decoration: BoxDecoration(
+                        color: AppTheme.muted,
+                        borderRadius: BorderRadius.circular(r.rad(8)),
+                      ),
+                      alignment: Alignment.center,
+                      child: Text('x1',
+                          style: TextStyle(fontSize: r.fs(12), fontWeight: FontWeight.w600,
+                              color: AppTheme.mutedForeground)),
+                    ),
+                  ],
+                ),
+              ),
+
+            SizedBox(height: r.s(22)),
+
+            // ── 2. Mode de réception ─────────────────────────────────────────
+            // Icône camion pour livraison, icône caisse pour retrait
+            Row(children: [
+              Icon(
+                _mode == 'livraison'
+                    ? Icons.local_shipping_outlined
+                    : Icons.storefront_outlined,
+                size: r.s(18), color: AppTheme.primary,
+              ),
+              SizedBox(width: r.s(7)),
+              Text('Mode de réception',
+                  style: TextStyle(fontSize: r.fs(15), fontWeight: FontWeight.w700,
+                      color: AppTheme.foreground)),
+            ]),
+            SizedBox(height: r.s(12)),
+
+            // Option Livraison à domicile
+            _OrderModeOption(
+              value: 'livraison',
+              groupValue: _mode,
+              title: 'Livraison à domicile',
+              subtitle: 'Recevez votre colis à Lomé & environs',
+              onTap: () => setState(() => _mode = 'livraison'),
+              r: r,
+            ),
+            SizedBox(height: r.s(10)),
+            // Option Retrait en point de vente
+            _OrderModeOption(
+              value: 'retrait',
+              groupValue: _mode,
+              title: 'Retrait en point de vente',
+              subtitle: 'Gratuit · Récupérez au Grand Marché',
+              onTap: () => setState(() => _mode = 'retrait'),
+              r: r,
+            ),
+
+            SizedBox(height: r.s(22)),
+
+            // ── 3. Vos coordonnées ───────────────────────────────────────────
+            Row(children: [
+              Icon(Icons.person_outline, size: r.s(18), color: AppTheme.primary),
+              SizedBox(width: r.s(7)),
+              Text('Vos coordonnées',
+                  style: TextStyle(fontSize: r.fs(15), fontWeight: FontWeight.w700,
+                      color: AppTheme.foreground)),
+            ]),
+            SizedBox(height: r.s(14)),
+
+            // Label téléphone
+            Text('NUMÉRO DE TÉLÉPHONE',
+                style: TextStyle(fontSize: r.fs(10), fontWeight: FontWeight.w600,
+                    color: AppTheme.mutedForeground, letterSpacing: 0.7)),
+            SizedBox(height: r.s(7)),
+
+            // Champ téléphone : +228 | numéro | ✓
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(r.rad(12)),
+                border: Border.all(color: AppTheme.border),
+              ),
+              child: IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Préfixe +228
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: r.s(14)),
+                      decoration: BoxDecoration(
+                        border: Border(right: BorderSide(color: AppTheme.border)),
+                      ),
+                      alignment: Alignment.center,
+                      child: Text('+228',
+                          style: TextStyle(fontSize: r.fs(14), fontWeight: FontWeight.w500,
+                              color: AppTheme.foreground)),
+                    ),
+                    // Champ numéro
+                    Expanded(
+                      child: TextField(
+                        controller: _phoneCtrl,
+                        keyboardType: TextInputType.phone,
+                        style: TextStyle(fontSize: r.fs(14), color: AppTheme.foreground),
+                        decoration: InputDecoration(
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.symmetric(
+                              horizontal: r.s(12), vertical: r.s(14)),
+                          isDense: true,
+                          hintText: '90 00 00 00',
+                          hintStyle: TextStyle(color: AppTheme.mutedForeground, fontSize: r.fs(14)),
+                        ),
+                      ),
+                    ),
+                    // Icône check verte
+                    Padding(
+                      padding: EdgeInsets.only(right: r.s(12)),
+                      child: Icon(Icons.check_circle_outline,
+                          size: r.s(20), color: Colors.green.shade600),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            SizedBox(height: r.s(14)),
+
+            // Label champ note — change selon mode
             Text(
-              label,
-              style: const TextStyle(
-                  fontSize: 12, color: AppTheme.mutedForeground),
+              _mode == 'livraison' ? 'QUARTIER & PRÉCISIONS' : 'NOTE OU PRÉCISIONS',
+              style: TextStyle(fontSize: r.fs(10), fontWeight: FontWeight.w600,
+                  color: AppTheme.mutedForeground, letterSpacing: 0.7),
+            ),
+            SizedBox(height: r.s(7)),
+
+            // Champ texte libre
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(r.rad(12)),
+                border: Border.all(color: AppTheme.border),
+              ),
+              child: TextField(
+                controller: _noteCtrl,
+                maxLines: 4,
+                style: TextStyle(fontSize: r.fs(13), color: AppTheme.foreground),
+                decoration: InputDecoration(
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.all(r.s(14)),
+                  isDense: true,
+                  hintText: _mode == 'livraison'
+                      ? 'Ex: Adidogomé, près de l\'église, portail bleu...'
+                      : 'Indiquez l\'heure de votre passage ou toute autre précision utile...',
+                  hintStyle: TextStyle(fontSize: r.fs(13), color: AppTheme.mutedForeground),
+                ),
+              ),
+            ),
+
+            SizedBox(height: r.s(14)),
+
+            // ── 4. Bandeau paiement ──────────────────────────────────────────
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.symmetric(vertical: r.s(12)),
+              decoration: BoxDecoration(
+                color: AppTheme.primaryLight,
+                borderRadius: BorderRadius.circular(r.rad(12)),
+                border: Border.all(color: AppTheme.primary.withOpacity(0.25)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.credit_card_outlined, size: r.s(16), color: AppTheme.primary),
+                  SizedBox(width: r.s(7)),
+                  Text(
+                    _mode == 'livraison'
+                        ? 'Paiement à la livraison uniquement'
+                        : 'Paiement au moment du retrait',
+                    style: TextStyle(fontSize: r.fs(12), fontWeight: FontWeight.w600,
+                        color: AppTheme.primary),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+
+      // ── 5. Footer fixe : ligne séparatrice + total + bouton + note ─────────
+      bottomSheet: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border(top: BorderSide(color: AppTheme.border)),
+        ),
+        padding: EdgeInsets.fromLTRB(r.hPad, r.s(14), r.hPad,
+            r.s(20) + MediaQuery.of(context).padding.bottom),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Ligne total
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
+              children: [
+                Text('Total à payer',
+                    style: TextStyle(fontSize: r.fs(13), color: AppTheme.mutedForeground)),
+                RichText(
+                  text: TextSpan(
+                    children: [
+                      TextSpan(
+                        text: product != null ? '$priceMain ' : '0 ',
+                        style: TextStyle(fontSize: r.fs(20), fontWeight: FontWeight.w800,
+                            color: AppTheme.foreground, fontFamily: 'PlusJakartaSans'),
+                      ),
+                      TextSpan(
+                        text: 'FCFA',
+                        style: TextStyle(fontSize: r.fs(13), fontWeight: FontWeight.w700,
+                            color: AppTheme.foreground, fontFamily: 'PlusJakartaSans'),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: r.s(12)),
+
+            // Bouton Confirmer
+            GestureDetector(
+              onTap: () {
+                setState(() => _confirmed = true);
+                Future.delayed(const Duration(seconds: 3), () => Get.offAllNamed('/home'));
+              },
+              child: Container(
+                width: double.infinity,
+                height: r.s(54).clamp(50.0, 62.0),
+                decoration: BoxDecoration(
+                  color: AppTheme.primary,
+                  borderRadius: BorderRadius.circular(r.rad(30)),
+                  boxShadow: AppTheme.shadowPrimary,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text('Confirmer la commande',
+                        style: TextStyle(fontSize: r.fs(15), fontWeight: FontWeight.w700,
+                            color: Colors.white)),
+                    SizedBox(width: r.s(6)),
+                    Icon(Icons.arrow_forward_ios_rounded, size: r.s(13), color: Colors.white),
+                  ],
+                ),
+              ),
+            ),
+
+            SizedBox(height: r.s(8)),
+
+            // Note légale contextuelle
+            Text(
+              _mode == 'livraison'
+                  ? 'En confirmant, vous vous engagez à réceptionner votre commande.'
+                  : 'En confirmant, vous vous engagez à venir récupérer votre commande.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: r.fs(10), color: AppTheme.mutedForeground),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Widget : option radio mode livraison / retrait ────────────────────────────
+class _OrderModeOption extends StatelessWidget {
+  final String value, groupValue, title, subtitle;
+  final VoidCallback onTap;
+  final R r;
+  const _OrderModeOption({
+    required this.value, required this.groupValue,
+    required this.title, required this.subtitle,
+    required this.onTap, required this.r,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final active = value == groupValue;
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: EdgeInsets.symmetric(horizontal: r.s(16), vertical: r.s(14)),
+        decoration: BoxDecoration(
+          // Fond blanc dans les deux cas — seule la bordure change
+          color: active ? AppTheme.primaryLight : Colors.white,
+          borderRadius: BorderRadius.circular(r.rad(14)),
+          border: Border.all(
+            color: active ? AppTheme.primary : AppTheme.border,
+            width: active ? 2 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            // Bouton radio dessiné à la main
+            Container(
+              width: r.s(22), height: r.s(22),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: active ? AppTheme.primary : const Color(0xFFBBB5B0),
+                  width: 2,
+                ),
+                color: Colors.transparent,
+              ),
+              child: active
+                  ? Center(
+                      child: Container(
+                        width: r.s(11), height: r.s(11),
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: AppTheme.primary,
+                        ),
+                      ),
+                    )
+                  : null,
+            ),
+            SizedBox(width: r.s(14)),
+            // Textes — titre toujours en noir/foreground (pas orange)
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title,
+                      style: TextStyle(
+                        fontSize: r.fs(14),
+                        fontWeight: FontWeight.w700,
+                        // Titre reste foreground même quand actif — comme dans la maquette
+                        color: AppTheme.foreground,
+                      )),
+                  SizedBox(height: r.s(2)),
+                  Text(subtitle,
+                      style: TextStyle(fontSize: r.fs(12), color: AppTheme.mutedForeground)),
+                ],
+              ),
             ),
           ],
         ),
