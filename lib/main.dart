@@ -11,7 +11,6 @@ import 'screens/onboarding/onboarding_screen.dart';
 import 'screens/auth/auth_screen.dart';
 import 'screens/home/home_screen.dart';
 import 'screens/search/search_screen.dart';
-import 'screens/category/category_screen.dart';
 import 'screens/product/product_detail_screen.dart';
 import 'screens/chat/chat_screen.dart';
 import 'screens/messages/messages_and_order_screen.dart';

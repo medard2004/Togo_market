@@ -3,8 +3,6 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:get/get.dart';
 import '../../theme/app_theme.dart';
-import '../../utils/responsive.dart';
-import '../../widgets/common_widgets.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -24,8 +22,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       title1: 'Achetez & Vendez',
       title2: 'facilement au Togo',
       subtitle: 'Des milliers de produits disponibles près de chez vous à Lomé.',
-      badge1: _Badge('📦 LIVRAISON RAPIDE', Alignment.topRight),
-      badge2: _Badge('✅ VENDEURS VÉRIFIÉS', Alignment.bottomLeft),
+      badge1: _Badge('LIVRAISON RAPIDE', Alignment.topRight, Icons.local_shipping),
+      badge2: _Badge('VENDEURS VÉRIFIÉS', Alignment.bottomLeft, Icons.verified),
     ),
     _SlideData(
       image:
@@ -34,19 +32,20 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       title2: 'vendeurs en direct',
       subtitle:
           'Négociez le prix, posez vos questions, tout en temps réel.',
-      badge1: _Badge('💬 NOUVEAU MESSAGE', Alignment.topRight),
-      badge2: _Badge('⚡ DIRECT CHAT', Alignment.bottomLeft),
+      badge1: _Badge('NOUVEAU MESSAGE', Alignment.topRight, Icons.chat),
+      badge2: _Badge('DIRECT CHAT', Alignment.bottomLeft, Icons.flash_on),
       isChat: true,
     ),
     _SlideData(
       image:
           'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=600&h=450&fit=crop',
       title1: 'Devenez vendeur',
-      title2: 'et gagnez plus 💰',
+      title2: 'et gagnez plus',
       subtitle:
           'Publiez vos annonces gratuitement et touchez des milliers d\'acheteurs.',
-      badge1: _Badge('🛍️ 50K+ VENDEURS', Alignment.topRight),
-      badge2: _Badge('🇹🇬 FAIT AU TOGO', Alignment.bottomLeft),
+      badge1: _Badge('50K+ VENDEURS', Alignment.topRight, Icons.shopping_bag),
+      badge2: _Badge('FAIT AU TOGO', Alignment.bottomLeft, Icons.flag),
+      titleIcon: Icons.attach_money,
     ),
   ];
 
@@ -151,6 +150,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                   color: AppTheme.foreground,
                                 ),
                               ),
+                              if (_slides[_currentSlide].titleIcon != null)
+                                WidgetSpan(
+                                  child: Icon(
+                                    _slides[_currentSlide].titleIcon,
+                                    size: 24,
+                                    color: AppTheme.primary,
+                                  ),
+                                ),
                               TextSpan(
                                 text: _slides[_currentSlide].title2,
                                 style: const TextStyle(
@@ -187,18 +194,34 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         borderRadius: BorderRadius.circular(16),
                         boxShadow: AppTheme.shadowPrimary,
                       ),
-                      child: Center(
-                        child: Text(
-                          _currentSlide < 2
-                              ? 'Continuer →'
-                              : 'Commencer 🚀',
-                          style: const TextStyle(
-                            fontFamily: 'Plus Jakarta Sans',
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            _currentSlide < 2 ? 'Continuer' : 'Commencer',
+                            style: const TextStyle(
+                              fontFamily: 'Plus Jakarta Sans',
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            ),
                           ),
-                        ),
+
+                          SizedBox(
+                            width: 5,
+                          ),
+
+
+                          if (_currentSlide < 2) ...[
+                            const Icon(Icons.arrow_forward, size: 16, color: Colors.white),
+                            const SizedBox(width: 8),
+                          ],
+                          if (_currentSlide == 2) ...[
+                            const Icon(Icons.rocket_launch, size: 16, color: Colors.white),
+                            const SizedBox(width: 8),
+                          ],
+                          
+                        ],
                       ),
                     ),
                   ),
@@ -330,13 +353,22 @@ class _FloatingBadge extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
           boxShadow: AppTheme.shadowCard,
         ),
-        child: Text(
-          badge.label,
-          style: const TextStyle(
-            fontSize: 10,
-            fontWeight: FontWeight.w700,
-            color: AppTheme.foreground,
-          ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (badge.icon != null) ...[
+              Icon(badge.icon, size: 12, color: AppTheme.foreground),
+              const SizedBox(width: 4),
+            ],
+            Text(
+              badge.label,
+              style: const TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                color: AppTheme.foreground,
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -351,6 +383,7 @@ class _SlideData {
   final _Badge badge1;
   final _Badge badge2;
   final bool isChat;
+  final IconData? titleIcon;
 
   const _SlideData({
     required this.image,
@@ -360,12 +393,14 @@ class _SlideData {
     required this.badge1,
     required this.badge2,
     this.isChat = false,
+    this.titleIcon,
   });
 }
 
 class _Badge {
   final String label;
   final Alignment alignment;
+  final IconData? icon;
 
-  const _Badge(this.label, this.alignment);
+  const _Badge(this.label, this.alignment, [this.icon]);
 }

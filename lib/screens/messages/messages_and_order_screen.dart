@@ -4,7 +4,6 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/bottom_nav.dart';
-import '../../widgets/common_widgets.dart';
 import '../../controllers/app_controller.dart';
 import '../../data/mock_data.dart';
 import '../../utils/responsive.dart';
@@ -364,11 +363,15 @@ class MessagesScreen extends StatefulWidget {
 }
 
 class _MessagesScreenState extends State<MessagesScreen> {
-  // Onglets filtre
-  final _tabs = ['Tous', 'Non lus', 'Ventes', 'Achats'];
-  int _tabIndex = 0;
+  // État des filtres
+  bool _hasActiveFilters = false;
+  String _selectedSort = 'date_desc'; // date_desc, date_asc, name_asc, name_desc
+  bool _showOnlineOnly = false;
+  bool _showUnreadOnly = false;
 
-  // Données mock enrichies (noms togolais, messages réalistes)
+  // État de sélection multiple
+  bool _isSelectionMode = false;
+  final Set<String> _selectedMessages = {}; // Utilise le nom comme clé unique
   final _mockConvs = [
     _ConvItem(name: 'Koffi Mensah',   time: '14:20', msg: 'C\'est toujours disponible à Lom...', unread: 1,
         img: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&h=80&fit=crop&crop=face',
@@ -388,8 +391,79 @@ class _MessagesScreenState extends State<MessagesScreen> {
   ];
 
   List<_ConvItem> get _filtered {
-    if (_tabIndex == 1) return _mockConvs.where((c) => c.unread > 0).toList();
-    return _mockConvs;
+    List<_ConvItem> filtered = List.from(_mockConvs);
+
+    // Filtre par statut en ligne
+    if (_showOnlineOnly) {
+      // Pour la démo, on considère que certains utilisateurs sont en ligne
+      final onlineNames = ['Koffi Mensah', 'Essi Gado', 'Amivi Lawson'];
+      filtered = filtered.where((c) => onlineNames.contains(c.name)).toList();
+    }
+
+    // Filtre par non lus
+    if (_showUnreadOnly) {
+      filtered = filtered.where((c) => c.unread > 0).toList();
+    }
+
+    // Tri selon le critère sélectionné
+    filtered.sort((a, b) {
+      switch (_selectedSort) {
+        case 'date_desc':
+          // Tri par date décroissante (plus récent d'abord)
+          return b.time.compareTo(a.time);
+        case 'date_asc':
+          // Tri par date croissante (plus ancien d'abord)
+          return a.time.compareTo(b.time);
+        case 'name_asc':
+          return a.name.compareTo(b.name);
+        case 'name_desc':
+          return b.name.compareTo(a.name);
+        default:
+          return 0;
+      }
+    });
+
+    return filtered;
+  }
+
+  // Méthodes pour la gestion de la sélection
+  void _toggleSelectionMode() {
+    setState(() {
+      _isSelectionMode = !_isSelectionMode;
+      if (!_isSelectionMode) {
+        _selectedMessages.clear();
+      }
+    });
+  }
+
+  void _toggleMessageSelection(String messageName) {
+    setState(() {
+      if (_selectedMessages.contains(messageName)) {
+        _selectedMessages.remove(messageName);
+      } else {
+        _selectedMessages.add(messageName);
+      }
+    });
+  }
+
+  void _selectAllMessages() {
+    setState(() {
+      if (_selectedMessages.length == _filtered.length) {
+        _selectedMessages.clear();
+      } else {
+        _selectedMessages.addAll(_filtered.map((msg) => msg.name));
+      }
+    });
+  }
+
+  void _deleteSelectedMessages() {
+    setState(() {
+      // Dans une vraie app, on supprimerait de la base de données
+      // Ici on simule en filtrant la liste mock
+      _mockConvs.removeWhere((msg) => _selectedMessages.contains(msg.name));
+      _selectedMessages.clear();
+      _isSelectionMode = false;
+    });
   }
 
   @override
@@ -405,75 +479,121 @@ class _MessagesScreenState extends State<MessagesScreen> {
             // ── Header ──────────────────────────────────────────────────────
             Padding(
               padding: EdgeInsets.fromLTRB(r.hPad, r.s(20), r.hPad, r.s(14)),
-              child: Text('Messages',
-                  style: TextStyle(fontSize: r.fs(26), fontWeight: FontWeight.w800, color: AppTheme.foreground)),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      _isSelectionMode ? '${_selectedMessages.length} sélectionné(s)' : 'Messages',
+                      style: TextStyle(fontSize: r.fs(26), fontWeight: FontWeight.w800, color: AppTheme.foreground)
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: _toggleSelectionMode,
+                    child: Container(
+                      padding: EdgeInsets.all(r.s(8)),
+                      decoration: BoxDecoration(
+                        color: _isSelectionMode ? AppTheme.primary.withOpacity(0.1) : Colors.transparent,
+                        borderRadius: BorderRadius.circular(r.rad(8)),
+                      ),
+                      child: Icon(
+                        _isSelectionMode ? Icons.close : Icons.checklist_rounded,
+                        size: r.s(24),
+                        color: _isSelectionMode ? AppTheme.primary : AppTheme.mutedForeground,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
 
             // ── Barre de recherche ───────────────────────────────────────────
             Padding(
               padding: EdgeInsets.symmetric(horizontal: r.hPad),
               child: Container(
-                height: r.s(46).clamp(42.0, 52.0),
+                height: r.s(50).clamp(46.0, 56.0),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(r.rad(14)),
-                  boxShadow: AppTheme.shadowCard,
+                  borderRadius: BorderRadius.circular(r.rad(16)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppTheme.primary.withOpacity(0.08),
+                      blurRadius: 12,
+                      offset: Offset(0, 4),
+                    ),
+                    BoxShadow(
+                      color: AppTheme.muted.withOpacity(0.05),
+                      blurRadius: 6,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
+                  border: Border.all(
+                    color: AppTheme.primary.withOpacity(0.1),
+                    width: 1,
+                  ),
                 ),
                 child: Row(
                   children: [
-                    SizedBox(width: r.s(14)),
-                    Icon(Icons.search, size: r.s(19), color: AppTheme.mutedForeground),
-                    SizedBox(width: r.s(8)),
+                    // Container pour l'icône avec fond coloré
+                    Container(
+                      width: r.s(48),
+                      height: r.s(48),
+                      margin: EdgeInsets.all(r.s(1)),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primary.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(r.rad(14)),
+                      ),
+                      child: Icon(
+                        Icons.search_rounded,
+                        size: r.s(22),
+                        color: AppTheme.primary,
+                      ),
+                    ),
+                    SizedBox(width: r.s(4)),
+                    // Champ de texte
                     Expanded(
                       child: TextField(
-                        style: TextStyle(fontSize: r.fs(14), color: AppTheme.foreground),
+                        style: TextStyle(
+                          fontSize: r.fs(15),
+                          color: AppTheme.foreground,
+                          fontWeight: FontWeight.w500,
+                        ),
                         decoration: InputDecoration(
                           border: InputBorder.none,
                           hintText: 'Rechercher une conversation...',
-                          hintStyle: TextStyle(fontSize: r.fs(13), color: AppTheme.mutedForeground),
+                          hintStyle: TextStyle(
+                            fontSize: r.fs(14),
+                            color: AppTheme.mutedForeground,
+                            fontWeight: FontWeight.w400,
+                          ),
                           isDense: true,
-                          contentPadding: EdgeInsets.zero,
+                          contentPadding: EdgeInsets.symmetric(vertical: r.s(12)),
+                        ),
+                      ),
+                    ),
+                    // Bouton filtre optionnel
+                    GestureDetector(
+                      onTap: _showFilterModal,
+                      child: Container(
+                        width: r.s(40),
+                        height: r.s(40),
+                        margin: EdgeInsets.only(right: r.s(4)),
+                        decoration: BoxDecoration(
+                          color: _hasActiveFilters
+                              ? AppTheme.primary.withOpacity(0.1)
+                              : AppTheme.muted.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(r.rad(12)),
+                        ),
+                        child: Icon(
+                          Icons.filter_list_rounded,
+                          size: r.s(18),
+                          color: _hasActiveFilters
+                              ? AppTheme.primary
+                              : AppTheme.mutedForeground,
                         ),
                       ),
                     ),
                   ],
                 ),
-              ),
-            ),
-            SizedBox(height: r.s(14)),
-
-            // ── Onglets filtre ───────────────────────────────────────────────
-            SizedBox(
-              height: r.s(36),
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                padding: EdgeInsets.symmetric(horizontal: r.hPad),
-                itemCount: _tabs.length,
-                separatorBuilder: (_, __) => SizedBox(width: r.s(8)),
-                itemBuilder: (_, i) {
-                  final active = _tabIndex == i;
-                  return GestureDetector(
-                    onTap: () => setState(() => _tabIndex = i),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 180),
-                      padding: EdgeInsets.symmetric(horizontal: r.s(18)),
-                      decoration: BoxDecoration(
-                        color: active ? AppTheme.primary : Colors.white,
-                        borderRadius: BorderRadius.circular(r.rad(20)),
-                        boxShadow: active ? AppTheme.shadowPrimary : AppTheme.shadowCard,
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        _tabs[i],
-                        style: TextStyle(
-                          fontSize: r.fs(13),
-                          fontWeight: FontWeight.w600,
-                          color: active ? Colors.white : AppTheme.foreground,
-                        ),
-                      ),
-                    ),
-                  );
-                },
               ),
             ),
             SizedBox(height: r.s(14)),
@@ -486,13 +606,109 @@ class _MessagesScreenState extends State<MessagesScreen> {
                       padding: EdgeInsets.fromLTRB(r.hPad, 0, r.hPad, r.s(24)),
                       itemCount: _filtered.length,
                       separatorBuilder: (_, __) => SizedBox(height: r.s(8)),
-                      itemBuilder: (_, i) => _ConvTile(item: _filtered[i], r: r),
+                      itemBuilder: (_, i) => _ConvTile(
+                        item: _filtered[i],
+                        r: r,
+                        isSelectionMode: _isSelectionMode,
+                        isSelected: _selectedMessages.contains(_filtered[i].name),
+                        onSelectionChanged: () => _toggleMessageSelection(_filtered[i].name),
+                      ),
                     ),
             ),
           ],
         ),
       ),
-      bottomNavigationBar: const BottomNavBar(currentIndex: 3),
+      bottomNavigationBar: _isSelectionMode
+          ? _buildSelectionActionBar()
+          : const BottomNavBar(currentIndex: 3),
+    );
+  }
+
+  Widget _buildSelectionActionBar() {
+    final r = R(context);
+    final allSelected = _selectedMessages.length == _filtered.length;
+    final hasSelection = _selectedMessages.isNotEmpty;
+
+    return Container(
+      padding: EdgeInsets.fromLTRB(r.hPad, r.s(12), r.hPad, r.s(12) + MediaQuery.of(context).padding.bottom),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 8,
+            offset: Offset(0, -2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          // Bouton Tout sélectionner
+          Expanded(
+            child: GestureDetector(
+              onTap: _selectAllMessages,
+              child: Container(
+                height: r.s(44),
+                decoration: BoxDecoration(
+                  color: AppTheme.muted.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(r.rad(12)),
+                ),
+                child: Center(
+                  child: Text(
+                    allSelected ? 'Tout désélectionner' : 'Tout sélectionner',
+                    style: TextStyle(
+                      fontSize: r.fs(14),
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.foreground,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          SizedBox(width: r.s(12)),
+          // Bouton Supprimer
+          Expanded(
+            child: GestureDetector(
+              onTap: hasSelection ? _deleteSelectedMessages : null,
+              child: Container(
+                height: r.s(44),
+                decoration: BoxDecoration(
+                  color: hasSelection ? AppTheme.destructive : AppTheme.muted.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(r.rad(12)),
+                ),
+                child: Center(
+                  child: Text(
+                    'Supprimer',
+                    style: TextStyle(
+                      fontSize: r.fs(14),
+                      fontWeight: FontWeight.w600,
+                      color: hasSelection ? Colors.white : AppTheme.mutedForeground,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Modal de filtres
+  void _showFilterModal() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _FilterModal(
+        selectedSort: _selectedSort,
+        showOnlineOnly: _showOnlineOnly,
+        showUnreadOnly: _showUnreadOnly,
+        onSortChanged: (value) => setState(() => _selectedSort = value),
+        onOnlineOnlyChanged: (value) => setState(() => _showOnlineOnly = value),
+        onUnreadOnlyChanged: (value) => setState(() => _showUnreadOnly = value),
+        onFiltersApplied: () => setState(() => _hasActiveFilters = _selectedSort != 'date_desc' || _showOnlineOnly || _showUnreadOnly),
+      ),
     );
   }
 }
@@ -510,22 +726,45 @@ class _ConvItem {
 class _ConvTile extends StatelessWidget {
   final _ConvItem item;
   final R r;
-  const _ConvTile({super.key, required this.item, required this.r});
+  final bool isSelectionMode;
+  final bool isSelected;
+  final VoidCallback? onSelectionChanged;
+
+  const _ConvTile({
+    required this.item,
+    required this.r,
+    this.isSelectionMode = false,
+    this.isSelected = false,
+    this.onSelectionChanged,
+  });
 
   @override
   Widget build(BuildContext context) {
     final hasUnread = item.unread > 0;
     return GestureDetector(
-      onTap: () => Get.toNamed('/chat/c1'),
+      onTap: isSelectionMode ? onSelectionChanged : () => Get.toNamed('/chat/c1'),
       child: Container(
         padding: EdgeInsets.all(r.s(12)),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(r.rad(16)),
           boxShadow: AppTheme.shadowCard,
+          border: isSelectionMode && isSelected
+              ? Border.all(color: AppTheme.primary, width: 2)
+              : null,
         ),
         child: Row(
           children: [
+            // Checkbox en mode sélection
+            if (isSelectionMode) ...[
+              Checkbox(
+                value: isSelected,
+                onChanged: (_) => onSelectionChanged?.call(),
+                activeColor: AppTheme.primary,
+              ),
+              SizedBox(width: r.s(8)),
+            ],
+
             // Avatar + badge non lu
             Stack(
               clipBehavior: Clip.none,
@@ -627,6 +866,234 @@ class _ConvTile extends StatelessWidget {
               ),
             ],
           ],
+        ),
+      ),
+    );
+  }
+}
+
+// ╔══════════════════════════════════════════════════════╗
+// ║  MODAL DE FILTRES (Design simple)                     ║
+// ╚══════════════════════════════════════════════════════╝
+class _FilterModal extends StatefulWidget {
+  final String selectedSort;
+  final bool showOnlineOnly;
+  final bool showUnreadOnly;
+  final Function(String) onSortChanged;
+  final Function(bool) onOnlineOnlyChanged;
+  final Function(bool) onUnreadOnlyChanged;
+  final Function() onFiltersApplied;
+
+  const _FilterModal({
+    required this.selectedSort,
+    required this.showOnlineOnly,
+    required this.showUnreadOnly,
+    required this.onSortChanged,
+    required this.onOnlineOnlyChanged,
+    required this.onUnreadOnlyChanged,
+    required this.onFiltersApplied,
+  });
+
+  @override
+  State<_FilterModal> createState() => _FilterModalState();
+}
+
+class _FilterModalState extends State<_FilterModal> {
+  late String _tempSelectedSort;
+  late bool _tempShowOnlineOnly;
+  late bool _tempShowUnreadOnly;
+
+  @override
+  void initState() {
+    super.initState();
+    _tempSelectedSort = widget.selectedSort;
+    _tempShowOnlineOnly = widget.showOnlineOnly;
+    _tempShowUnreadOnly = widget.showUnreadOnly;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final r = R(context);
+    return Container(
+      margin: EdgeInsets.all(r.s(16)),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(r.rad(20)),
+        boxShadow: AppTheme.shadowCardLg,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Header compact
+          Padding(
+            padding: EdgeInsets.all(r.s(16)),
+            child: Row(
+              children: [
+                Text(
+                  'Filtres',
+                  style: TextStyle(
+                    fontSize: r.fs(18),
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.foreground,
+                  ),
+                ),
+                const Spacer(),
+                GestureDetector(
+                  onTap: () => Navigator.pop(context),
+                  child: Icon(
+                    Icons.close,
+                    size: r.s(24),
+                    color: AppTheme.mutedForeground,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Contenu principal
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: r.s(16)),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Tri rapide - boutons en ligne
+                Text(
+                  'Trier par',
+                  style: TextStyle(
+                    fontSize: r.fs(14),
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.foreground,
+                  ),
+                ),
+                SizedBox(height: r.s(8)),
+                Row(
+                  children: [
+                    _buildQuickSortButton('Récent', 'date_desc'),
+                    SizedBox(width: r.s(8)),
+                    _buildQuickSortButton('Ancien', 'date_asc'),
+                    SizedBox(width: r.s(8)),
+                    _buildQuickSortButton('A-Z', 'name_asc'),
+                  ],
+                ),
+
+                SizedBox(height: r.s(16)),
+
+                // Filtres - chips
+                Text(
+                  'Afficher',
+                  style: TextStyle(
+                    fontSize: r.fs(14),
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.foreground,
+                  ),
+                ),
+                SizedBox(height: r.s(8)),
+                Wrap(
+                  spacing: r.s(8),
+                  runSpacing: r.s(8),
+                  children: [
+                    _buildFilterChip('En ligne', _tempShowOnlineOnly, (value) {
+                      setState(() => _tempShowOnlineOnly = value);
+                    }),
+                    _buildFilterChip('Non lus', _tempShowUnreadOnly, (value) {
+                      setState(() => _tempShowUnreadOnly = value);
+                    }),
+                  ],
+                ),
+
+                SizedBox(height: r.s(20)),
+              ],
+            ),
+          ),
+
+          // Bouton Appliquer
+          Padding(
+            padding: EdgeInsets.all(r.s(16)),
+            child: GestureDetector(
+              onTap: () {
+                widget.onSortChanged(_tempSelectedSort);
+                widget.onOnlineOnlyChanged(_tempShowOnlineOnly);
+                widget.onUnreadOnlyChanged(_tempShowUnreadOnly);
+                widget.onFiltersApplied();
+                Navigator.pop(context);
+              },
+              child: Container(
+                width: double.infinity,
+                height: r.s(44),
+                decoration: BoxDecoration(
+                  color: AppTheme.primary,
+                  borderRadius: BorderRadius.circular(r.rad(12)),
+                ),
+                child: Center(
+                  child: Text(
+                    'Appliquer les filtres',
+                    style: TextStyle(
+                      fontSize: r.fs(14),
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuickSortButton(String label, String value) {
+    final r = R(context);
+    final isSelected = _tempSelectedSort == value;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => setState(() => _tempSelectedSort = value),
+        child: Container(
+          height: r.s(36),
+          decoration: BoxDecoration(
+            color: isSelected ? AppTheme.primary : AppTheme.muted.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(r.rad(8)),
+            border: Border.all(
+              color: isSelected ? AppTheme.primary : AppTheme.muted.withOpacity(0.2),
+              width: 1,
+            ),
+          ),
+          child: Center(
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: r.fs(12),
+                fontWeight: FontWeight.w600,
+                color: isSelected ? Colors.white : AppTheme.foreground,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFilterChip(String label, bool isSelected, Function(bool) onChanged) {
+    final r = R(context);
+    return GestureDetector(
+      onTap: () => onChanged(!isSelected),
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: r.s(12), vertical: r.s(6)),
+        decoration: BoxDecoration(
+          color: isSelected ? AppTheme.primary : AppTheme.muted.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(r.rad(16)),
+          border: Border.all(
+            color: isSelected ? AppTheme.primary : AppTheme.muted.withOpacity(0.2),
+            width: 1,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: r.fs(12),
+            fontWeight: FontWeight.w500,
+            color: isSelected ? Colors.white : AppTheme.foreground,
+          ),
         ),
       ),
     );

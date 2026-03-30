@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import '../../theme/app_theme.dart';
 import '../../controllers/app_controller.dart';
@@ -22,8 +21,14 @@ class _AuthScreenState extends State<AuthScreen> {
   final Set<String> _selectedInterests = {};
 
   final _zones = [
-    'Agbalépédo', 'Bè', 'Tokoin', 'Adidogomé',
-    'Avépozo', 'Nyékonakpoè', 'Amadahomé', 'Kégué',
+    'Agbalépédo',
+    'Bè',
+    'Tokoin',
+    'Adidogomé',
+    'Avépozo',
+    'Nyékonakpoè',
+    'Amadahomé',
+    'Kégué',
   ];
 
   @override
@@ -32,9 +37,16 @@ class _AuthScreenState extends State<AuthScreen> {
   }
 
   void _startTimer() {
-    setState(() { _otpTimer = 45; _timerActive = true; });
+    setState(() {
+      _otpTimer = 45;
+      _timerActive = true;
+    });
     Stream.periodic(const Duration(seconds: 1), (i) => i).take(45).listen((i) {
-      if (mounted) setState(() { _otpTimer = 44 - i; if (_otpTimer <= 0) _timerActive = false; });
+      if (mounted)
+        setState(() {
+          _otpTimer = 44 - i;
+          if (_otpTimer <= 0) _timerActive = false;
+        });
     });
   }
 
@@ -68,7 +80,8 @@ class _AuthScreenState extends State<AuthScreen> {
       resizeToAvoidBottomInset: false,
       body: AnimatedSwitcher(
         duration: const Duration(milliseconds: 280),
-        transitionBuilder: (child, anim) => FadeTransition(opacity: anim, child: child),
+        transitionBuilder: (child, anim) =>
+            FadeTransition(opacity: anim, child: child),
         child: _buildStep(),
       ),
     );
@@ -86,7 +99,10 @@ class _AuthScreenState extends State<AuthScreen> {
           key: const ValueKey('phone'),
           ctrl: _phoneCtrl,
           onBack: () => setState(() => _step = 'welcome'),
-          onSend: () { _startTimer(); setState(() => _step = 'otp'); },
+          onSend: () {
+            _startTimer();
+            setState(() => _step = 'otp');
+          },
         );
       case 'otp':
         return _OtpStep(
@@ -115,12 +131,20 @@ class _AuthScreenState extends State<AuthScreen> {
           key: const ValueKey('interests'),
           selected: _selectedInterests,
           onToggle: (id) => setState(() {
-            if (_selectedInterests.contains(id)) _selectedInterests.remove(id);
-            else _selectedInterests.add(id);
+            if (_selectedInterests.contains(id))
+              _selectedInterests.remove(id);
+            else
+              _selectedInterests.add(id);
           }),
           onBack: () => setState(() => _step = 'profile'),
-          onSkip: () { Get.find<AppController>().login(); Get.offAllNamed('/home'); },
-          onFinish: () { Get.find<AppController>().login(); Get.offAllNamed('/home'); },
+          onSkip: () {
+            Get.find<AppController>().login();
+            Get.offAllNamed('/home');
+          },
+          onFinish: () {
+            Get.find<AppController>().login();
+            Get.offAllNamed('/home');
+          },
         );
       default:
         return const SizedBox.shrink();
@@ -148,12 +172,14 @@ class _WelcomeStep extends StatelessWidget {
 
             // Logo
             Container(
-              width: r.s(72), height: r.s(72),
+              width: r.s(72),
+              height: r.s(72),
               decoration: BoxDecoration(
                 color: AppTheme.primaryLight,
                 borderRadius: BorderRadius.circular(r.rad(20)),
               ),
-              child: Icon(Icons.shopping_bag_outlined, size: r.s(36), color: AppTheme.primary),
+              child: Icon(Icons.shopping_bag_outlined,
+                  size: r.s(36), color: AppTheme.primary),
             ),
             SizedBox(height: r.s(24)),
 
@@ -162,8 +188,8 @@ class _WelcomeStep extends StatelessWidget {
               'Achetez & Vendez\nau Togo',
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: r.fs(30),
-                fontWeight: FontWeight.w800,
+                fontSize: r.fs(25),
+                fontWeight: FontWeight.w900,
                 color: AppTheme.foreground,
                 height: 1.15,
               ),
@@ -172,7 +198,10 @@ class _WelcomeStep extends StatelessWidget {
             Text(
               'Le moyen le plus simple d\'échanger avec\nvos voisins par chat.',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: r.fs(14), color: AppTheme.mutedForeground, height: 1.4),
+              style: TextStyle(
+                  fontSize: r.fs(14),
+                  color: AppTheme.mutedForeground,
+                  height: 1.4),
             ),
             SizedBox(height: r.s(28)),
 
@@ -187,25 +216,33 @@ class _WelcomeStep extends StatelessWidget {
                       // Avatar gauche
                       Positioned(
                         left: r.screenW / 2 - r.s(90),
-                        child: _Avatar(url: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=100&fit=crop', size: r.s(52)),
+                        child: _Avatar(
+                            url:
+                                'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=100&fit=crop',
+                            size: r.s(52)),
                       ),
                       // Avatar centre (chat)
                       Positioned(
                         left: r.screenW / 2 - r.s(62),
                         child: Container(
-                          width: r.s(56), height: r.s(56),
+                          width: r.s(56),
+                          height: r.s(56),
                           decoration: BoxDecoration(
                             color: AppTheme.primary,
                             shape: BoxShape.circle,
                             border: Border.all(color: Colors.white, width: 3),
                           ),
-                          child: Icon(Icons.chat_bubble, size: r.s(24), color: Colors.white),
+                          child: Icon(Icons.chat_bubble,
+                              size: r.s(24), color: Colors.white),
                         ),
                       ),
                       // Avatar droite
                       Positioned(
                         left: r.screenW / 2 - r.s(30),
-                        child: _Avatar(url: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&fit=crop', size: r.s(52)),
+                        child: _Avatar(
+                            url:
+                                'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&fit=crop',
+                            size: r.s(52)),
                       ),
                     ],
                   ),
@@ -213,7 +250,8 @@ class _WelcomeStep extends StatelessWidget {
                 SizedBox(height: r.s(12)),
                 // Badge
                 Container(
-                  padding: EdgeInsets.symmetric(horizontal: r.s(14), vertical: r.s(6)),
+                  padding: EdgeInsets.symmetric(
+                      horizontal: r.s(14), vertical: r.s(6)),
                   decoration: BoxDecoration(
                     color: AppTheme.primaryLight,
                     borderRadius: BorderRadius.circular(r.rad(20)),
@@ -249,7 +287,10 @@ class _WelcomeStep extends StatelessWidget {
                     SizedBox(width: r.s(8)),
                     Text(
                       'Continuer avec un numéro',
-                      style: TextStyle(fontSize: r.fs(15), fontWeight: FontWeight.w700, color: Colors.white),
+                      style: TextStyle(
+                          fontSize: r.fs(15),
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white),
                     ),
                   ],
                 ),
@@ -263,8 +304,11 @@ class _WelcomeStep extends StatelessWidget {
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: r.s(12)),
                 child: Text('OU CONTINUER AVEC',
-                    style: TextStyle(fontSize: r.fs(11), fontWeight: FontWeight.w600,
-                        color: AppTheme.mutedForeground, letterSpacing: 0.5)),
+                    style: TextStyle(
+                        fontSize: r.fs(11),
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.mutedForeground,
+                        letterSpacing: 0.5)),
               ),
               const Expanded(child: Divider(color: AppTheme.border)),
             ]),
@@ -273,10 +317,15 @@ class _WelcomeStep extends StatelessWidget {
             // Bouton Google
             _SocialButton(
               onTap: () {},
-              child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+              child:
+                  Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                 _GoogleIcon(size: r.s(20)),
                 SizedBox(width: r.s(10)),
-                Text('Google', style: TextStyle(fontSize: r.fs(15), fontWeight: FontWeight.w600, color: AppTheme.foreground)),
+                Text('Google',
+                    style: TextStyle(
+                        fontSize: r.fs(15),
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.foreground)),
               ]),
             ),
             SizedBox(height: r.s(10)),
@@ -284,10 +333,16 @@ class _WelcomeStep extends StatelessWidget {
             // Bouton Facebook
             _SocialButton(
               onTap: () {},
-              child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                Icon(Icons.facebook, color: const Color(0xFF1877F2), size: r.s(22)),
+              child:
+                  Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                Icon(Icons.facebook,
+                    color: const Color(0xFF1877F2), size: r.s(22)),
                 SizedBox(width: r.s(10)),
-                Text('Facebook', style: TextStyle(fontSize: r.fs(15), fontWeight: FontWeight.w600, color: AppTheme.foreground)),
+                Text('Facebook',
+                    style: TextStyle(
+                        fontSize: r.fs(15),
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.foreground)),
               ]),
             ),
             SizedBox(height: r.s(10)),
@@ -295,10 +350,15 @@ class _WelcomeStep extends StatelessWidget {
             // Bouton Apple
             _SocialButton(
               onTap: () {},
-              child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+              child:
+                  Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                 Icon(Icons.apple, color: AppTheme.foreground, size: r.s(22)),
                 SizedBox(width: r.s(10)),
-                Text('Apple', style: TextStyle(fontSize: r.fs(15), fontWeight: FontWeight.w600, color: AppTheme.foreground)),
+                Text('Apple',
+                    style: TextStyle(
+                        fontSize: r.fs(15),
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.foreground)),
               ]),
             ),
 
@@ -306,12 +366,23 @@ class _WelcomeStep extends StatelessWidget {
             RichText(
               textAlign: TextAlign.center,
               text: TextSpan(
-                style: TextStyle(fontSize: r.fs(11), color: AppTheme.mutedForeground),
+                style: TextStyle(
+                    fontSize: r.fs(11), color: AppTheme.mutedForeground),
                 children: const [
                   TextSpan(text: 'En continuant, vous acceptez nos '),
-                  TextSpan(text: 'Conditions\nd\'utilisation', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w600, decoration: TextDecoration.underline)),
+                  TextSpan(
+                      text: 'Conditions\nd\'utilisation',
+                      style: TextStyle(
+                          color: AppTheme.primary,
+                          fontWeight: FontWeight.w600,
+                          decoration: TextDecoration.underline)),
                   TextSpan(text: ' et notre '),
-                  TextSpan(text: 'Politique de confidentialité', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w600, decoration: TextDecoration.underline)),
+                  TextSpan(
+                      text: 'Politique de confidentialité',
+                      style: TextStyle(
+                          color: AppTheme.primary,
+                          fontWeight: FontWeight.w600,
+                          decoration: TextDecoration.underline)),
                 ],
               ),
             ),
@@ -329,7 +400,11 @@ class _WelcomeStep extends StatelessWidget {
 class _PhoneStep extends StatelessWidget {
   final TextEditingController ctrl;
   final VoidCallback onBack, onSend;
-  const _PhoneStep({super.key, required this.ctrl, required this.onBack, required this.onSend});
+  const _PhoneStep(
+      {super.key,
+      required this.ctrl,
+      required this.onBack,
+      required this.onSend});
 
   @override
   Widget build(BuildContext context) {
@@ -338,48 +413,79 @@ class _PhoneStep extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // X
+          // Bouton retour
           Padding(
             padding: EdgeInsets.all(r.s(16)),
             child: GestureDetector(
               onTap: onBack,
               child: Container(
-                width: r.s(36), height: r.s(36),
-                decoration: BoxDecoration(color: AppTheme.muted, shape: BoxShape.circle),
-                child: Icon(Icons.close, size: r.s(18), color: AppTheme.foreground),
+                width: r.s(36),
+                height: r.s(36),
+                decoration: BoxDecoration(
+                  color: AppTheme.muted,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.arrow_back,
+                  size: r.s(18),
+                  color: AppTheme.foreground,
+                ),
               ),
             ),
           ),
 
           Expanded(
-            child: SingleChildScrollView(
+            child: Padding(
               padding: EdgeInsets.symmetric(horizontal: r.s(24)),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  SizedBox(height: r.s(8)),
+                  SizedBox(height: r.s(40)),
 
-                  // Logo petit
-                  Container(
-                    width: r.s(52), height: r.s(52),
-                    decoration: BoxDecoration(
-                      color: AppTheme.primaryLight,
-                      borderRadius: BorderRadius.circular(r.rad(14)),
+                  // Icône simple
+                  Center(
+                    child: Container(
+                      width: r.s(64),
+                      height: r.s(64),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primaryLight,
+                        borderRadius: BorderRadius.circular(r.rad(16)),
+                      ),
+                      child: Icon(
+                        Icons.phone_android,
+                        size: r.s(32),
+                        color: AppTheme.primary,
+                      ),
                     ),
-                    child: Icon(Icons.shopping_bag_outlined, size: r.s(26), color: AppTheme.primary),
                   ),
-                  SizedBox(height: r.s(20)),
+                  SizedBox(height: r.s(24)),
 
-                  Text('Bienvenue sur Togo\nMarket',
-                      style: TextStyle(fontSize: r.fs(28), fontWeight: FontWeight.w800, color: AppTheme.foreground, height: 1.2)),
+                  // Titre
+                  Center(
+                    child: Text(
+                      'Numéro de téléphone',
+                      style: TextStyle(
+                        fontSize: r.fs(24),
+                        fontWeight: FontWeight.w800,
+                        color: AppTheme.foreground,
+                      ),
+                    ),
+                  ),
                   SizedBox(height: r.s(8)),
-                  Text('Entrez votre numéro de téléphone pour\ncommencer à discuter et échanger localement.',
-                      style: TextStyle(fontSize: r.fs(14), color: AppTheme.mutedForeground, height: 1.5)),
-                  SizedBox(height: r.s(32)),
 
-                  Text('Numéro de téléphone',
-                      style: TextStyle(fontSize: r.fs(13), fontWeight: FontWeight.w600, color: AppTheme.foreground)),
-                  SizedBox(height: r.s(8)),
+                  // Description
+                  Center(
+                    child: Text(
+                      'Entrez votre numéro pour recevoir un code de vérification',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: r.fs(14),
+                        color: AppTheme.mutedForeground,
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: r.s(40)),
 
                   // Champ téléphone
                   Container(
@@ -392,7 +498,10 @@ class _PhoneStep extends StatelessWidget {
                       children: [
                         // Préfixe
                         Container(
-                          padding: EdgeInsets.symmetric(horizontal: r.s(12), vertical: r.s(14)),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: r.s(12),
+                            vertical: r.s(14),
+                          ),
                           decoration: BoxDecoration(
                             color: AppTheme.muted,
                             borderRadius: BorderRadius.only(
@@ -400,29 +509,46 @@ class _PhoneStep extends StatelessWidget {
                               bottomLeft: Radius.circular(r.rad(12)),
                             ),
                           ),
-                          child: Row(children: [
-                            Text('🇹🇬', style: TextStyle(fontSize: r.fs(16))),
-                            SizedBox(width: r.s(4)),
-                            Text('+228', style: TextStyle(fontSize: r.fs(14), fontWeight: FontWeight.w600, color: AppTheme.foreground)),
-                            SizedBox(width: r.s(4)),
-                            Icon(Icons.keyboard_arrow_down, size: r.s(16), color: AppTheme.mutedForeground),
-                          ]),
+                          child: Row(
+                            children: [
+                              Text(
+                                '🇹🇬',
+                                style: TextStyle(fontSize: r.fs(16)),
+                              ),
+                              SizedBox(width: r.s(4)),
+                              Text(
+                                '+228',
+                                style: TextStyle(
+                                  fontSize: r.fs(14),
+                                  fontWeight: FontWeight.w600,
+                                  color: AppTheme.foreground,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                         // Input
                         Expanded(
                           child: TextField(
                             controller: ctrl,
                             keyboardType: TextInputType.phone,
-                            style: TextStyle(fontSize: r.fs(15), fontWeight: FontWeight.w500),
+                            style: TextStyle(
+                              fontSize: r.fs(15),
+                              fontWeight: FontWeight.w500,
+                            ),
                             decoration: InputDecoration(
                               hintText: '00 00 00 00',
-                              hintStyle: TextStyle(color: AppTheme.mutedForeground, fontSize: r.fs(15)),
+                              hintStyle: TextStyle(
+                                color: AppTheme.mutedForeground,
+                                fontSize: r.fs(15),
+                              ),
                               border: InputBorder.none,
                               enabledBorder: InputBorder.none,
                               focusedBorder: InputBorder.none,
                               fillColor: Colors.transparent,
                               filled: false,
-                              contentPadding: EdgeInsets.symmetric(horizontal: r.s(14)),
+                              contentPadding:
+                                  EdgeInsets.symmetric(horizontal: r.s(14)),
                             ),
                           ),
                         ),
@@ -438,40 +564,62 @@ class _PhoneStep extends StatelessWidget {
                       final enabled = ctrl.text.length >= 8;
                       return GestureDetector(
                         onTap: enabled ? onSend : null,
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
+                        child: Container(
                           width: double.infinity,
-                          height: r.s(54).clamp(48, 60),
+                          height: r.s(50),
                           decoration: BoxDecoration(
-                            color: enabled ? AppTheme.primary : AppTheme.primary.withOpacity(0.4),
-                            borderRadius: BorderRadius.circular(r.rad(30)),
-                            boxShadow: enabled ? AppTheme.shadowPrimary : null,
+                            color: enabled ? AppTheme.primary : AppTheme.muted,
+                            borderRadius: BorderRadius.circular(r.rad(25)),
                           ),
                           child: Center(
-                            child: Text('Envoyer le code →',
-                                style: TextStyle(fontSize: r.fs(15), fontWeight: FontWeight.w700, color: Colors.white)),
+                            child: Text(
+                              'Continuer',
+                              style: TextStyle(
+                                fontSize: r.fs(15),
+                                fontWeight: FontWeight.w700,
+                                color: enabled
+                                    ? Colors.white
+                                    : AppTheme.mutedForeground,
+                              ),
+                            ),
                           ),
                         ),
                       );
                     },
                   ),
-                ],
-              ),
-            ),
-          ),
+                  const Spacer(),
 
-          // Conditions en bas
-          Padding(
-            padding: EdgeInsets.fromLTRB(r.s(24), r.s(12), r.s(24), r.s(24)),
-            child: RichText(
-              textAlign: TextAlign.center,
-              text: TextSpan(
-                style: TextStyle(fontSize: r.fs(11), color: AppTheme.mutedForeground),
-                children: const [
-                  TextSpan(text: 'En continuant, vous acceptez nos '),
-                  TextSpan(text: 'Conditions d\'utilisation', style: TextStyle(color: AppTheme.primary, decoration: TextDecoration.underline)),
-                  TextSpan(text: ' et notre\n'),
-                  TextSpan(text: 'Politique de confidentialité', style: TextStyle(color: AppTheme.primary, decoration: TextDecoration.underline)),
+                  // Conditions
+                  Center(
+                    child: RichText(
+                      textAlign: TextAlign.center,
+                      text: TextSpan(
+                        style: TextStyle(
+                          fontSize: r.fs(11),
+                          color: AppTheme.mutedForeground,
+                        ),
+                        children: const [
+                          TextSpan(text: 'En continuant, vous acceptez nos '),
+                          TextSpan(
+                            text: 'Conditions d\'utilisation',
+                            style: TextStyle(
+                              color: AppTheme.primary,
+                              decoration: TextDecoration.underline,
+                            ),
+                          ),
+                          TextSpan(text: ' et notre\n'),
+                          TextSpan(
+                            text: 'Politique de confidentialité',
+                            style: TextStyle(
+                              color: AppTheme.primary,
+                              decoration: TextDecoration.underline,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: r.s(16)),
                 ],
               ),
             ),
@@ -491,7 +639,15 @@ class _OtpStep extends StatelessWidget {
   final bool timerActive;
   final Function(String) onKeyPress;
   final VoidCallback onResend, onBack, onVerify;
-  const _OtpStep({super.key, required this.digits, required this.timer, required this.timerActive, required this.onKeyPress, required this.onResend, required this.onBack, required this.onVerify});
+  const _OtpStep(
+      {super.key,
+      required this.digits,
+      required this.timer,
+      required this.timerActive,
+      required this.onKeyPress,
+      required this.onResend,
+      required this.onBack,
+      required this.onVerify});
 
   @override
   Widget build(BuildContext context) {
@@ -500,98 +656,178 @@ class _OtpStep extends StatelessWidget {
 
     return SafeArea(
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // AppBar
-          _StepAppBar(title: 'Vérification', onBack: onBack),
-
-          Expanded(
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: r.s(24)),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SizedBox(height: r.s(24)),
-                  Text('Vérification',
-                      style: TextStyle(fontSize: r.fs(28), fontWeight: FontWeight.w800, color: AppTheme.foreground)),
-                  SizedBox(height: r.s(8)),
-                  Text('Entrez le code à 4 chiffres envoyé au',
-                      style: TextStyle(fontSize: r.fs(14), color: AppTheme.mutedForeground)),
-                  Text('+228 XX XX XX XX',
-                      style: TextStyle(fontSize: r.fs(14), fontWeight: FontWeight.w700, color: AppTheme.foreground)),
-                  SizedBox(height: r.s(32)),
-
-                  // 4 cases OTP
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: List.generate(4, (i) {
-                      final hasDigit = digits[i].isNotEmpty;
-                      final isCurrent = i == digits.where((d) => d.isNotEmpty).length && i < 4;
-                      return Container(
-                        margin: EdgeInsets.only(right: r.s(12)),
-                        width: r.s(62).clamp(52, 72),
-                        height: r.s(62).clamp(52, 72),
-                        decoration: BoxDecoration(
-                          color: AppTheme.cardColor,
-                          borderRadius: BorderRadius.circular(r.rad(12)),
-                          border: Border.all(
-                            color: isCurrent ? AppTheme.primary : (hasDigit ? AppTheme.primary.withOpacity(0.5) : AppTheme.border),
-                            width: isCurrent ? 2 : 1,
-                          ),
-                        ),
-                        child: Center(
-                          child: Text(
-                            digits[i],
-                            style: TextStyle(
-                              fontSize: r.fs(26),
-                              fontWeight: FontWeight.w800,
-                              color: AppTheme.foreground,
-                            ),
-                          ),
-                        ),
-                      );
-                    }),
+          // AppBar simple
+          Padding(
+            padding: EdgeInsets.all(r.s(16)),
+            child: Row(
+              children: [
+                GestureDetector(
+                  onTap: onBack,
+                  child: Container(
+                    width: r.s(36),
+                    height: r.s(36),
+                    decoration: BoxDecoration(
+                      color: AppTheme.muted,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.arrow_back,
+                      size: r.s(20),
+                      color: AppTheme.foreground,
+                    ),
                   ),
-                  SizedBox(height: r.s(20)),
+                ),
+                const Spacer(),
+                Text(
+                  'Vérification',
+                  style: TextStyle(
+                    fontSize: r.fs(20),
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.foreground,
+                  ),
+                ),
+                const Spacer(flex: 2),
+              ],
+            ),
+          ),
 
-                  // Timer / renvoyer
-                  Row(children: [
+          SizedBox(height: r.s(24)),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: r.s(24)),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Text(
+                  'Entrez le code à 4 chiffres envoyé au',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                      fontSize: r.fs(14), color: AppTheme.mutedForeground),
+                ),
+                Text(
+                  '+228 XX XX XX XX',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                      fontSize: r.fs(14),
+                      fontWeight: FontWeight.w700,
+                      color: AppTheme.foreground),
+                ),
+                SizedBox(height: r.s(32)),
+
+                // 4 cases OTP simples
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(4, (i) {
+                    return Container(
+                      margin: EdgeInsets.symmetric(horizontal: r.s(6)),
+                      width: r.s(44),
+                      height: r.s(54),
+                      decoration: BoxDecoration(
+                        color: AppTheme.cardColor,
+                        borderRadius: BorderRadius.circular(r.rad(8)),
+                        border: Border.all(
+                          color: AppTheme.border,
+                          width: 1,
+                        ),
+                      ),
+                      child: Center(
+                        child: Text(
+                          digits[i],
+                          style: TextStyle(
+                            fontSize: r.fs(22),
+                            fontWeight: FontWeight.w700,
+                            color: AppTheme.foreground,
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
+                ),
+                SizedBox(height: r.s(20)),
+
+                // Timer / renvoyer
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
                     Text('Vous n\'avez pas reçu le code ? ',
-                        style: TextStyle(fontSize: r.fs(13), color: AppTheme.mutedForeground)),
+                        style: TextStyle(
+                            fontSize: r.fs(13),
+                            color: AppTheme.mutedForeground)),
                     GestureDetector(
                       onTap: timerActive ? null : onResend,
                       child: Text(
                         timerActive ? 'Renvoyer (${timer}s)' : 'Renvoyer',
                         style: TextStyle(
-                          fontSize: r.fs(13), fontWeight: FontWeight.w700,
-                          color: timerActive ? AppTheme.mutedForeground : AppTheme.primary,
+                          fontSize: r.fs(13),
+                          fontWeight: FontWeight.w700,
+                          color: timerActive
+                              ? AppTheme.mutedForeground
+                              : AppTheme.primary,
                         ),
                       ),
                     ),
-                  ]),
-                ],
-              ),
-            ),
-          ),
+                  ],
+                ),
+                SizedBox(height: r.s(32)),
 
-          // Bouton vérifier
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: r.s(24), vertical: r.s(12)),
-            child: GestureDetector(
-              onTap: filled == 4 ? onVerify : null,
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                width: double.infinity,
-                height: r.s(54).clamp(48, 60),
-                decoration: BoxDecoration(
-                  color: filled == 4 ? AppTheme.primary : AppTheme.primary.withOpacity(0.4),
-                  borderRadius: BorderRadius.circular(r.rad(30)),
-                  boxShadow: filled == 4 ? AppTheme.shadowPrimary : null,
+                // Bouton vérifier simple
+                GestureDetector(
+                  onTap: filled == 4 ? onVerify : null,
+                  child: Container(
+                    width: double.infinity,
+                    height: r.s(50),
+                    decoration: BoxDecoration(
+                      color: filled == 4 ? AppTheme.primary : AppTheme.muted,
+                      borderRadius: BorderRadius.circular(r.rad(25)),
+                    ),
+                    child: Center(
+                      child: Text(
+                        'Continuer',
+                        style: TextStyle(
+                          fontSize: r.fs(15),
+                          fontWeight: FontWeight.w700,
+                          color: filled == 4
+                              ? Colors.white
+                              : AppTheme.mutedForeground,
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
-                child: Center(
-                  child: Text('Vérifier et continuer',
-                      style: TextStyle(fontSize: r.fs(15), fontWeight: FontWeight.w700, color: Colors.white)),
+                SizedBox(height: r.s(16)),
+
+                // Conditions
+                Center(
+                  child: RichText(
+                    textAlign: TextAlign.center,
+                    text: TextSpan(
+                      style: TextStyle(
+                        fontSize: r.fs(11),
+                        color: AppTheme.mutedForeground,
+                      ),
+                      children: const [
+                        TextSpan(text: 'En continuant, vous acceptez nos '),
+                        TextSpan(
+                          text: 'Conditions d\'utilisation',
+                          style: TextStyle(
+                            color: AppTheme.primary,
+                            decoration: TextDecoration.underline,
+                          ),
+                        ),
+                        TextSpan(text: ' et notre\n'),
+                        TextSpan(
+                          text: 'Politique de confidentialité',
+                          style: TextStyle(
+                            color: AppTheme.primary,
+                            decoration: TextDecoration.underline,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
+              ],
             ),
           ),
 
@@ -613,7 +849,15 @@ class _ProfileStep extends StatelessWidget {
   final String selectedZone;
   final ValueChanged<String?> onZoneChanged;
   final VoidCallback onBack, onSkip, onContinue;
-  const _ProfileStep({super.key, required this.nameCtrl, required this.zones, required this.selectedZone, required this.onZoneChanged, required this.onBack, required this.onSkip, required this.onContinue});
+  const _ProfileStep(
+      {super.key,
+      required this.nameCtrl,
+      required this.zones,
+      required this.selectedZone,
+      required this.onZoneChanged,
+      required this.onBack,
+      required this.onSkip,
+      required this.onContinue});
 
   @override
   Widget build(BuildContext context) {
@@ -621,7 +865,11 @@ class _ProfileStep extends StatelessWidget {
     return SafeArea(
       child: Column(
         children: [
-          _StepAppBar(title: 'Étape 1 sur 2', onBack: onBack, actionLabel: 'Passer', onAction: onSkip),
+          _StepAppBar(
+              title: 'Étape 1 sur 2',
+              onBack: onBack,
+              actionLabel: 'Passer',
+              onAction: onSkip),
 
           // Barre orange sous l'AppBar
           Container(height: 2, color: AppTheme.primary),
@@ -635,11 +883,15 @@ class _ProfileStep extends StatelessWidget {
                   SizedBox(height: r.s(24)),
                   Text('Créez votre profil',
                       textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: r.fs(26), fontWeight: FontWeight.w800, color: AppTheme.foreground)),
+                      style: TextStyle(
+                          fontSize: r.fs(26),
+                          fontWeight: FontWeight.w800,
+                          color: AppTheme.foreground)),
                   SizedBox(height: r.s(6)),
                   Text('Aidez vos voisins à vous reconnaître sur le marché.',
                       textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: r.fs(13), color: AppTheme.primary)),
+                      style: TextStyle(
+                          fontSize: r.fs(13), color: AppTheme.primary)),
                   SizedBox(height: r.s(28)),
 
                   // Avatar circulaire dashed
@@ -647,33 +899,48 @@ class _ProfileStep extends StatelessWidget {
                     alignment: Alignment.bottomRight,
                     children: [
                       Container(
-                        width: r.s(110), height: r.s(110),
+                        width: r.s(110),
+                        height: r.s(110),
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           color: AppTheme.primaryLight,
-                          border: Border.all(color: AppTheme.primary.withOpacity(0.4), width: 2),
+                          border: Border.all(
+                              color: AppTheme.primary.withOpacity(0.4),
+                              width: 2),
                         ),
-                        child: Icon(Icons.person, size: r.s(52), color: AppTheme.primary.withOpacity(0.5)),
+                        child: Icon(Icons.person,
+                            size: r.s(52),
+                            color: AppTheme.primary.withOpacity(0.5)),
                       ),
                       Container(
-                        width: r.s(32), height: r.s(32),
+                        width: r.s(32),
+                        height: r.s(32),
                         decoration: BoxDecoration(
                           color: AppTheme.primary,
                           shape: BoxShape.circle,
                           border: Border.all(color: Colors.white, width: 2),
                         ),
-                        child: Icon(Icons.camera_alt, size: r.s(16), color: Colors.white),
+                        child: Icon(Icons.camera_alt,
+                            size: r.s(16), color: Colors.white),
                       ),
                     ],
                   ),
                   SizedBox(height: r.s(8)),
                   Text('Appuyez pour ajouter une photo',
-                      style: TextStyle(fontSize: r.fs(13), fontWeight: FontWeight.w600, color: AppTheme.primary)),
+                      style: TextStyle(
+                          fontSize: r.fs(13),
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.primary)),
                   SizedBox(height: r.s(28)),
 
                   // Nom complet
-                  Align(alignment: Alignment.centerLeft,
-                      child: Text('Nom complet', style: TextStyle(fontSize: r.fs(13), fontWeight: FontWeight.w600, color: AppTheme.foreground))),
+                  Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text('Nom complet',
+                          style: TextStyle(
+                              fontSize: r.fs(13),
+                              fontWeight: FontWeight.w600,
+                              color: AppTheme.foreground))),
                   SizedBox(height: r.s(8)),
                   Container(
                     decoration: BoxDecoration(
@@ -686,20 +953,29 @@ class _ProfileStep extends StatelessWidget {
                       style: TextStyle(fontSize: r.fs(14)),
                       decoration: InputDecoration(
                         hintText: 'ex. Koffi Mensah',
-                        hintStyle: TextStyle(color: AppTheme.mutedForeground, fontSize: r.fs(14)),
+                        hintStyle: TextStyle(
+                            color: AppTheme.mutedForeground,
+                            fontSize: r.fs(14)),
                         border: InputBorder.none,
                         enabledBorder: InputBorder.none,
                         focusedBorder: InputBorder.none,
-                        fillColor: Colors.transparent, filled: false,
-                        contentPadding: EdgeInsets.symmetric(horizontal: r.s(16), vertical: r.s(14)),
+                        fillColor: Colors.transparent,
+                        filled: false,
+                        contentPadding: EdgeInsets.symmetric(
+                            horizontal: r.s(16), vertical: r.s(14)),
                       ),
                     ),
                   ),
                   SizedBox(height: r.s(16)),
 
                   // Quartier / Zone
-                  Align(alignment: Alignment.centerLeft,
-                      child: Text('Quartier / Zone', style: TextStyle(fontSize: r.fs(13), fontWeight: FontWeight.w600, color: AppTheme.foreground))),
+                  Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text('Quartier / Zone',
+                          style: TextStyle(
+                              fontSize: r.fs(13),
+                              fontWeight: FontWeight.w600,
+                              color: AppTheme.foreground))),
                   SizedBox(height: r.s(8)),
                   Container(
                     padding: EdgeInsets.symmetric(horizontal: r.s(16)),
@@ -713,9 +989,17 @@ class _ProfileStep extends StatelessWidget {
                         value: selectedZone.isEmpty ? null : selectedZone,
                         isExpanded: true,
                         hint: Text('Sélectionnez votre zone',
-                            style: TextStyle(color: AppTheme.mutedForeground, fontSize: r.fs(14))),
-                        icon: Icon(Icons.keyboard_arrow_down, color: AppTheme.mutedForeground, size: r.s(22)),
-                        items: zones.map((z) => DropdownMenuItem(value: z, child: Text(z, style: TextStyle(fontSize: r.fs(14))))).toList(),
+                            style: TextStyle(
+                                color: AppTheme.mutedForeground,
+                                fontSize: r.fs(14))),
+                        icon: Icon(Icons.keyboard_arrow_down,
+                            color: AppTheme.mutedForeground, size: r.s(22)),
+                        items: zones
+                            .map((z) => DropdownMenuItem(
+                                value: z,
+                                child: Text(z,
+                                    style: TextStyle(fontSize: r.fs(14)))))
+                            .toList(),
                         onChanged: onZoneChanged,
                       ),
                     ),
@@ -735,7 +1019,10 @@ class _ProfileStep extends StatelessWidget {
                       ),
                       child: Center(
                         child: Text('Continuer →',
-                            style: TextStyle(fontSize: r.fs(15), fontWeight: FontWeight.w700, color: Colors.white)),
+                            style: TextStyle(
+                                fontSize: r.fs(15),
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white)),
                       ),
                     ),
                   ),
@@ -744,12 +1031,21 @@ class _ProfileStep extends StatelessWidget {
                   RichText(
                     textAlign: TextAlign.center,
                     text: TextSpan(
-                      style: TextStyle(fontSize: r.fs(11), color: AppTheme.mutedForeground),
+                      style: TextStyle(
+                          fontSize: r.fs(11), color: AppTheme.mutedForeground),
                       children: const [
                         TextSpan(text: 'En continuant vous acceptez '),
-                        TextSpan(text: 'Conditions d\'utilisation', style: TextStyle(color: AppTheme.primary, decoration: TextDecoration.underline)),
+                        TextSpan(
+                            text: 'Conditions d\'utilisation',
+                            style: TextStyle(
+                                color: AppTheme.primary,
+                                decoration: TextDecoration.underline)),
                         TextSpan(text: ' et\nnotre '),
-                        TextSpan(text: 'Politique de confidentialité', style: TextStyle(color: AppTheme.primary, decoration: TextDecoration.underline)),
+                        TextSpan(
+                            text: 'Politique de confidentialité',
+                            style: TextStyle(
+                                color: AppTheme.primary,
+                                decoration: TextDecoration.underline)),
                       ],
                     ),
                   ),
@@ -772,15 +1068,25 @@ class _InterestsStep extends StatelessWidget {
   final Function(String) onToggle;
   final VoidCallback onBack, onSkip, onFinish;
 
-  const _InterestsStep({super.key, required this.selected, required this.onToggle, required this.onBack, required this.onSkip, required this.onFinish});
+  const _InterestsStep(
+      {super.key,
+      required this.selected,
+      required this.onToggle,
+      required this.onBack,
+      required this.onSkip,
+      required this.onFinish});
 
   static const _interests = [
-    {'id': 'mode',        'label': 'Mode',         'icon': '👕'},
-    {'id': 'electronique','label': 'Électronique', 'icon': '🖥️'},
-    {'id': 'maison',      'label': 'Maison',        'icon': '🏠'},
-    {'id': 'beaute',      'label': 'Beauté',        'icon': '💆'},
-    {'id': 'friperie',    'label': 'Friperie',      'icon': '♻️'},
-    {'id': 'alimentation','label': 'Alimentation',  'icon': '🍽️'},
+    {'id': 'mode', 'label': 'Mode', 'icon': Icons.checkroom},
+    {
+      'id': 'electronique',
+      'label': 'Électronique',
+      'icon': Icons.electrical_services
+    },
+    {'id': 'maison', 'label': 'Maison', 'icon': Icons.home},
+    {'id': 'beaute', 'label': 'Beauté', 'icon': Icons.brush},
+    {'id': 'friperie', 'label': 'Friperie', 'icon': Icons.recycling},
+    {'id': 'alimentation', 'label': 'Alimentation', 'icon': Icons.restaurant},
   ];
 
   @override
@@ -789,7 +1095,11 @@ class _InterestsStep extends StatelessWidget {
     return SafeArea(
       child: Column(
         children: [
-          _StepAppBar(title: 'Étape 2 sur 2', onBack: onBack, actionLabel: 'Passer', onAction: onSkip),
+          _StepAppBar(
+              title: 'Étape 2 sur 2',
+              onBack: onBack,
+              actionLabel: 'Passer',
+              onAction: onSkip),
           Container(height: 2, color: AppTheme.primary),
 
           Expanded(
@@ -800,10 +1110,16 @@ class _InterestsStep extends StatelessWidget {
                 children: [
                   SizedBox(height: r.s(24)),
                   Text('Qu\'est-ce qui vous\nintéresse ?',
-                      style: TextStyle(fontSize: r.fs(26), fontWeight: FontWeight.w800, color: AppTheme.foreground, height: 1.2)),
+                      style: TextStyle(
+                          fontSize: r.fs(26),
+                          fontWeight: FontWeight.w800,
+                          color: AppTheme.foreground,
+                          height: 1.2)),
                   SizedBox(height: r.s(8)),
-                  Text('Sélectionnez vos catégories préférées pour personnaliser votre flux.',
-                      style: TextStyle(fontSize: r.fs(13), color: AppTheme.mutedForeground)),
+                  Text(
+                      'Sélectionnez vos catégories préférées pour personnaliser votre flux.',
+                      style: TextStyle(
+                          fontSize: r.fs(13), color: AppTheme.mutedForeground)),
                   SizedBox(height: r.s(24)),
 
                   // Grille 2 colonnes
@@ -819,33 +1135,52 @@ class _InterestsStep extends StatelessWidget {
                       itemCount: _interests.length,
                       itemBuilder: (_, i) {
                         final item = _interests[i];
-                        final isSel = selected.contains(item['id']);
+                        final id = item['id'] as String;
+                        final label = item['label'] as String;
+                        final icon = item['icon'] as IconData;
+                        final isSel = selected.contains(id);
                         return GestureDetector(
-                          onTap: () => onToggle(item['id']!),
+                          onTap: () => onToggle(id),
                           child: AnimatedContainer(
                             duration: const Duration(milliseconds: 200),
                             decoration: BoxDecoration(
                               color: AppTheme.cardColor,
                               borderRadius: BorderRadius.circular(r.rad(16)),
                               border: Border.all(
-                                color: isSel ? AppTheme.primary : AppTheme.border,
+                                color:
+                                    isSel ? AppTheme.primary : AppTheme.border,
                                 width: isSel ? 2 : 1,
                               ),
                             ),
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Text(
-                                  item['icon']!,
-                                  style: TextStyle(fontSize: r.fs(28)),
+                                Container(
+                                  width: r.s(42),
+                                  height: r.s(42),
+                                  decoration: BoxDecoration(
+                                    color: isSel
+                                        ? AppTheme.primary
+                                        : AppTheme.muted,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    icon,
+                                    size: r.s(22),
+                                    color: isSel
+                                        ? Colors.white
+                                        : AppTheme.foreground,
+                                  ),
                                 ),
-                                SizedBox(height: r.s(6)),
+                                SizedBox(height: r.s(10)),
                                 Text(
-                                  item['label']!,
+                                  label,
                                   style: TextStyle(
                                     fontSize: r.fs(13),
                                     fontWeight: FontWeight.w600,
-                                    color: isSel ? AppTheme.primary : AppTheme.mutedForeground,
+                                    color: isSel
+                                        ? AppTheme.primary
+                                        : AppTheme.mutedForeground,
                                   ),
                                 ),
                               ],
@@ -875,7 +1210,10 @@ class _InterestsStep extends StatelessWidget {
                 ),
                 child: Center(
                   child: Text('Terminer',
-                      style: TextStyle(fontSize: r.fs(15), fontWeight: FontWeight.w700, color: Colors.white)),
+                      style: TextStyle(
+                          fontSize: r.fs(15),
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white)),
                 ),
               ),
             ),
@@ -896,7 +1234,11 @@ class _StepAppBar extends StatelessWidget {
   final VoidCallback onBack;
   final String? actionLabel;
   final VoidCallback? onAction;
-  const _StepAppBar({required this.title, required this.onBack, this.actionLabel, this.onAction});
+  const _StepAppBar(
+      {required this.title,
+      required this.onBack,
+      this.actionLabel,
+      this.onAction});
 
   @override
   Widget build(BuildContext context) {
@@ -908,19 +1250,26 @@ class _StepAppBar extends StatelessWidget {
         children: [
           GestureDetector(
             onTap: onBack,
-            child: Icon(Icons.arrow_back, size: r.s(22), color: AppTheme.foreground),
+            child: Icon(Icons.arrow_back,
+                size: r.s(22), color: AppTheme.foreground),
           ),
           Expanded(
             child: Center(
               child: Text(title,
-                  style: TextStyle(fontSize: r.fs(16), fontWeight: FontWeight.w700, color: AppTheme.foreground)),
+                  style: TextStyle(
+                      fontSize: r.fs(16),
+                      fontWeight: FontWeight.w700,
+                      color: AppTheme.foreground)),
             ),
           ),
           if (actionLabel != null)
             GestureDetector(
               onTap: onAction,
               child: Text(actionLabel!,
-                  style: TextStyle(fontSize: r.fs(14), fontWeight: FontWeight.w600, color: AppTheme.primary)),
+                  style: TextStyle(
+                      fontSize: r.fs(14),
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.primary)),
             )
           else
             SizedBox(width: r.s(40)),
@@ -946,23 +1295,30 @@ class _NumericKeypad extends StatelessWidget {
     ];
 
     return Column(
-      children: keys.map((row) => Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: row.map((key) {
-          if (key.isEmpty) return SizedBox(width: r.screenW / 3);
-          return GestureDetector(
-            onTap: () => onKey(key),
-            child: Container(
-              width: r.screenW / 3,
-              height: r.s(52).clamp(44, 60),
-              alignment: Alignment.center,
-              child: key == '⌫'
-                  ? Icon(Icons.backspace_outlined, size: r.s(22), color: AppTheme.foreground)
-                  : Text(key, style: TextStyle(fontSize: r.fs(22), fontWeight: FontWeight.w500, color: AppTheme.foreground)),
-            ),
-          );
-        }).toList(),
-      )).toList(),
+      children: keys
+          .map((row) => Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: row.map((key) {
+                  if (key.isEmpty) return SizedBox(width: r.screenW / 3);
+                  return GestureDetector(
+                    onTap: () => onKey(key),
+                    child: Container(
+                      width: r.screenW / 3,
+                      height: r.s(52).clamp(44, 60),
+                      alignment: Alignment.center,
+                      child: key == '⌫'
+                          ? Icon(Icons.backspace_outlined,
+                              size: r.s(22), color: AppTheme.foreground)
+                          : Text(key,
+                              style: TextStyle(
+                                  fontSize: r.fs(22),
+                                  fontWeight: FontWeight.w500,
+                                  color: AppTheme.foreground)),
+                    ),
+                  );
+                }).toList(),
+              ))
+          .toList(),
     );
   }
 }
@@ -1000,7 +1356,8 @@ class _GoogleIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: size, height: size,
+      width: size,
+      height: size,
       child: CustomPaint(painter: _GooglePainter()),
     );
   }
@@ -1015,13 +1372,17 @@ class _GooglePainter extends CustomPainter {
 
     // Simplified G shape using arcs
     paint.color = const Color(0xFF4285F4);
-    canvas.drawArc(Rect.fromCircle(center: center, radius: radius), -0.3, 3.77, true, paint);
+    canvas.drawArc(Rect.fromCircle(center: center, radius: radius), -0.3, 3.77,
+        true, paint);
     paint.color = const Color(0xFFEA4335);
-    canvas.drawArc(Rect.fromCircle(center: center, radius: radius), 3.47, 1.05, true, paint);
+    canvas.drawArc(Rect.fromCircle(center: center, radius: radius), 3.47, 1.05,
+        true, paint);
     paint.color = const Color(0xFFFBBC05);
-    canvas.drawArc(Rect.fromCircle(center: center, radius: radius), 4.52, 0.79, true, paint);
+    canvas.drawArc(Rect.fromCircle(center: center, radius: radius), 4.52, 0.79,
+        true, paint);
     paint.color = const Color(0xFF34A853);
-    canvas.drawArc(Rect.fromCircle(center: center, radius: radius), 5.31, 1.25, true, paint);
+    canvas.drawArc(Rect.fromCircle(center: center, radius: radius), 5.31, 1.25,
+        true, paint);
 
     // Masque central blanc
     paint.color = Colors.white;
@@ -1029,7 +1390,10 @@ class _GooglePainter extends CustomPainter {
 
     // Rectangle blanc pour le G
     paint.color = Colors.white;
-    canvas.drawRect(Rect.fromLTWH(center.dx, center.dy - radius * 0.25, radius * 0.9, radius * 0.5), paint);
+    canvas.drawRect(
+        Rect.fromLTWH(
+            center.dx, center.dy - radius * 0.25, radius * 0.9, radius * 0.5),
+        paint);
   }
 
   @override
@@ -1044,11 +1408,12 @@ class _Avatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-    width: size, height: size,
-    decoration: BoxDecoration(
-      shape: BoxShape.circle,
-      border: Border.all(color: Colors.white, width: 2.5),
-      image: DecorationImage(image: NetworkImage(url), fit: BoxFit.cover),
-    ),
-  );
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(color: Colors.white, width: 2.5),
+          image: DecorationImage(image: NetworkImage(url), fit: BoxFit.cover),
+        ),
+      );
 }

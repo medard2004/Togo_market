@@ -49,12 +49,10 @@ class AppTheme {
         colorScheme: const ColorScheme.light(
           primary: primary,
           secondary: secondary,
-          background: background,
           surface: cardColor,
           error: destructive,
           onPrimary: Colors.white,
           onSecondary: Colors.white,
-          onBackground: foreground,
           onSurface: foreground,
         ),
         scaffoldBackgroundColor: background,

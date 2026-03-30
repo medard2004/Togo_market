@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../theme/app_theme.dart';
-import '../../utils/responsive.dart';
 import '../../widgets/common_widgets.dart';
 import '../../widgets/bottom_nav.dart';
 import '../../controllers/app_controller.dart';
