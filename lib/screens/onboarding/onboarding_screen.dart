@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:get/get.dart';
+import '../../animations/togo_animation_system.dart';
 import '../../theme/app_theme.dart';
 import '../../Api/provider/auth_controller.dart';
 
@@ -127,24 +128,41 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               child: Column(
                 children: [
                   // Dots
-                  SmoothPageIndicator(
-                    controller: _pageController,
-                    count: 3,
-                    effect: ExpandingDotsEffect(
-                      activeDotColor: AppTheme.primary,
-                      dotColor: AppTheme.border,
-                      dotHeight: 8,
-                      dotWidth: 8,
-                      expansionFactor: 3.5,
+                  TogoSlideUp(
+                    delay: Duration.zero,
+                    duration: TogoMotion.slideUp,
+                    child: SmoothPageIndicator(
+                      controller: _pageController,
+                      count: 3,
+                      effect: ExpandingDotsEffect(
+                        activeDotColor: AppTheme.primary,
+                        dotColor: AppTheme.border,
+                        dotHeight: 8,
+                        dotWidth: 8,
+                        expansionFactor: 3.5,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 24),
-                  // Slide text
-                  AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 300),
-                    child: Column(
-                      key: ValueKey(_currentSlide),
-                      children: [
+                  TogoSlideUp(
+                    delay: TogoMotion.cascade1,
+                    child: AnimatedSwitcher(
+                      duration: TogoMotion.dotsOnboarding,
+                      switchInCurve: TogoMotion.easeProgressive,
+                      switchOutCurve: TogoMotion.easeProgressive,
+                      transitionBuilder: (child, anim) => FadeTransition(
+                        opacity: anim,
+                        child: SlideTransition(
+                          position: Tween<Offset>(
+                            begin: const Offset(0, 0.04),
+                            end: Offset.zero,
+                          ).animate(anim),
+                          child: child,
+                        ),
+                      ),
+                      child: Column(
+                        key: ValueKey(_currentSlide),
+                        children: [
                         RichText(
                           textAlign: TextAlign.center,
                           text: TextSpan(
@@ -188,48 +206,47 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           ),
                         ),
                       ],
+                      ),
                     ),
                   ),
                   const SizedBox(height: 20),
-                  // CTA
-                  GestureDetector(
-                    onTap: _next,
-                    child: Container(
-                      width: double.infinity,
-                      height: 56,
-                      decoration: BoxDecoration(
-                        color: AppTheme.primary,
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: AppTheme.shadowPrimary,
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            _currentSlide < 2 ? 'Continuer' : 'Commencer',
-                            style: const TextStyle(
-                              fontFamily: 'Plus Jakarta Sans',
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
+                  TogoSlideUp(
+                    delay: TogoMotion.cascade2,
+                    child: TogoPressableScale(
+                      onTap: _next,
+                      child: Container(
+                        width: double.infinity,
+                        height: 56,
+                        decoration: BoxDecoration(
+                          color: AppTheme.primary,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: AppTheme.shadowPrimary,
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              _currentSlide < 2 ? 'Continuer' : 'Commencer',
+                              style: const TextStyle(
+                                fontFamily: 'Plus Jakarta Sans',
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                              ),
                             ),
-                          ),
-
-                          SizedBox(
-                            width: 5,
-                          ),
-
-
-                          if (_currentSlide < 2) ...[
-                            const Icon(Icons.arrow_forward, size: 16, color: Colors.white),
-                            const SizedBox(width: 8),
+                            const SizedBox(width: 5),
+                            if (_currentSlide < 2) ...[
+                              const Icon(Icons.arrow_forward,
+                                  size: 16, color: Colors.white),
+                              const SizedBox(width: 8),
+                            ],
+                            if (_currentSlide == 2) ...[
+                              const Icon(Icons.rocket_launch,
+                                  size: 16, color: Colors.white),
+                              const SizedBox(width: 8),
+                            ],
                           ],
-                          if (_currentSlide == 2) ...[
-                            const Icon(Icons.rocket_launch, size: 16, color: Colors.white),
-                            const SizedBox(width: 8),
-                          ],
-                          
-                        ],
+                        ),
                       ),
                     ),
                   ),

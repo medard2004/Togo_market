@@ -7,6 +7,7 @@ import 'package:toastification/toastification.dart';
 
 import 'theme/app_theme.dart';
 import 'controllers/app_controller.dart';
+import 'navigation/app_transitions.dart';
 
 // Screens
 import 'screens/splash/splash_screen.dart';

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:get/get.dart';
+import '../../animations/togo_animation_system.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/common_widgets.dart';
@@ -115,28 +117,37 @@ class _HomeBody extends StatelessWidget {
     // Hauteur du scroll horizontal = image + info + padding
     final hScrollHeight = r.cardImageH + r.s(58);
 
-    return CustomScrollView(
-      slivers: [
+    return AnimationLimiter(
+      child: CustomScrollView(
+        slivers: [
         // ── Barre de recherche ────────────────────────────────────────────────
         SliverToBoxAdapter(
           child: Padding(
             padding: EdgeInsets.fromLTRB(r.hPad, r.s(4), r.hPad, r.s(12)),
-            child: GestureDetector(
-              onTap: () => Get.toNamed('/search'),
-              child: Container(
-                padding: EdgeInsets.symmetric(horizontal: r.s(16), vertical: r.s(13)),
-                decoration: BoxDecoration(
-                  color: AppTheme.cardColor,
-                  borderRadius: BorderRadius.circular(r.rad(16)),
-                  boxShadow: AppTheme.shadowCard,
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.search, color: AppTheme.mutedForeground, size: r.s(20)),
-                    SizedBox(width: r.s(10)),
-                    Text('Rechercher des produits...',
-                        style: TextStyle(fontSize: r.fs(14), color: AppTheme.mutedForeground)),
-                  ],
+            child: TogoFadeInEntry(
+              child: GestureDetector(
+                onTap: () => Get.toNamed('/search'),
+                child: Container(
+                  padding: EdgeInsets.symmetric(
+                      horizontal: r.s(16), vertical: r.s(13)),
+                  decoration: BoxDecoration(
+                    color: AppTheme.cardColor,
+                    borderRadius: BorderRadius.circular(r.rad(16)),
+                    boxShadow: AppTheme.shadowCard,
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.search,
+                          color: AppTheme.mutedForeground, size: r.s(20)),
+                      SizedBox(width: r.s(10)),
+                      Text(
+                        'Rechercher des produits...',
+                        style: TextStyle(
+                            fontSize: r.fs(14),
+                            color: AppTheme.mutedForeground),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -202,9 +213,21 @@ class _HomeBody extends StatelessWidget {
                 padding: EdgeInsets.symmetric(horizontal: r.hPad),
                 itemCount: allProducts.length,
                 separatorBuilder: (_, __) => SizedBox(width: r.s(12)),
-                itemBuilder: (_, i) => SizedBox(
-                  width: r.cardW,
-                  child: ProductCard(product: allProducts[i], isHorizontal: true),
+                itemBuilder: (_, i) => AnimationConfiguration.staggeredList(
+                  position: i,
+                  duration: const Duration(milliseconds: 260),
+                  child: SlideAnimation(
+                    horizontalOffset: 28,
+                    curve: Curves.easeOutCubic,
+                    child: FadeInAnimation(
+                      curve: Curves.easeOutCubic,
+                      child: SizedBox(
+                        width: r.cardW,
+                        child: ProductCard(
+                            product: allProducts[i], isHorizontal: true),
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -229,10 +252,23 @@ class _HomeBody extends StatelessWidget {
                 itemCount: allProducts.length,
                 separatorBuilder: (_, __) => SizedBox(width: r.s(12)),
                 itemBuilder: (_, i) {
-                  final idx = (allProducts.length - 1 - i) % allProducts.length;
-                  return SizedBox(
-                    width: r.cardW,
-                    child: ProductCard(product: allProducts[idx], isHorizontal: true),
+                  final idx =
+                      (allProducts.length - 1 - i) % allProducts.length;
+                  return AnimationConfiguration.staggeredList(
+                    position: i,
+                    duration: const Duration(milliseconds: 260),
+                    child: SlideAnimation(
+                      horizontalOffset: 28,
+                      curve: Curves.easeOutCubic,
+                      child: FadeInAnimation(
+                        curve: Curves.easeOutCubic,
+                        child: SizedBox(
+                          width: r.cardW,
+                          child: ProductCard(
+                              product: allProducts[idx], isHorizontal: true),
+                        ),
+                      ),
+                    ),
                   );
                 },
               ),
@@ -259,7 +295,19 @@ class _HomeBody extends StatelessWidget {
                 childAspectRatio: _gridAspectRatio(context),
               ),
               delegate: SliverChildBuilderDelegate(
-                (_, i) => ProductCard(product: allProducts[i]),
+                (_, i) => AnimationConfiguration.staggeredGrid(
+                  position: i,
+                  columnCount: 2,
+                  duration: const Duration(milliseconds: 280),
+                  child: SlideAnimation(
+                    verticalOffset: 22,
+                    curve: Curves.easeOutCubic,
+                    child: FadeInAnimation(
+                      curve: Curves.easeOutCubic,
+                      child: ProductCard(product: allProducts[i]),
+                    ),
+                  ),
+                ),
                 childCount: allProducts.length,
               ),
             ),
@@ -293,7 +341,19 @@ class _HomeBody extends StatelessWidget {
                   childAspectRatio: _gridAspectRatio(context),
                 ),
                 delegate: SliverChildBuilderDelegate(
-                  (_, i) => ProductCard(product: filteredProducts[i]),
+                  (_, i) => AnimationConfiguration.staggeredGrid(
+                    position: i,
+                    columnCount: 2,
+                    duration: const Duration(milliseconds: 280),
+                    child: SlideAnimation(
+                      verticalOffset: 22,
+                      curve: Curves.easeOutCubic,
+                      child: FadeInAnimation(
+                        curve: Curves.easeOutCubic,
+                        child: ProductCard(product: filteredProducts[i]),
+                      ),
+                    ),
+                  ),
                   childCount: filteredProducts.length,
                 ),
               ),
@@ -301,7 +361,8 @@ class _HomeBody extends StatelessWidget {
         ],
 
         SliverToBoxAdapter(child: SizedBox(height: r.s(100))),
-      ],
+        ],
+      ),
     );
   }
 
