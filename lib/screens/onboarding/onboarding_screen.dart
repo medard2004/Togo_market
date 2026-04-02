@@ -3,6 +3,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:get/get.dart';
 import '../../theme/app_theme.dart';
+import '../../Api/provider/auth_controller.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -60,6 +61,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       _pageController.nextPage(
           duration: const Duration(milliseconds: 350), curve: Curves.easeOut);
     } else {
+      Get.find<AuthController>().markOnboardingComplete();
       Get.offNamed('/auth');
     }
   }
@@ -81,7 +83,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     opacity: _currentSlide > 0 ? 1 : 0,
                     duration: const Duration(milliseconds: 200),
                     child: TextButton(
-                      onPressed: () => Get.offNamed('/auth'),
+                      onPressed: () {
+                        Get.find<AuthController>().markOnboardingComplete();
+                        Get.offNamed('/auth');
+                      },
                       child: const Text(
                         'Passer',
                         style: TextStyle(
@@ -92,7 +97,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     ),
                   ),
                   TextButton(
-                    onPressed: () => Get.offNamed('/auth'),
+                    onPressed: () {
+                      Get.find<AuthController>().markOnboardingComplete();
+                      Get.offNamed('/auth');
+                    },
                     child: const Text(
                       'Se connecter',
                       style: TextStyle(

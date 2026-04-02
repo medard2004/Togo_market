@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/responsive.dart';
+import '../../Api/provider/auth_controller.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -21,9 +22,24 @@ class _SplashScreenState extends State<SplashScreen> {
   void _startProgress() {
     Stream.periodic(const Duration(milliseconds: 40), (i) => i)
         .take(50)
-        .listen((i) {
+        .listen((i) async {
       if (mounted) setState(() => _progress = (i + 1) * 2.0 / 100.0);
-      if (i == 49) Future.delayed(const Duration(milliseconds: 200), () => Get.offNamed('/onboarding'));
+      if (i == 49) {
+        // Wait a bit to ensure smooth transition
+        await Future.delayed(const Duration(milliseconds: 200));
+        
+        final authController = Get.find<AuthController>();
+        // Wait for auth controller to finish checking initial state if it's still loading
+        // (Usually it's fast enough, but just in case)
+        
+        if (authController.isFirstTime.value) {
+          Get.offNamed('/onboarding');
+        } else if (authController.isAuthenticated || authController.hasToken.value) {
+          Get.offNamed('/home');
+        } else {
+          Get.offNamed('/auth');
+        }
+      }
     });
   }
 

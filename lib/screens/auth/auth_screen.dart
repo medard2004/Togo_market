@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../theme/app_theme.dart';
-import '../../controllers/app_controller.dart';
+import '../../Api/provider/auth_controller.dart';
+import '../../Api/model/location_model.dart';
+import '../../Api/model/category_model.dart';
 import '../../utils/responsive.dart';
+import '../../utils/app_toasts.dart';
+import '../../widgets/app_loader.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -11,78 +15,43 @@ class AuthScreen extends StatefulWidget {
 }
 
 class _AuthScreenState extends State<AuthScreen> {
+  final _authController = Get.find<AuthController>();
   String _step = 'welcome';
   final _phoneCtrl = TextEditingController();
+  final _passwordCtrl = TextEditingController();
   final _nameCtrl = TextEditingController();
-  final List<String> _otpDigits = ['', '', '', ''];
-  int _otpTimer = 45;
-  bool _timerActive = true;
-  String _selectedZone = '';
-  final Set<String> _selectedInterests = {};
-
-  final _zones = [
-    'Agbalépédo',
-    'Bè',
-    'Tokoin',
-    'Adidogomé',
-    'Avépozo',
-    'Nyékonakpoè',
-    'Amadahomé',
-    'Kégué',
-  ];
+  final _detailsCtrl = TextEditingController();
+  int? _selectedQuartierId;
+  final Set<int> _selectedInterests = {};
+  bool _obscurePassword = true;
 
   @override
   void initState() {
     super.initState();
   }
 
-  void _startTimer() {
-    setState(() {
-      _otpTimer = 45;
-      _timerActive = true;
-    });
-    Stream.periodic(const Duration(seconds: 1), (i) => i).take(45).listen((i) {
-      if (mounted)
-        setState(() {
-          _otpTimer = 44 - i;
-          if (_otpTimer <= 0) _timerActive = false;
-        });
-    });
-  }
-
-  void _onKeyPress(String key) {
-    final filled = _otpDigits.where((d) => d.isNotEmpty).length;
-    if (key == '⌫') {
-      for (int i = 3; i >= 0; i--) {
-        if (_otpDigits[i].isNotEmpty) {
-          setState(() => _otpDigits[i] = '');
-          return;
-        }
-      }
-    } else if (filled < 4) {
-      for (int i = 0; i < 4; i++) {
-        if (_otpDigits[i].isEmpty) {
-          setState(() => _otpDigits[i] = key);
-          break;
-        }
-      }
-      if (filled + 1 == 4) {
-        Future.delayed(const Duration(milliseconds: 300),
-            () => setState(() => _step = 'profile'));
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.background,
-      resizeToAvoidBottomInset: false,
-      body: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 280),
-        transitionBuilder: (child, anim) =>
-            FadeTransition(opacity: anim, child: child),
-        child: _buildStep(),
+      body: WillPopScope(
+        onWillPop: () async {
+          if (_step == 'welcome') return true;
+          if (_step == 'phone')
+            setState(() => _step = 'welcome');
+          else if (_step == 'password')
+            setState(() => _step = 'phone');
+          else if (_step == 'profile')
+            Get.offAllNamed('/home');
+          else if (_step == 'interests') setState(() => _step = 'profile');
+          return false;
+        },
+        child: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 280),
+          transitionBuilder: (child, anim) =>
+              FadeTransition(opacity: anim, child: child),
+          child: _buildStep(),
+        ),
       ),
     );
   }
@@ -93,59 +62,244 @@ class _AuthScreenState extends State<AuthScreen> {
         return _WelcomeStep(
           key: const ValueKey('welcome'),
           onContinue: () => setState(() => _step = 'phone'),
+          onGoogleSign: () async {
+            try {
+              await AppLoader.wrap(
+                context,
+                () => _authController.loginWithGoogle(),
+                message: 'Authentification Google...',
+              );
+              if (_authController.isAuthenticated) {
+                final user = _authController.currentUser.value;
+                if (user != null && user.telephone.startsWith('tmp_')) {
+                  // Nouveau compte social ou numéro manquant
+                  _nameCtrl.text = user.nom ?? '';
+                  setState(() => _step = 'phone');
+                } else {
+                  _authController.markOnboardingComplete();
+                  AppToasts.success(context, "Succès", "Connexion réussie !");
+                  Get.offAllNamed('/home');
+                }
+              }
+            } catch (e) {
+              print('Erreur Google Auth: $e');
+              final errorStr = e.toString().toLowerCase();
+              if (!errorStr.contains('cancel') && !errorStr.contains('annul') && !errorStr.contains('abort')) {
+                AppToasts.error(context, "Erreur", "Connexion échouée: $e");
+              }
+            }
+          },
         );
       case 'phone':
+        final isSocialCompleting = _authController.isAuthenticated &&
+            _authController.currentUser.value != null &&
+            _authController.currentUser.value!.telephone.startsWith('tmp_');
         return _PhoneStep(
           key: const ValueKey('phone'),
           ctrl: _phoneCtrl,
-          onBack: () => setState(() => _step = 'welcome'),
-          onSend: () {
-            _startTimer();
-            setState(() => _step = 'otp');
+          onBack: isSocialCompleting
+              ? null
+              : () => setState(() => _step = 'welcome'),
+          onSend: () async {
+            final phone = _phoneCtrl.text.trim();
+            if (phone.isEmpty) {
+              AppToasts.error(context, "Erreur", "Veuillez entrer un numéro de téléphone.");
+              return;
+            }
+            if (phone.length != 8) {
+              AppToasts.warning(context, "Format incorrect", "Le numéro doit être composé de exactement 8 chiffres.");
+              return;
+            }
+            final RegExp prefixRegex = RegExp(r'^(9[0-3|6-9]|7[0-1|9])');
+            if (!prefixRegex.hasMatch(phone)) {
+              AppToasts.error(context, "Réseau inconnu", "Le numéro doit commencer par 90-93, 96-99 (Togocel) ou 70-71, 79 (Moov).");
+              return;
+            }
+
+            final phoneToUpdate =
+                phone.startsWith('+228') ? phone : '+228$phone';
+
+            final confirmed = await Get.dialog<bool>(
+              AlertDialog(
+                backgroundColor: AppTheme.cardColor,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16)),
+                title: Text("Confirmer le numéro",
+                    style: TextStyle(
+                        color: AppTheme.foreground,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold)),
+                content: Text(
+                    "Voulez-vous vérifier et utiliser ce numéro :\n$phoneToUpdate ?",
+                    style: TextStyle(
+                        color: AppTheme.mutedForeground, fontSize: 14)),
+                actions: [
+                  TextButton(
+                    onPressed: () => Get.back(result: false),
+                    child: Text("Modifier",
+                        style: TextStyle(color: AppTheme.mutedForeground)),
+                  ),
+                  TextButton(
+                    onPressed: () => Get.back(result: true),
+                    child: Text("Confirmer",
+                        style: TextStyle(
+                            color: AppTheme.primary,
+                            fontWeight: FontWeight.bold)),
+                  ),
+                ],
+              ),
+            );
+
+            if (confirmed != true) return;
+
+            if (isSocialCompleting) {
+              try {
+                await AppLoader.wrap(
+                  context,
+                  () => _authController.updateProfile(telephone: phoneToUpdate),
+                  message: 'Association du numéro...',
+                );
+                setState(() => _step = 'profile');
+              } catch (e) {
+                String errorMsg = e.toString();
+                if (errorMsg.contains("taken") ||
+                    errorMsg.toLowerCase().contains("déjà") ||
+                    errorMsg.contains("already")) {
+                  errorMsg = "Ce numéro est déjà utilisé par un autre compte.";
+                } else if (errorMsg.toLowerCase().contains("exception")) {
+                  errorMsg = errorMsg.replaceAll(
+                      RegExp(r'^(ValidationException: |Exception: )'), "");
+                }
+                AppToasts.error(context, "Erreur", errorMsg);
+              }
+            } else {
+              setState(() => _step = 'password');
+            }
           },
         );
-      case 'otp':
-        return _OtpStep(
-          key: const ValueKey('otp'),
-          digits: _otpDigits,
-          timer: _otpTimer,
-          timerActive: _timerActive,
-          onKeyPress: _onKeyPress,
-          onResend: _startTimer,
+      case 'password':
+        return _PasswordStep(
+          key: const ValueKey('password'),
+          ctrl: _passwordCtrl,
+          obscureText: _obscurePassword,
+          onToggleObscure: () =>
+              setState(() => _obscurePassword = !_obscurePassword),
           onBack: () => setState(() => _step = 'phone'),
-          onVerify: () => setState(() => _step = 'profile'),
+          onVerify: () async {
+            try {
+              final phoneStr = _phoneCtrl.text.startsWith('+228')
+                  ? _phoneCtrl.text
+                  : '+228${_phoneCtrl.text}';
+              try {
+                // Tentative de connexion
+                await AppLoader.wrap(
+                  context,
+                  () => _authController.login(phoneStr, _passwordCtrl.text),
+                  message: 'Connexion en cours...',
+                );
+                _authController.markOnboardingComplete();
+                AppToasts.success(context, "Succès", "Connexion réussie ! Bienvenue sur Togo Market.");
+                Get.offAllNamed('/home');
+              } catch (loginError) {
+                // La connexion a échoué. Tentative d'inscription.
+                try {
+                  await AppLoader.wrap(
+                    context,
+                    () => _authController.register(phoneStr, _passwordCtrl.text),
+                    message: 'Création de votre compte...',
+                  );
+                  AppToasts.success(context, "Inscription réussie", "Compte créé ! Veuillez compléter votre profil.");
+                  setState(() => _step = 'profile');
+                } catch (registerError) {
+                  // L'inscription a échoué (Probablement car le numéro existe déjà)
+                  String errorMsg = registerError.toString();
+                  if (errorMsg.contains("taken") ||
+                      errorMsg.toLowerCase().contains("déjà") ||
+                      errorMsg.contains("already")) {
+                    AppToasts.error(context, "Accès refusé", "Mot de passe incorrect ou numéro déjà utilisé.");
+                  } else {
+                    AppToasts.error(context, "Erreur d'inscription", errorMsg.replaceAll(RegExp(r'^(ValidationException: |Exception: )'), ""));
+                  }
+                }
+              }
+            } catch (e) {
+              AppToasts.error(context, "Erreur", "Connexion/Inscription échouée");
+            }
+          },
         );
       case 'profile':
-        return _ProfileStep(
-          key: const ValueKey('profile'),
-          nameCtrl: _nameCtrl,
-          zones: _zones,
-          selectedZone: _selectedZone,
-          onZoneChanged: (v) => setState(() => _selectedZone = v ?? ''),
-          onBack: () => setState(() => _step = 'otp'),
-          onSkip: () => setState(() => _step = 'interests'),
-          onContinue: () => setState(() => _step = 'interests'),
-        );
+        return Obx(() {
+          final allQuartiers =
+              _authController.locations.expand((v) => v.quartiers).toList();
+          return _ProfileStep(
+            key: const ValueKey('profile'),
+            nameCtrl: _nameCtrl,
+            detailsCtrl: _detailsCtrl,
+            quartiers: allQuartiers,
+            selectedQuartierId: _selectedQuartierId,
+            onQuartierChanged: (v) => setState(() => _selectedQuartierId = v),
+            onSkip: () {
+              _authController.markOnboardingComplete();
+              Get.offAllNamed('/home');
+            },
+            onContinue: () {
+              if (_nameCtrl.text.isEmpty || _selectedQuartierId == null) {
+                AppToasts.warning(context, "Attention", "Veuillez remplir tous les champs");
+                return;
+              }
+              setState(() => _step = 'interests');
+            },
+          );
+        });
       case 'interests':
-        return _InterestsStep(
-          key: const ValueKey('interests'),
-          selected: _selectedInterests,
-          onToggle: (id) => setState(() {
-            if (_selectedInterests.contains(id))
-              _selectedInterests.remove(id);
-            else
-              _selectedInterests.add(id);
-          }),
-          onBack: () => setState(() => _step = 'profile'),
-          onSkip: () {
-            Get.find<AppController>().login();
-            Get.offAllNamed('/home');
-          },
-          onFinish: () {
-            Get.find<AppController>().login();
-            Get.offAllNamed('/home');
-          },
-        );
+        return Obx(() => _InterestsStep(
+              key: const ValueKey('interests'),
+              categories: _authController.categories,
+              selected: _selectedInterests,
+              onToggle: (id) => setState(() {
+                if (_selectedInterests.contains(id)) {
+                  _selectedInterests.remove(id);
+                } else {
+                  _selectedInterests.add(id);
+                }
+              }),
+              onBack: () => setState(() => _step = 'profile'),
+              onSkip: () {
+                _authController.markOnboardingComplete();
+                Get.offAllNamed('/home');
+              },
+              onFinish: () async {
+                try {
+                  final user = _authController.currentUser.value;
+                  final isSocialCompleting = _authController.isAuthenticated &&
+                      user != null &&
+                      user.telephone.startsWith('tmp_');
+                  String? phoneToUpdate;
+                  if (isSocialCompleting && _phoneCtrl.text.isNotEmpty) {
+                    phoneToUpdate = _phoneCtrl.text.startsWith('+228')
+                        ? _phoneCtrl.text
+                        : '+228${_phoneCtrl.text}';
+                  }
+
+                  await AppLoader.wrap(
+                    context,
+                    () => _authController.updateProfile(
+                      nom: _nameCtrl.text,
+                      telephone: phoneToUpdate,
+                      quartierId: _selectedQuartierId ?? 0,
+                      selectedCategories: _selectedInterests.toList(),
+                      details: _detailsCtrl.text,
+                    ),
+                    message: 'Configuration de votre espace...',
+                  );
+                  _authController.markOnboardingComplete();
+                  AppToasts.success(context, "Bienvenue", "Votre compte est entièrement configuré !");
+                  Get.offAllNamed('/home');
+                } catch (e) {
+                  AppToasts.error(context, "Erreur", "Impossible de mettre à jour le profil");
+                }
+              },
+            ));
       default:
         return const SizedBox.shrink();
     }
@@ -157,7 +311,9 @@ class _AuthScreenState extends State<AuthScreen> {
 // ╚══════════════════════════════════════════════════════╝
 class _WelcomeStep extends StatelessWidget {
   final VoidCallback onContinue;
-  const _WelcomeStep({super.key, required this.onContinue});
+  final VoidCallback onGoogleSign;
+  const _WelcomeStep(
+      {super.key, required this.onContinue, required this.onGoogleSign});
 
   @override
   Widget build(BuildContext context) {
@@ -316,29 +472,12 @@ class _WelcomeStep extends StatelessWidget {
 
             // Bouton Google
             _SocialButton(
-              onTap: () {},
+              onTap: onGoogleSign,
               child:
                   Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                 _GoogleIcon(size: r.s(20)),
                 SizedBox(width: r.s(10)),
                 Text('Google',
-                    style: TextStyle(
-                        fontSize: r.fs(15),
-                        fontWeight: FontWeight.w600,
-                        color: AppTheme.foreground)),
-              ]),
-            ),
-            SizedBox(height: r.s(10)),
-
-            // Bouton Facebook
-            _SocialButton(
-              onTap: () {},
-              child:
-                  Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                Icon(Icons.facebook,
-                    color: const Color(0xFF1877F2), size: r.s(22)),
-                SizedBox(width: r.s(10)),
-                Text('Facebook',
                     style: TextStyle(
                         fontSize: r.fs(15),
                         fontWeight: FontWeight.w600,
@@ -399,12 +538,10 @@ class _WelcomeStep extends StatelessWidget {
 // ╚══════════════════════════════════════════════════════╝
 class _PhoneStep extends StatelessWidget {
   final TextEditingController ctrl;
-  final VoidCallback onBack, onSend;
+  final VoidCallback? onBack;
+  final VoidCallback onSend;
   const _PhoneStep(
-      {super.key,
-      required this.ctrl,
-      required this.onBack,
-      required this.onSend});
+      {super.key, required this.ctrl, this.onBack, required this.onSend});
 
   @override
   Widget build(BuildContext context) {
@@ -414,33 +551,34 @@ class _PhoneStep extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Bouton retour
-          Padding(
-            padding: EdgeInsets.all(r.s(16)),
-            child: GestureDetector(
-              onTap: onBack,
-              child: Container(
-                width: r.s(36),
-                height: r.s(36),
-                decoration: BoxDecoration(
-                  color: AppTheme.muted,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.arrow_back,
-                  size: r.s(18),
-                  color: AppTheme.foreground,
+          if (onBack != null)
+            Padding(
+              padding: EdgeInsets.all(r.s(16)),
+              child: GestureDetector(
+                onTap: onBack,
+                child: Container(
+                  width: r.s(36),
+                  height: r.s(36),
+                  decoration: BoxDecoration(
+                    color: AppTheme.muted,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.arrow_back,
+                    size: r.s(18),
+                    color: AppTheme.foreground,
+                  ),
                 ),
               ),
             ),
-          ),
 
           Expanded(
-            child: Padding(
+            child: SingleChildScrollView(
               padding: EdgeInsets.symmetric(horizontal: r.s(24)),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  SizedBox(height: r.s(40)),
+                  SizedBox(height: r.s(20)),
 
                   // Icône simple
                   Center(
@@ -476,7 +614,7 @@ class _PhoneStep extends StatelessWidget {
                   // Description
                   Center(
                     child: Text(
-                      'Entrez votre numéro pour recevoir un code de vérification',
+                      'Entrez votre numéro pour continuer',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: r.fs(14),
@@ -555,7 +693,7 @@ class _PhoneStep extends StatelessWidget {
                       ],
                     ),
                   ),
-                  SizedBox(height: r.s(24)),
+                  SizedBox(height: r.s(32)),
 
                   // Bouton envoyer
                   ValueListenableBuilder(
@@ -587,7 +725,7 @@ class _PhoneStep extends StatelessWidget {
                       );
                     },
                   ),
-                  const Spacer(),
+                  SizedBox(height: r.s(40)),
 
                   // Conditions
                   Center(
@@ -619,7 +757,7 @@ class _PhoneStep extends StatelessWidget {
                       ),
                     ),
                   ),
-                  SizedBox(height: r.s(16)),
+                  SizedBox(height: r.s(20)),
                 ],
               ),
             ),
@@ -631,32 +769,27 @@ class _PhoneStep extends StatelessWidget {
 }
 
 // ╔══════════════════════════════════════════════════════╗
-// ║  STEP 3 — OTP                                        ║
+// ║  STEP 3 — PASSWORD                                   ║
 // ╚══════════════════════════════════════════════════════╝
-class _OtpStep extends StatelessWidget {
-  final List<String> digits;
-  final int timer;
-  final bool timerActive;
-  final Function(String) onKeyPress;
-  final VoidCallback onResend, onBack, onVerify;
-  const _OtpStep(
+class _PasswordStep extends StatelessWidget {
+  final TextEditingController ctrl;
+  final bool obscureText;
+  final VoidCallback onBack, onVerify, onToggleObscure;
+  const _PasswordStep(
       {super.key,
-      required this.digits,
-      required this.timer,
-      required this.timerActive,
-      required this.onKeyPress,
-      required this.onResend,
+      required this.ctrl,
+      required this.obscureText,
       required this.onBack,
-      required this.onVerify});
+      required this.onVerify,
+      required this.onToggleObscure});
 
   @override
   Widget build(BuildContext context) {
     final r = R(context);
-    final filled = digits.where((d) => d.isNotEmpty).length;
 
     return SafeArea(
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // AppBar simple
           Padding(
@@ -681,7 +814,7 @@ class _OtpStep extends StatelessWidget {
                 ),
                 const Spacer(),
                 Text(
-                  'Vérification',
+                  'Mot de passe',
                   style: TextStyle(
                     fontSize: r.fs(20),
                     fontWeight: FontWeight.w700,
@@ -693,147 +826,126 @@ class _OtpStep extends StatelessWidget {
             ),
           ),
 
-          SizedBox(height: r.s(24)),
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: r.s(24)),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Text(
-                  'Entrez le code à 4 chiffres envoyé au',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                      fontSize: r.fs(14), color: AppTheme.mutedForeground),
-                ),
-                Text(
-                  '+228 XX XX XX XX',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                      fontSize: r.fs(14),
-                      fontWeight: FontWeight.w700,
-                      color: AppTheme.foreground),
-                ),
-                SizedBox(height: r.s(32)),
-
-                // 4 cases OTP simples
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: List.generate(4, (i) {
-                    return Container(
-                      margin: EdgeInsets.symmetric(horizontal: r.s(6)),
-                      width: r.s(44),
-                      height: r.s(54),
+          Expanded(
+            child: SingleChildScrollView(
+              padding: EdgeInsets.symmetric(horizontal: r.s(24)),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(height: r.s(20)),
+                  Center(
+                    child: Container(
+                      width: r.s(64),
+                      height: r.s(64),
                       decoration: BoxDecoration(
-                        color: AppTheme.cardColor,
-                        borderRadius: BorderRadius.circular(r.rad(8)),
-                        border: Border.all(
-                          color: AppTheme.border,
-                          width: 1,
-                        ),
+                        color: AppTheme.primaryLight,
+                        borderRadius: BorderRadius.circular(r.rad(16)),
                       ),
-                      child: Center(
-                        child: Text(
-                          digits[i],
-                          style: TextStyle(
-                            fontSize: r.fs(22),
-                            fontWeight: FontWeight.w700,
-                            color: AppTheme.foreground,
-                          ),
-                        ),
-                      ),
-                    );
-                  }),
-                ),
-                SizedBox(height: r.s(20)),
-
-                // Timer / renvoyer
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text('Vous n\'avez pas reçu le code ? ',
-                        style: TextStyle(
-                            fontSize: r.fs(13),
-                            color: AppTheme.mutedForeground)),
-                    GestureDetector(
-                      onTap: timerActive ? null : onResend,
-                      child: Text(
-                        timerActive ? 'Renvoyer (${timer}s)' : 'Renvoyer',
-                        style: TextStyle(
-                          fontSize: r.fs(13),
-                          fontWeight: FontWeight.w700,
-                          color: timerActive
-                              ? AppTheme.mutedForeground
-                              : AppTheme.primary,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: r.s(32)),
-
-                // Bouton vérifier simple
-                GestureDetector(
-                  onTap: filled == 4 ? onVerify : null,
-                  child: Container(
-                    width: double.infinity,
-                    height: r.s(50),
-                    decoration: BoxDecoration(
-                      color: filled == 4 ? AppTheme.primary : AppTheme.muted,
-                      borderRadius: BorderRadius.circular(r.rad(25)),
-                    ),
-                    child: Center(
-                      child: Text(
-                        'Continuer',
-                        style: TextStyle(
-                          fontSize: r.fs(15),
-                          fontWeight: FontWeight.w700,
-                          color: filled == 4
-                              ? Colors.white
-                              : AppTheme.mutedForeground,
-                        ),
+                      child: Icon(
+                        Icons.lock,
+                        size: r.s(32),
+                        color: AppTheme.primary,
                       ),
                     ),
                   ),
-                ),
-                SizedBox(height: r.s(16)),
-
-                // Conditions
-                Center(
-                  child: RichText(
-                    textAlign: TextAlign.center,
-                    text: TextSpan(
+                  SizedBox(height: r.s(24)),
+                  Center(
+                    child: Text(
+                      'Entrez votre mot de passe',
                       style: TextStyle(
-                        fontSize: r.fs(11),
-                        color: AppTheme.mutedForeground,
+                        fontSize: r.fs(24),
+                        fontWeight: FontWeight.w800,
+                        color: AppTheme.foreground,
                       ),
-                      children: const [
-                        TextSpan(text: 'En continuant, vous acceptez nos '),
-                        TextSpan(
-                          text: 'Conditions d\'utilisation',
-                          style: TextStyle(
-                            color: AppTheme.primary,
-                            decoration: TextDecoration.underline,
-                          ),
-                        ),
-                        TextSpan(text: ' et notre\n'),
-                        TextSpan(
-                          text: 'Politique de confidentialité',
-                          style: TextStyle(
-                            color: AppTheme.primary,
-                            decoration: TextDecoration.underline,
-                          ),
-                        ),
-                      ],
                     ),
                   ),
-                ),
-              ],
+                  SizedBox(height: r.s(8)),
+                  Center(
+                    child: Text(
+                      'Sert pour la connexion et l\'inscription',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: r.fs(14),
+                        color: AppTheme.mutedForeground,
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: r.s(40)),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: AppTheme.cardColor,
+                      borderRadius: BorderRadius.circular(r.rad(12)),
+                      border: Border.all(color: AppTheme.border),
+                    ),
+                    child: TextField(
+                      controller: ctrl,
+                      obscureText: obscureText,
+                      style: TextStyle(
+                        fontSize: r.fs(15),
+                        fontWeight: FontWeight.w500,
+                      ),
+                      decoration: InputDecoration(
+                        hintText: 'Mot de passe sécurisé',
+                        hintStyle: TextStyle(
+                          color: AppTheme.mutedForeground,
+                          fontSize: r.fs(15),
+                        ),
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            obscureText
+                                ? Icons.visibility_off
+                                : Icons.visibility,
+                            color: AppTheme.mutedForeground,
+                            size: r.s(20),
+                          ),
+                          onPressed: onToggleObscure,
+                        ),
+                        border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                        fillColor: Colors.transparent,
+                        filled: false,
+                        contentPadding: EdgeInsets.symmetric(
+                            horizontal: r.s(16), vertical: r.s(16)),
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: r.s(32)),
+                  ValueListenableBuilder(
+                    valueListenable: ctrl,
+                    builder: (_, __, ___) {
+                      final enabled = ctrl.text.length >= 6;
+                      return GestureDetector(
+                        onTap: enabled ? onVerify : null,
+                        child: Container(
+                          width: double.infinity,
+                          height: r.s(50),
+                          decoration: BoxDecoration(
+                            color: enabled ? AppTheme.primary : AppTheme.muted,
+                            borderRadius: BorderRadius.circular(r.rad(25)),
+                          ),
+                          child: Center(
+                            child: Text(
+                              'Continuer',
+                              style: TextStyle(
+                                fontSize: r.fs(15),
+                                fontWeight: FontWeight.w700,
+                                color: enabled
+                                    ? Colors.white
+                                    : AppTheme.mutedForeground,
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  SizedBox(height: r.s(40)),
+                ],
+              ),
             ),
-          ),
-
-          // Clavier custom
-          _NumericKeypad(onKey: onKeyPress, r: r),
-          SizedBox(height: r.s(16)),
+          )
         ],
       ),
     );
@@ -845,17 +957,18 @@ class _OtpStep extends StatelessWidget {
 // ╚══════════════════════════════════════════════════════╝
 class _ProfileStep extends StatelessWidget {
   final TextEditingController nameCtrl;
-  final List<String> zones;
-  final String selectedZone;
-  final ValueChanged<String?> onZoneChanged;
-  final VoidCallback onBack, onSkip, onContinue;
+  final TextEditingController detailsCtrl;
+  final List<Quartier> quartiers;
+  final int? selectedQuartierId;
+  final ValueChanged<int?> onQuartierChanged;
+  final VoidCallback onSkip, onContinue;
   const _ProfileStep(
       {super.key,
       required this.nameCtrl,
-      required this.zones,
-      required this.selectedZone,
-      required this.onZoneChanged,
-      required this.onBack,
+      required this.detailsCtrl,
+      required this.quartiers,
+      required this.selectedQuartierId,
+      required this.onQuartierChanged,
       required this.onSkip,
       required this.onContinue});
 
@@ -866,10 +979,7 @@ class _ProfileStep extends StatelessWidget {
       child: Column(
         children: [
           _StepAppBar(
-              title: 'Étape 1 sur 2',
-              onBack: onBack,
-              actionLabel: 'Passer',
-              onAction: onSkip),
+              title: 'Étape 1 sur 2', actionLabel: 'Passer', onAction: onSkip),
 
           // Barre orange sous l'AppBar
           Container(height: 2, color: AppTheme.primary),
@@ -977,30 +1087,75 @@ class _ProfileStep extends StatelessWidget {
                               fontWeight: FontWeight.w600,
                               color: AppTheme.foreground))),
                   SizedBox(height: r.s(8)),
+                  GestureDetector(
+                    onTap: () {
+                      _showZonePicker(context, quartiers, selectedQuartierId,
+                          onQuartierChanged);
+                    },
+                    child: Container(
+                      padding: EdgeInsets.symmetric(
+                          horizontal: r.s(16), vertical: r.s(14)),
+                      decoration: BoxDecoration(
+                        color: AppTheme.cardColor,
+                        borderRadius: BorderRadius.circular(r.rad(12)),
+                        border: Border.all(color: AppTheme.border),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              selectedQuartierId != null
+                                  ? quartiers
+                                      .firstWhere(
+                                          (q) => q.id == selectedQuartierId)
+                                      .nom
+                                  : 'Rechercher votre zone / quartier',
+                              style: TextStyle(
+                                fontSize: r.fs(14),
+                                color: selectedQuartierId != null
+                                    ? AppTheme.foreground
+                                    : AppTheme.mutedForeground,
+                              ),
+                            ),
+                          ),
+                          Icon(Icons.keyboard_arrow_down,
+                              color: AppTheme.mutedForeground, size: r.s(22)),
+                        ],
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: r.s(16)),
+
+                  // Détails Location
+                  Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text('Détails supplémentaires',
+                          style: TextStyle(
+                              fontSize: r.fs(13),
+                              fontWeight: FontWeight.w600,
+                              color: AppTheme.foreground))),
+                  SizedBox(height: r.s(8)),
                   Container(
-                    padding: EdgeInsets.symmetric(horizontal: r.s(16)),
                     decoration: BoxDecoration(
                       color: AppTheme.cardColor,
                       borderRadius: BorderRadius.circular(r.rad(12)),
                       border: Border.all(color: AppTheme.border),
                     ),
-                    child: DropdownButtonHideUnderline(
-                      child: DropdownButton<String>(
-                        value: selectedZone.isEmpty ? null : selectedZone,
-                        isExpanded: true,
-                        hint: Text('Sélectionnez votre zone',
-                            style: TextStyle(
-                                color: AppTheme.mutedForeground,
-                                fontSize: r.fs(14))),
-                        icon: Icon(Icons.keyboard_arrow_down,
-                            color: AppTheme.mutedForeground, size: r.s(22)),
-                        items: zones
-                            .map((z) => DropdownMenuItem(
-                                value: z,
-                                child: Text(z,
-                                    style: TextStyle(fontSize: r.fs(14)))))
-                            .toList(),
-                        onChanged: onZoneChanged,
+                    child: TextField(
+                      controller: detailsCtrl,
+                      style: TextStyle(fontSize: r.fs(14)),
+                      decoration: InputDecoration(
+                        hintText: 'ex. Appartement, rue, repère...',
+                        hintStyle: TextStyle(
+                            color: AppTheme.mutedForeground,
+                            fontSize: r.fs(14)),
+                        border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                        fillColor: Colors.transparent,
+                        filled: false,
+                        contentPadding: EdgeInsets.symmetric(
+                            horizontal: r.s(16), vertical: r.s(14)),
                       ),
                     ),
                   ),
@@ -1064,30 +1219,19 @@ class _ProfileStep extends StatelessWidget {
 // ║  STEP 5 — INTERESTS                                  ║
 // ╚══════════════════════════════════════════════════════╝
 class _InterestsStep extends StatelessWidget {
-  final Set<String> selected;
-  final Function(String) onToggle;
+  final List<Category> categories;
+  final Set<int> selected;
+  final Function(int) onToggle;
   final VoidCallback onBack, onSkip, onFinish;
 
   const _InterestsStep(
       {super.key,
+      required this.categories,
       required this.selected,
       required this.onToggle,
       required this.onBack,
       required this.onSkip,
       required this.onFinish});
-
-  static const _interests = [
-    {'id': 'mode', 'label': 'Mode', 'icon': Icons.checkroom},
-    {
-      'id': 'electronique',
-      'label': 'Électronique',
-      'icon': Icons.electrical_services
-    },
-    {'id': 'maison', 'label': 'Maison', 'icon': Icons.home},
-    {'id': 'beaute', 'label': 'Beauté', 'icon': Icons.brush},
-    {'id': 'friperie', 'label': 'Friperie', 'icon': Icons.recycling},
-    {'id': 'alimentation', 'label': 'Alimentation', 'icon': Icons.restaurant},
-  ];
 
   @override
   Widget build(BuildContext context) {
@@ -1132,12 +1276,13 @@ class _InterestsStep extends StatelessWidget {
                         crossAxisSpacing: r.s(12),
                         childAspectRatio: 1.55,
                       ),
-                      itemCount: _interests.length,
+                      itemCount: categories.length,
                       itemBuilder: (_, i) {
-                        final item = _interests[i];
-                        final id = item['id'] as String;
-                        final label = item['label'] as String;
-                        final icon = item['icon'] as IconData;
+                        final item = categories[i];
+                        final id = item.id;
+                        final label = item.nom;
+                        final icon =
+                            Icons.label_outline; // Fallback generic icon
                         final isSel = selected.contains(id);
                         return GestureDetector(
                           onTap: () => onToggle(id),
@@ -1231,14 +1376,11 @@ class _InterestsStep extends StatelessWidget {
 /// AppBar réutilisable pour les étapes internes
 class _StepAppBar extends StatelessWidget {
   final String title;
-  final VoidCallback onBack;
+  final VoidCallback? onBack;
   final String? actionLabel;
   final VoidCallback? onAction;
   const _StepAppBar(
-      {required this.title,
-      required this.onBack,
-      this.actionLabel,
-      this.onAction});
+      {required this.title, this.onBack, this.actionLabel, this.onAction});
 
   @override
   Widget build(BuildContext context) {
@@ -1248,11 +1390,14 @@ class _StepAppBar extends StatelessWidget {
       padding: EdgeInsets.symmetric(horizontal: r.s(16)),
       child: Row(
         children: [
-          GestureDetector(
-            onTap: onBack,
-            child: Icon(Icons.arrow_back,
-                size: r.s(22), color: AppTheme.foreground),
-          ),
+          if (onBack != null)
+            GestureDetector(
+              onTap: onBack,
+              child: Icon(Icons.arrow_back,
+                  size: r.s(22), color: AppTheme.foreground),
+            )
+          else
+            SizedBox(width: r.s(22)),
           Expanded(
             child: Center(
               child: Text(title,
@@ -1275,50 +1420,6 @@ class _StepAppBar extends StatelessWidget {
             SizedBox(width: r.s(40)),
         ],
       ),
-    );
-  }
-}
-
-/// Clavier numérique personnalisé (comme sur la maquette)
-class _NumericKeypad extends StatelessWidget {
-  final Function(String) onKey;
-  final R r;
-  const _NumericKeypad({required this.onKey, required this.r});
-
-  @override
-  Widget build(BuildContext context) {
-    final keys = [
-      ['1', '2', '3'],
-      ['4', '5', '6'],
-      ['7', '8', '9'],
-      ['', '0', '⌫'],
-    ];
-
-    return Column(
-      children: keys
-          .map((row) => Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: row.map((key) {
-                  if (key.isEmpty) return SizedBox(width: r.screenW / 3);
-                  return GestureDetector(
-                    onTap: () => onKey(key),
-                    child: Container(
-                      width: r.screenW / 3,
-                      height: r.s(52).clamp(44, 60),
-                      alignment: Alignment.center,
-                      child: key == '⌫'
-                          ? Icon(Icons.backspace_outlined,
-                              size: r.s(22), color: AppTheme.foreground)
-                          : Text(key,
-                              style: TextStyle(
-                                  fontSize: r.fs(22),
-                                  fontWeight: FontWeight.w500,
-                                  color: AppTheme.foreground)),
-                    ),
-                  );
-                }).toList(),
-              ))
-          .toList(),
     );
   }
 }
@@ -1416,4 +1517,100 @@ class _Avatar extends StatelessWidget {
           image: DecorationImage(image: NetworkImage(url), fit: BoxFit.cover),
         ),
       );
+}
+
+void _showZonePicker(BuildContext context, List<Quartier> quartiers,
+    int? currentId, ValueChanged<int?> onSelected) {
+  final r = R(context);
+  final searchCtrl = TextEditingController();
+  final rxQuartiers = RxList<Quartier>(quartiers);
+
+  searchCtrl.addListener(() {
+    final query = searchCtrl.text.toLowerCase();
+    if (query.isEmpty) {
+      rxQuartiers.assignAll(quartiers);
+    } else {
+      rxQuartiers.assignAll(
+          quartiers.where((q) => q.nom.toLowerCase().contains(query)));
+    }
+  });
+
+  Get.bottomSheet(
+    Container(
+      height: r.screenH * 0.75,
+      decoration: BoxDecoration(
+        color: AppTheme.background,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(r.rad(24))),
+      ),
+      child: Column(
+        children: [
+          SizedBox(height: r.s(12)),
+          Container(
+              width: 40,
+              height: 5,
+              decoration: BoxDecoration(
+                  color: AppTheme.border,
+                  borderRadius: BorderRadius.circular(10))),
+          SizedBox(height: r.s(16)),
+          Text('Choisissez votre zone',
+              style: TextStyle(
+                  fontSize: r.fs(18),
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.foreground)),
+          SizedBox(height: r.s(16)),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: r.s(20)),
+            child: Container(
+              decoration: BoxDecoration(
+                  color: AppTheme.cardColor,
+                  borderRadius: BorderRadius.circular(r.rad(12)),
+                  border: Border.all(color: AppTheme.border)),
+              child: TextField(
+                controller: searchCtrl,
+                style: TextStyle(fontSize: r.fs(14)),
+                decoration: InputDecoration(
+                  hintText: 'Rechercher un quartier...',
+                  hintStyle: TextStyle(
+                      color: AppTheme.mutedForeground, fontSize: r.fs(14)),
+                  prefixIcon:
+                      const Icon(Icons.search, color: AppTheme.mutedForeground),
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.symmetric(vertical: r.s(14)),
+                ),
+              ),
+            ),
+          ),
+          SizedBox(height: r.s(12)),
+          Expanded(
+            child: Obx(() => ListView.builder(
+                  itemCount: rxQuartiers.length,
+                  itemBuilder: (context, i) {
+                    final q = rxQuartiers[i];
+                    final isSel = q.id == currentId;
+                    return ListTile(
+                      title: Text(q.nom,
+                          style: TextStyle(
+                              fontSize: r.fs(15),
+                              fontWeight:
+                                  isSel ? FontWeight.w700 : FontWeight.w500,
+                              color: isSel
+                                  ? AppTheme.primary
+                                  : AppTheme.foreground)),
+                      trailing: isSel
+                          ? const Icon(Icons.check_circle,
+                              color: AppTheme.primary)
+                          : null,
+                      onTap: () {
+                        onSelected(q.id);
+                        Get.back();
+                      },
+                    );
+                  },
+                )),
+          ),
+        ],
+      ),
+    ),
+    isScrollControlled: true,
+  );
 }

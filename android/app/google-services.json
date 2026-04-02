@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "837496328760",
+    "project_id": "togo-market-fc0a7",
+    "storage_bucket": "togo-market-fc0a7.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:837496328760:android:f94be4ab03d4d4a2850ccd",
+        "android_client_info": {
+          "package_name": "com.example.togo_market"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "837496328760-ofj07pq4kp9p5ns03t6c0kdddk584ps4.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.togo_market",
+            "certificate_hash": "a372553b04a0bb800750ffd4a816fba4ce29fa43"
+          }
+        },
+        {
+          "client_id": "837496328760-601482t0kgr95ce28915k6j23mphsie4.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBKiGNbkkghuZXORNPiD56d139otqLx2sw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "837496328760-601482t0kgr95ce28915k6j23mphsie4.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

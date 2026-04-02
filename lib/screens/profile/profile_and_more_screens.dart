@@ -7,6 +7,8 @@ import '../../widgets/bottom_nav.dart';
 import '../../widgets/common_widgets.dart';
 import '../../controllers/app_controller.dart';
 import '../../data/mock_data.dart';
+import '../../Api/provider/auth_controller.dart';
+import '../../widgets/app_loader.dart';
 
 // ── Profile Screen ────────────────────────────────────────────────────────────
 class ProfileScreen extends StatelessWidget {
@@ -116,7 +118,14 @@ class ProfileScreen extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             GestureDetector(
-              onTap: () => Get.offAllNamed('/auth'),
+              onTap: () async {
+                await AppLoader.wrap(
+                  context,
+                  () => Get.find<AuthController>().logout(),
+                  message: 'Déconnexion en cours...',
+                );
+                Get.offAllNamed('/auth');
+              },
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 decoration: BoxDecoration(
@@ -450,7 +459,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             const SizedBox(height: 20),
             GestureDetector(
-              onTap: () => Get.offAllNamed('/auth'),
+              onTap: () async {
+                await AppLoader.wrap(
+                  context,
+                  () => Get.find<AuthController>().logout(),
+                  message: 'Déconnexion en cours...',
+                );
+                Get.offAllNamed('/auth');
+              },
               child: Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
