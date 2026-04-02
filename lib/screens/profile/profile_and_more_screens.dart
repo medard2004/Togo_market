@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../theme/app_theme.dart';
@@ -7,6 +8,9 @@ import '../../widgets/bottom_nav.dart';
 import '../../widgets/common_widgets.dart';
 import '../../controllers/app_controller.dart';
 import '../../data/mock_data.dart';
+import '../../models/models.dart';
+import '../../navigation/app_transitions.dart';
+import '../../animations/togo_animation_system.dart';
 
 // ── Profile Screen ────────────────────────────────────────────────────────────
 class ProfileScreen extends StatelessWidget {
@@ -16,7 +20,7 @@ class ProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final ctrl = Get.find<AppController>();
     return Scaffold(
-        resizeToAvoidBottomInset: true,
+      resizeToAvoidBottomInset: true,
       backgroundColor: AppTheme.background,
       appBar: AppBar(
         title: const Text('Mon Profil'),
@@ -122,7 +126,8 @@ class ProfileScreen extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: AppTheme.cardColor,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppTheme.destructive.withOpacity(0.3)),
+                  border:
+                      Border.all(color: AppTheme.destructive.withOpacity(0.3)),
                 ),
                 child: const Center(
                   child: Text(
@@ -222,7 +227,7 @@ class NotificationsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        resizeToAvoidBottomInset: true,
+      resizeToAvoidBottomInset: true,
       backgroundColor: AppTheme.background,
       appBar: AppBar(
         title: const Text('Notifications'),
@@ -256,8 +261,7 @@ class NotificationsScreen extends StatelessWidget {
               borderRadius: BorderRadius.circular(16),
               border: notif.isRead
                   ? Border.all(color: AppTheme.border)
-                  : Border.all(
-                      color: AppTheme.primary.withOpacity(0.2)),
+                  : Border.all(color: AppTheme.primary.withOpacity(0.2)),
             ),
             child: Row(
               children: [
@@ -402,7 +406,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        resizeToAvoidBottomInset: true,
+      resizeToAvoidBottomInset: true,
       backgroundColor: AppTheme.background,
       appBar: AppBar(
         title: const Text('Paramètres'),
@@ -456,8 +460,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 decoration: BoxDecoration(
                   color: AppTheme.destructive.withOpacity(0.05),
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                      color: AppTheme.destructive.withOpacity(0.2)),
+                  border:
+                      Border.all(color: AppTheme.destructive.withOpacity(0.2)),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -484,8 +488,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             const SizedBox(height: 20),
             const Text('Togo_Market v1.0.0 — 🇹🇬 Fait au Togo',
-                style: TextStyle(
-                    fontSize: 12, color: AppTheme.mutedForeground)),
+                style:
+                    TextStyle(fontSize: 12, color: AppTheme.mutedForeground)),
           ],
         ),
       ),
@@ -533,8 +537,7 @@ class _SettingsTile extends StatelessWidget {
                     if (subtitle != null)
                       Text(subtitle!,
                           style: const TextStyle(
-                              fontSize: 12,
-                              color: AppTheme.mutedForeground)),
+                              fontSize: 12, color: AppTheme.mutedForeground)),
                   ],
                 ),
               ),
@@ -584,7 +587,7 @@ class _HelpScreenState extends State<HelpScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        resizeToAvoidBottomInset: true,
+      resizeToAvoidBottomInset: true,
       backgroundColor: AppTheme.background,
       appBar: AppBar(
         title: const Text('Aide & Support'),
@@ -628,13 +631,25 @@ class _HelpScreenState extends State<HelpScreen> {
                             ),
                           ],
                         ),
-                        if (_expanded == i) ...[
-                          const SizedBox(height: 10),
-                          Text(faq.$2,
-                              style: const TextStyle(
-                                  fontSize: 13, height: 1.5,
-                                  color: AppTheme.mutedForeground)),
-                        ],
+                        AnimatedSize(
+                          duration: TogoMotion.accordion,
+                          curve: TogoMotion.accordionCurve,
+                          alignment: Alignment.topLeft,
+                          clipBehavior: Clip.hardEdge,
+                          child: _expanded == i
+                              ? Padding(
+                                  padding: const EdgeInsets.only(top: 10),
+                                  child: Text(
+                                    faq.$2,
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      height: 1.5,
+                                      color: AppTheme.mutedForeground,
+                                    ),
+                                  ),
+                                )
+                              : const SizedBox.shrink(),
+                        ),
                       ],
                     ),
                   ),
@@ -670,7 +685,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        resizeToAvoidBottomInset: true,
+      resizeToAvoidBottomInset: true,
       backgroundColor: AppTheme.background,
       appBar: AppBar(
         title: const Text('Mes Commandes'),
@@ -688,8 +703,12 @@ class _OrdersScreenState extends State<OrdersScreen> {
               ),
               child: Row(
                 children: [
-                  Expanded(child: _TabPill('Achats', 0, _tab, (v) => setState(() => _tab = v))),
-                  Expanded(child: _TabPill('Ventes', 1, _tab, (v) => setState(() => _tab = v))),
+                  Expanded(
+                      child: _TabPill(
+                          'Achats', 0, _tab, (v) => setState(() => _tab = v))),
+                  Expanded(
+                      child: _TabPill(
+                          'Ventes', 1, _tab, (v) => setState(() => _tab = v))),
                 ],
               ),
             ),
@@ -796,7 +815,8 @@ class _TabPill extends StatelessWidget {
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w700,
-                color: current == index ? Colors.white : AppTheme.mutedForeground,
+                color:
+                    current == index ? Colors.white : AppTheme.mutedForeground,
               ),
             ),
           ),
@@ -804,7 +824,19 @@ class _TabPill extends StatelessWidget {
       );
 }
 
-// ── Dashboard Screen ──────────────────────────────────────────────────────────
+// ── Dashboard Screen (maquette « Mon espace vendeur ») ────────────────────────
+class _SellerMockColors {
+  static const Color background = Color(0xFFF9F9F9);
+  static const Color primaryOrange = Color(0xFFFF5722);
+  static const Color textGray = Color(0xFF707070);
+  static const Color editBg = Color(0xFFE8E4F3);
+  static const Color editIcon = Color(0xFF7C69AF);
+  static const Color deleteBg = Color(0xFFFCE8E8);
+  static const Color deleteIcon = Color(0xFFE53935);
+  static const Color chipBg = Color(0xFFEDEDED);
+  static const Color chipText = Color(0xFF5C5C5C);
+}
+
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
 
@@ -819,76 +851,228 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        resizeToAvoidBottomInset: true,
-      backgroundColor: AppTheme.background,
-      appBar: AppBar(
-        title: const Text('Espace Vendeur'),
-        automaticallyImplyLeading: false,
-      ),
-      body: Column(
-        children: [
-          // Tabs
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-            child: Container(
-              decoration: BoxDecoration(
-                color: AppTheme.muted,
-                borderRadius: BorderRadius.circular(16),
-              ),
+      resizeToAvoidBottomInset: true,
+      backgroundColor: _SellerMockColors.background,
+      body: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(8, 8, 16, 12),
               child: Row(
                 children: [
-                  for (final t in ['Articles', 'Ajouter', 'Commandes', 'Messages'])
-                    Expanded(
-                      child: GestureDetector(
-                        onTap: () {
-                          if (t == 'Ajouter') {
-                            Get.toNamed('/add-product');
-                          } else {
-                            setState(() => _tab = ['Articles', 'Ajouter', 'Commandes', 'Messages'].indexOf(t));
-                          }
-                        },
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          margin: const EdgeInsets.all(4),
-                          padding: const EdgeInsets.symmetric(vertical: 8),
-                          decoration: BoxDecoration(
-                            color: _tab == ['Articles', 'Ajouter', 'Commandes', 'Messages'].indexOf(t)
-                                ? AppTheme.primary
-                                : Colors.transparent,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Center(
-                            child: Text(
-                              t,
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                                color: _tab == ['Articles', 'Ajouter', 'Commandes', 'Messages'].indexOf(t)
-                                    ? Colors.white
-                                    : AppTheme.mutedForeground,
-                              ),
-                            ),
-                          ),
-                        ),
+                  _SellerBackButton(onPressed: () => Get.back()),
+                  const SizedBox(width: 10),
+                  const Expanded(
+                    child: Text(
+                      'Mon Espace Vendeur',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.black,
+                        letterSpacing: -0.3,
                       ),
                     ),
+                  ),
                 ],
               ),
             ),
-          ),
-          // Content
-          Expanded(
-            child: _tab == 0
-                ? _ArticlesTab(ctrl: _dashCtrl)
-                : _tab == 2
-                    ? _OrdersTab()
-                    : _tab == 3
-                        ? _MessagesTab()
-                        : const SizedBox.shrink(),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: _SellerTabBar(
+                selectedIndex: _tab,
+                onSelect: (i) {
+                  if (i == 1) {
+                    Navigator.of(context).push<void>(
+                      PageRouteBuilder<void>(
+                        settings: const RouteSettings(name: '/add-product'),
+                        fullscreenDialog: true,
+                        opaque: true,
+                        transitionDuration: const Duration(milliseconds: 400),
+                        reverseTransitionDuration:
+                            const Duration(milliseconds: 340),
+                        pageBuilder: (context, animation, secondaryAnimation) =>
+                            const AddProductScreen(),
+                        transitionsBuilder:
+                            (context, animation, secondaryAnimation, child) {
+                          final transition = TogoModalLiftTransition();
+                          return transition.buildTransition(
+                            context,
+                            Curves.easeOutCubic,
+                            null,
+                            animation,
+                            secondaryAnimation,
+                            child,
+                          );
+                        },
+                      ),
+                    );
+                    return;
+                  }
+                  setState(() => _tab = i);
+                },
+              ),
+            ),
+            const SizedBox(height: 14),
+            Expanded(
+              child: _tab == 0
+                  ? _ArticlesTab(ctrl: _dashCtrl)
+                  : _tab == 2
+                      ? _OrdersTab()
+                      : _tab == 3
+                          ? _MessagesTab()
+                          : const SizedBox.shrink(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SellerBackButton extends StatelessWidget {
+  final VoidCallback onPressed;
+
+  const _SellerBackButton({required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      customBorder: const CircleBorder(),
+      onTap: onPressed,
+      child: Ink(
+        width: 44,
+        height: 44,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 8,
+              spreadRadius: 0,
+              offset: Offset(0, 3),
+            ),
+          ],
+        ),
+        child: const Icon(Icons.arrow_back, size: 20, color: Colors.black),
+      ),
+    );
+  }
+}
+
+class _SellerTabBar extends StatelessWidget {
+  final int selectedIndex;
+  final ValueChanged<int> onSelect;
+
+  const _SellerTabBar({
+    required this.selectedIndex,
+    required this.onSelect,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(6),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.07),
+            blurRadius: 14,
+            offset: const Offset(0, 3),
           ),
         ],
       ),
-      bottomNavigationBar: const BottomNavBar(currentIndex: 2),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            _TabEntry(
+              label: 'Articles',
+              icon: Icons.grid_view_rounded,
+              selected: selectedIndex == 0,
+              onTap: () => onSelect(0),
+            ),
+            _TabEntry(
+              label: 'Ajouter',
+              icon: Icons.add,
+              selected: selectedIndex == 1,
+              onTap: () => onSelect(1),
+            ),
+            _TabEntry(
+              label: 'Commandes',
+              icon: Icons.inventory_2_outlined,
+              selected: selectedIndex == 2,
+              onTap: () => onSelect(2),
+            ),
+            _TabEntry(
+              label: 'Messages',
+              icon: Icons.chat_bubble_outline_rounded,
+              selected: selectedIndex == 3,
+              onTap: () => onSelect(3),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _TabEntry extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _TabEntry({
+    required this.label,
+    required this.icon,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ConstrainedBox(
+      constraints: const BoxConstraints(minWidth: 70),
+      child: GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOutCubic,
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          margin: const EdgeInsets.symmetric(horizontal: 2),
+          decoration: BoxDecoration(
+            color:
+                selected ? _SellerMockColors.primaryOrange : Colors.transparent,
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
+                size: 22,
+                color: selected ? Colors.white : _SellerMockColors.textGray,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: selected ? Colors.white : _SellerMockColors.textGray,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -898,60 +1082,179 @@ class _ArticlesTab extends StatelessWidget {
   const _ArticlesTab({required this.ctrl});
 
   @override
-  Widget build(BuildContext context) => Obx(() => ListView.separated(
-        padding: const EdgeInsets.all(16),
-        itemCount: ctrl.myProducts.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 10),
-        itemBuilder: (_, i) {
-          final p = ctrl.myProducts[i];
-          return Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: AppTheme.cardColor,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: AppTheme.shadowCard,
+  Widget build(BuildContext context) => Obx(() {
+        final n = ctrl.myProducts.length;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 16, 12),
+              child: Text(
+                '$n article${n > 1 ? 's' : ''} actif${n > 1 ? 's' : ''}',
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: _SellerMockColors.textGray,
+                ),
+              ),
             ),
-            child: Row(
+            Expanded(
+              child: ListView.separated(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
+                itemCount: ctrl.myProducts.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 14),
+                itemBuilder: (_, i) {
+                  final p = ctrl.myProducts[i];
+                  return _SellerProductCard(
+                    product: p,
+                    onEdit: () {},
+                    onDelete: () => ctrl.deleteProduct(p.id),
+                  );
+                },
+              ),
+            ),
+          ],
+        );
+      });
+}
+
+class _SellerProductCard extends StatelessWidget {
+  final Product product;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
+
+  const _SellerProductCard({
+    required this.product,
+    required this.onEdit,
+    required this.onDelete,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.07),
+            blurRadius: 14,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(18),
+            child: CachedNetworkImage(
+              imageUrl: product.image,
+              width: 72,
+              height: 72,
+              fit: BoxFit.cover,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
-                  child: CachedNetworkImage(
-                    imageUrl: p.image,
-                    width: 56,
-                    height: 56,
-                    fit: BoxFit.cover,
+                Text(
+                  product.title,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.black,
+                    height: 1.25,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  formatPrice(product.price),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: _SellerMockColors.primaryOrange,
                   ),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(p.title,
-                          style: const TextStyle(
-                              fontSize: 13, fontWeight: FontWeight.w600)),
-                      Text(formatPrice(p.price),
-                          style: const TextStyle(
-                              color: AppTheme.primary,
-                              fontWeight: FontWeight.w700)),
-                    ],
+                const SizedBox(height: 8),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: _SellerMockColors.chipBg,
+                    borderRadius: BorderRadius.circular(20),
                   ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.edit_outlined,
-                      size: 18, color: AppTheme.primary),
-                  onPressed: () {},
-                ),
-                IconButton(
-                  icon: const Icon(Icons.delete_outline,
-                      size: 18, color: AppTheme.destructive),
-                  onPressed: () => ctrl.deleteProduct(p.id),
+                  child: Text(
+                    product.condition,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: _SellerMockColors.chipText,
+                    ),
+                  ),
                 ),
               ],
             ),
-          );
-        },
-      ));
+          ),
+          const SizedBox(width: 8),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _RoundIconButton(
+                background: _SellerMockColors.editBg,
+                iconColor: _SellerMockColors.editIcon,
+                icon: Icons.edit_outlined,
+                onTap: onEdit,
+              ),
+              const SizedBox(width: 10),
+              _RoundIconButton(
+                background: _SellerMockColors.deleteBg,
+                iconColor: _SellerMockColors.deleteIcon,
+                icon: Icons.delete_outline_rounded,
+                onTap: onDelete,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RoundIconButton extends StatelessWidget {
+  final Color background;
+  final Color iconColor;
+  final IconData icon;
+  final VoidCallback onTap;
+
+  const _RoundIconButton({
+    required this.background,
+    required this.iconColor,
+    required this.icon,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: background,
+      shape: const CircleBorder(),
+      child: InkWell(
+        customBorder: const CircleBorder(),
+        onTap: onTap,
+        child: SizedBox(
+          width: 40,
+          height: 40,
+          child: Icon(icon, size: 20, color: iconColor),
+        ),
+      ),
+    );
+  }
 }
 
 class _OrdersTab extends StatelessWidget {
@@ -1072,8 +1375,7 @@ class _MessagesTab extends StatelessWidget {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
-                                fontSize: 12,
-                                color: AppTheme.mutedForeground)),
+                                fontSize: 12, color: AppTheme.mutedForeground)),
                       ],
                     ),
                   ),
@@ -1104,379 +1406,389 @@ class _AddProductScreenState extends State<AddProductScreen> {
   final Set<String> _selectedZones = {};
 
   final _zones = [
-    'Tokoin', 'Avépozo', 'Adidogomé', 'Bè', 'Kégué',
-    'Nyékonakpoè', 'Agbalépédo', 'Amadahomé', 'Agoè', 'Legbassito',
+    'Tokoin',
+    'Avépozo',
+    'Adidogomé',
+    'Bè',
+    'Kégué',
+    'Nyékonakpoè',
+    'Agbalépédo',
+    'Amadahomé',
+    'Agoè',
+    'Legbassito',
   ];
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-        resizeToAvoidBottomInset: true,
-      backgroundColor: AppTheme.background,
-      appBar: AppBar(
-        title: const Text('Ajouter un produit'),
-        leading: const BackButton(),
-        actions: [
-          TextButton(
-            onPressed: () {},
-            child: const Text('Brouillons',
-                style: TextStyle(color: AppTheme.mutedForeground)),
-          ),
-        ],
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.dark,
+        systemNavigationBarColor: AppTheme.background,
+        systemNavigationBarIconBrightness: Brightness.dark,
+        systemNavigationBarDividerColor: Colors.transparent,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Photos
-            const Text('Photos',
-                style:
-                    TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
-            const SizedBox(height: 10),
-            GridView.count(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              crossAxisCount: 3,
-              mainAxisSpacing: 8,
-              crossAxisSpacing: 8,
-              children: [
-                Container(
-                  decoration: BoxDecoration(
-                    color: AppTheme.primaryLight,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                        color: AppTheme.primary, style: BorderStyle.solid),
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.camera_alt_outlined,
-                          color: AppTheme.primary),
-                      const Text('1/5',
-                          style: TextStyle(
-                              fontSize: 11, color: AppTheme.primary)),
-                    ],
-                  ),
-                ),
-                ...List.generate(
-                  4,
-                  (_) => Container(
+      child: Scaffold(
+        resizeToAvoidBottomInset: true,
+        backgroundColor: AppTheme.background,
+        appBar: AppBar(
+          title: const Text('Ajouter un produit'),
+          leading: const BackButton(),
+          actions: [
+            TextButton(
+              onPressed: () {},
+              child: const Text('Brouillons',
+                  style: TextStyle(color: AppTheme.mutedForeground)),
+            ),
+          ],
+        ),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Photos
+              const Text('Photos',
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+              const SizedBox(height: 10),
+              GridView.count(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                crossAxisCount: 3,
+                mainAxisSpacing: 8,
+                crossAxisSpacing: 8,
+                children: [
+                  Container(
                     decoration: BoxDecoration(
-                      color: AppTheme.muted,
+                      color: AppTheme.primaryLight,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppTheme.border, style: BorderStyle.solid),
+                      border: Border.all(
+                          color: AppTheme.primary, style: BorderStyle.solid),
                     ),
-                    child: const Icon(Icons.add,
-                        color: AppTheme.mutedForeground),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            // Title
-            const Text('Titre',
-                style:
-                    TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-            const SizedBox(height: 8),
-            const TextField(
-              decoration: InputDecoration(hintText: 'Ex: iPhone 13 128GB'),
-            ),
-            const SizedBox(height: 16),
-            // Price + Category
-            Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text('Prix (FCFA)',
-                          style: TextStyle(
-                              fontSize: 14, fontWeight: FontWeight.w600)),
-                      const SizedBox(height: 8),
-                      const TextField(
-                        keyboardType: TextInputType.number,
-                        decoration:
-                            InputDecoration(hintText: '0'),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text('Catégorie',
-                          style: TextStyle(
-                              fontSize: 14, fontWeight: FontWeight.w600)),
-                      const SizedBox(height: 8),
-                      Container(
-                        padding:
-                            const EdgeInsets.symmetric(horizontal: 12),
-                        decoration: BoxDecoration(
-                          border: Border.all(color: AppTheme.border),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: DropdownButtonHideUnderline(
-                          child: DropdownButton<String>(
-                            value: _category,
-                            isExpanded: true,
-                            items: mockCategories
-                                .where((c) => c.id != 'all')
-                                .map((c) => DropdownMenuItem(
-                                      value: c.id,
-                                      child: Text(
-                                        '${c.emoji} ${c.label}',
-                                        style: const TextStyle(fontSize: 12),
-                                      ),
-                                    ))
-                                .toList(),
-                            onChanged: (v) =>
-                                setState(() => _category = v!),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            // Price type toggle
-            const Text('Type de prix',
-                style:
-                    TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                for (final t in [('Fixe', '⚡'), ('Négociable', '🤝')])
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () => setState(() => _priceType = t.$1),
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        margin: EdgeInsets.only(right: t.$1 == 'Fixe' ? 6 : 0),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        decoration: BoxDecoration(
-                          color: _priceType == t.$1
-                              ? AppTheme.primaryLight
-                              : AppTheme.cardColor,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: _priceType == t.$1
-                                ? AppTheme.primary
-                                : AppTheme.border,
-                            width: _priceType == t.$1 ? 2 : 1,
-                          ),
-                        ),
-                        child: Center(
-                          child: Text(
-                            '${t.$2} ${t.$1}',
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.camera_alt_outlined,
+                            color: AppTheme.primary),
+                        const Text('1/5',
                             style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
+                                fontSize: 11, color: AppTheme.primary)),
+                      ],
+                    ),
+                  ),
+                  ...List.generate(
+                    4,
+                    (_) => Container(
+                      decoration: BoxDecoration(
+                        color: AppTheme.muted,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                            color: AppTheme.border, style: BorderStyle.solid),
+                      ),
+                      child: const Icon(Icons.add,
+                          color: AppTheme.mutedForeground),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              // Title
+              const Text('Titre',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+              const SizedBox(height: 8),
+              const TextField(
+                decoration: InputDecoration(hintText: 'Ex: iPhone 13 128GB '),
+              ),
+              const SizedBox(height: 16),
+              // Price + Category
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Prix (FCFA)',
+                            style: TextStyle(
+                                fontSize: 14, fontWeight: FontWeight.w600)),
+                        const SizedBox(height: 8),
+                        const TextField(
+                          keyboardType: TextInputType.number,
+                          decoration: InputDecoration(hintText: '0'),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Catégorie',
+                            style: TextStyle(
+                                fontSize: 14, fontWeight: FontWeight.w600)),
+                        const SizedBox(height: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: AppTheme.border),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<String>(
+                              value: _category,
+                              isExpanded: true,
+                              items: mockCategories
+                                  .where((c) => c.id != 'all')
+                                  .map((c) => DropdownMenuItem(
+                                        value: c.id,
+                                        child: Text(
+                                          '${c.emoji} ${c.label}',
+                                          style: const TextStyle(fontSize: 12),
+                                        ),
+                                      ))
+                                  .toList(),
+                              onChanged: (v) => setState(() => _category = v!),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              // Price type toggle
+              const Text('Type de prix',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  for (final t in [('Fixe', '⚡'), ('Négociable', '🤝')])
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () => setState(() => _priceType = t.$1),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          margin:
+                              EdgeInsets.only(right: t.$1 == 'Fixe' ? 6 : 0),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          decoration: BoxDecoration(
+                            color: _priceType == t.$1
+                                ? AppTheme.primaryLight
+                                : AppTheme.cardColor,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
                               color: _priceType == t.$1
                                   ? AppTheme.primary
-                                  : AppTheme.foreground,
+                                  : AppTheme.border,
+                              width: _priceType == t.$1 ? 2 : 1,
                             ),
                           ),
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            // Condition
-            const Text('État',
-                style:
-                    TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                for (final c in ['Neuf', 'Occasion'])
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () => setState(() => _condition = c),
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        margin: EdgeInsets.only(right: c == 'Neuf' ? 6 : 0),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        decoration: BoxDecoration(
-                          color: _condition == c
-                              ? AppTheme.primaryLight
-                              : AppTheme.cardColor,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: _condition == c
-                                ? AppTheme.primary
-                                : AppTheme.border,
-                            width: _condition == c ? 2 : 1,
-                          ),
-                        ),
-                        child: Center(
-                          child: Text(
-                            c,
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: _condition == c
-                                  ? AppTheme.primary
-                                  : AppTheme.foreground,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            // Description
-            const Text('Description',
-                style:
-                    TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-            const SizedBox(height: 8),
-            TextField(
-              maxLines: 4,
-              decoration: const InputDecoration(
-                hintText: 'Décrivez votre produit en détail...',
-              ),
-            ),
-            const SizedBox(height: 16),
-            // Zones
-            GestureDetector(
-              onTap: () => setState(() => _showZones = !_showZones),
-              child: Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: AppTheme.cardColor,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppTheme.border),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.location_on_outlined,
-                        color: AppTheme.primary),
-                    const SizedBox(width: 10),
-                    const Expanded(
-                      child: Text('Zones de vente',
-                          style: TextStyle(
-                              fontSize: 14, fontWeight: FontWeight.w600)),
-                    ),
-                    Icon(
-                      _showZones
-                          ? Icons.keyboard_arrow_up
-                          : Icons.keyboard_arrow_down,
-                      color: AppTheme.mutedForeground,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            if (_showZones) ...[
-              const SizedBox(height: 8),
-              GestureDetector(
-                onTap: () {
-                  if (_selectedZones.length == _zones.length) {
-                    setState(() => _selectedZones.clear());
-                  } else {
-                    setState(() => _selectedZones.addAll(_zones));
-                  }
-                },
-                child: Text(
-                  _selectedZones.length == _zones.length
-                      ? 'Tout désélectionner'
-                      : 'Tout sélectionner',
-                  style: const TextStyle(
-                      color: AppTheme.primary,
-                      fontWeight: FontWeight.w600),
-                ),
-              ),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: _zones
-                    .map((z) => GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              if (_selectedZones.contains(z)) {
-                                _selectedZones.remove(z);
-                              } else {
-                                _selectedZones.add(z);
-                              }
-                            });
-                          },
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 200),
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: _selectedZones.contains(z)
-                                  ? AppTheme.primary
-                                  : AppTheme.cardColor,
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(
-                                color: _selectedZones.contains(z)
+                          child: Center(
+                            child: Text(
+                              '${t.$2} ${t.$1}',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: _priceType == t.$1
                                     ? AppTheme.primary
-                                    : AppTheme.border,
+                                    : AppTheme.foreground,
                               ),
                             ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                if (_selectedZones.contains(z))
-                                  const Icon(Icons.check,
-                                      size: 12, color: Colors.white),
-                                if (_selectedZones.contains(z))
-                                  const SizedBox(width: 4),
-                                Text(
-                                  z,
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                    color: _selectedZones.contains(z)
-                                        ? Colors.white
-                                        : AppTheme.foreground,
-                                  ),
-                                ),
-                              ],
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              // Condition
+              const Text('État',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  for (final c in ['Neuf', 'Occasion'])
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () => setState(() => _condition = c),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          margin: EdgeInsets.only(right: c == 'Neuf' ? 6 : 0),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          decoration: BoxDecoration(
+                            color: _condition == c
+                                ? AppTheme.primaryLight
+                                : AppTheme.cardColor,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: _condition == c
+                                  ? AppTheme.primary
+                                  : AppTheme.border,
+                              width: _condition == c ? 2 : 1,
                             ),
                           ),
-                        ))
-                    .toList(),
+                          child: Center(
+                            child: Text(
+                              c,
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: _condition == c
+                                    ? AppTheme.primary
+                                    : AppTheme.foreground,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              // Description
+              const Text('Description',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+              const SizedBox(height: 8),
+              TextField(
+                maxLines: 4,
+                decoration: const InputDecoration(
+                  hintText: 'Décrivez votre produit en détail...',
+                ),
+              ),
+              const SizedBox(height: 16),
+              // Zones
+              GestureDetector(
+                onTap: () => setState(() => _showZones = !_showZones),
+                child: Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: AppTheme.cardColor,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: AppTheme.border),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.location_on_outlined,
+                          color: AppTheme.primary),
+                      const SizedBox(width: 10),
+                      const Expanded(
+                        child: Text('Zones de vente',
+                            style: TextStyle(
+                                fontSize: 14, fontWeight: FontWeight.w600)),
+                      ),
+                      Icon(
+                        _showZones
+                            ? Icons.keyboard_arrow_up
+                            : Icons.keyboard_arrow_down,
+                        color: AppTheme.mutedForeground,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              if (_showZones) ...[
+                const SizedBox(height: 8),
+                GestureDetector(
+                  onTap: () {
+                    if (_selectedZones.length == _zones.length) {
+                      setState(() => _selectedZones.clear());
+                    } else {
+                      setState(() => _selectedZones.addAll(_zones));
+                    }
+                  },
+                  child: Text(
+                    _selectedZones.length == _zones.length
+                        ? 'Tout désélectionner'
+                        : 'Tout sélectionner',
+                    style: const TextStyle(
+                        color: AppTheme.primary, fontWeight: FontWeight.w600),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: _zones
+                      .map((z) => GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                if (_selectedZones.contains(z)) {
+                                  _selectedZones.remove(z);
+                                } else {
+                                  _selectedZones.add(z);
+                                }
+                              });
+                            },
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: _selectedZones.contains(z)
+                                    ? AppTheme.primary
+                                    : AppTheme.cardColor,
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: _selectedZones.contains(z)
+                                      ? AppTheme.primary
+                                      : AppTheme.border,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  if (_selectedZones.contains(z))
+                                    const Icon(Icons.check,
+                                        size: 12, color: Colors.white),
+                                  if (_selectedZones.contains(z))
+                                    const SizedBox(width: 4),
+                                  Text(
+                                    z,
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: _selectedZones.contains(z)
+                                          ? Colors.white
+                                          : AppTheme.foreground,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ))
+                      .toList(),
+                ),
+              ],
+              const SizedBox(height: 90),
+            ],
+          ),
+        ),
+        bottomNavigationBar: Container(
+          padding: EdgeInsets.fromLTRB(
+              16, 12, 16, MediaQuery.of(context).padding.bottom + 12),
+          decoration: BoxDecoration(
+            color: AppTheme.cardColor,
+            boxShadow: AppTheme.shadowCardLg,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'En publiant, vous acceptez nos Conditions d\'utilisation',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 11, color: AppTheme.mutedForeground),
+              ),
+              const SizedBox(height: 10),
+              AppButton(
+                label: 'Publier l\'annonce',
+                onTap: () {
+                  Navigator.of(context).maybePop();
+                },
+                icon: Icons.upload_outlined,
               ),
             ],
-            const SizedBox(height: 90),
-          ],
-        ),
-      ),
-      bottomNavigationBar: Container(
-        padding: EdgeInsets.fromLTRB(
-            16, 12, 16, MediaQuery.of(context).padding.bottom + 12),
-        decoration: BoxDecoration(
-          color: AppTheme.cardColor,
-          boxShadow: AppTheme.shadowCardLg,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-              'En publiant, vous acceptez nos Conditions d\'utilisation',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 11, color: AppTheme.mutedForeground),
-            ),
-            const SizedBox(height: 10),
-            AppButton(
-              label: 'Publier l\'annonce',
-              onTap: () {
-                Get.back();
-              },
-              icon: Icons.upload_outlined,
-            ),
-          ],
+          ),
         ),
       ),
     );

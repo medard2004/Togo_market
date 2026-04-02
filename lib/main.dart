@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 
 import 'theme/app_theme.dart';
 import 'controllers/app_controller.dart';
+import 'navigation/app_transitions.dart';
 
 // Screens
 import 'screens/splash/splash_screen.dart';
@@ -50,31 +51,30 @@ class TogoMarketApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.theme,
       initialRoute: '/splash',
-      defaultTransition: Transition.cupertino,
-      transitionDuration: const Duration(milliseconds: 280),
+      transitionDuration: const Duration(milliseconds: 300),
       getPages: [
-        GetPage(name: '/splash', page: () => const SplashScreen()),
-        GetPage(name: '/onboarding', page: () => const OnboardingScreen()),
-        GetPage(name: '/auth', page: () => const AuthScreen()),
-        GetPage(name: '/home', page: () => const HomeScreen()),
-        GetPage(name: '/search', page: () => const SearchScreen()),
-        GetPage(
-          name: '/product/:id',
-          page: () => const ProductDetailScreen(),
-        ),
-        GetPage(name: '/chat/:id', page: () => const ChatScreen()),
-        GetPage(name: '/messages', page: () => const MessagesScreen()),
-        GetPage(name: '/order', page: () => const OrderScreen()),
-        GetPage(name: '/seller/:id', page: () => const SellerScreen()),
-        GetPage(name: '/dashboard', page: () => const DashboardScreen()),
-        GetPage(name: '/add-product', page: () => const AddProductScreen()),
-        GetPage(
-            name: '/notifications', page: () => const NotificationsScreen()),
-        GetPage(name: '/profile', page: () => const ProfileScreen()),
-        GetPage(name: '/settings', page: () => const SettingsScreen()),
-        GetPage(name: '/favorites', page: () => const FavoritesScreen()),
-        GetPage(name: '/orders', page: () => const OrdersScreen()),
-        GetPage(name: '/help', page: () => const HelpScreen()),
+        togoPage('/splash', () => const SplashScreen(),
+            style: TogoRouteStyle.softFade),
+        togoPage('/onboarding', () => const OnboardingScreen(),
+            style: TogoRouteStyle.softFade),
+        togoPage('/auth', () => const AuthScreen(),
+            style: TogoRouteStyle.softFade),
+        togoPage('/home', () => const HomeScreen()),
+        togoPage('/search', () => const SearchScreen()),
+        togoPage('/product/:id', () => const ProductDetailScreen()),
+        togoPage('/chat/:id', () => const ChatScreen()),
+        togoPage('/messages', () => const MessagesScreen()),
+        togoPage('/order', () => const OrderScreen()),
+        togoPage('/seller/:id', () => const SellerScreen()),
+        togoPage('/dashboard', () => const DashboardScreen()),
+        togoPage('/add-product', () => const AddProductScreen(),
+            style: TogoRouteStyle.modalLift),
+        togoPage('/notifications', () => const NotificationsScreen()),
+        togoPage('/profile', () => const ProfileScreen()),
+        togoPage('/settings', () => const SettingsScreen()),
+        togoPage('/favorites', () => const FavoritesScreen()),
+        togoPage('/orders', () => const OrdersScreen()),
+        togoPage('/help', () => const HelpScreen()),
       ],
     );
   }

@@ -171,6 +171,46 @@ final List<Product> mockProducts = [
   ),
 ];
 
+/// Liste affichée dans « Mon espace vendeur » (alignée sur la maquette).
+final List<Product> sellerDashboardProducts = [
+  Product(
+    id: 'sd1',
+    title: 'iPhone 13 Pro Max 256Go',
+    price: 350000,
+    location: 'Tokoin, Lomé',
+    image:
+        'https://images.unsplash.com/photo-1632661674596-df8be070a5c5?w=400&h=400&fit=crop',
+    category: 'electronique',
+    condition: 'Occasion',
+    description: '',
+    sellerId: 's1',
+  ),
+  Product(
+    id: 'sd2',
+    title: 'Canapé 3 places cuir',
+    price: 85000,
+    location: 'Bè, Lomé',
+    image:
+        'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400&h=400&fit=crop',
+    category: 'maison',
+    condition: 'Occasion',
+    description: '',
+    sellerId: 's1',
+  ),
+  Product(
+    id: 'sd3',
+    title: 'Laptop HP EliteBook',
+    price: 220000,
+    location: 'Tokoin, Lomé',
+    image:
+        'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=400&h=400&fit=crop',
+    category: 'electronique',
+    condition: 'Occasion',
+    description: '',
+    sellerId: 's1',
+  ),
+];
+
 // ── Conversations ─────────────────────────────────────────────────────────────
 final List<Conversation> mockConversations = [
   Conversation(

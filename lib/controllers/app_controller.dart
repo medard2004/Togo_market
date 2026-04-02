@@ -144,8 +144,7 @@ class DashboardController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    // Simulate "my products" as seller s1
-    myProducts.assignAll(mockProducts.where((p) => p.sellerId == 's1'));
+    myProducts.assignAll(sellerDashboardProducts);
   }
 
   void deleteProduct(String productId) {
