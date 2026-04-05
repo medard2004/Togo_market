@@ -11,7 +11,7 @@ class BottomNavBar extends StatelessWidget {
   static const _items = [
     _NavItem(icon: Icons.home_outlined,      label: 'Accueil',  route: '/home'),
     _NavItem(icon: Icons.search,             label: 'Chercher', route: '/search'),
-    _NavItem(icon: Icons.add,                label: 'Vendre',   route: '/dashboard'),
+    _NavItem(icon: Icons.add,                label: 'Vendre',   route: '/store-settings'),
     _NavItem(icon: Icons.chat_bubble_outline,label: 'Chat',     route: '/messages'),
     _NavItem(icon: Icons.person_outline,     label: 'Profil',   route: '/profile'),
   ];

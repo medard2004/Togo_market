@@ -67,6 +67,7 @@ class TogoMarketApp extends StatelessWidget {
         togoPage('/order', () => const OrderScreen()),
         togoPage('/seller/:id', () => const SellerScreen()),
         togoPage('/dashboard', () => const DashboardScreen()),
+        togoPage('/store-settings', () => const StoreSettingsScreen()),
         togoPage('/add-product', () => const AddProductScreen(),
             style: TogoRouteStyle.modalLift),
         togoPage('/notifications', () => const NotificationsScreen()),

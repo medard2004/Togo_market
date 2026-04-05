@@ -8,8 +8,6 @@ import '../../widgets/bottom_nav.dart';
 import '../../widgets/common_widgets.dart';
 import '../../controllers/app_controller.dart';
 import '../../data/mock_data.dart';
-import '../../models/models.dart';
-import '../../navigation/app_transitions.dart';
 import '../../animations/togo_animation_system.dart';
 
 // ── Profile Screen ────────────────────────────────────────────────────────────
@@ -127,7 +125,7 @@ class ProfileScreen extends StatelessWidget {
                   color: AppTheme.cardColor,
                   borderRadius: BorderRadius.circular(16),
                   border:
-                      Border.all(color: AppTheme.destructive.withOpacity(0.3)),
+                      Border.all(color: AppTheme.destructive.withValues(alpha: 0.3)),
                 ),
                 child: const Center(
                   child: Text(
@@ -261,7 +259,7 @@ class NotificationsScreen extends StatelessWidget {
               borderRadius: BorderRadius.circular(16),
               border: notif.isRead
                   ? Border.all(color: AppTheme.border)
-                  : Border.all(color: AppTheme.primary.withOpacity(0.2)),
+                  : Border.all(color: AppTheme.primary.withValues(alpha: 0.2)),
             ),
             child: Row(
               children: [
@@ -269,7 +267,7 @@ class NotificationsScreen extends StatelessWidget {
                   width: 42,
                   height: 42,
                   decoration: BoxDecoration(
-                    color: iconColor.withOpacity(0.1),
+                    color: iconColor.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(icon, color: iconColor, size: 20),
@@ -458,10 +456,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
               child: Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: AppTheme.destructive.withOpacity(0.05),
+                  color: AppTheme.destructive.withValues(alpha: 0.05),
                   borderRadius: BorderRadius.circular(16),
                   border:
-                      Border.all(color: AppTheme.destructive.withOpacity(0.2)),
+                      Border.all(color: AppTheme.destructive.withValues(alpha: 0.2)),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -470,7 +468,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       width: 36,
                       height: 36,
                       decoration: BoxDecoration(
-                        color: AppTheme.destructive.withOpacity(0.1),
+                        color: AppTheme.destructive.withValues(alpha: 0.1),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(Icons.logout,
@@ -757,8 +755,8 @@ class _OrdersScreenState extends State<OrdersScreen> {
                                   horizontal: 8, vertical: 3),
                               decoration: BoxDecoration(
                                 color: i == 0
-                                    ? Colors.amber.withOpacity(0.15)
-                                    : Colors.green.withOpacity(0.15),
+                                    ? Colors.amber.withValues(alpha: 0.15)
+                                    : Colors.green.withValues(alpha: 0.15),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(
@@ -824,19 +822,356 @@ class _TabPill extends StatelessWidget {
       );
 }
 
-// ── Dashboard Screen (maquette « Mon espace vendeur ») ────────────────────────
-class _SellerMockColors {
-  static const Color background = Color(0xFFF9F9F9);
-  static const Color primaryOrange = Color(0xFFFF5722);
-  static const Color textGray = Color(0xFF707070);
-  static const Color editBg = Color(0xFFE8E4F3);
-  static const Color editIcon = Color(0xFF7C69AF);
-  static const Color deleteBg = Color(0xFFFCE8E8);
-  static const Color deleteIcon = Color(0xFFE53935);
-  static const Color chipBg = Color(0xFFEDEDED);
-  static const Color chipText = Color(0xFF5C5C5C);
+// ── Store Settings Screen (Paramètres boutique) ───────────────────────────────
+class StoreSettingsScreen extends StatefulWidget {
+  const StoreSettingsScreen({super.key});
+
+  @override
+  State<StoreSettingsScreen> createState() => _StoreSettingsScreenState();
 }
 
+class _StoreSettingsScreenState extends State<StoreSettingsScreen> {
+  bool _notifOrders = true;
+  bool _notifMessages = true;
+  bool _notifPromo = false;
+  bool _vacationMode = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppTheme.background,
+      appBar: AppBar(
+        title: const Text('Paramètres boutique'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        centerTitle: true,
+        leading: BackButton(onPressed: () => Get.back()),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── Shop Card (Header) ──────────────────────────────────────────
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(32),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.04),
+                    blurRadius: 24,
+                    offset: const Offset(0, 8),
+                  )
+                ],
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 72,
+                        height: 72,
+                        decoration: BoxDecoration(
+                          color: AppTheme.primary.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                        child: const Icon(Icons.storefront,
+                            color: AppTheme.primary, size: 36),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Kofi Tech Shop',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w800,
+                                color: AppTheme.foreground,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Row(
+                              children: const [
+                                Icon(Icons.location_on_outlined,
+                                    size: 14, color: AppTheme.mutedForeground),
+                                Text(' Tokoin, Lomé',
+                                    style: TextStyle(
+                                        fontSize: 13,
+                                        color: AppTheme.mutedForeground)),
+                              ],
+                            ),
+                            const SizedBox(height: 6),
+                            Row(
+                              children: [
+                                Row(
+                                  children: const [
+                                    Icon(Icons.star,
+                                        size: 16, color: Colors.orange),
+                                    Text(' 4.8',
+                                        style: TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w700,
+                                            color: Colors.orange)),
+                                  ],
+                                ),
+                                const SizedBox(width: 8),
+                                const Text('•',
+                                    style: TextStyle(
+                                        color: AppTheme.mutedForeground)),
+                                const SizedBox(width: 8),
+                                const Text('3 articles',
+                                    style: TextStyle(
+                                        fontSize: 13,
+                                        color: AppTheme.mutedForeground,
+                                        fontWeight: FontWeight.w500)),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 20),
+                    child: Divider(height: 1),
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      _buildStatItem('3', 'Articles'),
+                      _buildStatItem('24', 'Vues/Jour'),
+                      _buildStatItem('98%', 'Réponse'),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 32),
+
+            // ── Sections ────────────────────────────────────────────────────
+            _buildSectionHeader('MA BOUTIQUE'),
+            _buildSettingsContainer([
+              _buildSettingTile(Icons.storefront_outlined, 'Informations de la boutique',
+                  subtitle: 'Nom, description, logo'),
+              _buildSettingTile(Icons.location_on_outlined, 'Zones de couverture',
+                  subtitle: 'Tokoin, Adidogomé'),
+              _buildSettingTile(Icons.access_time_outlined, 'Horaires d\'ouverture',
+                  subtitle: '08h - 18h, Lun-Sam'),
+              _buildSettingTile(Icons.category_outlined, 'Catégories de produits',
+                  subtitle: 'Électronique', isLast: true),
+            ]),
+
+            const SizedBox(height: 24),
+            _buildSectionHeader('NOTIFICATIONS'),
+            _buildSettingsContainer([
+              _buildSwitchTile(Icons.shopping_bag_outlined, 'Nouvelles commandes',
+                  _notifOrders, (v) => setState(() => _notifOrders = v)),
+              _buildSwitchTile(Icons.people_outline, 'Messages clients',
+                  _notifMessages, (v) => setState(() => _notifMessages = v)),
+              _buildSwitchTile(Icons.star_outline, 'Promotions & conseils',
+                  _notifPromo, (v) => setState(() => _notifPromo = v),
+                  isLast: true),
+            ]),
+
+            const SizedBox(height: 24),
+            _buildSectionHeader('GESTION'),
+            _buildSettingsContainer([
+              _buildSwitchTile(Icons.pause_circle_outline, 'Mode vacances',
+                  _vacationMode, (v) => setState(() => _vacationMode = v),
+                  subtitle: 'Masque temporairement votre boutique'),
+              _buildSettingTile(Icons.shield_outlined, 'Politique de retour',
+                  subtitle: 'Non configurée'),
+              _buildSettingTile(Icons.bar_chart_outlined, 'Statistiques détaillées',
+                  subtitle: 'Vues, ventes, performances', isLast: true),
+            ]),
+
+            const SizedBox(height: 24),
+            _buildSectionHeader('AIDE'),
+            _buildSettingsContainer([
+              _buildSettingTile(Icons.help_outline, 'Centre d\'aide vendeur',
+                  subtitle: 'FAQ, guides, contact support', isLast: true),
+            ]),
+
+            const SizedBox(height: 40),
+            TogoPressableScale(
+              onTap: () {},
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 18),
+                decoration: BoxDecoration(
+                  color: AppTheme.destructive.withValues(alpha: 0.05),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: const [
+                    Icon(Icons.logout, color: AppTheme.destructive, size: 20),
+                    SizedBox(width: 8),
+                    Text(
+                      'Désactiver ma boutique',
+                      style: TextStyle(
+                        color: AppTheme.destructive,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 40),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatItem(String val, String label) {
+    return Column(
+      children: [
+        Text(val,
+            style: const TextStyle(
+                fontSize: 20, fontWeight: FontWeight.w800, color: AppTheme.primary)),
+        const SizedBox(height: 4),
+        Text(label,
+            style: const TextStyle(fontSize: 12, color: AppTheme.mutedForeground)),
+      ],
+    );
+  }
+
+  Widget _buildSectionHeader(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 4, bottom: 12),
+      child: Text(
+        title,
+        style: const TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w800,
+          color: AppTheme.mutedForeground,
+          letterSpacing: 0.5,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSettingsContainer(List<Widget> children) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          )
+        ],
+      ),
+      child: Column(children: children),
+    );
+  }
+
+  Widget _buildSettingTile(IconData icon, String title,
+      {String? subtitle, bool isLast = false}) {
+    return TogoPressableScale(
+      onTap: () {},
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primary.withValues(alpha: 0.06),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(icon, color: AppTheme.primary, size: 20),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(title,
+                          style: const TextStyle(
+                              fontSize: 15, fontWeight: FontWeight.w700)),
+                      if (subtitle != null)
+                        Text(subtitle,
+                            style: const TextStyle(
+                                fontSize: 13, color: AppTheme.mutedForeground)),
+                    ],
+                  ),
+                ),
+                const Icon(Icons.chevron_right, color: AppTheme.mutedForeground, size: 20),
+              ],
+            ),
+          ),
+          if (!isLast)
+            const Padding(
+              padding: EdgeInsets.only(left: 64),
+              child: Divider(height: 1),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSwitchTile(IconData icon, String title, bool value, Function(bool) onChanged,
+      {String? subtitle, bool isLast = false}) {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppTheme.primary.withValues(alpha: 0.06),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, color: AppTheme.primary, size: 20),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title,
+                        style: const TextStyle(
+                            fontSize: 15, fontWeight: FontWeight.w700)),
+                    if (subtitle != null)
+                      Text(subtitle,
+                          style: const TextStyle(
+                              fontSize: 13, color: AppTheme.mutedForeground)),
+                  ],
+                ),
+              ),
+              Switch.adaptive(
+                value: value,
+                onChanged: onChanged,
+                activeColor: AppTheme.primary,
+              ),
+            ],
+          ),
+        ),
+        if (!isLast)
+          const Padding(
+            padding: EdgeInsets.only(left: 64),
+            child: Divider(height: 1),
+          ),
+      ],
+    );
+  }
+}
+
+// ── Dashboard Screen (maquette « Mon espace vendeur ») ────────────────────────
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
 
@@ -845,228 +1180,235 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  int _tab = 0;
-  final _dashCtrl = Get.put(DashboardController());
+  int _tabIndex = 0; // 0: Articles, 1: Commandes, 2: Messages
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      resizeToAvoidBottomInset: true,
-      backgroundColor: _SellerMockColors.background,
+      backgroundColor: AppTheme.background,
       body: SafeArea(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            // ── Header ──────────────────────────────────────────────────────
             Padding(
-              padding: const EdgeInsets.fromLTRB(8, 8, 16, 12),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  _SellerBackButton(onPressed: () => Get.back()),
-                  const SizedBox(width: 10),
-                  const Expanded(
-                    child: Text(
-                      'Mon Espace Vendeur',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.black,
-                        letterSpacing: -0.3,
-                      ),
+                   _buildCircleBtn(
+                    Icons.arrow_back,
+                    Colors.black,
+                    Colors.white,
+                    onTap: () => Get.back(),
+                  ),
+                  const Text(
+                    'Mon Espace Vendeur',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                      color: AppTheme.foreground,
                     ),
+                  ),
+                  _buildCircleBtn(
+                    Icons.settings_outlined,
+                    AppTheme.primary,
+                    AppTheme.primaryLight,
+                    onTap: () => Get.toNamed('/store-settings'),
                   ),
                 ],
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: _SellerTabBar(
-                selectedIndex: _tab,
-                onSelect: (i) {
-                  if (i == 1) {
-                    Navigator.of(context).push<void>(
-                      PageRouteBuilder<void>(
-                        settings: const RouteSettings(name: '/add-product'),
-                        fullscreenDialog: true,
-                        opaque: true,
-                        transitionDuration: const Duration(milliseconds: 400),
-                        reverseTransitionDuration:
-                            const Duration(milliseconds: 340),
-                        pageBuilder: (context, animation, secondaryAnimation) =>
-                            const AddProductScreen(),
-                        transitionsBuilder:
-                            (context, animation, secondaryAnimation, child) {
-                          final transition = TogoModalLiftTransition();
-                          return transition.buildTransition(
-                            context,
-                            Curves.easeOutCubic,
-                            null,
-                            animation,
-                            secondaryAnimation,
-                            child,
-                          );
-                        },
-                      ),
-                    );
-                    return;
-                  }
-                  setState(() => _tab = i);
-                },
-              ),
-            ),
-            const SizedBox(height: 14),
+
             Expanded(
-              child: _tab == 0
-                  ? _ArticlesTab(ctrl: _dashCtrl)
-                  : _tab == 2
-                      ? _OrdersTab()
-                      : _tab == 3
-                          ? _MessagesTab()
-                          : const SizedBox.shrink(),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // ── Shop Card ──────────────────────────────────────────────
+                    _buildShopCard(),
+                    const SizedBox(height: 24),
+
+                    // ── Tab Navigation ────────────────────────────────────────
+                    _buildTabSelector(),
+                    const SizedBox(height: 24),
+
+                    // ── Tab Content ───────────────────────────────────────────
+                    Column(
+                      key: ValueKey(_tabIndex),
+                      children: [
+                        if (_tabIndex == 0) ...[
+                          _buildAddButton(),
+                          const SizedBox(height: 24),
+                          _buildArticlesTab(),
+                        ] else if (_tabIndex == 1)
+                          _buildOrdersTab()
+                        else
+                          _buildMessagesTab(),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
             ),
           ],
         ),
       ),
     );
   }
-}
 
-class _SellerBackButton extends StatelessWidget {
-  final VoidCallback onPressed;
-
-  const _SellerBackButton({required this.onPressed});
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      customBorder: const CircleBorder(),
-      onTap: onPressed,
-      child: Ink(
+  Widget _buildCircleBtn(IconData icon, Color iconColor, Color bg, {VoidCallback? onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
         width: 44,
         height: 44,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: bg,
           shape: BoxShape.circle,
-          boxShadow: [
+          boxShadow: bg == Colors.white ? [
             BoxShadow(
-              color: Colors.black.withOpacity(0.08),
+              color: Colors.black.withValues(alpha: 0.08),
               blurRadius: 8,
-              spreadRadius: 0,
-              offset: Offset(0, 3),
-            ),
-          ],
+              offset: const Offset(0, 3),
+            )
+          ] : null,
         ),
-        child: const Icon(Icons.arrow_back, size: 20, color: Colors.black),
+        child: Icon(icon, color: iconColor, size: 20),
       ),
     );
   }
-}
 
-class _SellerTabBar extends StatelessWidget {
-  final int selectedIndex;
-  final ValueChanged<int> onSelect;
-
-  const _SellerTabBar({
-    required this.selectedIndex,
-    required this.onSelect,
-  });
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildShopCard() {
     return Container(
-      padding: const EdgeInsets.all(6),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.07),
-            blurRadius: 14,
-            offset: const Offset(0, 3),
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          )
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 56,
+            height: 56,
+            decoration: const BoxDecoration(
+              color: AppTheme.primaryLight,
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.storefront_outlined,
+                color: AppTheme.primary, size: 28),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Kofi Tech Shop',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: AppTheme.foreground,
+                  ),
+                ),
+                Row(
+                  children: const [
+                    Icon(Icons.location_on_outlined,
+                        size: 14, color: AppTheme.mutedForeground),
+                    Text(' Tokoin, Lomé',
+                        style:
+                            TextStyle(fontSize: 13, color: AppTheme.mutedForeground)),
+                  ],
+                ),
+                const SizedBox(height: 2),
+                Row(
+                  children: const [
+                    Text('3 articles',
+                        style:
+                            TextStyle(fontSize: 13, color: AppTheme.primary)),
+                    Text(' • ',
+                        style:
+                            TextStyle(fontSize: 13, color: AppTheme.primary)),
+                    Icon(Icons.star, size: 14, color: Colors.amber),
+                    Text(' 4.8',
+                        style:
+                            TextStyle(fontSize: 13, color: AppTheme.primary)),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          TogoPressableScale(
+            onTap: () => Get.toNamed('/store-settings'),
+            child: const Text(
+              'Modifier',
+              style: TextStyle(
+                color: AppTheme.primary,
+                fontWeight: FontWeight.w600,
+                decoration: TextDecoration.underline,
+              ),
+            ),
           ),
         ],
       ),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(
-          children: [
-            _TabEntry(
-              label: 'Articles',
-              icon: Icons.grid_view_rounded,
-              selected: selectedIndex == 0,
-              onTap: () => onSelect(0),
-            ),
-            _TabEntry(
-              label: 'Ajouter',
-              icon: Icons.add,
-              selected: selectedIndex == 1,
-              onTap: () => onSelect(1),
-            ),
-            _TabEntry(
-              label: 'Commandes',
-              icon: Icons.inventory_2_outlined,
-              selected: selectedIndex == 2,
-              onTap: () => onSelect(2),
-            ),
-            _TabEntry(
-              label: 'Messages',
-              icon: Icons.chat_bubble_outline_rounded,
-              selected: selectedIndex == 3,
-              onTap: () => onSelect(3),
-            ),
-          ],
-        ),
+    );
+  }
+
+  Widget _buildTabSelector() {
+    return Container(
+      height: 72,
+      padding: const EdgeInsets.all(6),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(32),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          )
+        ],
+      ),
+      child: Row(
+        children: [
+          _buildTabItem(0, Icons.grid_view_outlined, 'Articles'),
+          _buildTabItem(1, Icons.inventory_2_outlined, 'Commandes'),
+          _buildTabItem(2, Icons.chat_bubble_outline_outlined, 'Messages'),
+        ],
       ),
     );
   }
-}
 
-class _TabEntry extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final bool selected;
-  final VoidCallback onTap;
-
-  const _TabEntry({
-    required this.label,
-    required this.icon,
-    required this.selected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return ConstrainedBox(
-      constraints: const BoxConstraints(minWidth: 70),
+  Widget _buildTabItem(int index, IconData icon, String label) {
+    bool isActive = _tabIndex == index;
+    return Expanded(
       child: GestureDetector(
-        onTap: onTap,
-        behavior: HitTestBehavior.opaque,
+        onTap: () => setState(() => _tabIndex = index),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
-          curve: Curves.easeOutCubic,
-          padding: const EdgeInsets.symmetric(vertical: 10),
-          margin: const EdgeInsets.symmetric(horizontal: 2),
           decoration: BoxDecoration(
-            color:
-                selected ? _SellerMockColors.primaryOrange : Colors.transparent,
-            borderRadius: BorderRadius.circular(14),
+            color: isActive ? AppTheme.primary : Colors.transparent,
+            borderRadius: BorderRadius.circular(28),
           ),
           child: Column(
-            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                icon,
-                size: 22,
-                color: selected ? Colors.white : _SellerMockColors.textGray,
-              ),
-              const SizedBox(height: 4),
+              Icon(icon,
+                  size: 20,
+                  color: isActive ? Colors.white : AppTheme.mutedForeground),
               Text(
                 label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
-                  color: selected ? Colors.white : _SellerMockColors.textGray,
+                  color: isActive ? Colors.white : AppTheme.mutedForeground,
                 ),
               ),
             ],
@@ -1075,148 +1417,457 @@ class _TabEntry extends StatelessWidget {
       ),
     );
   }
-}
 
-class _ArticlesTab extends StatelessWidget {
-  final DashboardController ctrl;
-  const _ArticlesTab({required this.ctrl});
-
-  @override
-  Widget build(BuildContext context) => Obx(() {
-        final n = ctrl.myProducts.length;
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 16, 12),
-              child: Text(
-                '$n article${n > 1 ? 's' : ''} actif${n > 1 ? 's' : ''}',
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: _SellerMockColors.textGray,
+  Widget _buildAddButton() {
+    return GestureDetector(
+      onTap: () => Get.to(() => const AddProductScreen()),
+      child: Container(
+        width: double.infinity,
+        height: 64,
+        decoration: BoxDecoration(
+          color: AppTheme.primaryLight.withValues(alpha: 0.5),
+          borderRadius: BorderRadius.circular(32),
+        ),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(32),
+            border: Border.all(
+              color: AppTheme.primary.withValues(alpha: 0.3),
+              width: 1,
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: const [
+              Icon(Icons.add, color: AppTheme.primary),
+              SizedBox(width: 8),
+              Text(
+                'Ajouter un article',
+                style: TextStyle(
+                  color: AppTheme.primary,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildArticlesTab() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        TogoSlideUp(
+          child: const Text(
+            '3 articles actifs',
+            style: TextStyle(
+              fontSize: 15,
+              color: AppTheme.mutedForeground,
+              fontWeight: FontWeight.w500,
             ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        TogoSlideUp(
+          delay: const Duration(milliseconds: 100),
+          child: _buildProductTile(
+            'iPhone 13 Pro Max 256Go',
+            '350 000 F',
+            'Occasion',
+            'https://images.unsplash.com/photo-1632661674596-df8be070a5c5?w=400&h=400&fit=crop',
+          ),
+        ),
+        TogoSlideUp(
+          delay: const Duration(milliseconds: 200),
+          child: _buildProductTile(
+            'Canapé 3 places cuir',
+            '85 000 F',
+            'Occasion',
+            'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400&h=400&fit=crop',
+          ),
+        ),
+        TogoSlideUp(
+          delay: const Duration(milliseconds: 300),
+          child: _buildProductTile(
+            'Laptop HP EliteBook',
+            '220 000 F',
+            'Occasion',
+            'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=400&h=400&fit=crop',
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildOrdersTab() {
+    return Column(
+      children: [
+        TogoSlideUp(
+          child: _buildOrderTile(
+            'iPhone 13 Pro Max 256Go',
+            'Kafui A.',
+            '350 000 F',
+            'https://images.unsplash.com/photo-1632661674596-df8be070a5c5?w=200&h=200&fit=crop',
+            'En attente',
+            isPending: true,
+          ),
+        ),
+        TogoSlideUp(
+          delay: const Duration(milliseconds: 100),
+          child: _buildOrderTile(
+            'Canapé 3 places cuir',
+            'Mawuli K.',
+            '85 000 F',
+            'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=200&h=200&fit=crop',
+            'Acceptée',
+            isPending: false,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMessagesTab() {
+    return Column(
+      children: [
+        TogoSlideUp(
+          child: _buildMessageTile(
+            'Kofi Mensah',
+            'Oui, il est toujours disponible !',
+            '10:32',
+            'iPhone 13 Pro Max 256Go',
+            'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=200&auto=format&fit=crop',
+            unreadCount: 2,
+          ),
+        ),
+        TogoSlideUp(
+          delay: const Duration(milliseconds: 100),
+          child: _buildMessageTile(
+            'Ama Koffi',
+            'Je peux faire 13 000 FCFA',
+            'Hier',
+            'Robe Ankara colorée',
+            'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=200&auto=format&fit=crop',
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildOrderTile(
+      String title, String buyer, String price, String img, String status,
+      {bool isPending = true}) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          )
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: CachedNetworkImage(
+                    imageUrl: img,
+                    width: 64,
+                    height: 64,
+                    fit: BoxFit.cover),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            title,
+                            style: const TextStyle(
+                                fontSize: 15, fontWeight: FontWeight.w800),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: isPending
+                                ? AppTheme.primaryLight
+                                : Colors.green.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            status,
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: isPending ? AppTheme.primary : Colors.green,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    Text('Acheteur: $buyer',
+                        style: const TextStyle(
+                            fontSize: 13, color: AppTheme.mutedForeground)),
+                    const SizedBox(height: 2),
+                    Text(price,
+                        style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                            color: AppTheme.primary)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          if (isPending) ...[
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  flex: 2,
+                  child: TogoPressableScale(
+                    onTap: () {},
+                    child: Container(
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: AppTheme.primary,
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: const [
+                          Icon(Icons.check_circle_outline,
+                              color: Colors.white, size: 20),
+                          SizedBox(width: 8),
+                          Text('Accepter',
+                              style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w700)),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  flex: 2,
+                  child: TogoPressableScale(
+                    onTap: () {},
+                    child: Container(
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: AppTheme.destructive.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: const [
+                          Icon(Icons.cancel_outlined,
+                              color: AppTheme.destructive, size: 20),
+                          SizedBox(width: 8),
+                          Text('Refuser',
+                              style: TextStyle(
+                                  color: AppTheme.destructive,
+                                  fontWeight: FontWeight.w700)),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMessageTile(String name, String message, String time,
+      String product, String avatar,
+      {int unreadCount = 0}) {
+    return TogoPressableScale(
+      onTap: () {},
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
+            )
+          ],
+        ),
+        child: Row(
+          children: [
+            CircleAvatar(
+              radius: 28,
+              backgroundImage: CachedNetworkImageProvider(avatar),
+            ),
+            const SizedBox(width: 14),
             Expanded(
-              child: ListView.separated(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
-                itemCount: ctrl.myProducts.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 14),
-                itemBuilder: (_, i) {
-                  final p = ctrl.myProducts[i];
-                  return _SellerProductCard(
-                    product: p,
-                    onEdit: () {},
-                    onDelete: () => ctrl.deleteProduct(p.id),
-                  );
-                },
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(name,
+                          style: const TextStyle(
+                              fontSize: 15, fontWeight: FontWeight.w800)),
+                      Text(time,
+                          style: const TextStyle(
+                              fontSize: 11, color: AppTheme.mutedForeground)),
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          message,
+                          style: const TextStyle(
+                              fontSize: 13, color: AppTheme.mutedForeground),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      if (unreadCount > 0)
+                        Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: const BoxDecoration(
+                              color: AppTheme.primary, shape: BoxShape.circle),
+                          child: Text(
+                            unreadCount.toString(),
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w800),
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      const Icon(Icons.inventory_2_outlined,
+                          size: 14, color: AppTheme.primary),
+                      const SizedBox(width: 4),
+                      Text(product,
+                          style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: AppTheme.primary)),
+                    ],
+                  ),
+                ],
               ),
             ),
           ],
-        );
-      });
-}
+        ),
+      ),
+    );
+  }
 
-class _SellerProductCard extends StatelessWidget {
-  final Product product;
-  final VoidCallback onEdit;
-  final VoidCallback onDelete;
-
-  const _SellerProductCard({
-    required this.product,
-    required this.onEdit,
-    required this.onDelete,
-  });
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildProductTile(
+      String title, String price, String cond, String img) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.07),
-            blurRadius: 14,
-            offset: const Offset(0, 3),
-          ),
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          )
         ],
       ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           ClipRRect(
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(20),
             child: CachedNetworkImage(
-              imageUrl: product.image,
+              imageUrl: img,
               width: 72,
               height: 72,
               fit: BoxFit.cover,
             ),
           ),
-          const SizedBox(width: 14),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  product.title,
+                  title,
                   style: const TextStyle(
                     fontSize: 14,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.black,
-                    height: 1.25,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.foreground,
                   ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 4),
                 Text(
-                  formatPrice(product.price),
+                  price,
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w800,
-                    color: _SellerMockColors.primaryOrange,
+                    color: AppTheme.primary,
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
                 Container(
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                   decoration: BoxDecoration(
-                    color: _SellerMockColors.chipBg,
-                    borderRadius: BorderRadius.circular(20),
+                    color: AppTheme.muted,
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
-                    product.condition,
+                    cond,
                     style: const TextStyle(
                       fontSize: 11,
+                      color: AppTheme.mutedForeground,
                       fontWeight: FontWeight.w600,
-                      color: _SellerMockColors.chipText,
                     ),
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(width: 8),
           Row(
-            mainAxisSize: MainAxisSize.min,
             children: [
-              _RoundIconButton(
-                background: _SellerMockColors.editBg,
-                iconColor: _SellerMockColors.editIcon,
-                icon: Icons.edit_outlined,
-                onTap: onEdit,
+              TogoPressableScale(
+                onTap: () {},
+                child: _buildActionBtn(Icons.edit_outlined),
               ),
-              const SizedBox(width: 10),
-              _RoundIconButton(
-                background: _SellerMockColors.deleteBg,
-                iconColor: _SellerMockColors.deleteIcon,
-                icon: Icons.delete_outline_rounded,
-                onTap: onDelete,
+              const SizedBox(width: 8),
+              TogoPressableScale(
+                onTap: () {},
+                child: _buildActionBtn(Icons.delete_outline, isDelete: true),
               ),
             ],
           ),
@@ -1224,171 +1875,22 @@ class _SellerProductCard extends StatelessWidget {
       ),
     );
   }
-}
 
-class _RoundIconButton extends StatelessWidget {
-  final Color background;
-  final Color iconColor;
-  final IconData icon;
-  final VoidCallback onTap;
-
-  const _RoundIconButton({
-    required this.background,
-    required this.iconColor,
-    required this.icon,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: background,
-      shape: const CircleBorder(),
-      child: InkWell(
-        customBorder: const CircleBorder(),
-        onTap: onTap,
-        child: SizedBox(
-          width: 40,
-          height: 40,
-          child: Icon(icon, size: 20, color: iconColor),
-        ),
+  Widget _buildActionBtn(IconData icon, {bool isDelete = false}) {
+    return Container(
+      width: 36,
+      height: 36,
+      decoration: const BoxDecoration(
+        color: AppTheme.primaryLight,
+        shape: BoxShape.circle,
       ),
+      child: Icon(icon,
+          size: 18, color: isDelete ? AppTheme.destructive : AppTheme.primary),
     );
   }
 }
 
-class _OrdersTab extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) => ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: 2,
-        itemBuilder: (_, i) {
-          final p = mockProducts[i];
-          return Container(
-            margin: const EdgeInsets.only(bottom: 10),
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: AppTheme.cardColor,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: AppTheme.shadowCard,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(p.title,
-                    style: const TextStyle(
-                        fontSize: 14, fontWeight: FontWeight.w600)),
-                const SizedBox(height: 4),
-                Text('Acheteur: Kwame A.',
-                    style: const TextStyle(
-                        fontSize: 12, color: AppTheme.mutedForeground)),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Expanded(
-                      child: GestureDetector(
-                        onTap: () {},
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 8),
-                          decoration: BoxDecoration(
-                            color: Colors.green.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(
-                                color: Colors.green.withOpacity(0.3)),
-                          ),
-                          child: const Center(
-                            child: Text('✓ Accepter',
-                                style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.green)),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: GestureDetector(
-                        onTap: () {},
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 8),
-                          decoration: BoxDecoration(
-                            color: AppTheme.destructive.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(
-                                color: AppTheme.destructive.withOpacity(0.3)),
-                          ),
-                          child: const Center(
-                            child: Text('✗ Refuser',
-                                style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppTheme.destructive)),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          );
-        },
-      );
-}
 
-class _MessagesTab extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) => ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: mockConversations.length,
-        itemBuilder: (_, i) {
-          final c = mockConversations[i];
-          final seller = getSellerById(c.sellerId);
-          return GestureDetector(
-            onTap: () => Get.toNamed('/chat/${c.id}'),
-            child: Container(
-              margin: const EdgeInsets.only(bottom: 8),
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: AppTheme.cardColor,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: AppTheme.shadowCard,
-              ),
-              child: Row(
-                children: [
-                  CircleAvatar(
-                    radius: 22,
-                    backgroundImage: seller != null
-                        ? CachedNetworkImageProvider(seller.avatar)
-                        : null,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(seller?.shopName ?? '',
-                            style: const TextStyle(
-                                fontSize: 13, fontWeight: FontWeight.w600)),
-                        Text(c.lastMessage,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                                fontSize: 12, color: AppTheme.mutedForeground)),
-                      ],
-                    ),
-                  ),
-                  Text(c.time,
-                      style: const TextStyle(
-                          fontSize: 11, color: AppTheme.mutedForeground)),
-                ],
-              ),
-            ),
-          );
-        },
-      );
-}
 
 // ── Add Product Screen ────────────────────────────────────────────────────────
 class AddProductScreen extends StatefulWidget {
@@ -1448,318 +1950,385 @@ class _AddProductScreenState extends State<AddProductScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Photos
-              const Text('Photos',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
-              const SizedBox(height: 10),
-              GridView.count(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                crossAxisCount: 3,
-                mainAxisSpacing: 8,
-                crossAxisSpacing: 8,
-                children: [
-                  Container(
-                    decoration: BoxDecoration(
-                      color: AppTheme.primaryLight,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                          color: AppTheme.primary, style: BorderStyle.solid),
-                    ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
+              TogoSlideUp(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Photos',
+                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+                    const SizedBox(height: 10),
+                    GridView.count(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      crossAxisCount: 3,
+                      mainAxisSpacing: 8,
+                      crossAxisSpacing: 8,
                       children: [
-                        const Icon(Icons.camera_alt_outlined,
-                            color: AppTheme.primary),
-                        const Text('1/5',
-                            style: TextStyle(
-                                fontSize: 11, color: AppTheme.primary)),
+                        TogoPressableScale(
+                          onTap: () {},
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: AppTheme.primaryLight,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                  color: AppTheme.primary, style: BorderStyle.solid),
+                            ),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.camera_alt_outlined,
+                                    color: AppTheme.primary),
+                                const Text('1/5',
+                                    style: TextStyle(
+                                        fontSize: 11, color: AppTheme.primary)),
+                              ],
+                            ),
+                          ),
+                        ),
+                        ...List.generate(
+                          4,
+                          (i) => TogoSlideUp(
+                            delay: Duration(milliseconds: 100 + (i * 50)),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: AppTheme.muted,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                    color: AppTheme.border, style: BorderStyle.solid),
+                              ),
+                              child: const Icon(Icons.add,
+                                  color: AppTheme.mutedForeground),
+                            ),
+                          ),
+                        ),
                       ],
                     ),
-                  ),
-                  ...List.generate(
-                    4,
-                    (_) => Container(
-                      decoration: BoxDecoration(
-                        color: AppTheme.muted,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                            color: AppTheme.border, style: BorderStyle.solid),
-                      ),
-                      child: const Icon(Icons.add,
-                          color: AppTheme.mutedForeground),
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
               const SizedBox(height: 20),
               // Title
-              const Text('Titre',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-              const SizedBox(height: 8),
-              const TextField(
-                decoration: InputDecoration(hintText: 'Ex: iPhone 13 128GB '),
+              TogoSlideUp(
+                delay: const Duration(milliseconds: 200),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Titre',
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 8),
+                    const TextField(
+                      decoration: InputDecoration(hintText: 'Ex: iPhone 13 128GB '),
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 16),
               // Price + Category
-              Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('Prix (FCFA)',
-                            style: TextStyle(
-                                fontSize: 14, fontWeight: FontWeight.w600)),
-                        const SizedBox(height: 8),
-                        const TextField(
-                          keyboardType: TextInputType.number,
-                          decoration: InputDecoration(hintText: '0'),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('Catégorie',
-                            style: TextStyle(
-                                fontSize: 14, fontWeight: FontWeight.w600)),
-                        const SizedBox(height: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12),
-                          decoration: BoxDecoration(
-                            border: Border.all(color: AppTheme.border),
-                            borderRadius: BorderRadius.circular(16),
+              TogoSlideUp(
+                delay: const Duration(milliseconds: 300),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Prix (FCFA)',
+                              style: TextStyle(
+                                  fontSize: 14, fontWeight: FontWeight.w600)),
+                          const SizedBox(height: 8),
+                          const TextField(
+                            keyboardType: TextInputType.number,
+                            decoration: InputDecoration(hintText: '0'),
                           ),
-                          child: DropdownButtonHideUnderline(
-                            child: DropdownButton<String>(
-                              value: _category,
-                              isExpanded: true,
-                              items: mockCategories
-                                  .where((c) => c.id != 'all')
-                                  .map((c) => DropdownMenuItem(
-                                        value: c.id,
-                                        child: Text(
-                                          '${c.emoji} ${c.label}',
-                                          style: const TextStyle(fontSize: 12),
-                                        ),
-                                      ))
-                                  .toList(),
-                              onChanged: (v) => setState(() => _category = v!),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Catégorie',
+                              style: TextStyle(
+                                  fontSize: 14, fontWeight: FontWeight.w600)),
+                          const SizedBox(height: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: AppTheme.border),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: DropdownButtonHideUnderline(
+                              child: DropdownButton<String>(
+                                value: _category,
+                                isExpanded: true,
+                                items: mockCategories
+                                    .where((c) => c.id != 'all')
+                                    .map((c) => DropdownMenuItem(
+                                          value: c.id,
+                                          child: Text(
+                                            '${c.emoji} ${c.label}',
+                                            style: const TextStyle(fontSize: 12),
+                                          ),
+                                        ))
+                                    .toList(),
+                                onChanged: (v) => setState(() => _category = v!),
+                              ),
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
               const SizedBox(height: 16),
               // Price type toggle
-              const Text('Type de prix',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  for (final t in [('Fixe', '⚡'), ('Négociable', '🤝')])
-                    Expanded(
-                      child: GestureDetector(
-                        onTap: () => setState(() => _priceType = t.$1),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          margin:
-                              EdgeInsets.only(right: t.$1 == 'Fixe' ? 6 : 0),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          decoration: BoxDecoration(
-                            color: _priceType == t.$1
-                                ? AppTheme.primaryLight
-                                : AppTheme.cardColor,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: _priceType == t.$1
-                                  ? AppTheme.primary
-                                  : AppTheme.border,
-                              width: _priceType == t.$1 ? 2 : 1,
-                            ),
-                          ),
-                          child: Center(
-                            child: Text(
-                              '${t.$2} ${t.$1}',
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: _priceType == t.$1
-                                    ? AppTheme.primary
-                                    : AppTheme.foreground,
+              TogoSlideUp(
+                delay: const Duration(milliseconds: 400),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Type de prix',
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        for (final t in [('Fixe', '⚡'), ('Négociable', '🤝')])
+                          Expanded(
+                            child: TogoPressableScale(
+                              onTap: () => setState(() => _priceType = t.$1),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 200),
+                                margin:
+                                    EdgeInsets.only(right: t.$1 == 'Fixe' ? 6 : 0),
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                decoration: BoxDecoration(
+                                  color: _priceType == t.$1
+                                      ? AppTheme.primaryLight
+                                      : AppTheme.cardColor,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: _priceType == t.$1
+                                        ? AppTheme.primary
+                                        : AppTheme.border,
+                                    width: _priceType == t.$1 ? 2 : 1,
+                                  ),
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    '${t.$2} ${t.$1}',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: _priceType == t.$1
+                                          ? AppTheme.primary
+                                          : AppTheme.foreground,
+                                    ),
+                                  ),
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                      ),
+                      ],
                     ),
-                ],
+                  ],
+                ),
               ),
               const SizedBox(height: 16),
               // Condition
-              const Text('État',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  for (final c in ['Neuf', 'Occasion'])
-                    Expanded(
-                      child: GestureDetector(
-                        onTap: () => setState(() => _condition = c),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          margin: EdgeInsets.only(right: c == 'Neuf' ? 6 : 0),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          decoration: BoxDecoration(
-                            color: _condition == c
-                                ? AppTheme.primaryLight
-                                : AppTheme.cardColor,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: _condition == c
-                                  ? AppTheme.primary
-                                  : AppTheme.border,
-                              width: _condition == c ? 2 : 1,
-                            ),
-                          ),
-                          child: Center(
-                            child: Text(
-                              c,
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: _condition == c
-                                    ? AppTheme.primary
-                                    : AppTheme.foreground,
+              TogoSlideUp(
+                delay: const Duration(milliseconds: 500),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('État',
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        for (final c in ['Neuf', 'Occasion'])
+                          Expanded(
+                            child: TogoPressableScale(
+                              onTap: () => setState(() => _condition = c),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 200),
+                                margin: EdgeInsets.only(right: c == 'Neuf' ? 6 : 0),
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                decoration: BoxDecoration(
+                                  color: _condition == c
+                                      ? AppTheme.primaryLight
+                                      : AppTheme.cardColor,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: _condition == c
+                                        ? AppTheme.primary
+                                        : AppTheme.border,
+                                    width: _condition == c ? 2 : 1,
+                                  ),
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    c,
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: _condition == c
+                                          ? AppTheme.primary
+                                          : AppTheme.foreground,
+                                    ),
+                                  ),
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                      ),
+                      ],
                     ),
-                ],
+                  ],
+                ),
               ),
               const SizedBox(height: 16),
               // Description
-              const Text('Description',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-              const SizedBox(height: 8),
-              TextField(
-                maxLines: 4,
-                decoration: const InputDecoration(
-                  hintText: 'Décrivez votre produit en détail...',
+              TogoSlideUp(
+                delay: const Duration(milliseconds: 600),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Description',
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 8),
+                    TextField(
+                      maxLines: 4,
+                      decoration: const InputDecoration(
+                        hintText: 'Décrivez votre produit en détail...',
+                      ),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 16),
               // Zones
-              GestureDetector(
-                onTap: () => setState(() => _showZones = !_showZones),
-                child: Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: AppTheme.cardColor,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AppTheme.border),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.location_on_outlined,
-                          color: AppTheme.primary),
-                      const SizedBox(width: 10),
-                      const Expanded(
-                        child: Text('Zones de vente',
-                            style: TextStyle(
-                                fontSize: 14, fontWeight: FontWeight.w600)),
+              TogoSlideUp(
+                delay: const Duration(milliseconds: 700),
+                child: Column(
+                  children: [
+                    TogoPressableScale(
+                      onTap: () => setState(() => _showZones = !_showZones),
+                      child: Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: AppTheme.cardColor,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: AppTheme.border),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.location_on_outlined,
+                                color: AppTheme.primary),
+                            const SizedBox(width: 10),
+                            const Expanded(
+                              child: Text('Zones de vente',
+                                  style: TextStyle(
+                                      fontSize: 14, fontWeight: FontWeight.w600)),
+                            ),
+                            Icon(
+                              _showZones
+                                  ? Icons.keyboard_arrow_up
+                                  : Icons.keyboard_arrow_down,
+                              color: AppTheme.mutedForeground,
+                            ),
+                          ],
+                        ),
                       ),
-                      Icon(
-                        _showZones
-                            ? Icons.keyboard_arrow_up
-                            : Icons.keyboard_arrow_down,
-                        color: AppTheme.mutedForeground,
-                      ),
-                    ],
-                  ),
+                    ),
+                    AnimatedSize(
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeInOut,
+                      child: _showZones
+                          ? Column(
+                              children: [
+                                const SizedBox(height: 8),
+                                GestureDetector(
+                                  onTap: () {
+                                    if (_selectedZones.length == _zones.length) {
+                                      setState(() => _selectedZones.clear());
+                                    } else {
+                                      setState(() => _selectedZones.addAll(_zones));
+                                    }
+                                  },
+                                  child: Text(
+                                    _selectedZones.length == _zones.length
+                                        ? 'Tout désélectionner'
+                                        : 'Tout sélectionner',
+                                    style: const TextStyle(
+                                        color: AppTheme.primary,
+                                        fontWeight: FontWeight.w600),
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Wrap(
+                                  spacing: 8,
+                                  runSpacing: 8,
+                                  children: _zones
+                                      .map((z) => TogoPressableScale(
+                                            onTap: () {
+                                              setState(() {
+                                                if (_selectedZones.contains(z)) {
+                                                  _selectedZones.remove(z);
+                                                } else {
+                                                  _selectedZones.add(z);
+                                                }
+                                              });
+                                            },
+                                            child: AnimatedContainer(
+                                              duration:
+                                                  const Duration(milliseconds: 200),
+                                              padding: const EdgeInsets.symmetric(
+                                                  horizontal: 12, vertical: 6),
+                                              decoration: BoxDecoration(
+                                                color: _selectedZones.contains(z)
+                                                    ? AppTheme.primary
+                                                    : AppTheme.cardColor,
+                                                borderRadius:
+                                                    BorderRadius.circular(20),
+                                                border: Border.all(
+                                                  color: _selectedZones.contains(z)
+                                                      ? AppTheme.primary
+                                                      : AppTheme.border,
+                                                ),
+                                              ),
+                                              child: Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  if (_selectedZones.contains(z))
+                                                    const Icon(Icons.check,
+                                                        size: 12,
+                                                        color: Colors.white),
+                                                  if (_selectedZones.contains(z))
+                                                    const SizedBox(width: 4),
+                                                  Text(
+                                                    z,
+                                                    style: TextStyle(
+                                                      fontSize: 12,
+                                                      fontWeight: FontWeight.w600,
+                                                      color: _selectedZones.contains(z)
+                                                          ? Colors.white
+                                                          : AppTheme.foreground,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ))
+                                      .toList(),
+                                ),
+                              ],
+                            )
+                          : const SizedBox.shrink(),
+                    ),
+                  ],
                 ),
               ),
-              if (_showZones) ...[
-                const SizedBox(height: 8),
-                GestureDetector(
-                  onTap: () {
-                    if (_selectedZones.length == _zones.length) {
-                      setState(() => _selectedZones.clear());
-                    } else {
-                      setState(() => _selectedZones.addAll(_zones));
-                    }
-                  },
-                  child: Text(
-                    _selectedZones.length == _zones.length
-                        ? 'Tout désélectionner'
-                        : 'Tout sélectionner',
-                    style: const TextStyle(
-                        color: AppTheme.primary, fontWeight: FontWeight.w600),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: _zones
-                      .map((z) => GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                if (_selectedZones.contains(z)) {
-                                  _selectedZones.remove(z);
-                                } else {
-                                  _selectedZones.add(z);
-                                }
-                              });
-                            },
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 200),
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 6),
-                              decoration: BoxDecoration(
-                                color: _selectedZones.contains(z)
-                                    ? AppTheme.primary
-                                    : AppTheme.cardColor,
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(
-                                  color: _selectedZones.contains(z)
-                                      ? AppTheme.primary
-                                      : AppTheme.border,
-                                ),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  if (_selectedZones.contains(z))
-                                    const Icon(Icons.check,
-                                        size: 12, color: Colors.white),
-                                  if (_selectedZones.contains(z))
-                                    const SizedBox(width: 4),
-                                  Text(
-                                    z,
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
-                                      color: _selectedZones.contains(z)
-                                          ? Colors.white
-                                          : AppTheme.foreground,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ))
-                      .toList(),
-                ),
-              ],
               const SizedBox(height: 90),
             ],
           ),
