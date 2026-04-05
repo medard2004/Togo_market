@@ -8,13 +8,10 @@ import '../../widgets/bottom_nav.dart';
 import '../../widgets/common_widgets.dart';
 import '../../controllers/app_controller.dart';
 import '../../data/mock_data.dart';
-<<<<<<< HEAD
 import '../../Api/provider/auth_controller.dart';
 import '../../widgets/app_loader.dart';
 import '../../models/models.dart';
 import '../../navigation/app_transitions.dart';
-=======
->>>>>>> main
 import '../../animations/togo_animation_system.dart';
 
 // ── Profile Screen ────────────────────────────────────────────────────────────
@@ -866,7 +863,15 @@ class _StoreSettingsScreenState extends State<StoreSettingsScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
-        leading: BackButton(onPressed: () => Get.back()),
+        leading: BackButton(
+          onPressed: () {
+            if (Navigator.of(context).canPop()) {
+              Get.back();
+            } else {
+              Get.offNamed('/home');
+            }
+          },
+        ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
@@ -1048,6 +1053,7 @@ class _StoreSettingsScreenState extends State<StoreSettingsScreen> {
           ],
         ),
       ),
+      bottomNavigationBar: const BottomNavBar(currentIndex: 2),
     );
   }
 

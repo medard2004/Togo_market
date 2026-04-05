@@ -39,7 +39,8 @@ class BottomNavBar extends StatelessWidget {
                 final btnSize = (r.bottomNavH * 0.82).clamp(44.0, 58.0);
                 return Expanded(
                   child: GestureDetector(
-                    onTap: () => Get.toNamed(_items[i].route),
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () => Get.offNamed(_items[i].route),
                     child: Center(
                       child: Transform.translate(
                         offset: Offset(0, -r.s(10)),
