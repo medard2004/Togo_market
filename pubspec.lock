@@ -257,6 +257,7 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.0.21"
+<<<<<<< HEAD
   dio:
     dependency: "direct main"
     description:
@@ -273,6 +274,8 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.1.2"
+=======
+>>>>>>> main
   equatable:
     dependency: transitive
     description:
@@ -393,6 +396,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.1.1"
+  fl_chart:
+    dependency: "direct main"
+    description:
+      name: fl_chart
+      sha256: b938f77d042cbcd822936a7a359a7235bad8bd72070de1f827efc2cc297ac888
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.2.0"
   flutter:
     dependency: "direct main"
     description: flutter

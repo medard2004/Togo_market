@@ -39,6 +39,7 @@ dependencies:
 
   # Chat
   dash_chat_2: ^0.0.21
+<<<<<<< HEAD
   dio: ^5.9.2
   flutter_secure_storage: ^10.0.0
   google_sign_in: ^7.2.0
@@ -48,6 +49,9 @@ dependencies:
   toastification: ^3.0.3
   flutter_dotenv: ^5.2.1
   pinput: ^6.0.2
+=======
+  fl_chart: ^1.2.0
+>>>>>>> main
 
 dev_dependencies:
   flutter_test:

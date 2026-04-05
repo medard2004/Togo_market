@@ -65,6 +65,7 @@ class TogoMarketApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+<<<<<<< HEAD
     return ToastificationWrapper(
       child: GetMaterialApp(
         title: 'Togo Market',
@@ -107,6 +108,39 @@ class TogoMarketApp extends StatelessWidget {
           GetPage(name: '/help', page: () => const HelpScreen()),
         ],
       ),
+=======
+    return GetMaterialApp(
+      title: 'Togo Market',
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme.theme,
+      initialRoute: '/splash',
+      transitionDuration: const Duration(milliseconds: 300),
+      getPages: [
+        togoPage('/splash', () => const SplashScreen(),
+            style: TogoRouteStyle.softFade),
+        togoPage('/onboarding', () => const OnboardingScreen(),
+            style: TogoRouteStyle.softFade),
+        togoPage('/auth', () => const AuthScreen(),
+            style: TogoRouteStyle.softFade),
+        togoPage('/home', () => const HomeScreen()),
+        togoPage('/search', () => const SearchScreen()),
+        togoPage('/product/:id', () => const ProductDetailScreen()),
+        togoPage('/chat/:id', () => const ChatScreen()),
+        togoPage('/messages', () => const MessagesScreen()),
+        togoPage('/order', () => const OrderScreen()),
+        togoPage('/seller/:id', () => const SellerScreen()),
+        togoPage('/dashboard', () => const DashboardScreen()),
+        togoPage('/store-settings', () => const StoreSettingsScreen()),
+        togoPage('/add-product', () => const AddProductScreen(),
+            style: TogoRouteStyle.modalLift),
+        togoPage('/notifications', () => const NotificationsScreen()),
+        togoPage('/profile', () => const ProfileScreen()),
+        togoPage('/settings', () => const SettingsScreen()),
+        togoPage('/favorites', () => const FavoritesScreen()),
+        togoPage('/orders', () => const OrdersScreen()),
+        togoPage('/help', () => const HelpScreen()),
+      ],
+>>>>>>> main
     );
   }
 }
