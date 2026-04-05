@@ -103,6 +103,32 @@ class AuthService {
     throw Exception('Profile update failed');
   }
 
+  Future<String> requestPasswordReset(String telephone) async {
+    final response = await _apiClient.post(
+      ApiConstants.forgotPasswordEndpoint,
+      data: {'telephone': telephone},
+    );
+    if (response.statusCode == 200) {
+      return response.data['message'] ?? 'Code envoyé';
+    }
+    throw Exception('Request failed');
+  }
+
+  Future<String> resetPassword(String telephone, String code, String password) async {
+    final response = await _apiClient.post(
+      ApiConstants.resetPasswordEndpoint,
+      data: {
+        'telephone': telephone,
+        'code': code,
+        'password': password,
+      },
+    );
+    if (response.statusCode == 200) {
+      return response.data['message'] ?? 'Mot de passe réinitialisé';
+    }
+    throw Exception('Reset failed');
+  }
+
   // --- SOCIAL AUTHENTICATION --- //
 
   Future<User> socialLogin(String provider, String idToken, {String? nom, String? email}) async {

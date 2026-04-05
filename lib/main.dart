@@ -1,6 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get/get.dart';
 import 'package:toastification/toastification.dart';
@@ -14,6 +15,7 @@ import 'screens/splash/splash_screen.dart';
 import 'screens/onboarding/onboarding_screen.dart';
 import 'screens/auth/auth_screen.dart';
 import 'screens/home/home_screen.dart';
+import 'screens/category/category_screen.dart';
 import 'screens/search/search_screen.dart';
 import 'screens/product/product_detail_screen.dart';
 import 'screens/chat/chat_screen.dart';
@@ -27,6 +29,7 @@ import 'Api/provider/auth_controller.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: '.env');
   await Firebase.initializeApp();
 
   await const FlutterSecureStorage().deleteAll();
@@ -83,6 +86,7 @@ class TogoMarketApp extends StatelessWidget {
           GetPage(name: '/onboarding', page: () => const OnboardingScreen()),
           GetPage(name: '/auth', page: () => const AuthScreen()),
           GetPage(name: '/home', page: () => const HomeScreen()),
+          GetPage(name: '/category', page: () => const CategoryScreen()),
           GetPage(name: '/search', page: () => const SearchScreen()),
           GetPage(
             name: '/product/:id',

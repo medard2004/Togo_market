@@ -7,6 +7,7 @@ import '../../Api/model/category_model.dart';
 import '../../utils/responsive.dart';
 import '../../utils/app_toasts.dart';
 import '../../widgets/app_loader.dart';
+import 'forgot_password_screen.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -940,6 +941,23 @@ class _PasswordStep extends StatelessWidget {
                         ),
                       );
                     },
+                  ),
+                  SizedBox(height: r.s(24)),
+                  Center(
+                    child: GestureDetector(
+                      onTap: () {
+                        FocusScope.of(context).unfocus();
+                        Get.to(() => const ForgotPasswordPhoneScreen());
+                      },
+                      child: Text(
+                        'Mot de passe oublié ?',
+                        style: TextStyle(
+                          fontSize: r.fs(14),
+                          fontWeight: FontWeight.w700,
+                          color: AppTheme.primary,
+                        ),
+                      ),
+                    ),
                   ),
                   SizedBox(height: r.s(40)),
                 ],

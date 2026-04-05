@@ -46,6 +46,8 @@ dependencies:
   firebase_auth: ^6.3.0
   confirm_alert: ^0.0.1
   toastification: ^3.0.3
+  flutter_dotenv: ^5.2.1
+  pinput: ^6.0.2
 
 dev_dependencies:
   flutter_test:
@@ -57,4 +59,5 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
+    - .env
     - assets/images/

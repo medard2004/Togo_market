@@ -144,4 +144,25 @@ class AuthController extends GetxController {
     currentUser.value = null;
     // Redirect is now handled by the UI after the loading screen
   }
+  Future<void> requestPasswordReset(String telephone) async {
+    try {
+      isLoading.value = true;
+      await _authService.requestPasswordReset(telephone);
+    } catch (e) {
+      rethrow;
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  Future<void> resetPassword(String telephone, String code, String password) async {
+    try {
+      isLoading.value = true;
+      await _authService.resetPassword(telephone, code, password);
+    } catch (e) {
+      rethrow;
+    } finally {
+      isLoading.value = false;
+    }
+  }
 }

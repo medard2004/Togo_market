@@ -1,6 +1,16 @@
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 class ApiConstants {
-  // Base URL
-  static const String baseUrl = 'http://192.168.1.73:8000/api';
+  /// Défini dans `.env` (clé `API_BASE_URL`), chargé au démarrage dans `main()`.
+  static String get baseUrl {
+    final url = dotenv.env['API_BASE_URL'];
+    if (url == null || url.isEmpty) {
+      throw StateError(
+        'API_BASE_URL est absent ou vide dans le fichier .env à la racine du projet.',
+      );
+    }
+    return url;
+  }
 
   // Public Endpoints
   static const String categoriesEndpoint = '/categories';
@@ -11,6 +21,8 @@ class ApiConstants {
   static const String registerEndpoint = '/auth/register';
   static const String loginEndpoint = '/auth/login';
   static const String socialAuthEndpoint = '/auth/social';
+  static const String forgotPasswordEndpoint = '/auth/forgot-password';
+  static const String resetPasswordEndpoint = '/auth/reset-password';
 
   // Profile Endpoints
   static const String userProfileEndpoint = '/user/profile';
