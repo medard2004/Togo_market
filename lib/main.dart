@@ -2,7 +2,6 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get/get.dart';
 import 'package:toastification/toastification.dart';
 
@@ -30,8 +29,6 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: '.env');
   await Firebase.initializeApp();
-
-  // await const FlutterSecureStorage().deleteAll();
 
   // Force portrait orientation
   await SystemChrome.setPreferredOrientations([
@@ -99,7 +96,7 @@ class TogoMarketApp extends StatelessWidget {
           GetPage(name: '/add-product', page: () => const AddProductScreen()),
           GetPage(
             name: '/store-settings',
-            page: () => const StoreSettingsScreen(),
+            page: () => const StoreConfigurationScreen(),
           ),
           GetPage(
               name: '/notifications', page: () => const NotificationsScreen()),
