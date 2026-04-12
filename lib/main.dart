@@ -18,8 +18,22 @@ import 'screens/category/category_screen.dart';
 import 'screens/search/search_screen.dart';
 import 'screens/product/product_detail_screen.dart';
 import 'screens/chat/chat_screen.dart';
-import 'screens/messages/messages_and_order_screen.dart';
-import 'screens/profile/profile_and_more_screens.dart';
+import 'screens/messages/messages_screen.dart';
+import 'screens/orders/order_checkout_screen.dart';
+import 'screens/orders/orders_screen.dart';
+import 'screens/seller/seller_screen.dart';
+import 'screens/seller/dashboard_screen.dart';
+import 'screens/seller/shop_settings_screen.dart';
+import 'screens/seller/shop_information_screen.dart';
+import 'screens/seller/edit_shop_screen.dart';
+import 'screens/seller/store_configuration_screen.dart';
+import 'screens/seller/add_product_screen.dart';
+import 'screens/seller/edit_product_screen.dart';
+import 'screens/profile/profile_screen.dart';
+import 'screens/notifications/notifications_screen.dart';
+import 'screens/settings/settings_screen.dart';
+import 'screens/favorites/favorites_screen.dart';
+import 'screens/help/help_screen.dart';
 
 // API
 import 'Api/core/api_client.dart';
@@ -106,14 +120,23 @@ class TogoMarketApp extends StatelessWidget {
           ),
           GetPage(name: '/chat/:id', page: () => const ChatScreen()),
           GetPage(name: '/messages', page: () => const MessagesScreen()),
-          GetPage(name: '/order', page: () => const OrderScreen()),
+          GetPage(name: '/order', page: () => const OrderCheckoutScreen()),
           GetPage(name: '/seller/:id', page: () => const SellerScreen()),
           GetPage(name: '/dashboard', page: () => const DashboardScreen()),
           GetPage(name: '/add-product', page: () => const AddProductScreen()),
+        togoPage('/shop-information', () => const ShopInformationScreen()),
+        togoPage(
+            '/edit-shop',
+            () => EditShopScreen(
+                  shop: Get.arguments as ShopInfo? ?? ShopInfo.sample,
+                ),
+            style: TogoRouteStyle.modalLift),
           GetPage(
             name: '/store-settings',
             page: () => const StoreConfigurationScreen(),
           ),
+            style: TogoRouteStyle.modalLift),
+        togoPage('/edit-product/:id', () => const EditProductScreen(),
           GetPage(
               name: '/notifications', page: () => const NotificationsScreen()),
           GetPage(name: '/profile', page: () => const ProfileScreen()),

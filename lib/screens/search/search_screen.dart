@@ -192,8 +192,7 @@ class _EmptyQueryContent extends StatelessWidget {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(cat.emoji,
-                          style: const TextStyle(fontSize: 26)),
+                      Icon(cat.icon, size: 26, color: AppTheme.primary),
                       const SizedBox(height: 4),
                       Text(cat.label,
                           style: const TextStyle(
@@ -221,7 +220,8 @@ class _EmptyResults extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text('🔍', style: TextStyle(fontSize: 48)),
+          Icon(Icons.search_rounded,
+              size: 48, color: AppTheme.mutedForeground),
           SizedBox(height: 12),
           Text('Aucun résultat',
               style: TextStyle(

@@ -196,13 +196,13 @@ class FavoriteTicketCard extends StatelessWidget {
     'beaute':       Color(0xFFD44A6A),
     'services':     Color(0xFF4A7AB5),
   };
-  static const _catEmojis = {
-    'electronique': '📱',
-    'mode':         '👠',
-    'friperie':     '👗',
-    'maison':       '🏠',
-    'beaute':       '💄',
-    'services':     '🔧',
+  static const _catIcons = {
+    'electronique': Icons.devices_rounded,
+    'mode':         Icons.shopping_bag_rounded,
+    'friperie':     Icons.checkroom_rounded,
+    'maison':       Icons.home_rounded,
+    'beaute':       Icons.face_retouching_natural_rounded,
+    'services':     Icons.build_rounded,
   };
 
   Color _stripeColor() {
@@ -216,7 +216,7 @@ class FavoriteTicketCard extends StatelessWidget {
     final ctrl = Get.find<AppController>();
     final seller = getSellerById(product.sellerId);
     final stripe = _stripeColor();
-    final emoji = _catEmojis[product.category] ?? '🛍️';
+    final iconData = _catIcons[product.category] ?? Icons.shopping_cart_rounded;
     final catLabel = {
       'electronique': 'Électronique',
       'mode':         'Mode',
@@ -263,13 +263,13 @@ class FavoriteTicketCard extends StatelessWidget {
                     placeholder: (_, __) => Container(
                       color: stripe.withOpacity(0.12),
                       child: Center(
-                        child: Text(emoji, style: TextStyle(fontSize: r.s(32))),
+                        child: Icon(iconData, size: r.s(32), color: stripe),
                       ),
                     ),
                     errorWidget: (_, __, ___) => Container(
                       color: stripe.withOpacity(0.12),
                       child: Center(
-                        child: Text(emoji, style: TextStyle(fontSize: r.s(32))),
+                        child: Icon(iconData, size: r.s(32), color: stripe),
                       ),
                     ),
                   ),
@@ -531,8 +531,17 @@ class SectionTitle extends StatelessWidget {
   final String title;
   final String? actionLabel;
   final VoidCallback? onAction;
+  final IconData? icon;
+  final Color? iconColor;
 
-  const SectionTitle({super.key, required this.title, this.actionLabel, this.onAction});
+  const SectionTitle({
+    super.key,
+    required this.title,
+    this.actionLabel,
+    this.onAction,
+    this.icon,
+    this.iconColor,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -541,11 +550,25 @@ class SectionTitle extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Flexible(
-          child: Text(
-            title,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(fontSize: r.fs(16), fontWeight: FontWeight.w700, color: AppTheme.foreground),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (icon != null) ...[
+                Icon(icon, size: r.fs(18), color: iconColor ?? AppTheme.foreground),
+                SizedBox(width: r.s(8)),
+              ],
+              Flexible(
+                child: Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                      fontSize: r.fs(16),
+                      fontWeight: FontWeight.w700,
+                      color: AppTheme.foreground),
+                ),
+              ),
+            ],
           ),
         ),
         if (actionLabel != null) ...[
@@ -554,7 +577,10 @@ class SectionTitle extends StatelessWidget {
             onTap: onAction,
             child: Text(
               actionLabel!,
-              style: TextStyle(fontSize: r.fs(13), fontWeight: FontWeight.w600, color: AppTheme.primary),
+              style: TextStyle(
+                  fontSize: r.fs(13),
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.primary),
             ),
           ),
         ],
@@ -565,12 +591,18 @@ class SectionTitle extends StatelessWidget {
 
 // ── CategoryPill ──────────────────────────────────────────────────────────────
 class CategoryPill extends StatelessWidget {
-  final String emoji;
+  final IconData icon;
   final String label;
   final bool isActive;
   final VoidCallback onTap;
 
-  const CategoryPill({super.key, required this.emoji, required this.label, required this.isActive, required this.onTap});
+  const CategoryPill({
+    super.key,
+    required this.icon,
+    required this.label,
+    required this.isActive,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -588,12 +620,19 @@ class CategoryPill extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(emoji, style: TextStyle(fontSize: r.fs(15))),
-            SizedBox(width: r.s(5)),
+            Icon(
+              icon,
+              size: r.fs(15),
+              color: isActive ? Colors.white : AppTheme.primary,
+            ),
+            SizedBox(width: r.s(6)),
             Text(
               label,
               maxLines: 1,
-              style: TextStyle(fontSize: r.fs(12), fontWeight: FontWeight.w600, color: isActive ? Colors.white : AppTheme.foreground),
+              style: TextStyle(
+                  fontSize: r.fs(12),
+                  fontWeight: FontWeight.w600,
+                  color: isActive ? Colors.white : AppTheme.foreground),
             ),
           ],
         ),

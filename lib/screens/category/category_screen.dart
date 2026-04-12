@@ -155,15 +155,24 @@ class _CategoryScreenState extends State<CategoryScreen> {
                             ? AppTheme.shadowPrimary
                             : AppTheme.shadowCard,
                       ),
-                      child: Text(
-                        '${cat.emoji} ${cat.label}',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: isActive
-                              ? Colors.white
-                              : AppTheme.foreground,
-                        ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            cat.icon,
+                            size: 16,
+                            color: isActive ? Colors.white : AppTheme.primary,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            cat.label,
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: isActive ? Colors.white : AppTheme.foreground,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   );
@@ -312,8 +321,8 @@ class _CategoryScreenState extends State<CategoryScreen> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Text('😕',
-                              style: TextStyle(fontSize: 48)),
+                          Icon(Icons.search_off_rounded,
+                              size: 48, color: AppTheme.mutedForeground),
                           const SizedBox(height: 12),
                           const Text(
                             'Aucun produit trouvé',

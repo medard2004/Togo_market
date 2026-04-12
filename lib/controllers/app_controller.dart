@@ -120,9 +120,6 @@ class ChatController extends GetxController {
     );
     currentMessages.add(newMsg);
 
-    // Update last message in conversation list
-    final idx = conversations.indexWhere((c) => c.id == conversationId);
-
     // Simulate bot reply after 1.2s
     isTyping.value = true;
     await Future.delayed(const Duration(milliseconds: 1200));
@@ -135,8 +132,7 @@ class ChatController extends GetxController {
       'Livraison possible dans tout Lomé pour 1 000 F.',
       'Contactez-moi au +228 90 00 00 00 pour plus d\'infos.',
     ];
-    final reply = replies[
-        DateTime.now().millisecond % replies.length];
+    final reply = replies[DateTime.now().millisecond % replies.length];
 
     final botMsg = ChatMessage(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
