@@ -14,8 +14,19 @@ import 'screens/home/home_screen.dart';
 import 'screens/search/search_screen.dart';
 import 'screens/product/product_detail_screen.dart';
 import 'screens/chat/chat_screen.dart';
-import 'screens/messages/messages_and_order_screen.dart';
-import 'screens/profile/profile_and_more_screens.dart';
+import 'screens/messages/messages_screen.dart';
+import 'screens/orders/order_checkout_screen.dart';
+import 'screens/orders/orders_screen.dart';
+import 'screens/seller/seller_screen.dart';
+import 'screens/seller/dashboard_screen.dart';
+import 'screens/seller/shop_settings_screen.dart';
+import 'screens/seller/store_configuration_screen.dart';
+import 'screens/seller/add_product_screen.dart';
+import 'screens/profile/profile_screen.dart';
+import 'screens/notifications/notifications_screen.dart';
+import 'screens/settings/settings_screen.dart';
+import 'screens/favorites/favorites_screen.dart';
+import 'screens/help/help_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -64,7 +75,7 @@ class TogoMarketApp extends StatelessWidget {
         togoPage('/product/:id', () => const ProductDetailScreen()),
         togoPage('/chat/:id', () => const ChatScreen()),
         togoPage('/messages', () => const MessagesScreen()),
-        togoPage('/order', () => const OrderScreen()),
+        togoPage('/order', () => const OrderCheckoutScreen()),
         togoPage('/seller/:id', () => const SellerScreen()),
         togoPage('/dashboard', () => const DashboardScreen()),
         togoPage('/shop-settings', () => const ShopSettingsScreen()),

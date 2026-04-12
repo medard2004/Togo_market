@@ -102,9 +102,6 @@ class ChatController extends GetxController {
     );
     currentMessages.add(newMsg);
 
-    // Update last message in conversation list
-    final idx = conversations.indexWhere((c) => c.id == conversationId);
-
     // Simulate bot reply after 1.2s
     isTyping.value = true;
     await Future.delayed(const Duration(milliseconds: 1200));

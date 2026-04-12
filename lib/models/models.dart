@@ -1,3 +1,5 @@
+import 'package:flutter/widgets.dart';
+
 // ── Product ──────────────────────────────────────────────────────────────────
 class Product {
   final String id;
@@ -89,12 +91,12 @@ class Conversation {
 class Category {
   final String id;
   final String label;
-  final String emoji;
+  final IconData icon;
 
   const Category({
     required this.id,
     required this.label,
-    required this.emoji,
+    required this.icon,
   });
 }
 

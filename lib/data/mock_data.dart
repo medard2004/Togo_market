@@ -1,14 +1,15 @@
+import 'package:flutter/material.dart';
 import '../models/models.dart';
 
 // ── Catégories ────────────────────────────────────────────────────────────────
 final List<Category> mockCategories = [
-  Category(id: 'all', label: 'Tout', emoji: '🛍️'),
-  Category(id: 'friperie', label: 'Friperie', emoji: '👗'),
-  Category(id: 'mode', label: 'Mode', emoji: '👠'),
-  Category(id: 'electronique', label: 'Électronique', emoji: '📱'),
-  Category(id: 'maison', label: 'Maison', emoji: '🏠'),
-  Category(id: 'beaute', label: 'Beauté', emoji: '💄'),
-  Category(id: 'services', label: 'Services', emoji: '🔧'),
+  Category(id: 'all', label: 'Tout', icon: Icons.grid_view_rounded),
+  Category(id: 'friperie', label: 'Friperie', icon: Icons.checkroom_rounded),
+  Category(id: 'mode', label: 'Mode', icon: Icons.shopping_bag_rounded),
+  Category(id: 'electronique', label: 'Électronique', icon: Icons.devices_rounded),
+  Category(id: 'maison', label: 'Maison', icon: Icons.home_rounded),
+  Category(id: 'beaute', label: 'Beauté', icon: Icons.face_retouching_natural_rounded),
+  Category(id: 'services', label: 'Services', icon: Icons.build_rounded),
 ];
 
 // ── Vendeurs ──────────────────────────────────────────────────────────────────
