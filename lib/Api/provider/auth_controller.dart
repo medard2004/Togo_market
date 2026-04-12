@@ -56,13 +56,50 @@ class AuthController extends GetxController {
 
   Future<void> _loadPublicData() async {
     try {
-      final cats = await _authService.getCategories();
+      var cats = await _authService.getCategories();
+      if (cats.isEmpty) {
+        cats = [
+          Category(id: 1, nom: 'Électronique', emoji: '📱'),
+          Category(id: 2, nom: 'Mode', emoji: '👗'),
+          Category(id: 3, nom: 'Alimentation', emoji: '🍔'),
+          Category(id: 4, nom: 'Maison', emoji: '🏠'),
+        ];
+      }
       categories.assignAll(cats);
       
-      final locs = await _authService.getLocations();
+      var locs = await _authService.getLocations();
+      if (locs.isEmpty) {
+        locs = [
+          Ville(id: 1, nom: 'Lomé', quartiers: [
+            Quartier(id: 1, villeId: 1, nom: 'Adidogomé'),
+            Quartier(id: 2, villeId: 1, nom: 'Agoè'),
+            Quartier(id: 3, villeId: 1, nom: 'Bé'),
+            Quartier(id: 4, villeId: 1, nom: 'Bagida'),
+            Quartier(id: 5, villeId: 1, nom: 'Hedzranawoé'),
+          ]),
+          Ville(id: 2, nom: 'Kara', quartiers: [
+            Quartier(id: 6, villeId: 2, nom: 'Chaminade'),
+            Quartier(id: 7, villeId: 2, nom: 'Lama'),
+          ]),
+        ];
+      }
       locations.assignAll(locs);
     } catch (e) {
       print("Failed to load public data: \$e");
+      // Fallback
+      categories.assignAll([
+        Category(id: 1, nom: 'Électronique', emoji: '📱'),
+        Category(id: 2, nom: 'Mode', emoji: '👗'),
+        Category(id: 3, nom: 'Alimentation', emoji: '🍔'),
+      ]);
+      locations.assignAll([
+        Ville(id: 1, nom: 'Lomé', quartiers: [
+          Quartier(id: 1, villeId: 1, nom: 'Adidogomé'),
+          Quartier(id: 2, villeId: 1, nom: 'Agoè'),
+          Quartier(id: 3, villeId: 1, nom: 'Bé'),
+          Quartier(id: 4, villeId: 1, nom: 'Bagida'),
+        ])
+      ]);
     }
   }
 
@@ -130,6 +167,23 @@ class AuthController extends GetxController {
         quartierId: quartierId,
         categories: selectedCategories,
         details: details,
+      );
+      currentUser.value = updatedUser;
+    } catch (e) {
+      rethrow;
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  /// Après Google : le backend attend souvent `verify-phone` puis la mise à jour profil pour enregistrer le numéro.
+  Future<void> linkSocialPhone(String telephone, String nom) async {
+    try {
+      isLoading.value = true;
+      await _authService.verifyPhone(telephone);
+      final updatedUser = await _authService.updateProfile(
+        telephone: telephone,
+        nom: nom,
       );
       currentUser.value = updatedUser;
     } catch (e) {

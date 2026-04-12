@@ -2,6 +2,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get/get.dart';
 import 'package:toastification/toastification.dart';
 
@@ -23,12 +24,17 @@ import 'screens/profile/profile_and_more_screens.dart';
 // API
 import 'Api/core/api_client.dart';
 import 'Api/services/auth_service.dart';
+import 'Api/services/boutique_service.dart';
+import 'Api/services/produit_service.dart';
 import 'Api/provider/auth_controller.dart';
+import 'controllers/boutique_controller.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: '.env');
   await Firebase.initializeApp();
+
+  await FlutterSecureStorage().deleteAll(); // supprimer les données en local
 
   // Force portrait orientation
   await SystemChrome.setPreferredOrientations([
@@ -46,8 +52,18 @@ void main() async {
 
   // Initialize Auth Dependencies
   final apiClient = ApiClient();
+  Get.put(apiClient, permanent: true);
+
   final authService = AuthService(apiClient);
+  final boutiqueService = BoutiqueService(apiClient);
+  final produitService = ProduitService(apiClient);
+
+  Get.put(authService, permanent: true);
+  Get.put(boutiqueService, permanent: true);
+  Get.put(produitService, permanent: true);
+
   Get.put(AuthController(authService), permanent: true);
+  Get.put(BoutiqueController(boutiqueService), permanent: true);
 
   // Initialize global controllers
   Get.put(AppController());

@@ -25,10 +25,26 @@ class _AuthScreenState extends State<AuthScreen> {
   int? _selectedQuartierId;
   final Set<int> _selectedInterests = {};
   bool _obscurePassword = true;
+  bool _isLoginFlow = false;
 
   @override
   void initState() {
     super.initState();
+  }
+
+  /// Nom à envoyer avec la mise à jour du téléphone (flux Google + tmp_) : le backend exige `nom`.
+  String _resolvedNomForSocialProfile() {
+    final fromField = _nameCtrl.text.trim();
+    if (fromField.isNotEmpty) return fromField;
+    final user = _authController.currentUser.value;
+    final fromUser = user?.nom?.trim();
+    if (fromUser != null && fromUser.isNotEmpty) return fromUser;
+    final email = user?.email;
+    if (email != null && email.contains('@')) {
+      final local = email.split('@').first.trim();
+      if (local.isNotEmpty) return local;
+    }
+    return 'Utilisateur';
   }
 
   @override
@@ -107,11 +123,15 @@ class _AuthScreenState extends State<AuthScreen> {
               AppToasts.error(context, "Erreur", "Veuillez entrer un numéro de téléphone.");
               return;
             }
+            if (!RegExp(r'^\d+$').hasMatch(phone)) {
+              AppToasts.error(context, "Erreur", "Le numéro ne doit contenir que des chiffres.");
+              return;
+            }
             if (phone.length != 8) {
               AppToasts.warning(context, "Format incorrect", "Le numéro doit être composé de exactement 8 chiffres.");
               return;
             }
-            final RegExp prefixRegex = RegExp(r'^(9[0-3|6-9]|7[0-1|9])');
+            final RegExp prefixRegex = RegExp(r'^(90|91|92|93|96|97|98|99|70|71|79)');
             if (!prefixRegex.hasMatch(phone)) {
               AppToasts.error(context, "Réseau inconnu", "Le numéro doit commencer par 90-93, 96-99 (Togocel) ou 70-71, 79 (Moov).");
               return;
@@ -157,7 +177,10 @@ class _AuthScreenState extends State<AuthScreen> {
               try {
                 await AppLoader.wrap(
                   context,
-                  () => _authController.updateProfile(telephone: phoneToUpdate),
+                  () => _authController.linkSocialPhone(
+                    phoneToUpdate,
+                    _resolvedNomForSocialProfile(),
+                  ),
                   message: 'Association du numéro...',
                 );
                 setState(() => _step = 'profile');
@@ -174,7 +197,33 @@ class _AuthScreenState extends State<AuthScreen> {
                 AppToasts.error(context, "Erreur", errorMsg);
               }
             } else {
-              setState(() => _step = 'password');
+              try {
+                await AppLoader.wrap(
+                  context,
+                  () => _authController.verifyPhone(phoneToUpdate),
+                  message: 'Vérification du numéro...',
+                );
+                // Si ça réussit, le numéro est disponible -> Inscription
+                setState(() {
+                  _isLoginFlow = false;
+                  _step = 'password';
+                });
+              } catch (e) {
+                String errorMsg = e.toString();
+                if (errorMsg.contains("taken") ||
+                    errorMsg.toLowerCase().contains("déjà") ||
+                    errorMsg.contains("already") || 
+                    errorMsg.toLowerCase().contains("utilisé")) {
+                  // Déjà utilisé -> Connexion
+                  setState(() {
+                    _isLoginFlow = true;
+                    _step = 'password';
+                  });
+                } else {
+                  String msg = errorMsg.replaceAll(RegExp(r'^(ValidationException: |Exception: )'), "");
+                  AppToasts.error(context, "Erreur", msg);
+                }
+              }
             }
           },
         );
@@ -183,6 +232,7 @@ class _AuthScreenState extends State<AuthScreen> {
           key: const ValueKey('password'),
           ctrl: _passwordCtrl,
           obscureText: _obscurePassword,
+          isLoginFlow: _isLoginFlow,
           onToggleObscure: () =>
               setState(() => _obscurePassword = !_obscurePassword),
           onBack: () => setState(() => _step = 'phone'),
@@ -271,15 +321,14 @@ class _AuthScreenState extends State<AuthScreen> {
               },
               onFinish: () async {
                 try {
-                  final user = _authController.currentUser.value;
-                  final isSocialCompleting = _authController.isAuthenticated &&
-                      user != null &&
-                      user.telephone.startsWith('tmp_');
+                  // Toujours renvoyer le téléphone saisi si présent : évite qu'un PUT final
+                  // sans `telephone` ne laisse le numéro non persisté ou écrasé côté API.
                   String? phoneToUpdate;
-                  if (isSocialCompleting && _phoneCtrl.text.isNotEmpty) {
-                    phoneToUpdate = _phoneCtrl.text.startsWith('+228')
-                        ? _phoneCtrl.text
-                        : '+228${_phoneCtrl.text}';
+                  final rawPhone = _phoneCtrl.text.trim();
+                  if (rawPhone.isNotEmpty) {
+                    phoneToUpdate = rawPhone.startsWith('+228')
+                        ? rawPhone
+                        : '+228$rawPhone';
                   }
 
                   await AppLoader.wrap(
@@ -775,11 +824,13 @@ class _PhoneStep extends StatelessWidget {
 class _PasswordStep extends StatelessWidget {
   final TextEditingController ctrl;
   final bool obscureText;
+  final bool isLoginFlow;
   final VoidCallback onBack, onVerify, onToggleObscure;
   const _PasswordStep(
       {super.key,
       required this.ctrl,
       required this.obscureText,
+      required this.isLoginFlow,
       required this.onBack,
       required this.onVerify,
       required this.onToggleObscure});
@@ -943,22 +994,23 @@ class _PasswordStep extends StatelessWidget {
                     },
                   ),
                   SizedBox(height: r.s(24)),
-                  Center(
-                    child: GestureDetector(
-                      onTap: () {
-                        FocusScope.of(context).unfocus();
-                        Get.to(() => const ForgotPasswordPhoneScreen());
-                      },
-                      child: Text(
-                        'Mot de passe oublié ?',
-                        style: TextStyle(
-                          fontSize: r.fs(14),
-                          fontWeight: FontWeight.w700,
-                          color: AppTheme.primary,
+                  if (isLoginFlow)
+                    Center(
+                      child: GestureDetector(
+                        onTap: () {
+                          FocusScope.of(context).unfocus();
+                          Get.to(() => const ForgotPasswordPhoneScreen());
+                        },
+                        child: Text(
+                          'Mot de passe oublié ?',
+                          style: TextStyle(
+                            fontSize: r.fs(14),
+                            fontWeight: FontWeight.w700,
+                            color: AppTheme.primary,
+                          ),
                         ),
                       ),
                     ),
-                  ),
                   SizedBox(height: r.s(40)),
                 ],
               ),

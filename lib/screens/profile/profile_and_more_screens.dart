@@ -11,6 +11,7 @@ import '../../data/mock_data.dart';
 import '../../Api/provider/auth_controller.dart';
 import '../../widgets/app_loader.dart';
 import '../../animations/togo_animation_system.dart';
+import '../../controllers/boutique_controller.dart';
 
 // ── Profile Screen ────────────────────────────────────────────────────────────
 class ProfileScreen extends StatelessWidget {
@@ -133,8 +134,8 @@ class ProfileScreen extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: AppTheme.cardColor,
                   borderRadius: BorderRadius.circular(16),
-                  border:
-                      Border.all(color: AppTheme.destructive.withValues(alpha: 0.3)),
+                  border: Border.all(
+                      color: AppTheme.destructive.withValues(alpha: 0.3)),
                 ),
                 child: const Center(
                   child: Text(
@@ -474,8 +475,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 decoration: BoxDecoration(
                   color: AppTheme.destructive.withValues(alpha: 0.05),
                   borderRadius: BorderRadius.circular(16),
-                  border:
-                      Border.all(color: AppTheme.destructive.withValues(alpha: 0.2)),
+                  border: Border.all(
+                      color: AppTheme.destructive.withValues(alpha: 0.2)),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -850,14 +851,21 @@ class StoreConfigurationScreen extends StatefulWidget {
 class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
   final _nameCtrl = TextEditingController();
   final _descCtrl = TextEditingController();
-  final _sloganCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
+  final _phone2Ctrl = TextEditingController();
+  final _detailsCtrl = TextEditingController(); // Détails adresse
   TimeOfDay? _openingTime = const TimeOfDay(hour: 8, minute: 0);
   TimeOfDay? _closingTime = const TimeOfDay(hour: 18, minute: 0);
   String _zone = 'Tokoin';
   String _categoryId = 'friperie'; // Default category
   final List<String> _days = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
-  final List<String> _selectedDays = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven']; // Default
+  final List<String> _selectedDays = [
+    'Lun',
+    'Mar',
+    'Mer',
+    'Jeu',
+    'Ven'
+  ]; // Default
 
   final _zones = [
     'Tokoin',
@@ -871,6 +879,8 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
     'Agoè',
     'Legbassito',
   ];
+
+  Map<String, dynamic> _errors = {};
 
   Future<void> _pickTime(bool isOpening) async {
     final initialTime = isOpening
@@ -906,9 +916,11 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
               ),
               hourMinuteShape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
-                side: BorderSide(color: AppTheme.border.withValues(alpha: 0.3), width: 0.5),
+                side: BorderSide(
+                    color: AppTheme.border.withValues(alpha: 0.3), width: 0.5),
               ),
-              hourMinuteColor: AppTheme.primary.withValues(alpha: 0.08), // Couleur de fond très légère
+              hourMinuteColor: AppTheme.primary
+                  .withValues(alpha: 0.08), // Couleur de fond très légère
               hourMinuteTextColor: AppTheme.primary,
               dayPeriodTextColor: AppTheme.primary,
               dayPeriodColor: AppTheme.primary.withValues(alpha: 0.15),
@@ -959,8 +971,9 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
   void dispose() {
     _nameCtrl.dispose();
     _descCtrl.dispose();
-    _sloganCtrl.dispose();
     _phoneCtrl.dispose();
+    _phone2Ctrl.dispose();
+    _detailsCtrl.dispose();
     super.dispose();
   }
 
@@ -1039,7 +1052,8 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
                           child: CircleAvatar(
                             radius: 12,
                             backgroundColor: AppTheme.primary,
-                            child: Icon(Icons.edit, size: 14, color: Colors.white),
+                            child:
+                                Icon(Icons.edit, size: 14, color: Colors.white),
                           ),
                         ),
                       ),
@@ -1057,19 +1071,33 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
             const SizedBox(height: 8),
             TextField(
               controller: _nameCtrl,
-              onChanged: (_) => setState(() {}),
-              decoration: const InputDecoration(hintText: 'Ex: Ma Super Boutique'),
+              onChanged: (_) {
+                if (_errors.containsKey('nom')) {
+                  setState(() => _errors.remove('nom'));
+                }
+                setState(() {});
+              },
+              decoration: InputDecoration(
+                hintText: 'Ex: Ma Super Boutique',
+                errorText: _errors['nom'] != null
+                    ? (_errors['nom'] is List
+                        ? _errors['nom'].join('\n')
+                        : _errors['nom'].toString())
+                    : null,
+              ),
             ),
             const SizedBox(height: 16),
             const Text(
-              'Slogan (Optionnel)',
+              'Description',
               style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 8),
             TextField(
-              controller: _sloganCtrl,
-              onChanged: (_) => setState(() {}),
-              decoration: const InputDecoration(hintText: 'Motto de votre boutique...'),
+              controller: _descCtrl,
+              maxLines: 3,
+              decoration: const InputDecoration(
+                hintText: 'Ex: Vente d\'articles de mode et accessoires...',
+              ),
             ),
             const SizedBox(height: 16),
             const Text(
@@ -1102,28 +1130,39 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
             ),
             const SizedBox(height: 16),
             const Text(
-              'Description',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _descCtrl,
-              maxLines: 3,
-              decoration: const InputDecoration(
-                hintText: 'Ex: Produits de qualité et livraison rapide.',
-              ),
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'Téléphone *',
+              'Téléphone 1 *',
               style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 8),
             TextField(
               controller: _phoneCtrl,
               keyboardType: TextInputType.phone,
-              onChanged: (_) => setState(() {}),
-              decoration: const InputDecoration(hintText: 'Ex: +228 90 00 00 00'),
+              onChanged: (_) {
+                if (_errors.containsKey('telephone')) {
+                  setState(() => _errors.remove('telephone'));
+                }
+                setState(() {});
+              },
+              decoration: InputDecoration(
+                hintText: 'Ex: +228 90 00 00 00',
+                errorText: _errors['telephone'] != null
+                    ? (_errors['telephone'] is List
+                        ? _errors['telephone'].join('\n')
+                        : _errors['telephone'].toString())
+                    : null,
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Téléphone 2 (Optionnel)',
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _phone2Ctrl,
+              keyboardType: TextInputType.phone,
+              decoration:
+                  const InputDecoration(hintText: 'Ex: +228 91 00 00 00'),
             ),
             const SizedBox(height: 16),
             const Text(
@@ -1140,7 +1179,8 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
                   onTap: () => _toggleDay(day),
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                     decoration: BoxDecoration(
                       color: isSelected ? AppTheme.primary : AppTheme.cardColor,
                       borderRadius: BorderRadius.circular(12),
@@ -1152,7 +1192,8 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
                       day,
                       style: TextStyle(
                         fontSize: 13,
-                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                        fontWeight:
+                            isSelected ? FontWeight.w600 : FontWeight.w400,
                         color: isSelected ? Colors.white : AppTheme.foreground,
                       ),
                     ),
@@ -1181,11 +1222,13 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(Icons.wb_sunny_outlined, size: 18, color: Colors.orange),
+                          const Icon(Icons.wb_sunny_outlined,
+                              size: 18, color: Colors.orange),
                           const SizedBox(width: 8),
                           Text(
                             _formatTime(_openingTime),
-                            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                            style: const TextStyle(
+                                fontSize: 15, fontWeight: FontWeight.w600),
                           ),
                         ],
                       ),
@@ -1216,11 +1259,13 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(Icons.nights_stay_outlined, size: 18, color: Colors.indigo),
+                          const Icon(Icons.nights_stay_outlined,
+                              size: 18, color: Colors.indigo),
                           const SizedBox(width: 8),
                           Text(
                             _formatTime(_closingTime),
-                            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                            style: const TextStyle(
+                                fontSize: 15, fontWeight: FontWeight.w600),
                           ),
                         ],
                       ),
@@ -1230,8 +1275,9 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
               ],
             ),
             const SizedBox(height: 16),
+            const SizedBox(height: 16),
             const Text(
-              'Localisation *',
+              'Adresses / Zone *',
               style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 8),
@@ -1252,6 +1298,19 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
                 ),
               ),
             ),
+            const SizedBox(height: 16),
+            const Text(
+              'Détails supplémentaires d\'adresse (Optionnel)',
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _detailsCtrl,
+              maxLines: 2,
+              decoration: const InputDecoration(
+                hintText: 'Ex: A côté de la pharmacie, rue 123...',
+              ),
+            ),
           ],
         ),
       ),
@@ -1264,8 +1323,41 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
               label: 'Créer ma boutique',
               icon: Icons.storefront_outlined,
               onTap: _isFormValid
-                  ? () {
-                      Get.offNamed('/dashboard');
+                  ? () async {
+                      setState(() => _errors.clear());
+                      final payload = {
+                        'nom': _nameCtrl.text.trim(),
+                        'categorieId': _categoryId,
+                        'adresse': _zone,
+                        'details_adresse': _detailsCtrl.text.trim(),
+                        'description': _descCtrl.text.trim(),
+                        'telephone': _phoneCtrl.text.trim(),
+                        if (_phone2Ctrl.text.trim().isNotEmpty)
+                          'contacts': [
+                            _phone2Ctrl.text.trim(),
+                          ],
+                        'horaires': {
+                          'jours': _selectedDays,
+                          'ouverture': _formatTime(_openingTime),
+                          'fermeture': _formatTime(_closingTime),
+                        },
+                        'latitude': 0.0,
+                        'longitude': 0.0,
+                      };
+
+                      if (Get.isRegistered<BoutiqueController>()) {
+                        final result =
+                            await BoutiqueController.to.createBoutique(payload);
+                        if (result == true) {
+                          Get.offNamed('/dashboard');
+                        } else if (result is Map) {
+                          setState(() {
+                            _errors = Map<String, dynamic>.from(result);
+                          });
+                        }
+                      } else {
+                        Get.offNamed('/dashboard');
+                      }
                     }
                   : () {},
             ),
@@ -1300,11 +1392,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                   _buildCircleBtn(
+                  _buildCircleBtn(
                     Icons.arrow_back,
                     Colors.black,
                     Colors.white,
-                    onTap: () => Get.back(),
+                    onTap: () => Get.offNamed('/profile'),
                   ),
                   const Text(
                     'Mon Espace Vendeur',
@@ -1318,7 +1410,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     Icons.settings_outlined,
                     AppTheme.primary,
                     AppTheme.primaryLight,
-                    onTap: () => Get.toNamed('/shop-settings'),
+                    onTap: () => Get.toNamed('/store-settings'),
                   ),
                 ],
               ),
@@ -1362,7 +1454,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildCircleBtn(IconData icon, Color iconColor, Color bg, {VoidCallback? onTap}) {
+  Widget _buildCircleBtn(IconData icon, Color iconColor, Color bg,
+      {VoidCallback? onTap}) {
     return TogoPressableScale(
       onTap: onTap,
       child: Container(
@@ -1371,13 +1464,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
         decoration: BoxDecoration(
           color: bg,
           shape: BoxShape.circle,
-          boxShadow: bg == Colors.white ? [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.08),
-              blurRadius: 8,
-              offset: const Offset(0, 3),
-            )
-          ] : null,
+          boxShadow: bg == Colors.white
+              ? [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.08),
+                    blurRadius: 8,
+                    offset: const Offset(0, 3),
+                  )
+                ]
+              : null,
         ),
         child: Icon(icon, color: iconColor, size: 20),
       ),
@@ -1428,8 +1523,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     Icon(Icons.location_on_outlined,
                         size: 14, color: AppTheme.mutedForeground),
                     Text(' Tokoin, Lomé',
-                        style:
-                            TextStyle(fontSize: 13, color: AppTheme.mutedForeground)),
+                        style: TextStyle(
+                            fontSize: 13, color: AppTheme.mutedForeground)),
                   ],
                 ),
                 const SizedBox(height: 2),
@@ -1451,7 +1546,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ),
           TogoPressableScale(
-            onTap: () => Get.toNamed('/store-config'),
+            onTap: () => Get.toNamed('/store-settings'),
             child: const Text(
               'Modifier',
               style: TextStyle(
@@ -1686,10 +1781,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ClipRRect(
                 borderRadius: BorderRadius.circular(16),
                 child: CachedNetworkImage(
-                    imageUrl: img,
-                    width: 64,
-                    height: 64,
-                    fit: BoxFit.cover),
+                    imageUrl: img, width: 64, height: 64, fit: BoxFit.cover),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -1722,7 +1814,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w700,
-                              color: isPending ? AppTheme.primary : Colors.green,
+                              color:
+                                  isPending ? AppTheme.primary : Colors.green,
                             ),
                           ),
                         ),
@@ -1805,8 +1898,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildMessageTile(String name, String message, String time,
-      String product, String avatar,
+  Widget _buildMessageTile(
+      String name, String message, String time, String product, String avatar,
       {int unreadCount = 0}) {
     return TogoPressableScale(
       onTap: () {},
@@ -1995,8 +2088,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 }
 
-
-
 // ── Add Product Screen ────────────────────────────────────────────────────────
 class AddProductScreen extends StatefulWidget {
   const AddProductScreen({super.key});
@@ -2060,7 +2151,8 @@ class _AddProductScreenState extends State<AddProductScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text('Photos',
-                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+                        style: TextStyle(
+                            fontSize: 15, fontWeight: FontWeight.w700)),
                     const SizedBox(height: 10),
                     GridView.count(
                       shrinkWrap: true,
@@ -2076,7 +2168,8 @@ class _AddProductScreenState extends State<AddProductScreen> {
                               color: AppTheme.primaryLight,
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
-                                  color: AppTheme.primary, style: BorderStyle.solid),
+                                  color: AppTheme.primary,
+                                  style: BorderStyle.solid),
                             ),
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
@@ -2099,7 +2192,8 @@ class _AddProductScreenState extends State<AddProductScreen> {
                                 color: AppTheme.muted,
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(
-                                    color: AppTheme.border, style: BorderStyle.solid),
+                                    color: AppTheme.border,
+                                    style: BorderStyle.solid),
                               ),
                               child: const Icon(Icons.add,
                                   color: AppTheme.mutedForeground),
@@ -2119,10 +2213,12 @@ class _AddProductScreenState extends State<AddProductScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text('Titre',
-                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                        style: TextStyle(
+                            fontSize: 14, fontWeight: FontWeight.w600)),
                     const SizedBox(height: 8),
                     const TextField(
-                      decoration: InputDecoration(hintText: 'Ex: iPhone 13 128GB '),
+                      decoration:
+                          InputDecoration(hintText: 'Ex: iPhone 13 128GB '),
                     ),
                   ],
                 ),
@@ -2173,11 +2269,13 @@ class _AddProductScreenState extends State<AddProductScreen> {
                                           value: c.id,
                                           child: Text(
                                             '${c.emoji} ${c.label}',
-                                            style: const TextStyle(fontSize: 12),
+                                            style:
+                                                const TextStyle(fontSize: 12),
                                           ),
                                         ))
                                     .toList(),
-                                onChanged: (v) => setState(() => _category = v!),
+                                onChanged: (v) =>
+                                    setState(() => _category = v!),
                               ),
                             ),
                           ),
@@ -2195,7 +2293,8 @@ class _AddProductScreenState extends State<AddProductScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text('Type de prix',
-                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                        style: TextStyle(
+                            fontSize: 14, fontWeight: FontWeight.w600)),
                     const SizedBox(height: 8),
                     Row(
                       children: [
@@ -2205,9 +2304,10 @@ class _AddProductScreenState extends State<AddProductScreen> {
                               onTap: () => setState(() => _priceType = t.$1),
                               child: AnimatedContainer(
                                 duration: const Duration(milliseconds: 200),
-                                margin:
-                                    EdgeInsets.only(right: t.$1 == 'Fixe' ? 6 : 0),
-                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                margin: EdgeInsets.only(
+                                    right: t.$1 == 'Fixe' ? 6 : 0),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 12),
                                 decoration: BoxDecoration(
                                   color: _priceType == t.$1
                                       ? AppTheme.primaryLight
@@ -2248,7 +2348,8 @@ class _AddProductScreenState extends State<AddProductScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text('État',
-                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                        style: TextStyle(
+                            fontSize: 14, fontWeight: FontWeight.w600)),
                     const SizedBox(height: 8),
                     Row(
                       children: [
@@ -2258,8 +2359,10 @@ class _AddProductScreenState extends State<AddProductScreen> {
                               onTap: () => setState(() => _condition = c),
                               child: AnimatedContainer(
                                 duration: const Duration(milliseconds: 200),
-                                margin: EdgeInsets.only(right: c == 'Neuf' ? 6 : 0),
-                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                margin:
+                                    EdgeInsets.only(right: c == 'Neuf' ? 6 : 0),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 12),
                                 decoration: BoxDecoration(
                                   color: _condition == c
                                       ? AppTheme.primaryLight
@@ -2300,7 +2403,8 @@ class _AddProductScreenState extends State<AddProductScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text('Description',
-                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                        style: TextStyle(
+                            fontSize: 14, fontWeight: FontWeight.w600)),
                     const SizedBox(height: 8),
                     TextField(
                       maxLines: 4,
@@ -2334,7 +2438,8 @@ class _AddProductScreenState extends State<AddProductScreen> {
                             const Expanded(
                               child: Text('Zones de vente',
                                   style: TextStyle(
-                                      fontSize: 14, fontWeight: FontWeight.w600)),
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600)),
                             ),
                             Icon(
                               _showZones
@@ -2355,10 +2460,12 @@ class _AddProductScreenState extends State<AddProductScreen> {
                                 const SizedBox(height: 8),
                                 GestureDetector(
                                   onTap: () {
-                                    if (_selectedZones.length == _zones.length) {
+                                    if (_selectedZones.length ==
+                                        _zones.length) {
                                       setState(() => _selectedZones.clear());
                                     } else {
-                                      setState(() => _selectedZones.addAll(_zones));
+                                      setState(
+                                          () => _selectedZones.addAll(_zones));
                                     }
                                   },
                                   child: Text(
@@ -2378,7 +2485,8 @@ class _AddProductScreenState extends State<AddProductScreen> {
                                       .map((z) => TogoPressableScale(
                                             onTap: () {
                                               setState(() {
-                                                if (_selectedZones.contains(z)) {
+                                                if (_selectedZones
+                                                    .contains(z)) {
                                                   _selectedZones.remove(z);
                                                 } else {
                                                   _selectedZones.add(z);
@@ -2386,37 +2494,45 @@ class _AddProductScreenState extends State<AddProductScreen> {
                                               });
                                             },
                                             child: AnimatedContainer(
-                                              duration:
-                                                  const Duration(milliseconds: 200),
-                                              padding: const EdgeInsets.symmetric(
-                                                  horizontal: 12, vertical: 6),
+                                              duration: const Duration(
+                                                  milliseconds: 200),
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 12,
+                                                      vertical: 6),
                                               decoration: BoxDecoration(
-                                                color: _selectedZones.contains(z)
-                                                    ? AppTheme.primary
-                                                    : AppTheme.cardColor,
+                                                color:
+                                                    _selectedZones.contains(z)
+                                                        ? AppTheme.primary
+                                                        : AppTheme.cardColor,
                                                 borderRadius:
                                                     BorderRadius.circular(20),
                                                 border: Border.all(
-                                                  color: _selectedZones.contains(z)
-                                                      ? AppTheme.primary
-                                                      : AppTheme.border,
+                                                  color:
+                                                      _selectedZones.contains(z)
+                                                          ? AppTheme.primary
+                                                          : AppTheme.border,
                                                 ),
                                               ),
                                               child: Row(
                                                 mainAxisSize: MainAxisSize.min,
                                                 children: [
-                                                  if (_selectedZones.contains(z))
+                                                  if (_selectedZones
+                                                      .contains(z))
                                                     const Icon(Icons.check,
                                                         size: 12,
                                                         color: Colors.white),
-                                                  if (_selectedZones.contains(z))
+                                                  if (_selectedZones
+                                                      .contains(z))
                                                     const SizedBox(width: 4),
                                                   Text(
                                                     z,
                                                     style: TextStyle(
                                                       fontSize: 12,
-                                                      fontWeight: FontWeight.w600,
-                                                      color: _selectedZones.contains(z)
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                      color: _selectedZones
+                                                              .contains(z)
                                                           ? Colors.white
                                                           : AppTheme.foreground,
                                                     ),
@@ -2546,7 +2662,8 @@ class _ShopSettingsScreenState extends State<ShopSettingsScreen> {
                               Row(
                                 children: const [
                                   Icon(Icons.location_on_outlined,
-                                      size: 14, color: AppTheme.mutedForeground),
+                                      size: 14,
+                                      color: AppTheme.mutedForeground),
                                   Text(' Tokoin, Lomé',
                                       style: TextStyle(
                                           fontSize: 13,
@@ -2557,7 +2674,8 @@ class _ShopSettingsScreenState extends State<ShopSettingsScreen> {
                               const SizedBox(height: 4),
                               Row(
                                 children: const [
-                                  Icon(Icons.star, size: 14, color: Colors.amber),
+                                  Icon(Icons.star,
+                                      size: 14, color: Colors.amber),
                                   Text(' 4.8',
                                       style: TextStyle(
                                           fontSize: 14,
@@ -2837,8 +2955,7 @@ class _ShopSettingsScreenState extends State<ShopSettingsScreen> {
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
                           color: AppTheme.foreground)),
-                  if (subtitle != null)
-                    const SizedBox(height: 1),
+                  if (subtitle != null) const SizedBox(height: 1),
                   if (subtitle != null)
                     Text(subtitle,
                         style: const TextStyle(
@@ -2863,4 +2980,3 @@ class _ShopSettingsScreenState extends State<ShopSettingsScreen> {
     );
   }
 }
-

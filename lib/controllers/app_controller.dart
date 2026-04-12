@@ -1,6 +1,8 @@
 import 'package:get/get.dart';
 import '../models/models.dart';
 import '../data/mock_data.dart';
+import '../Api/services/produit_service.dart';
+import 'boutique_controller.dart';
 
 // ── AppController (global state) ──────────────────────────────────────────────
 class AppController extends GetxController {
@@ -26,8 +28,24 @@ class AppController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    // Load mocks by default for UI
     products.assignAll(mockProducts);
     favorites.assignAll(mockProducts.where((p) => p.isFavorite).toList());
+    
+    // Attempt to fetch real products
+    fetchProduits();
+  }
+
+  Future<void> fetchProduits() async {
+    try {
+      final apiProducts = await ProduitService.to.getPublicProducts();
+      if (apiProducts.isNotEmpty) {
+        products.assignAll(apiProducts);
+        favorites.assignAll(apiProducts.where((p) => p.isFavorite).toList());
+      }
+    } catch (e) {
+      print("Error fetching products: $e");
+    }
   }
 
   void toggleFavorite(String productId) {
@@ -145,9 +163,37 @@ class DashboardController extends GetxController {
   void onInit() {
     super.onInit();
     myProducts.assignAll(sellerDashboardProducts);
+    _loadRealMyProducts();
   }
 
-  void deleteProduct(String productId) {
-    myProducts.removeWhere((p) => p.id == productId);
+  Future<void> _loadRealMyProducts() async {
+    // If we have a boutique id, we can filter the AppController products or fetch them
+    final boutique = Get.isRegistered<BoutiqueController>() ? BoutiqueController.to.myBoutique.value : null;
+    if (boutique != null) {
+      try {
+        final realProducts = await ProduitService.to.getPublicProducts();
+        final mine = realProducts.where((p) => p.boutiqueId.toString() == boutique.id.toString()).toList();
+        if (mine.isNotEmpty) {
+          myProducts.assignAll(mine);
+        }
+      } catch (e) {
+        print("Error loading real products for dashboard: $e");
+      }
+    }
+  }
+
+  Future<void> deleteProduct(String productId) async {
+    try {
+      // Call API
+      await ProduitService.to.deleteProduct(productId);
+      myProducts.removeWhere((p) => p.id == productId);
+      // Also remove from global list
+      if (Get.isRegistered<AppController>()) {
+        Get.find<AppController>().products.removeWhere((p) => p.id == productId);
+      }
+      Get.snackbar('Succès', 'Produit supprimé avec succès');
+    } catch (e) {
+      Get.snackbar('Erreur', e.toString());
+    }
   }
 }

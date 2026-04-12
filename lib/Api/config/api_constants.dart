@@ -26,6 +26,8 @@ class ApiConstants {
 
   // Profile Endpoints
   static const String userProfileEndpoint = '/user/profile';
+  static const String boutiqueEndpoint = '/boutique';
+  static const String boutiqueMeEndpoint = '/boutique/me';
 
   // Example Endpoints
   static const String productsEndpoint = '/produits';

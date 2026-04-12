@@ -1,29 +1,5 @@
-// ── Product ──────────────────────────────────────────────────────────────────
-class Product {
-  final String id;
-  final String title;
-  final double price;
-  final String location;
-  final String image;
-  final String category;
-  final String condition; // 'Neuf' | 'Occasion'
-  final String description;
-  final String sellerId;
-  bool isFavorite;
-
-  Product({
-    required this.id,
-    required this.title,
-    required this.price,
-    required this.location,
-    required this.image,
-    required this.category,
-    required this.condition,
-    required this.description,
-    required this.sellerId,
-    this.isFavorite = false,
-  });
-}
+export 'product_model.dart';
+export 'boutique_model.dart';
 
 // ── Seller ───────────────────────────────────────────────────────────────────
 class Seller {
