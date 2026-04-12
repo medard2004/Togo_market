@@ -139,7 +139,7 @@ class _ShopSettingsScreenState extends State<ShopSettingsScreen> {
                   icon: Icons.storefront,
                   title: 'Informations de la boutique',
                   subtitle: 'Nom, description, logo',
-                  onTap: () {},
+                  onTap: () => Get.toNamed('/shop-information'),
                 ),
                 _buildSettingsTile(
                   icon: Icons.location_on_outlined,

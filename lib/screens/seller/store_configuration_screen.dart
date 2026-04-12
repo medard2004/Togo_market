@@ -24,7 +24,13 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
   String _zone = 'Tokoin';
   String _categoryId = 'friperie'; // Default category
   final List<String> _days = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
-  final List<String> _selectedDays = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven']; // Default
+  final List<String> _selectedDays = [
+    'Lun',
+    'Mar',
+    'Mer',
+    'Jeu',
+    'Ven'
+  ]; // Default
 
   final _zones = [
     'Tokoin',
@@ -73,7 +79,8 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
               ),
               hourMinuteShape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
-                side: BorderSide(color: AppTheme.border.withOpacity(0.3), width: 0.5),
+                side: BorderSide(
+                    color: AppTheme.border.withOpacity(0.3), width: 0.5),
               ),
               hourMinuteColor: AppTheme.primary.withOpacity(0.08),
               hourMinuteTextColor: AppTheme.primary,
@@ -251,7 +258,8 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
                               value: c.id,
                               child: Row(
                                 children: [
-                                  Icon(c.icon, size: 18, color: AppTheme.primary),
+                                  Icon(c.icon,
+                                      size: 18, color: AppTheme.primary),
                                   const SizedBox(width: 8),
                                   Text(c.label),
                                 ],
@@ -304,14 +312,12 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 14, vertical: 8),
                       decoration: BoxDecoration(
-                        color: isSelected
-                            ? AppTheme.primary
-                            : AppTheme.cardColor,
+                        color:
+                            isSelected ? AppTheme.primary : AppTheme.cardColor,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: isSelected
-                              ? AppTheme.primary
-                              : AppTheme.border,
+                          color:
+                              isSelected ? AppTheme.primary : AppTheme.border,
                         ),
                       ),
                       child: Text(
@@ -320,7 +326,8 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
                           fontSize: 13,
                           fontWeight:
                               isSelected ? FontWeight.w600 : FontWeight.w400,
-                          color: isSelected ? Colors.white : AppTheme.foreground,
+                          color:
+                              isSelected ? Colors.white : AppTheme.foreground,
                         ),
                       ),
                     ),

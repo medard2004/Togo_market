@@ -6,9 +6,13 @@ final List<Category> mockCategories = [
   Category(id: 'all', label: 'Tout', icon: Icons.grid_view_rounded),
   Category(id: 'friperie', label: 'Friperie', icon: Icons.checkroom_rounded),
   Category(id: 'mode', label: 'Mode', icon: Icons.shopping_bag_rounded),
-  Category(id: 'electronique', label: 'Électronique', icon: Icons.devices_rounded),
+  Category(
+      id: 'electronique', label: 'Électronique', icon: Icons.devices_rounded),
   Category(id: 'maison', label: 'Maison', icon: Icons.home_rounded),
-  Category(id: 'beaute', label: 'Beauté', icon: Icons.face_retouching_natural_rounded),
+  Category(
+      id: 'beaute',
+      label: 'Beauté',
+      icon: Icons.face_retouching_natural_rounded),
   Category(id: 'services', label: 'Services', icon: Icons.build_rounded),
 ];
 
@@ -341,7 +345,8 @@ Seller? getSellerById(String id) {
 
 Product? getProductById(String id) {
   try {
-    return mockProducts.firstWhere((p) => p.id == id);
+    return [...mockProducts, ...sellerDashboardProducts]
+        .firstWhere((p) => p.id == id);
   } catch (_) {
     return null;
   }

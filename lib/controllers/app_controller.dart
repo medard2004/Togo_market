@@ -114,8 +114,7 @@ class ChatController extends GetxController {
       'Livraison possible dans tout Lomé pour 1 000 F.',
       'Contactez-moi au +228 90 00 00 00 pour plus d\'infos.',
     ];
-    final reply = replies[
-        DateTime.now().millisecond % replies.length];
+    final reply = replies[DateTime.now().millisecond % replies.length];
 
     final botMsg = ChatMessage(
       id: DateTime.now().millisecondsSinceEpoch.toString(),

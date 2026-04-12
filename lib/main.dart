@@ -20,8 +20,11 @@ import 'screens/orders/orders_screen.dart';
 import 'screens/seller/seller_screen.dart';
 import 'screens/seller/dashboard_screen.dart';
 import 'screens/seller/shop_settings_screen.dart';
+import 'screens/seller/shop_information_screen.dart';
+import 'screens/seller/edit_shop_screen.dart';
 import 'screens/seller/store_configuration_screen.dart';
 import 'screens/seller/add_product_screen.dart';
+import 'screens/seller/edit_product_screen.dart';
 import 'screens/profile/profile_screen.dart';
 import 'screens/notifications/notifications_screen.dart';
 import 'screens/settings/settings_screen.dart';
@@ -79,8 +82,17 @@ class TogoMarketApp extends StatelessWidget {
         togoPage('/seller/:id', () => const SellerScreen()),
         togoPage('/dashboard', () => const DashboardScreen()),
         togoPage('/shop-settings', () => const ShopSettingsScreen()),
+        togoPage('/shop-information', () => const ShopInformationScreen()),
+        togoPage(
+            '/edit-shop',
+            () => EditShopScreen(
+                  shop: Get.arguments as ShopInfo? ?? ShopInfo.sample,
+                ),
+            style: TogoRouteStyle.modalLift),
         togoPage('/store-config', () => const StoreConfigurationScreen()),
         togoPage('/add-product', () => const AddProductScreen(),
+            style: TogoRouteStyle.modalLift),
+        togoPage('/edit-product/:id', () => const EditProductScreen(),
             style: TogoRouteStyle.modalLift),
         togoPage('/notifications', () => const NotificationsScreen()),
         togoPage('/profile', () => const ProfileScreen()),

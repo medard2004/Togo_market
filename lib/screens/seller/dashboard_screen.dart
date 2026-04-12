@@ -28,7 +28,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                   _buildCircleBtn(
+                  _buildCircleBtn(
                     Icons.arrow_back,
                     Colors.black,
                     Colors.white,
@@ -58,10 +58,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // ── Shop Card ──────────────────────────────────────────────
-                    _buildShopCard(),
-                    const SizedBox(height: 24),
-
                     // ── Tab Navigation ────────────────────────────────────────
                     _buildTabSelector(),
                     const SizedBox(height: 24),
@@ -90,7 +86,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildCircleBtn(IconData icon, Color iconColor, Color bg, {VoidCallback? onTap}) {
+  Widget _buildCircleBtn(IconData icon, Color iconColor, Color bg,
+      {VoidCallback? onTap}) {
     return TogoPressableScale(
       onTap: onTap,
       child: Container(
@@ -99,97 +96,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
         decoration: BoxDecoration(
           color: bg,
           shape: BoxShape.circle,
-          boxShadow: bg == Colors.white ? [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.08),
-              blurRadius: 8,
-              offset: const Offset(0, 3),
-            )
-          ] : null,
+          boxShadow: bg == Colors.white
+              ? [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.08),
+                    blurRadius: 8,
+                    offset: const Offset(0, 3),
+                  )
+                ]
+              : null,
         ),
         child: Icon(icon, color: iconColor, size: 20),
-      ),
-    );
-  }
-
-  Widget _buildShopCard() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          )
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 56,
-            height: 56,
-            decoration: const BoxDecoration(
-              color: AppTheme.primaryLight,
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(Icons.storefront_outlined,
-                color: AppTheme.primary, size: 28),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Kofi Tech Shop',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                    color: AppTheme.foreground,
-                  ),
-                ),
-                Row(
-                  children: const [
-                    Icon(Icons.location_on_outlined,
-                        size: 14, color: AppTheme.mutedForeground),
-                    Text(' Tokoin, Lomé',
-                        style:
-                            TextStyle(fontSize: 13, color: AppTheme.mutedForeground)),
-                  ],
-                ),
-                const SizedBox(height: 2),
-                Row(
-                  children: const [
-                    Text('3 articles',
-                        style:
-                            TextStyle(fontSize: 13, color: AppTheme.primary)),
-                    Text(' • ',
-                        style:
-                            TextStyle(fontSize: 13, color: AppTheme.primary)),
-                    Icon(Icons.star, size: 14, color: Colors.amber),
-                    Text(' 4.8',
-                        style:
-                            TextStyle(fontSize: 13, color: AppTheme.primary)),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          TogoPressableScale(
-            onTap: () => Get.toNamed('/store-config'),
-            child: const Text(
-              'Modifier',
-              style: TextStyle(
-                color: AppTheme.primary,
-                fontWeight: FontWeight.w600,
-                decoration: TextDecoration.underline,
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -307,6 +224,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         TogoSlideUp(
           delay: const Duration(milliseconds: 100),
           child: _buildProductTile(
+            'sd1',
             'iPhone 13 Pro Max 256Go',
             '350 000 F',
             'Occasion',
@@ -316,6 +234,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         TogoSlideUp(
           delay: const Duration(milliseconds: 200),
           child: _buildProductTile(
+            'sd2',
             'Canapé 3 places cuir',
             '85 000 F',
             'Occasion',
@@ -325,6 +244,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         TogoSlideUp(
           delay: const Duration(milliseconds: 300),
           child: _buildProductTile(
+            'sd3',
             'Laptop HP EliteBook',
             '220 000 F',
             'Occasion',
@@ -414,10 +334,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ClipRRect(
                 borderRadius: BorderRadius.circular(16),
                 child: CachedNetworkImage(
-                    imageUrl: img,
-                    width: 64,
-                    height: 64,
-                    fit: BoxFit.cover),
+                    imageUrl: img, width: 64, height: 64, fit: BoxFit.cover),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -450,7 +367,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w700,
-                              color: isPending ? AppTheme.primary : Colors.green,
+                              color:
+                                  isPending ? AppTheme.primary : Colors.green,
                             ),
                           ),
                         ),
@@ -533,8 +451,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildMessageTile(String name, String message, String time,
-      String product, String avatar,
+  Widget _buildMessageTile(
+      String name, String message, String time, String product, String avatar,
       {int unreadCount = 0}) {
     return TogoPressableScale(
       onTap: () {},
@@ -624,7 +542,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildProductTile(
-      String title, String price, String cond, String img) {
+      String productId, String title, String price, String cond, String img) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(12),
@@ -694,7 +612,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           Row(
             children: [
               TogoPressableScale(
-                onTap: () {},
+                onTap: () => Get.toNamed('/edit-product/$productId'),
                 child: _buildActionBtn(Icons.edit_outlined),
               ),
               const SizedBox(width: 8),
