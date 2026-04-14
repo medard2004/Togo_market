@@ -30,16 +30,15 @@ class BoutiqueService extends GetxService {
   /// Create a new boutique
   Future<Boutique> store(Map<String, dynamic> payload) async {
     final response = await _apiClient.post(ApiConstants.boutiqueEndpoint, data: payload);
-    return Boutique.fromJson(response.data['data'] ?? response.data);
+    return Boutique.fromJson(response.data['boutique'] ?? response.data['data'] ?? response.data);
   }
 
   /// Update an existing boutique
   Future<Boutique> update(Map<String, dynamic> payload) async {
-    // If we use multipart data for the image, we often use POST with _method=PUT in Laravel
-    final response = await _apiClient.post(
-      ApiConstants.boutiqueEndpoint, 
+    final response = await _apiClient.put(
+      ApiConstants.boutiqueEndpoint,
       data: payload,
     );
-    return Boutique.fromJson(response.data['data'] ?? response.data);
+    return Boutique.fromJson(response.data['boutique'] ?? response.data['data'] ?? response.data);
   }
 }

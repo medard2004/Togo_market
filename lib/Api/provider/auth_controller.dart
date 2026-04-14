@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:get/get.dart';
 import '../model/user_model.dart';
 import '../model/category_model.dart';
@@ -85,7 +86,7 @@ class AuthController extends GetxController {
       }
       locations.assignAll(locs);
     } catch (e) {
-      print("Failed to load public data: \$e");
+      debugPrint("Failed to load public data: $e");
       // Fallback
       categories.assignAll([
         Category(id: 1, nom: 'Électronique', emoji: '📱'),

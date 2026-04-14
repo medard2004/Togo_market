@@ -4,6 +4,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/bottom_nav.dart';
 import '../../controllers/app_controller.dart';
+import '../../Api/provider/auth_controller.dart';
 import 'widgets/profile_menu_item.dart';
 import 'widgets/profile_stat_card.dart';
 
@@ -12,7 +13,9 @@ class ProfileScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ctrl = Get.find<AppController>();
+    final appCtrl = Get.find<AppController>();
+    final authCtrl = Get.find<AuthController>();
+
     return Scaffold(
       resizeToAvoidBottomInset: true,
       backgroundColor: AppTheme.background,
@@ -24,70 +27,90 @@ class ProfileScreen extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            // Profile card
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: AppTheme.cardColor,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: AppTheme.shadowCard,
-              ),
-              child: Column(
-                children: [
-                  CircleAvatar(
-                    radius: 44,
-                    backgroundImage:
-                        CachedNetworkImageProvider(ctrl.userAvatar.value),
-                  ),
-                  const SizedBox(height: 12),
-                  Obx(() => Text(ctrl.userName.value,
-                      style: const TextStyle(
-                          fontSize: 20, fontWeight: FontWeight.w800))),
-                  const SizedBox(height: 4),
-                  Obx(() => Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.location_on,
-                              size: 14, color: AppTheme.mutedForeground),
-                          Text(ctrl.userLocation.value,
-                              style: const TextStyle(
-                                  fontSize: 13,
-                                  color: AppTheme.mutedForeground)),
-                        ],
-                      )),
-                  const SizedBox(height: 4),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(
-                        5,
-                        (i) => const Icon(Icons.star,
-                            size: 14, color: Colors.amber)),
-                  ),
-                  const SizedBox(height: 12),
-                  OutlinedButton(
-                    onPressed: () {},
-                    style: OutlinedButton.styleFrom(
-                      minimumSize: const Size(160, 40),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            // ── Profile card ──────────────────────────────────────────────────
+            Obx(() {
+              final user = authCtrl.currentUser.value;
+              final displayName = user?.nom?.isNotEmpty == true
+                  ? user!.nom!
+                  : appCtrl.userName.value;
+              final displayAvatar = user?.avatarUrl?.isNotEmpty == true
+                  ? user!.avatarUrl!
+                  : appCtrl.userAvatar.value;
+              final displayPhone = user?.telephone.isNotEmpty == true
+                  ? user!.telephone
+                  : appCtrl.userLocation.value;
+
+              return Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: AppTheme.cardColor,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: AppTheme.shadowCard,
+                ),
+                child: Column(
+                  children: [
+                    CircleAvatar(
+                      radius: 44,
+                      backgroundImage:
+                          CachedNetworkImageProvider(displayAvatar),
                     ),
-                    child: const Text('Modifier le profil'),
-                  ),
-                ],
-              ),
-            ),
+                    const SizedBox(height: 12),
+                    Text(
+                      displayName,
+                      style: const TextStyle(
+                          fontSize: 20, fontWeight: FontWeight.w800),
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.phone_outlined,
+                            size: 14, color: AppTheme.mutedForeground),
+                        const SizedBox(width: 4),
+                        Text(
+                          displayPhone,
+                          style: const TextStyle(
+                              fontSize: 13, color: AppTheme.mutedForeground),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(
+                          5,
+                          (i) => const Icon(Icons.star,
+                              size: 14, color: Colors.amber)),
+                    ),
+                    const SizedBox(height: 12),
+                    OutlinedButton(
+                      onPressed: () {
+                        // TODO: naviguer vers la page d'édition du profil
+                        // Get.toNamed('/edit-profile');
+                        Get.snackbar(
+                          'Bientôt disponible',
+                          'La modification du profil sera disponible prochainement.',
+                          snackPosition: SnackPosition.BOTTOM,
+                          backgroundColor: AppTheme.cardColor,
+                          colorText: AppTheme.foreground,
+                          borderRadius: 16,
+                          margin: const EdgeInsets.all(16),
+                        );
+                      },
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size(160, 40),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12)),
+                      ),
+                      child: const Text('Modifier le profil'),
+                    ),
+                  ],
+                ),
+              );
+            }),
             const SizedBox(height: 16),
-            // Stats
-            const Row(
-              children: [
-                ProfileStatCard(value: '3', label: 'Annonces'),
-                SizedBox(width: 10),
-                ProfileStatCard(value: '12', label: 'Ventes'),
-                SizedBox(width: 10),
-                ProfileStatCard(value: '4.8★', label: 'Note'),
-              ],
-            ),
-            const SizedBox(height: 16),
-            // Menu
+
+            // ── Menu ──────────────────────────────────────────────────────────
             ProfileMenuItem(
               icon: Icons.favorite_border,
               label: 'Mes favoris',
@@ -114,15 +137,34 @@ class ProfileScreen extends StatelessWidget {
               onTap: () => Get.toNamed('/help'),
             ),
             const SizedBox(height: 12),
+
+            // ── Logout ────────────────────────────────────────────────────────
             GestureDetector(
-              onTap: () => Get.offAllNamed('/auth'),
+              onTap: () async {
+                // Affiche un indicateur de chargement superposé qui empêche le spam
+                Get.dialog(
+                  const Center(child: CircularProgressIndicator()),
+                  barrierDismissible: false,
+                );
+
+                // Envoie la requête backend et efface le local storage
+                await Get.find<AuthController>().logout();
+
+                // Ferme l'indicateur
+                if (Get.isDialogOpen == true) {
+                  Get.back();
+                }
+
+                // Redirige vers auth
+                Get.offAllNamed('/auth');
+              },
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 decoration: BoxDecoration(
                   color: AppTheme.cardColor,
                   borderRadius: BorderRadius.circular(16),
-                  border:
-                      Border.all(color: AppTheme.destructive.withValues(alpha: 0.3)),
+                  border: Border.all(
+                      color: AppTheme.destructive.withValues(alpha: 0.3)),
                 ),
                 child: const Center(
                   child: Text(

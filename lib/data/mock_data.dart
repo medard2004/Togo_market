@@ -2,18 +2,18 @@ import 'package:flutter/material.dart';
 import '../models/models.dart';
 
 // ── Catégories ────────────────────────────────────────────────────────────────
-final List<Category> mockCategories = [
-  Category(id: 'all', label: 'Tout', icon: Icons.grid_view_rounded),
-  Category(id: 'friperie', label: 'Friperie', icon: Icons.checkroom_rounded),
-  Category(id: 'mode', label: 'Mode', icon: Icons.shopping_bag_rounded),
-  Category(
+final List<AppCategory> mockCategories = [
+  AppCategory(id: 'all', label: 'Tout', icon: Icons.grid_view_rounded),
+  AppCategory(id: 'friperie', label: 'Friperie', icon: Icons.checkroom_rounded),
+  AppCategory(id: 'mode', label: 'Mode', icon: Icons.shopping_bag_rounded),
+  AppCategory(
       id: 'electronique', label: 'Électronique', icon: Icons.devices_rounded),
-  Category(id: 'maison', label: 'Maison', icon: Icons.home_rounded),
-  Category(
+  AppCategory(id: 'maison', label: 'Maison', icon: Icons.home_rounded),
+  AppCategory(
       id: 'beaute',
       label: 'Beauté',
       icon: Icons.face_retouching_natural_rounded),
-  Category(id: 'services', label: 'Services', icon: Icons.build_rounded),
+  AppCategory(id: 'services', label: 'Services', icon: Icons.build_rounded),
 ];
 
 // ── Vendeurs ──────────────────────────────────────────────────────────────────

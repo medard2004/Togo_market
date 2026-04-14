@@ -47,12 +47,12 @@ class BottomNavBar extends StatelessWidget {
                         await BoutiqueController.to.checkMyBoutique();
                         if (Get.isDialogOpen ?? false) Get.back(); // close dialog
                         if (BoutiqueController.to.myBoutique.value != null) {
-                          Get.offNamed('/dashboard');
+                          Get.toNamed('/dashboard');
                         } else {
-                          Get.offNamed('/store-settings');
+                          Get.toNamed('/store-settings');
                         }
                       } else {
-                        Get.offNamed('/store-settings');
+                        Get.toNamed('/store-settings');
                       }
                     },
                     child: Center(

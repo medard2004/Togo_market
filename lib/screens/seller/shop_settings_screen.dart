@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../theme/app_theme.dart';
 import '../../animations/togo_animation_system.dart';
+import '../../controllers/boutique_controller.dart';
 
 class ShopSettingsScreen extends StatefulWidget {
   const ShopSettingsScreen({super.key});
@@ -28,268 +29,304 @@ class _ShopSettingsScreenState extends State<ShopSettingsScreen> {
         ),
         centerTitle: true,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // ── Shop Header Card ──────────────────────────────────────────────
-            TogoSlideUp(
-              child: Container(
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(30),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 20,
-                      offset: const Offset(0, 10),
-                    )
-                  ],
-                ),
-                child: Column(
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          width: 68,
-                          height: 68,
-                          decoration: const BoxDecoration(
-                            color: AppTheme.primaryLight,
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(Icons.storefront,
-                              color: AppTheme.primary, size: 32),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'Kofi Tech Shop',
-                                style: TextStyle(
-                                  fontSize: 19,
-                                  fontWeight: FontWeight.w900,
-                                  color: AppTheme.foreground,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Row(
-                                children: const [
-                                  Icon(Icons.location_on_outlined,
-                                      size: 14, color: AppTheme.mutedForeground),
-                                  Text(' Tokoin, Lomé',
-                                      style: TextStyle(
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.w500,
-                                          color: AppTheme.mutedForeground)),
-                                ],
-                              ),
-                              const SizedBox(height: 4),
-                              Row(
-                                children: const [
-                                  Icon(Icons.star, size: 14, color: Colors.amber),
-                                  Text(' 4.8',
-                                      style: TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w800,
-                                          color: AppTheme.primary)),
-                                  Text('  •  ',
-                                      style: TextStyle(
-                                          fontSize: 13,
-                                          color: AppTheme.border)),
-                                  Text('3 articles',
-                                      style: TextStyle(
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.w500,
-                                          color: AppTheme.mutedForeground)),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 24),
-                      child: Divider(height: 1, color: AppTheme.border),
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: [
-                        _buildStatItem('3', 'Articles'),
-                        _buildStatItem('24', 'Vues/Jour'),
-                        _buildStatItem('98%', 'Réponse'),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 32),
+      body: Obx(() {
+        final boutique = BoutiqueController.to.myBoutique.value;
+        if (boutique == null) {
+          return const Center(
+            child: Text("Boutique non trouvée ou chargement..."),
+          );
+        }
 
-            // ── MA BOUTIQUE ──────────────────────────────────────────────────
-            _buildSectionTitle('MA BOUTIQUE'),
-            TogoSlideUp(
-              delay: const Duration(milliseconds: 100),
-              child: _buildSettingsGroup([
-                _buildSettingsTile(
-                  icon: Icons.storefront,
-                  title: 'Informations de la boutique',
-                  subtitle: 'Nom, description, logo',
-                  onTap: () => Get.toNamed('/shop-information'),
-                ),
-                _buildSettingsTile(
-                  icon: Icons.location_on_outlined,
-                  title: 'Zones de couverture',
-                  subtitle: 'Tokoin, Adidogomé',
-                  onTap: () {},
-                ),
-                _buildSettingsTile(
-                  icon: Icons.access_time,
-                  title: 'Horaires d\'ouverture',
-                  subtitle: '08h - 18h, Lun-Sam',
-                  onTap: () {},
-                ),
-                _buildSettingsTile(
-                  icon: Icons.category_outlined,
-                  title: 'Catégories de produits',
-                  subtitle: 'Électronique',
-                  onTap: () {},
-                ),
-              ]),
-            ),
-            const SizedBox(height: 24),
+        // Convert the horizons to a printable string
+        String horString = "08h - 18h";
+        if (boutique.horaires is Map &&
+            boutique.horaires['ouverture'] != null) {
+          horString =
+              "${boutique.horaires['ouverture']} - ${boutique.horaires['fermeture']}";
+          if (boutique.horaires['jours'] is List) {
+            horString +=
+                ", ${(boutique.horaires['jours'] as List).length} jours";
+          }
+        }
 
-            // ── NOTIFICATIONS ────────────────────────────────────────────────
-            _buildSectionTitle('NOTIFICATIONS'),
-            TogoSlideUp(
-              delay: const Duration(milliseconds: 200),
-              child: _buildSettingsGroup([
-                _buildSettingsTile(
-                  icon: Icons.shopping_bag_outlined,
-                  title: 'Nouvelles commandes',
-                  hasSwitch: true,
-                  switchValue: _notifOrders,
-                  onSwitchChanged: (v) => setState(() => _notifOrders = v),
-                ),
-                _buildSettingsTile(
-                  icon: Icons.people_outline,
-                  title: 'Messages clients',
-                  hasSwitch: true,
-                  switchValue: _notifMessages,
-                  onSwitchChanged: (v) => setState(() => _notifMessages = v),
-                ),
-                _buildSettingsTile(
-                  icon: Icons.star_border,
-                  title: 'Promotions & conseils',
-                  hasSwitch: true,
-                  switchValue: _notifPromos,
-                  onSwitchChanged: (v) => setState(() => _notifPromos = v),
-                ),
-              ]),
-            ),
-            const SizedBox(height: 24),
+        String locationStr = '';
+        if (boutique.adresse?.isNotEmpty == true) {
+          locationStr = boutique.adresse!;
+        }
+        if (boutique.detailsAdresse?.isNotEmpty == true) {
+          if (locationStr.isNotEmpty) locationStr += ', ';
+          locationStr += boutique.detailsAdresse!;
+        }
+        if (locationStr.isEmpty) locationStr = 'Adresse non spécifiée';
 
-            // ── GESTION ───────────────────────────────────────────────────────
-            _buildSectionTitle('GESTION'),
-            TogoSlideUp(
-              delay: const Duration(milliseconds: 300),
-              child: _buildSettingsGroup([
-                _buildSettingsTile(
-                  icon: Icons.pause_outlined,
-                  title: 'Mode vacances',
-                  subtitle: 'Masque temporairement votre boutique',
-                  hasSwitch: true,
-                  switchValue: _vacationMode,
-                  onSwitchChanged: (v) => setState(() => _vacationMode = v),
-                ),
-                _buildSettingsTile(
-                  icon: Icons.policy_outlined,
-                  title: 'Politique de retour',
-                  subtitle: 'Non configurée',
-                  onTap: () {},
-                ),
-                _buildSettingsTile(
-                  icon: Icons.bar_chart_outlined,
-                  title: 'Statistiques détaillées',
-                  subtitle: 'Vues, ventes, performances',
-                  onTap: () {},
-                ),
-              ]),
-            ),
-            const SizedBox(height: 24),
-
-            // ── AIDE ──────────────────────────────────────────────────────────
-            _buildSectionTitle('AIDE'),
-            TogoSlideUp(
-              delay: const Duration(milliseconds: 400),
-              child: _buildSettingsGroup([
-                _buildSettingsTile(
-                  icon: Icons.help_outline,
-                  title: 'Centre d\'aide vendeur',
-                  subtitle: 'FAQ, guides, contact support',
-                  onTap: () {},
-                ),
-              ]),
-            ),
-            const SizedBox(height: 32),
-
-            // ── Deactivate Button ───────────────────────────────────────────
-            TogoSlideUp(
-              delay: const Duration(milliseconds: 500),
-              child: TogoPressableScale(
-                onTap: () {},
+        return SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ── Shop Header Card ──────────────────────────────────────────────
+              TogoSlideUp(
                 child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 18),
+                  padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: AppTheme.destructive.withOpacity(0.03),
+                    color: Colors.white,
                     borderRadius: BorderRadius.circular(30),
-                    border: Border.all(
-                        color: AppTheme.destructive.withOpacity(0.15)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 20,
+                        offset: const Offset(0, 10),
+                      )
+                    ],
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                  child: Column(
                     children: [
-                      const Icon(Icons.logout,
-                          color: AppTheme.destructive, size: 20),
-                      const SizedBox(width: 10),
-                      const Text(
-                        'Désactiver ma boutique',
-                        style: TextStyle(
-                            color: AppTheme.destructive,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700),
+                      Row(
+                        children: [
+                          Container(
+                            width: 68,
+                            height: 68,
+                            decoration: BoxDecoration(
+                              color: AppTheme.primaryLight,
+                              shape: BoxShape.circle,
+                              image: boutique.logoUrl.isNotEmpty
+                                  ? DecorationImage(
+                                      image: NetworkImage(boutique.logoUrl),
+                                      fit: BoxFit.cover)
+                                  : null,
+                            ),
+                            child: boutique.logoUrl.isEmpty
+                                ? const Icon(Icons.storefront,
+                                    color: AppTheme.primary, size: 32)
+                                : null,
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  boutique.nom,
+                                  style: const TextStyle(
+                                    fontSize: 19,
+                                    fontWeight: FontWeight.w900,
+                                    color: AppTheme.foreground,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Row(
+                                  children: [
+                                    const Icon(Icons.location_on_outlined,
+                                        size: 14,
+                                        color: AppTheme.mutedForeground),
+                                    Expanded(
+                                      child: Text(
+                                          ' $locationStr',
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w500,
+                                              color: AppTheme.mutedForeground)),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 4),
+                                Row(
+                                  children: [
+                                    const Icon(Icons.star,
+                                        size: 14, color: Colors.amber),
+                                    Text(' ${boutique.noteMoyenne}',
+                                        style: const TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w800,
+                                            color: AppTheme.primary)),
+                                    const Text('  •  ',
+                                        style: TextStyle(
+                                            fontSize: 13,
+                                            color: AppTheme.border)),
+                                    const Text('0 articles',
+                                        style: TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w500,
+                                            color: AppTheme.mutedForeground)),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 24),
+                        child: Divider(height: 1, color: AppTheme.border),
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          _buildStatItem('0', 'Articles'),
+                          _buildStatItem('Indisponible', 'Vues/Jour'),
+                          _buildStatItem('Indisponible', 'Réponse'),
+                        ],
                       ),
                     ],
                   ),
                 ),
               ),
-            ),
-            const SizedBox(height: 48),
-          ],
-        ),
-      ),
+              const SizedBox(height: 32),
+
+              // ── MA BOUTIQUE ──────────────────────────────────────────────────
+              _buildSectionTitle('MA BOUTIQUE'),
+              TogoSlideUp(
+                delay: const Duration(milliseconds: 100),
+                child: _buildSettingsGroup([
+                  _buildSettingsTile(
+                    icon: Icons.storefront,
+                    title: 'Informations de la boutique',
+                    subtitle: boutique.description.isNotEmpty
+                        ? boutique.description
+                        : 'Nom, description, logo',
+                    onTap: () => Get.toNamed('/shop-information'),
+                  )
+                ]),
+              ),
+              const SizedBox(height: 24),
+
+              // ── NOTIFICATIONS ────────────────────────────────────────────────
+              _buildSectionTitle('NOTIFICATIONS'),
+              TogoSlideUp(
+                delay: const Duration(milliseconds: 200),
+                child: _buildSettingsGroup([
+                  _buildSettingsTile(
+                    icon: Icons.shopping_bag_outlined,
+                    title: 'Nouvelles commandes',
+                    hasSwitch: true,
+                    switchValue: _notifOrders,
+                    onSwitchChanged: (v) => setState(() => _notifOrders = v),
+                  ),
+                  _buildSettingsTile(
+                    icon: Icons.people_outline,
+                    title: 'Messages clients',
+                    hasSwitch: true,
+                    switchValue: _notifMessages,
+                    onSwitchChanged: (v) => setState(() => _notifMessages = v),
+                  ),
+                  _buildSettingsTile(
+                    icon: Icons.star_border,
+                    title: 'Promotions & conseils',
+                    hasSwitch: true,
+                    switchValue: _notifPromos,
+                    onSwitchChanged: (v) => setState(() => _notifPromos = v),
+                  ),
+                ]),
+              ),
+              const SizedBox(height: 24),
+
+              // ── GESTION ───────────────────────────────────────────────────────
+              _buildSectionTitle('GESTION'),
+              TogoSlideUp(
+                delay: const Duration(milliseconds: 300),
+                child: _buildSettingsGroup([
+                  _buildSettingsTile(
+                    icon: Icons.pause_outlined,
+                    title: 'Mode vacances',
+                    subtitle: 'Masque temporairement votre boutique',
+                    hasSwitch: true,
+                    switchValue: _vacationMode,
+                    onSwitchChanged: (v) => setState(() => _vacationMode = v),
+                  ),
+                  _buildSettingsTile(
+                    icon: Icons.policy_outlined,
+                    title: 'Politique de retour',
+                    subtitle: 'Non configurée',
+                    onTap: () {},
+                  ),
+                  _buildSettingsTile(
+                    icon: Icons.bar_chart_outlined,
+                    title: 'Statistiques détaillées',
+                    subtitle: 'Vues, ventes, performances',
+                    onTap: () {},
+                  ),
+                ]),
+              ),
+              const SizedBox(height: 24),
+
+              // ── AIDE ──────────────────────────────────────────────────────────
+              _buildSectionTitle('AIDE'),
+              TogoSlideUp(
+                delay: const Duration(milliseconds: 400),
+                child: _buildSettingsGroup([
+                  _buildSettingsTile(
+                    icon: Icons.help_outline,
+                    title: 'Centre d\'aide vendeur',
+                    subtitle: 'FAQ, guides, contact support',
+                    onTap: () {},
+                  ),
+                ]),
+              ),
+              const SizedBox(height: 32),
+
+              // ── Deactivate Button ───────────────────────────────────────────
+              TogoSlideUp(
+                delay: const Duration(milliseconds: 500),
+                child: TogoPressableScale(
+                  onTap: () {},
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 18),
+                    decoration: BoxDecoration(
+                      color: AppTheme.destructive.withOpacity(0.03),
+                      borderRadius: BorderRadius.circular(30),
+                      border: Border.all(
+                          color: AppTheme.destructive.withOpacity(0.15)),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.logout,
+                            color: AppTheme.destructive, size: 20),
+                        const SizedBox(width: 10),
+                        const Text(
+                          'Désactiver ma boutique',
+                          style: TextStyle(
+                              color: AppTheme.destructive,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 48),
+            ],
+          ),
+        );
+      }),
     );
   }
 
   Widget _buildStatItem(String val, String lab) {
+    bool isUnavailable = val == 'Indisponible';
     return Column(
       children: [
-        Text(val,
-            style: const TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w900,
-                color: AppTheme.primary)),
+        Text(
+          isUnavailable ? 'N/A' : val,
+          style: TextStyle(
+            fontSize: isUnavailable ? 14 : 22,
+            fontWeight: isUnavailable ? FontWeight.w600 : FontWeight.w900,
+            color: isUnavailable ? AppTheme.mutedForeground : AppTheme.primary,
+          ),
+        ),
         const SizedBox(height: 4),
-        Text(lab,
-            style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: AppTheme.mutedForeground)),
+        Text(
+          lab,
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+            color: AppTheme.mutedForeground,
+          ),
+        ),
       ],
     );
   }
@@ -370,8 +407,7 @@ class _ShopSettingsScreenState extends State<ShopSettingsScreen> {
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
                           color: AppTheme.foreground)),
-                  if (subtitle != null)
-                    const SizedBox(height: 1),
+                  if (subtitle != null) const SizedBox(height: 1),
                   if (subtitle != null)
                     Text(subtitle,
                         style: const TextStyle(

@@ -1,85 +1,44 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 import '../../theme/app_theme.dart';
 import '../../widgets/common_widgets.dart';
-
-class ShopInfo {
-  final String name;
-  final String slogan;
-  final String description;
-  final String category;
-  final String location;
-  final String phone;
-  final String openingTime;
-  final String closingTime;
-  final List<String> openingDays;
-  final List<String> zones;
-  final String coverUrl;
-  final String logoUrl;
-
-  const ShopInfo({
-    required this.name,
-    required this.slogan,
-    required this.description,
-    required this.category,
-    required this.location,
-    required this.phone,
-    required this.openingTime,
-    required this.closingTime,
-    required this.openingDays,
-    required this.zones,
-    required this.coverUrl,
-    required this.logoUrl,
-  });
-
-  static const sample = ShopInfo(
-    name: 'Kofi Tech Shop',
-    slogan: 'Électronique de qualité à Lomé',
-    description:
-        'Boutique spécialisée dans la vente de produits électroniques neufs et d’occasion. Livraison rapide sur Lomé et service client disponible 7j/7.',
-    category: 'Électronique',
-    location: 'Tokoin, Lomé',
-    phone: '+228 90 00 00 00',
-    openingTime: '08:00',
-    closingTime: '18:00',
-    openingDays: ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven'],
-    zones: ['Tokoin', 'Adidogomé', 'Bè'],
-    coverUrl:
-        'https://images.unsplash.com/photo-1556740738-b6a63e27c4df?q=80&w=600&auto=format&fit=crop',
-    logoUrl:
-        'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=200&auto=format&fit=crop',
-  );
-}
+import '../../models/models.dart';
+import '../../controllers/boutique_controller.dart';
+import '../../Api/core/api_client.dart';
+import '../../Api/config/api_constants.dart';
+import '../../utils/app_toasts.dart';
 
 class EditShopScreen extends StatefulWidget {
-  final ShopInfo shop;
-
-  const EditShopScreen({super.key, required this.shop});
+  const EditShopScreen({super.key});
 
   @override
   State<EditShopScreen> createState() => _EditShopScreenState();
 }
 
 class _EditShopScreenState extends State<EditShopScreen> {
-  late final TextEditingController _nameController;
-  late final TextEditingController _sloganController;
-  late final TextEditingController _descriptionController;
-  late final TextEditingController _phoneController;
-  late String _category;
-  late String _location;
-  late String _openingTime;
-  late String _closingTime;
-  late final Set<String> _selectedDays;
-  late final Set<String> _selectedZones;
+  final _nameCtrl = TextEditingController();
+  final _descCtrl = TextEditingController();
+  final _phoneCtrl = TextEditingController();
+  final _phone2Ctrl = TextEditingController();
+  final _detailsCtrl = TextEditingController();
 
-  final _categories = [
-    'Électronique',
-    'Mode',
-    'Maison',
-    'Services',
-    'Beauté',
-  ];
+  String _zone = 'Tokoin';
+  List<String> _selectedCategoryIds = [];
+
+  TimeOfDay? _openingTime = const TimeOfDay(hour: 8, minute: 0);
+  TimeOfDay? _closingTime = const TimeOfDay(hour: 18, minute: 0);
+  final List<String> _days = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+  List<String> _selectedDays = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven'];
+
+  Map<String, dynamic> _errors = {};
+  bool _isLoading = false;
+  bool _isLoadingCategories = true;
+  List<AppCategory> _dbCategories = [];
+
+  late Boutique _boutique;
 
   final _zones = [
     'Tokoin',
@@ -94,341 +53,609 @@ class _EditShopScreenState extends State<EditShopScreen> {
     'Legbassito',
   ];
 
-  final List<String> _days = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
-
   @override
   void initState() {
     super.initState();
-    _nameController = TextEditingController(text: widget.shop.name);
-    _sloganController = TextEditingController(text: widget.shop.slogan);
-    _descriptionController = TextEditingController(text: widget.shop.description);
-    _phoneController = TextEditingController(text: widget.shop.phone);
-    _category = widget.shop.category;
-    _location = widget.shop.location;
-    _openingTime = widget.shop.openingTime;
-    _closingTime = widget.shop.closingTime;
-    _selectedDays = widget.shop.openingDays.toSet();
-    _selectedZones = widget.shop.zones.toSet();
+    _boutique = BoutiqueController.to.myBoutique.value!;
+    _initFromBoutique();
+    _fetchCategories();
+  }
+
+  void _initFromBoutique() {
+    _nameCtrl.text = _boutique.nom;
+    _descCtrl.text = _boutique.description;
+    _phoneCtrl.text = _boutique.telephone;
+    _phone2Ctrl.text = (_boutique.contacts != null && _boutique.contacts!.isNotEmpty)
+        ? _boutique.contacts!.first.toString()
+        : '';
+    _detailsCtrl.text = _boutique.detailsAdresse ?? '';
+
+    // Préremplir la zone si elle correspond à une valeur connue
+    final adresse = _boutique.adresse ?? '';
+    if (_zones.contains(adresse)) {
+      _zone = adresse;
+    }
+
+    // Préremplir les horaires
+    if (_boutique.horaires is Map) {
+      final h = _boutique.horaires as Map;
+      final ouv = h['ouverture']?.toString();
+      final fer = h['fermeture']?.toString();
+      final jours = h['jours'];
+
+      if (ouv != null && ouv.contains(':')) {
+        final parts = ouv.split(':');
+        _openingTime = TimeOfDay(
+          hour: int.tryParse(parts[0]) ?? 8,
+          minute: int.tryParse(parts[1]) ?? 0,
+        );
+      }
+      if (fer != null && fer.contains(':')) {
+        final parts = fer.split(':');
+        _closingTime = TimeOfDay(
+          hour: int.tryParse(parts[0]) ?? 18,
+          minute: int.tryParse(parts[1]) ?? 0,
+        );
+      }
+      if (jours is List) {
+        _selectedDays = List<String>.from(jours);
+      }
+    }
+  }
+
+  Future<void> _fetchCategories() async {
+    try {
+      final response = await Get.find<ApiClient>().get(ApiConstants.categoriesEndpoint);
+      if (response.statusCode == 200) {
+        final List<dynamic> data = response.data;
+        if (mounted) {
+          setState(() {
+            _dbCategories = data.map((e) {
+              final nom = e['nom'].toString();
+              IconData iconData = Icons.category_rounded;
+              if (e['slug'] == 'mode') iconData = Icons.shopping_bag_rounded;
+              else if (e['slug'] == 'beaute-sante') iconData = Icons.face_retouching_natural_rounded;
+              else if (e['slug'] == 'electronique') iconData = Icons.devices_rounded;
+              else if (e['slug'] == 'alimentation') iconData = Icons.restaurant_rounded;
+              else if (e['slug'] == 'maison-decoration') iconData = Icons.home_rounded;
+              else if (e['slug'] == 'immobilier') iconData = Icons.apartment_rounded;
+              else if (e['slug'] == 'vehicules') iconData = Icons.directions_car_rounded;
+              else if (e['slug'] == 'services') iconData = Icons.build_rounded;
+
+              return AppCategory(id: e['id'].toString(), label: nom, icon: iconData);
+            }).toList();
+
+            // Préremplir les catégories existantes
+            if (_boutique.categories != null) {
+              _selectedCategoryIds = _boutique.categories!
+                  .map((c) => c['id'].toString())
+                  .toList();
+            }
+
+            _isLoadingCategories = false;
+          });
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoadingCategories = false);
+      }
+    }
+  }
+
+  String _formatPhoneNumber(String phone) {
+    if (phone.isEmpty) return phone;
+    String cleanPhone = phone.replaceAll(RegExp(r'\s+'), '');
+    if (!cleanPhone.startsWith('+') && !cleanPhone.startsWith('00')) {
+      return '+228$cleanPhone';
+    }
+    return cleanPhone;
+  }
+
+  Future<void> _pickTime(bool isOpening) async {
+    final initialTime = isOpening
+        ? (_openingTime ?? const TimeOfDay(hour: 8, minute: 0))
+        : (_closingTime ?? const TimeOfDay(hour: 18, minute: 0));
+
+    final TimeOfDay? picked = await showTimePicker(
+      context: context,
+      initialTime: initialTime,
+      helpText: isOpening ? 'Heure d\'ouverture' : 'Heure de fermeture',
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: AppTheme.primary,
+              onPrimary: Colors.white,
+              onSurface: AppTheme.foreground,
+              surface: Colors.white,
+            ),
+            timePickerTheme: TimePickerThemeData(
+              backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+              hourMinuteShape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+                side: BorderSide(color: AppTheme.border.withOpacity(0.3), width: 0.5),
+              ),
+              hourMinuteColor: AppTheme.primary.withOpacity(0.08),
+              hourMinuteTextColor: AppTheme.primary,
+              dayPeriodTextColor: AppTheme.primary,
+              dayPeriodColor: AppTheme.primary.withOpacity(0.15),
+              dialBackgroundColor: AppTheme.primary.withOpacity(0.1),
+              dialHandColor: AppTheme.primary,
+              dialTextColor: AppTheme.foreground,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null) {
+      setState(() {
+        if (isOpening) _openingTime = picked;
+        else _closingTime = picked;
+      });
+    }
+  }
+
+  String _formatTime(TimeOfDay? time) {
+    if (time == null) return '--:--';
+    return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+  }
+
+  void _toggleDay(String day) {
+    setState(() {
+      if (_selectedDays.contains(day)) {
+        if (_selectedDays.length > 1) _selectedDays.remove(day);
+      } else {
+        _selectedDays.add(day);
+      }
+    });
+  }
+
+  bool get _isFormValid {
+    return _nameCtrl.text.trim().isNotEmpty &&
+        _phoneCtrl.text.trim().isNotEmpty &&
+        _selectedCategoryIds.isNotEmpty &&
+        _selectedDays.isNotEmpty &&
+        _openingTime != null &&
+        _closingTime != null;
   }
 
   @override
   void dispose() {
-    _nameController.dispose();
-    _sloganController.dispose();
-    _descriptionController.dispose();
-    _phoneController.dispose();
+    _nameCtrl.dispose();
+    _descCtrl.dispose();
+    _phoneCtrl.dispose();
+    _phone2Ctrl.dispose();
+    _detailsCtrl.dispose();
     super.dispose();
-  }
-
-  bool get _isFormValid {
-    return _nameController.text.isNotEmpty &&
-        _phoneController.text.isNotEmpty &&
-        _selectedDays.isNotEmpty &&
-        _openingTime.isNotEmpty &&
-        _closingTime.isNotEmpty;
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppTheme.background,
-      appBar: AppBar(
-        title: const Text('Modifier la boutique'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppTheme.primary),
-          onPressed: Get.back,
-        ),
-        centerTitle: true,
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.dark,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Stack(
-                clipBehavior: Clip.none,
-                alignment: Alignment.bottomCenter,
-                children: [
-                  Container(
-                    width: double.infinity,
-                    height: 140,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(20),
-                      image: DecorationImage(
-                        image: NetworkImage(widget.shop.coverUrl),
-                        fit: BoxFit.cover,
+      child: Scaffold(
+        resizeToAvoidBottomInset: true,
+        backgroundColor: AppTheme.background,
+        appBar: AppBar(
+          title: const Text('Modifier la boutique'),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: AppTheme.primary),
+            onPressed: Get.back,
+          ),
+          centerTitle: true,
+        ),
+        body: _isLoadingCategories
+            ? const Center(child: CircularProgressIndicator())
+            : SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Cover & Avatar
+                    Center(
+                      child: Stack(
+                        clipBehavior: Clip.none,
+                        alignment: Alignment.bottomCenter,
+                        children: [
+                          Container(
+                            width: double.infinity,
+                            height: 140,
+                            decoration: BoxDecoration(
+                              color: AppTheme.primaryLight,
+                              borderRadius: BorderRadius.circular(16),
+                              image: const DecorationImage(
+                                image: CachedNetworkImageProvider(
+                                    'https://images.unsplash.com/photo-1556740738-b6a63e27c4df?q=80&w=600&auto=format&fit=crop'),
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                            child: Align(
+                              alignment: Alignment.topRight,
+                              child: Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: CircleAvatar(
+                                  backgroundColor: Colors.white.withOpacity(0.4),
+                                  child: const Icon(Icons.camera_alt, color: AppTheme.primary),
+                                ),
+                              ),
+                            ),
+                          ),
+                          Positioned(
+                            bottom: -40,
+                            child: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: const BoxDecoration(
+                                color: AppTheme.background,
+                                shape: BoxShape.circle,
+                              ),
+                              child: _boutique.logoUrl.isNotEmpty
+                                  ? CircleAvatar(
+                                      radius: 40,
+                                      backgroundImage: CachedNetworkImageProvider(_boutique.logoUrl),
+                                      child: Align(
+                                        alignment: Alignment.bottomRight,
+                                        child: CircleAvatar(
+                                          radius: 12,
+                                          backgroundColor: AppTheme.primary,
+                                          child: const Icon(Icons.edit, size: 14, color: Colors.white),
+                                        ),
+                                      ),
+                                    )
+                                  : CircleAvatar(
+                                      radius: 40,
+                                      backgroundColor: AppTheme.primaryLight,
+                                      child: Align(
+                                        alignment: Alignment.bottomRight,
+                                        child: CircleAvatar(
+                                          radius: 12,
+                                          backgroundColor: AppTheme.primary,
+                                          child: const Icon(Icons.edit, size: 14, color: Colors.white),
+                                        ),
+                                      ),
+                                    ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ),
-                  Positioned(
-                    bottom: -36,
-                    child: Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: const BoxDecoration(
-                        color: AppTheme.background,
-                        shape: BoxShape.circle,
-                      ),
-                      child: CircleAvatar(
-                        radius: 36,
-                        backgroundImage: NetworkImage(widget.shop.logoUrl),
+                    const SizedBox(height: 60),
+
+                    // Nom de la boutique
+                    const Text('Nom de la boutique *',
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: _nameCtrl,
+                      onChanged: (_) {
+                        if (_errors.containsKey('nom')) setState(() => _errors.remove('nom'));
+                        setState(() {});
+                      },
+                      decoration: InputDecoration(
+                        hintText: 'Ex: Ma Super Boutique',
+                        errorText: _errors['nom'] != null
+                            ? (_errors['nom'] is List ? _errors['nom'].join('\n') : _errors['nom'].toString())
+                            : null,
                       ),
                     ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 52),
-            _buildLabel('Nom de la boutique *'),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _nameController,
-              decoration: const InputDecoration(hintText: 'Ex: Kofi Tech Shop'),
-              onChanged: (_) => setState(() {}),
-            ),
-            const SizedBox(height: 16),
-            _buildLabel('Slogan'),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _sloganController,
-              decoration: const InputDecoration(hintText: 'Votre slogan...'),
-            ),
-            const SizedBox(height: 16),
-            _buildLabel('Catégorie principale'),
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              decoration: BoxDecoration(
-                border: Border.all(color: AppTheme.border),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: DropdownButtonHideUnderline(
-                child: DropdownButton<String>(
-                  value: _category,
-                  isExpanded: true,
-                  items: _categories
-                      .map((value) => DropdownMenuItem(
-                            value: value,
-                            child: Text(value),
-                          ))
-                      .toList(),
-                  onChanged: (value) {
-                    if (value != null) {
-                      setState(() => _category = value);
-                    }
-                  },
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            _buildLabel('Description'),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _descriptionController,
-              maxLines: 4,
-              decoration: const InputDecoration(
-                hintText: 'Décrivez votre boutique...',
-              ),
-            ),
-            const SizedBox(height: 16),
-            _buildLabel('Téléphone *'),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _phoneController,
-              keyboardType: TextInputType.phone,
-              onChanged: (_) => setState(() {}),
-              decoration:
-                  const InputDecoration(hintText: '+228 90 00 00 00'),
-            ),
-            const SizedBox(height: 16),
-            _buildLabel('Localisation *'),
-            const SizedBox(height: 8),
-            TextField(
-              controller: TextEditingController(text: _location),
-              readOnly: true,
-              decoration: const InputDecoration(
-                hintText: 'Tokoin, Lomé',
-                suffixIcon: Icon(Icons.location_on_outlined),
-              ),
-            ),
-            const SizedBox(height: 16),
-            _buildLabel('Horaires d’ouverture'),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildTimeButton('Ouverture', _openingTime, () async {
-                    final result = await showTimePicker(
-                      context: context,
-                      initialTime: TimeOfDay(
-                          hour: int.parse(_openingTime.split(':').first),
-                          minute: int.parse(_openingTime.split(':').last)),
-                      builder: (context, child) => Theme(
-                        data: Theme.of(context).copyWith(
-                          colorScheme: ColorScheme.light(
-                            primary: AppTheme.primary,
-                            onPrimary: Colors.white,
-                            onSurface: AppTheme.foreground,
+                    const SizedBox(height: 16),
+
+                    const Text('Catégorie de produits *',
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: _dbCategories.map((c) {
+                        final isSelected = _selectedCategoryIds.contains(c.id);
+                        return FilterChip(
+                          label: Text(c.label),
+                          labelStyle: TextStyle(
+                            color: isSelected ? Colors.white : AppTheme.foreground,
+                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                          ),
+                          selected: isSelected,
+                          onSelected: (bool selected) {
+                            setState(() {
+                              if (selected) {
+                                _selectedCategoryIds.add(c.id);
+                              } else {
+                                _selectedCategoryIds.remove(c.id);
+                              }
+                            });
+                          },
+                          backgroundColor: AppTheme.cardColor,
+                          selectedColor: AppTheme.primary,
+                          checkmarkColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                            side: BorderSide(
+                              color: isSelected ? AppTheme.primary : AppTheme.border,
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Description
+                    const Text('Description',
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: _descCtrl,
+                      maxLines: 3,
+                      decoration: const InputDecoration(
+                          hintText: 'Ex: Produits de qualité et livraison rapide.'),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Téléphone Principal
+                    const Text('Téléphone Principal *',
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: _phoneCtrl,
+                      keyboardType: TextInputType.phone,
+                      onChanged: (_) {
+                        if (_errors.containsKey('telephone')) setState(() => _errors.remove('telephone'));
+                        setState(() {});
+                      },
+                      decoration: InputDecoration(
+                        hintText: 'Ex: 90 00 00 00',
+                        errorText: _errors['telephone'] != null
+                            ? (_errors['telephone'] is List
+                                ? _errors['telephone'].join('\n')
+                                : _errors['telephone'].toString())
+                            : null,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Téléphone Secondaire
+                    const Text('Téléphone / Contact 2 (Optionnel)',
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: _phone2Ctrl,
+                      keyboardType: TextInputType.phone,
+                      onChanged: (_) {
+                        if (_errors.containsKey('contacts.0')) setState(() => _errors.remove('contacts.0'));
+                        if (_errors.containsKey('contacts')) setState(() => _errors.remove('contacts'));
+                        setState(() {});
+                      },
+                      decoration: InputDecoration(
+                        hintText: 'Ex: 99 00 00 00',
+                        errorText: _errors['contacts.0'] != null
+                            ? (_errors['contacts.0'] is List
+                                ? _errors['contacts.0'].join('\n')
+                                : _errors['contacts.0'].toString())
+                            : (_errors['contacts'] != null
+                                ? (_errors['contacts'] is List
+                                    ? _errors['contacts'].join('\n')
+                                    : _errors['contacts'].toString())
+                                : null),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Jours d'ouverture
+                    const Text('Jours d\'ouverture *',
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: _days.map((day) {
+                        final isSelected = _selectedDays.contains(day);
+                        return GestureDetector(
+                          onTap: () => _toggleDay(day),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: isSelected ? AppTheme.primary : AppTheme.cardColor,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: isSelected ? AppTheme.primary : AppTheme.border,
+                              ),
+                            ),
+                            child: Text(
+                              day,
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                                color: isSelected ? Colors.white : AppTheme.foreground,
+                              ),
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Horaires d'ouverture
+                    const Text('Horaires d\'ouverture *',
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () => _pickTime(true),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              decoration: BoxDecoration(
+                                color: AppTheme.cardColor,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(color: AppTheme.border),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(Icons.wb_sunny_outlined, size: 18, color: Colors.orange),
+                                  const SizedBox(width: 8),
+                                  Text(_formatTime(_openingTime),
+                                      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                                ],
+                              ),
+                            ),
                           ),
                         ),
-                        child: child!,
-                      ),
-                    );
-                    if (result != null) {
-                      setState(() => _openingTime = result.format(context));
-                    }
-                  }),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _buildTimeButton('Fermeture', _closingTime, () async {
-                    final result = await showTimePicker(
-                      context: context,
-                      initialTime: TimeOfDay(
-                          hour: int.parse(_closingTime.split(':').first),
-                          minute: int.parse(_closingTime.split(':').last)),
-                      builder: (context, child) => Theme(
-                        data: Theme.of(context).copyWith(
-                          colorScheme: ColorScheme.light(
-                            primary: AppTheme.primary,
-                            onPrimary: Colors.white,
-                            onSurface: AppTheme.foreground,
+                        const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 16),
+                          child: Text('à',
+                              style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                  color: AppTheme.mutedForeground)),
+                        ),
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () => _pickTime(false),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              decoration: BoxDecoration(
+                                color: AppTheme.cardColor,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(color: AppTheme.border),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(Icons.nights_stay_outlined, size: 18, color: Colors.indigo),
+                                  const SizedBox(width: 8),
+                                  Text(_formatTime(_closingTime),
+                                      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                                ],
+                              ),
+                            ),
                           ),
                         ),
-                        child: child!,
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Localisation / Zone
+                    const Text('Localisation de la boutique *',
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: AppTheme.border),
+                        borderRadius: BorderRadius.circular(16),
                       ),
-                    );
-                    if (result != null) {
-                      setState(() => _closingTime = result.format(context));
-                    }
-                  }),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          value: _zone,
+                          isExpanded: true,
+                          items: _zones
+                              .map((z) => DropdownMenuItem(value: z, child: Text(z)))
+                              .toList(),
+                          onChanged: (v) => setState(() => _zone = v!),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Détails de l'adresse
+                    const Text('Détails de l\'adresse (Optionnel)',
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: _detailsCtrl,
+                      decoration: const InputDecoration(
+                          hintText: 'Ex: Près de la pharmacie XYZ...'),
+                    ),
+                    const SizedBox(height: 32),
+                  ],
                 ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            _buildLabel('Jours d’ouverture'),
-            const SizedBox(height: 10),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: _days.map((day) {
-                final selected = _selectedDays.contains(day);
-                return GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      if (selected) {
-                        _selectedDays.remove(day);
-                      } else {
-                        _selectedDays.add(day);
-                      }
-                    });
-                  },
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                    decoration: BoxDecoration(
-                      color:
-                          selected ? AppTheme.primary : AppTheme.cardColor,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: selected ? AppTheme.primary : AppTheme.border,
-                      ),
-                    ),
-                    child: Text(
-                      day,
-                      style: TextStyle(
-                        color: selected ? Colors.white : AppTheme.foreground,
-                        fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                );
-              }).toList(),
-            ),
-            const SizedBox(height: 16),
-            _buildLabel('Zones de vente'),
-            const SizedBox(height: 10),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: _zones.map((zone) {
-                final selected = _selectedZones.contains(zone);
-                return GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      if (selected) {
-                        _selectedZones.remove(zone);
-                      } else {
-                        _selectedZones.add(zone);
-                      }
-                    });
-                  },
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    decoration: BoxDecoration(
-                      color:
-                          selected ? AppTheme.primary : AppTheme.cardColor,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color: selected ? AppTheme.primary : AppTheme.border,
-                      ),
-                    ),
-                    child: Text(
-                      zone,
-                      style: TextStyle(
-                        color: selected ? Colors.white : AppTheme.foreground,
-                      ),
-                    ),
-                  ),
-                );
-              }).toList(),
-            ),
-            const SizedBox(height: 24),
-            AppButton(
-              label: 'Enregistrer les modifications',
-              icon: Icons.save_outlined,
-              onTap: _isFormValid ? () => Get.back() : () {},
-            ),
-            const SizedBox(height: 24),
-          ],
-        ),
-      ),
-    );
-  }
+              ),
+        bottomNavigationBar: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Opacity(
+              opacity: (_isFormValid && !_isLoading) ? 1.0 : 0.5,
+              child: AppButton(
+                label: _isLoading ? 'Enregistrement...' : 'Enregistrer les modifications',
+                icon: _isLoading ? Icons.hourglass_empty : Icons.save_outlined,
+                onTap: (_isFormValid && !_isLoading)
+                    ? () async {
+                        setState(() {
+                          _errors.clear();
+                          _isLoading = true;
+                        });
 
-  Widget _buildLabel(String label) {
-    return Text(
-      label,
-      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-    );
-  }
+                        final telephoneFormatted = _formatPhoneNumber(_phoneCtrl.text.trim());
+                        final phone2Raw = _phone2Ctrl.text.trim();
+                        final phone2Formatted = _formatPhoneNumber(phone2Raw);
 
-  Widget _buildTimeButton(String label, String value, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
-        decoration: BoxDecoration(
-          color: AppTheme.cardColor,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppTheme.border),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(label,
-                style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.mutedForeground)),
-            const SizedBox(height: 6),
-            Text(value,
-                style: const TextStyle(
-                    fontSize: 15, fontWeight: FontWeight.w700)),
-          ],
+                        if (phone2Formatted.isNotEmpty && telephoneFormatted == phone2Formatted) {
+                          setState(() {
+                            _errors['contacts.0'] = 'Le contact secondaire ne peut pas être identique au numéro principal.';
+                            _isLoading = false;
+                          });
+                          return;
+                        }
+
+                        // On envoie toujours contacts pour ne pas perdre la valeur existante.
+                        // Si le champ est vide → tableau vide → le backend supprime le contact.
+                        // Si rempli → met à jour.
+                        final List<String> contacts =
+                            phone2Formatted.isNotEmpty ? [phone2Formatted] : [];
+
+                        final payload = {
+                          'nom': _nameCtrl.text.trim(),
+                          'telephone': telephoneFormatted,
+                          'adresse': _zone,
+                          'details_adresse': _detailsCtrl.text.trim(),
+                          'description': _descCtrl.text.trim(),
+                          'contacts': contacts,
+                          'horaires': {
+                            'jours': _selectedDays,
+                            'ouverture': _formatTime(_openingTime),
+                            'fermeture': _formatTime(_closingTime),
+                          },
+                          'categories': _selectedCategoryIds,
+                        };
+
+                        try {
+                          final result = await BoutiqueController.to.updateBoutique(payload);
+                          if (result == true) {
+                            AppToasts.success(
+                              context,
+                              'Succès',
+                              'Votre boutique a été modifiée avec succès.',
+                            );
+                            Get.back();
+                          } else if (result is Map) {
+                            setState(() {
+                              _errors = Map<String, dynamic>.from(result);
+                            });
+                            AppToasts.error(
+                              context,
+                              'Erreur de validation',
+                              'Veuillez corriger les erreurs dans le formulaire.',
+                            );
+                          } else {
+                            AppToasts.error(context, 'Erreur', 'Une erreur inattendue est survenue.');
+                          }
+                        } finally {
+                          if (mounted) {
+                            setState(() => _isLoading = false);
+                          }
+                        }
+                      }
+                    : () {},
+              ),
+            ),
+          ),
         ),
       ),
     );

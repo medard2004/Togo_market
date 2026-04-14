@@ -192,6 +192,14 @@ class AuthService {
   }
   
   Future<void> logout() async {
-    await _apiClient.deleteToken();
+    try {
+      // On invalide le token côté serveur
+      await _apiClient.post('/auth/logout');
+    } catch (_) {
+      // Ignorer si la session serveur est déjà invalide ou expirée
+    } finally {
+      // Suppression stricte du token côté local en toutes circonstances
+      await _apiClient.deleteToken();
+    }
   }
 }

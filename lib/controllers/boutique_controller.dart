@@ -1,6 +1,6 @@
 import 'package:get/get.dart';
 import 'package:dio/dio.dart';
-import '../../models/models.dart';
+import '../models/models.dart';
 import '../../Api/services/boutique_service.dart';
 
 class BoutiqueController extends GetxController {

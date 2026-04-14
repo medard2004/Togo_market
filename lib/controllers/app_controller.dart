@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:get/get.dart';
 import '../models/models.dart';
 import '../data/mock_data.dart';
@@ -44,7 +45,7 @@ class AppController extends GetxController {
         favorites.assignAll(apiProducts.where((p) => p.isFavorite).toList());
       }
     } catch (e) {
-      print("Error fetching products: $e");
+      debugPrint("Error fetching products: $e");
     }
   }
 
@@ -173,7 +174,7 @@ class DashboardController extends GetxController {
           myProducts.assignAll(mine);
         }
       } catch (e) {
-        print("Error loading real products for dashboard: $e");
+        debugPrint("Error loading real products for dashboard: $e");
       }
     }
   }

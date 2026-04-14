@@ -3,10 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+// import 'package:flutter_secure_storage/flutter_secure_storage.dart'; // utilisé uniquement par la ligne DEBUG commentée
 import 'package:get/get.dart';
 import 'package:toastification/toastification.dart';
 
 import 'theme/app_theme.dart';
+import 'navigation/app_transitions.dart';
 import 'controllers/app_controller.dart';
 
 // Screens
@@ -48,7 +50,7 @@ void main() async {
   await dotenv.load(fileName: '.env');
   await Firebase.initializeApp();
 
-  await FlutterSecureStorage().deleteAll(); // supprimer les données en local
+  // await FlutterSecureStorage().deleteAll(); // DEBUG ONLY — à ne pas décommenter en production
 
   // Force portrait orientation
   await SystemChrome.setPreferredOrientations([
@@ -82,6 +84,7 @@ void main() async {
   // Initialize global controllers
   Get.put(AppController());
   Get.put(ChatController());
+  Get.put(DashboardController());
 
   runApp(const TogoMarketApp());
 }
@@ -124,22 +127,25 @@ class TogoMarketApp extends StatelessWidget {
           GetPage(name: '/seller/:id', page: () => const SellerScreen()),
           GetPage(name: '/dashboard', page: () => const DashboardScreen()),
           GetPage(name: '/add-product', page: () => const AddProductScreen()),
-        togoPage('/shop-information', () => const ShopInformationScreen()),
-        togoPage(
+          togoPage('/shop-information', () => const ShopInformationScreen()),
+          togoPage(
             '/edit-shop',
-            () => EditShopScreen(
-                  shop: Get.arguments as ShopInfo? ?? ShopInfo.sample,
-                ),
-            style: TogoRouteStyle.modalLift),
+            () => const EditShopScreen(),
+            style: TogoRouteStyle.modalLift,
+          ),
           GetPage(
             name: '/store-settings',
             page: () => const StoreConfigurationScreen(),
           ),
-            style: TogoRouteStyle.modalLift),
-        togoPage('/edit-product/:id', () => const EditProductScreen(),
+          togoPage(
+            '/edit-product/:id',
+            () => const EditProductScreen(),
+          ),
           GetPage(
               name: '/notifications', page: () => const NotificationsScreen()),
           GetPage(name: '/profile', page: () => const ProfileScreen()),
+          GetPage(
+              name: '/shop-settings', page: () => const ShopSettingsScreen()),
           GetPage(name: '/settings', page: () => const SettingsScreen()),
           GetPage(name: '/favorites', page: () => const FavoritesScreen()),
           GetPage(name: '/orders', page: () => const OrdersScreen()),
