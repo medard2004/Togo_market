@@ -11,6 +11,11 @@ class AppController extends GetxController {
   final userAvatar =
       'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop'
           .obs;
+  final userBio =
+      'Passionné par la technologie et les produits vintage. Je vends mes articles soigneusement entretenus au meilleur prix.'
+          .obs;
+  final userEmail = 'koffi.mensah@email.com'.obs;
+  final userPhone = '+228 90 00 00 00'.obs;
 
   // Products
   final products = <Product>[].obs;

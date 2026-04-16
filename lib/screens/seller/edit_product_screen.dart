@@ -6,7 +6,6 @@ import 'package:get/get.dart';
 import '../../data/mock_data.dart';
 import '../../models/models.dart';
 import '../../theme/app_theme.dart';
-import '../../utils/responsive.dart';
 import '../../animations/togo_animation_system.dart';
 import '../../widgets/common_widgets.dart';
 
@@ -81,7 +80,6 @@ class _EditProductScreenState extends State<EditProductScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final r = R(context);
     if (_product == null && Get.parameters['id'] != null) {
       return Scaffold(
         backgroundColor: AppTheme.background,

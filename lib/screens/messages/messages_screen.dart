@@ -156,26 +156,26 @@ class _MessagesScreenState extends State<MessagesScreen> {
           children: [
             // ── Header ──────────────────────────────────────────────────────
             Padding(
-              padding: EdgeInsets.fromLTRB(r.hPad, r.s(20), r.hPad, r.s(14)),
+              padding: EdgeInsets.fromLTRB(r.hPad, r.s(10), r.hPad, r.s(14)),
               child: Row(
                 children: [
                    Expanded(
                     child: Text(
                       _isSelectionMode ? '${_selectedMessages.length} sélectionné(s)' : 'Messages',
-                      style: TextStyle(fontSize: r.fs(26), fontWeight: FontWeight.w800, color: AppTheme.foreground)
+                      style: TextStyle(fontSize: r.fs(15), fontWeight: FontWeight.w800, color: AppTheme.foreground)
                     ),
                   ),
                   GestureDetector(
                     onTap: _toggleSelectionMode,
                     child: Container(
-                      padding: EdgeInsets.all(r.s(8)),
+                      padding: EdgeInsets.all(r.s(3)),
                       decoration: BoxDecoration(
                         color: _isSelectionMode ? AppTheme.primary.withOpacity(0.1) : Colors.transparent,
-                        borderRadius: BorderRadius.circular(r.rad(8)),
+                        borderRadius: BorderRadius.circular(r.rad(4)),
                       ),
                       child: Icon(
                         _isSelectionMode ? Icons.close : Icons.checklist_rounded,
-                        size: r.s(24),
+                        size: r.s(18),
                         color: _isSelectionMode ? AppTheme.primary : AppTheme.mutedForeground,
                       ),
                     ),

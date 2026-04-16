@@ -16,6 +16,8 @@ class AppTheme {
   static const Color accent = Color(0xFFFEEEE8);
   static const Color accentForeground = Color(0xFFD4451A);
   static const Color destructive = Color(0xFFE53E3E);
+  static const Color green = Color(0xFF16A34A);         // Vert positif
+  static const Color red = Color(0xFFEF4444);           // Rouge négatif
   static const Color border = Color(0xFFE8E0DA);
 
   // ── Ombres ──────────────────────────────────────────────────────────────────

@@ -216,7 +216,7 @@ class _ShopSettingsScreenState extends State<ShopSettingsScreen> {
                   icon: Icons.bar_chart_outlined,
                   title: 'Statistiques détaillées',
                   subtitle: 'Vues, ventes, performances',
-                  onTap: () {},
+                  onTap: () => Get.toNamed('/seller-stats'),
                 ),
               ]),
             ),

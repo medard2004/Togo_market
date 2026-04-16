@@ -25,7 +25,9 @@ import 'screens/seller/edit_shop_screen.dart';
 import 'screens/seller/store_configuration_screen.dart';
 import 'screens/seller/add_product_screen.dart';
 import 'screens/seller/edit_product_screen.dart';
+import 'screens/seller/seller_stats_screen.dart';
 import 'screens/profile/profile_screen.dart';
+import 'screens/profile/edit_profile_screen.dart';
 import 'screens/notifications/notifications_screen.dart';
 import 'screens/settings/settings_screen.dart';
 import 'screens/favorites/favorites_screen.dart';
@@ -94,8 +96,11 @@ class TogoMarketApp extends StatelessWidget {
             style: TogoRouteStyle.modalLift),
         togoPage('/edit-product/:id', () => const EditProductScreen(),
             style: TogoRouteStyle.modalLift),
+        togoPage('/seller-stats', () => const SellerStatsScreen()),
         togoPage('/notifications', () => const NotificationsScreen()),
         togoPage('/profile', () => const ProfileScreen()),
+        togoPage('/edit-profile', () => const EditProfileScreen(),
+            style: TogoRouteStyle.modalLift),
         togoPage('/settings', () => const SettingsScreen()),
         togoPage('/favorites', () => const FavoritesScreen()),
         togoPage('/orders', () => const OrdersScreen()),

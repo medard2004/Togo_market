@@ -12,6 +12,7 @@ dependencies:
 
   # Navigation & State Management
   get: ^4.6.6
+  fl_chart: ^1.2.0
 
   # UI & Animations
   shimmer: ^3.0.0
@@ -39,7 +40,6 @@ dependencies:
 
   # Chat
   dash_chat_2: ^0.0.21
-  fl_chart: ^1.2.0
 
 dev_dependencies:
   flutter_test:
