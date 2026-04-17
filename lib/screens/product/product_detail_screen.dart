@@ -5,8 +5,9 @@ import 'package:shimmer/shimmer.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/common_widgets.dart';
 import '../../controllers/app_controller.dart';
-import '../../data/mock_data.dart';
 import '../../utils/responsive.dart';
+import '../../utils/app_utils.dart';
+import '../../Api/config/api_constants.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   const ProductDetailScreen({super.key});
@@ -29,22 +30,25 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   Widget build(BuildContext context) {
     final r = R(context);
     final id = Get.parameters['id'] ?? '';
-    final product = getProductById(id);
     final ctrl = Get.find<AppController>();
+    
+    // Get product from global state
+    final product = ctrl.products.firstWhereOrNull((p) => p.id.toString() == id);
 
     if (product == null) {
       return Scaffold(
         body: Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
           const Text('😕', style: TextStyle(fontSize: 40)),
           const Text('Produit introuvable'),
+          const SizedBox(height: 10),
           ElevatedButton(onPressed: Get.back, child: const Text('Retour')),
         ])),
       );
     }
 
-    final seller = getSellerById(product.sellerId);
-    final similar = ctrl.getSimilarProducts(product.id, product.category);
-    final images = [product.image, product.image, product.image];
+    final boutique = product.boutiqueObj;
+    final similar = ctrl.getSimilarProducts(product.id.toString(), product.category);
+    final images = product.images.isNotEmpty ? product.images : [product.image];
 
     return Scaffold(
       backgroundColor: AppTheme.background,
@@ -97,7 +101,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         itemCount: images.length,
                         onPageChanged: (i) => setState(() => _imageIndex = i),
                         itemBuilder: (_, i) => CachedNetworkImage(
-                          imageUrl: images[i],
+                          imageUrl: ApiConstants.resolveImageUrl(images[i]),
                           fit: BoxFit.cover,
                           width: double.infinity,
                           placeholder: (_, __) => Shimmer.fromColors(
@@ -187,7 +191,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                   children: [
                                     Text(product.location,
                                         style: TextStyle(fontSize: r.fs(14), fontWeight: FontWeight.w700, color: AppTheme.foreground)),
-                                    Text('À 2.5 km de vous',
+                                    Text('Quartier / Ville',
                                         style: TextStyle(fontSize: r.fs(12), color: AppTheme.mutedForeground)),
                                   ],
                                 ),
@@ -212,7 +216,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       Wrap(
                         spacing: r.s(8),
                         runSpacing: r.s(8),
-                        children: ['Pointure 42', product.condition, 'Vendeur vérifié']
+                        children: [
+                          if (product.categoryObj != null) product.categoryObj!.nom,
+                          product.condition,
+                          product.isPriceNegotiable ? 'Prix Négociable' : 'Prix Fixe'
+                        ]
                             .map((tag) => Container(
                                   padding: EdgeInsets.symmetric(horizontal: r.s(14), vertical: r.s(7)),
                                   decoration: BoxDecoration(
@@ -227,7 +235,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       SizedBox(height: r.s(20)),
 
                       // Carte vendeur
-                      if (seller != null) ...[
+                      if (boutique != null) ...[
                         Container(
                           padding: EdgeInsets.all(r.s(14)),
                           decoration: BoxDecoration(
@@ -243,7 +251,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                     children: [
                                       CircleAvatar(
                                         radius: r.s(26),
-                                        backgroundImage: CachedNetworkImageProvider(seller.avatar),
+                                        backgroundImage: CachedNetworkImageProvider(ApiConstants.resolveImageUrl(boutique.logoUrl)),
+                                        backgroundColor: AppTheme.primaryLight,
                                       ),
                                       Positioned(
                                         bottom: 0, right: 0,
@@ -262,18 +271,18 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        Text(seller.shopName,
+                                        Text(boutique.nom,
                                             style: TextStyle(fontSize: r.fs(15), fontWeight: FontWeight.w700, color: AppTheme.foreground)),
                                         SizedBox(height: r.s(2)),
                                         Row(children: [
                                           Icon(Icons.flash_on, size: r.s(12), color: AppTheme.primary),
                                           SizedBox(width: r.s(2)),
-                                          Text('Répond en ~5 min',
-                                              style: TextStyle(fontSize: r.fs(12), color: AppTheme.mutedForeground)),
+                                          const Text('Vendeur Professionnel',
+                                              style: TextStyle(fontSize: 12, color: AppTheme.mutedForeground)),
                                         ]),
                                         SizedBox(height: r.s(2)),
-                                        Text('MEMBRE DEPUIS JAN 2023',
-                                            style: TextStyle(fontSize: r.fs(10), fontWeight: FontWeight.w600,
+                                        const Text('TOGO MARKET VÉRIFIÉ',
+                                            style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600,
                                                 letterSpacing: 0.5, color: AppTheme.mutedForeground)),
                                       ],
                                     ),
@@ -281,14 +290,14 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                   Row(children: [
                                     Icon(Icons.star, size: r.s(14), color: Colors.amber),
                                     SizedBox(width: r.s(2)),
-                                    Text('${seller.rating}',
+                                    Text('${boutique.noteMoyenne}',
                                         style: TextStyle(fontSize: r.fs(13), fontWeight: FontWeight.w700, color: AppTheme.foreground)),
                                   ]),
                                 ],
                               ),
                               SizedBox(height: r.s(12)),
                               GestureDetector(
-                                onTap: () => Get.toNamed('/seller/${seller.id}'),
+                                onTap: () => Get.toNamed('/seller/${boutique.id}'),
                                 child: Container(
                                   width: double.infinity,
                                   padding: EdgeInsets.symmetric(vertical: r.s(11)),
@@ -313,38 +322,27 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       Text('Localisation du produit',
                           style: TextStyle(fontSize: r.fs(18), fontWeight: FontWeight.w700, color: AppTheme.foreground)),
                       SizedBox(height: r.s(12)),
-                      ClipRRect(
+                       ClipRRect(
                         borderRadius: BorderRadius.circular(r.rad(16)),
-                        child: Stack(
-                          children: [
-                            CachedNetworkImage(
-                              imageUrl:
-                                  'https://images.unsplash.com/photo-1524661135-423995f22d0b?w=600&h=250&fit=crop',
-                              width: double.infinity,
-                              height: r.s(160),
-                              fit: BoxFit.cover,
-                            ),
-                            Positioned.fill(
-                              child: Container(color: Colors.black.withOpacity(0.08)),
-                            ),
-                            Positioned(
-                              bottom: r.s(14), left: r.s(14),
-                              child: Container(
-                                padding: EdgeInsets.symmetric(horizontal: r.s(12), vertical: r.s(7)),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(r.rad(20)),
-                                  boxShadow: AppTheme.shadowCard,
-                                ),
-                                child: Row(children: [
-                                  Icon(Icons.location_on, size: r.s(14), color: AppTheme.primary),
-                                  SizedBox(width: r.s(4)),
-                                  Text(product.location,
-                                      style: TextStyle(fontSize: r.fs(12), fontWeight: FontWeight.w600)),
-                                ]),
-                              ),
-                            ),
-                          ],
+                        child: Container(
+                           width: double.infinity,
+                           padding: EdgeInsets.symmetric(vertical: r.s(40)),
+                           decoration: BoxDecoration(
+                             color: AppTheme.cardColor,
+                             border: Border.all(color: AppTheme.border),
+                           ),
+                           child: Column(
+                             children: [
+                               Icon(Icons.map_outlined, size: r.s(48), color: AppTheme.muted),
+                               SizedBox(height: r.s(12)),
+                               Text('Fonctionnalité indisponible pour le moment',
+                                style: TextStyle(
+                                  fontSize: r.fs(13), 
+                                  color: AppTheme.mutedForeground,
+                                  fontWeight: FontWeight.w600
+                                )),
+                             ]
+                           ),
                         ),
                       ),
                       SizedBox(height: r.s(16)),

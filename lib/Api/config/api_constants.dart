@@ -12,6 +12,24 @@ class ApiConstants {
     return url;
   }
 
+  /// Root URL (sans /api) pour construire les URLs de storage
+  static String get storageBaseUrl {
+    final base = baseUrl;
+    return base.endsWith('/api')
+        ? base.substring(0, base.length - 4)
+        : base;
+  }
+
+  /// Résout un chemin image vers une URL complète.
+  /// Accepte : URLs absolues (http...), chemins /storage/... ou relatifs produits/...
+  static String resolveImageUrl(String? path) {
+    if (path == null || path.isEmpty) return '';
+    if (path.startsWith('http')) return path;
+    if (path.startsWith('/storage/')) return '$storageBaseUrl$path';
+    // Chemin relatif type "produits/xxxx.png"
+    return '$storageBaseUrl/storage/$path';
+  }
+
   // Public Endpoints
   static const String categoriesEndpoint = '/categories';
   static const String locationsEndpoint = '/locations';

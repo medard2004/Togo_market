@@ -32,6 +32,7 @@ import 'screens/seller/store_configuration_screen.dart';
 import 'screens/seller/add_product_screen.dart';
 import 'screens/seller/edit_product_screen.dart';
 import 'screens/profile/profile_screen.dart';
+import 'screens/profile/profile_setup_screen.dart';
 import 'screens/notifications/notifications_screen.dart';
 import 'screens/settings/settings_screen.dart';
 import 'screens/favorites/favorites_screen.dart';
@@ -42,6 +43,7 @@ import 'Api/core/api_client.dart';
 import 'Api/services/auth_service.dart';
 import 'Api/services/boutique_service.dart';
 import 'Api/services/produit_service.dart';
+import 'Api/services/category_service.dart';
 import 'Api/provider/auth_controller.dart';
 import 'controllers/boutique_controller.dart';
 
@@ -73,10 +75,12 @@ void main() async {
   final authService = AuthService(apiClient);
   final boutiqueService = BoutiqueService(apiClient);
   final produitService = ProduitService(apiClient);
+  final categoryService = CategoryService(apiClient);
 
   Get.put(authService, permanent: true);
   Get.put(boutiqueService, permanent: true);
   Get.put(produitService, permanent: true);
+  Get.put(categoryService, permanent: true);
 
   Get.put(AuthController(authService), permanent: true);
   Get.put(BoutiqueController(boutiqueService), permanent: true);
@@ -144,6 +148,7 @@ class TogoMarketApp extends StatelessWidget {
           GetPage(
               name: '/notifications', page: () => const NotificationsScreen()),
           GetPage(name: '/profile', page: () => const ProfileScreen()),
+          GetPage(name: '/profile-setup', page: () => const ProfileSetupScreen()),
           GetPage(
               name: '/shop-settings', page: () => const ShopSettingsScreen()),
           GetPage(name: '/settings', page: () => const SettingsScreen()),

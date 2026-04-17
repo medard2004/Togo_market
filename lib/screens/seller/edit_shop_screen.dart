@@ -1,11 +1,14 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
 import '../../theme/app_theme.dart';
 import '../../widgets/common_widgets.dart';
-import '../../models/models.dart';
+import '../../models/models.dart'; // Used for AppCategory (UI model)
+import '../../Api/model/boutique_model.dart';
 import '../../controllers/boutique_controller.dart';
 import '../../Api/core/api_client.dart';
 import '../../Api/config/api_constants.dart';
@@ -25,6 +28,9 @@ class _EditShopScreenState extends State<EditShopScreen> {
   final _phone2Ctrl = TextEditingController();
   final _detailsCtrl = TextEditingController();
 
+  String? _bannerPath;
+  String? _logoPath;
+
   String _zone = 'Tokoin';
   List<String> _selectedCategoryIds = [];
 
@@ -36,7 +42,9 @@ class _EditShopScreenState extends State<EditShopScreen> {
   Map<String, dynamic> _errors = {};
   bool _isLoading = false;
   bool _isLoadingCategories = true;
+  bool _isPickingImage = false;
   List<AppCategory> _dbCategories = [];
+  final ImagePicker _picker = ImagePicker();
 
   late Boutique _boutique;
 
@@ -152,6 +160,41 @@ class _EditShopScreenState extends State<EditShopScreen> {
     return cleanPhone;
   }
 
+  String _resolveUrl(String? url) {
+    if (url == null || url.isEmpty) return '';
+    if (url.startsWith('http')) return url;
+    if (url.startsWith('/storage/')) {
+      final baseUrl = ApiConstants.baseUrl;
+      final rootUrl = baseUrl.endsWith('/api')
+          ? baseUrl.substring(0, baseUrl.length - 4)
+          : baseUrl;
+      return '$rootUrl$url';
+    }
+    return url;
+  }
+
+  Future<void> _pickImage(bool isBanner) async {
+    if (_isPickingImage) return;
+    _isPickingImage = true;
+    
+    try {
+      final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+      if (pickedFile != null && mounted) {
+        setState(() {
+          if (isBanner) {
+            _bannerPath = pickedFile.path;
+          } else {
+            _logoPath = pickedFile.path;
+          }
+        });
+      }
+    } catch (e) {
+      debugPrint('Image picker error: $e');
+    } finally {
+      _isPickingImage = false;
+    }
+  }
+
   Future<void> _pickTime(bool isOpening) async {
     final initialTime = isOpening
         ? (_openingTime ?? const TimeOfDay(hour: 8, minute: 0))
@@ -263,62 +306,84 @@ class _EditShopScreenState extends State<EditShopScreen> {
                         clipBehavior: Clip.none,
                         alignment: Alignment.bottomCenter,
                         children: [
-                          Container(
-                            width: double.infinity,
-                            height: 140,
-                            decoration: BoxDecoration(
-                              color: AppTheme.primaryLight,
-                              borderRadius: BorderRadius.circular(16),
-                              image: const DecorationImage(
-                                image: CachedNetworkImageProvider(
-                                    'https://images.unsplash.com/photo-1556740738-b6a63e27c4df?q=80&w=600&auto=format&fit=crop'),
-                                fit: BoxFit.cover,
+                          GestureDetector(
+                            onTap: () => _pickImage(true),
+                            child: Container(
+                              width: double.infinity,
+                              height: 140,
+                              decoration: BoxDecoration(
+                                color: AppTheme.primaryLight,
+                                borderRadius: BorderRadius.circular(16),
+                                image: _bannerPath != null
+                                    ? DecorationImage(
+                                        image: FileImage(File(_bannerPath!)),
+                                        fit: BoxFit.cover,
+                                      )
+                                    : (_boutique.bannerUrl.isNotEmpty
+                                        ? DecorationImage(
+                                            image: CachedNetworkImageProvider(_resolveUrl(_boutique.bannerUrl)),
+                                            fit: BoxFit.cover,
+                                          )
+                                        : null),
                               ),
-                            ),
-                            child: Align(
-                              alignment: Alignment.topRight,
-                              child: Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: CircleAvatar(
-                                  backgroundColor: Colors.white.withOpacity(0.4),
-                                  child: const Icon(Icons.camera_alt, color: AppTheme.primary),
-                                ),
-                              ),
+                              child: _bannerPath == null && _boutique.bannerUrl.isEmpty
+                                  ? Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(Icons.panorama_outlined,
+                                            size: 40,
+                                            color: AppTheme.primary.withOpacity(0.5)),
+                                        const SizedBox(height: 8),
+                                        Text('Ajouter une bannière',
+                                            style: TextStyle(
+                                                color: AppTheme.primary.withOpacity(0.7),
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w600)),
+                                      ],
+                                    )
+                                  : Align(
+                                      alignment: Alignment.topRight,
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(8.0),
+                                        child: CircleAvatar(
+                                          backgroundColor: Colors.white.withOpacity(0.8),
+                                          child: const Icon(Icons.edit, color: AppTheme.primary),
+                                        ),
+                                      ),
+                                    ),
                             ),
                           ),
                           Positioned(
                             bottom: -40,
-                            child: Container(
-                              padding: const EdgeInsets.all(4),
-                              decoration: const BoxDecoration(
-                                color: AppTheme.background,
-                                shape: BoxShape.circle,
+                            child: GestureDetector(
+                              onTap: () => _pickImage(false),
+                              child: Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: const BoxDecoration(
+                                  color: AppTheme.background,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: CircleAvatar(
+                                  radius: 40,
+                                  backgroundColor: AppTheme.cardColor,
+                                  backgroundImage: (_logoPath != null
+                                      ? FileImage(File(_logoPath!))
+                                      : (_boutique.logoUrl.isNotEmpty
+                                          ? CachedNetworkImageProvider(_resolveUrl(_boutique.logoUrl))
+                                          : null)) as ImageProvider?,
+                                  child: _logoPath == null && _boutique.logoUrl.isEmpty
+                                      ? const Icon(Icons.storefront,
+                                          size: 40, color: AppTheme.primary)
+                                      : const Align(
+                                          alignment: Alignment.bottomRight,
+                                          child: CircleAvatar(
+                                            radius: 12,
+                                            backgroundColor: AppTheme.primary,
+                                            child: Icon(Icons.edit, size: 14, color: Colors.white),
+                                          ),
+                                        ),
+                                ),
                               ),
-                              child: _boutique.logoUrl.isNotEmpty
-                                  ? CircleAvatar(
-                                      radius: 40,
-                                      backgroundImage: CachedNetworkImageProvider(_boutique.logoUrl),
-                                      child: Align(
-                                        alignment: Alignment.bottomRight,
-                                        child: CircleAvatar(
-                                          radius: 12,
-                                          backgroundColor: AppTheme.primary,
-                                          child: const Icon(Icons.edit, size: 14, color: Colors.white),
-                                        ),
-                                      ),
-                                    )
-                                  : CircleAvatar(
-                                      radius: 40,
-                                      backgroundColor: AppTheme.primaryLight,
-                                      child: Align(
-                                        alignment: Alignment.bottomRight,
-                                        child: CircleAvatar(
-                                          radius: 12,
-                                          backgroundColor: AppTheme.primary,
-                                          child: const Icon(Icons.edit, size: 14, color: Colors.white),
-                                        ),
-                                      ),
-                                    ),
                             ),
                           ),
                         ],
@@ -623,6 +688,8 @@ class _EditShopScreenState extends State<EditShopScreen> {
                             'fermeture': _formatTime(_closingTime),
                           },
                           'categories': _selectedCategoryIds,
+                          if (_bannerPath != null) 'bannerPath': _bannerPath,
+                          if (_logoPath != null) 'logoPath': _logoPath,
                         };
 
                         try {

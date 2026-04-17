@@ -5,8 +5,9 @@ import '../../../animations/togo_animation_system.dart';
 import '../../../theme/app_theme.dart';
 import '../../../widgets/common_widgets.dart';
 import '../../../controllers/app_controller.dart';
-import '../../../data/mock_data.dart';
 import '../../../utils/responsive.dart';
+import '../../../Api/model/category_model.dart';
+import '../../../utils/category_icon_helper.dart';
 
 class HomeBody extends StatelessWidget {
   final AppController ctrl;
@@ -23,8 +24,17 @@ class HomeBody extends StatelessWidget {
     final hScrollHeight = r.cardImageH + r.s(58);
 
     return AnimationLimiter(
-      child: CustomScrollView(
-        slivers: [
+      child: RefreshIndicator(
+        onRefresh: () async {
+          await ctrl.fetchProduits();
+          // Optionally fetch categories if needed
+          await ctrl.fetchCategories();
+        },
+        color: AppTheme.primary,
+        backgroundColor: AppTheme.cardColor,
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
           // ── Barre de recherche ──────────────────────────────────────────────
           SliverToBoxAdapter(
             child: Padding(
@@ -63,51 +73,64 @@ class HomeBody extends StatelessWidget {
           SliverToBoxAdapter(
             child: SizedBox(
               height: r.s(44),
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                padding: EdgeInsets.symmetric(horizontal: r.hPad),
-                itemCount: mockCategories.length,
-                separatorBuilder: (_, __) => SizedBox(width: r.s(8)),
-                itemBuilder: (_, i) {
-                  final cat = mockCategories[i];
-                  final isActive = selectedCat == cat.id;
-                  return GestureDetector(
-                    onTap: () {
-                      ctrl.selectedCategory.value = cat.id;
-                      ctrl.update();
-                    },
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      padding: EdgeInsets.symmetric(
-                          horizontal: r.s(14), vertical: r.s(8)),
-                      decoration: BoxDecoration(
-                        color: isActive ? AppTheme.primary : AppTheme.cardColor,
-                        borderRadius: BorderRadius.circular(r.rad(20)),
-                        boxShadow:
-                            isActive ? AppTheme.shadowPrimary : AppTheme.shadowCard,
+              child: Obx(() {
+                final apiCats = ctrl.categories;
+                // We manually add "Tout" at the beginning
+                final displayCats = [
+                  Category(id: -1, nom: 'Tout', slug: 'tout'),
+                  ...apiCats
+                ];
+
+                return ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  padding: EdgeInsets.symmetric(horizontal: r.hPad),
+                  itemCount: displayCats.length,
+                  separatorBuilder: (_, __) => SizedBox(width: r.s(8)),
+                  itemBuilder: (_, i) {
+                    final cat = displayCats[i];
+                    final catIdStr = cat.id == -1 ? 'all' : cat.id.toString();
+                    final isActive = selectedCat == catIdStr;
+
+                    return GestureDetector(
+                      onTap: () {
+                        ctrl.selectedCategory.value = catIdStr;
+                        ctrl.update();
+                      },
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        padding: EdgeInsets.symmetric(
+                            horizontal: r.s(14), vertical: r.s(8)),
+                        decoration: BoxDecoration(
+                          color:
+                              isActive ? AppTheme.primary : AppTheme.cardColor,
+                          borderRadius: BorderRadius.circular(r.rad(20)),
+                          boxShadow: isActive
+                              ? AppTheme.shadowPrimary
+                              : AppTheme.shadowCard,
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              CategoryIconHelper.getIcon(cat.slug),
+                              size: r.fs(16),
+                              color: isActive ? Colors.white : AppTheme.primary,
+                            ),
+                            SizedBox(width: r.s(8)),
+                            Text(cat.nom,
+                                style: TextStyle(
+                                    fontSize: r.fs(12),
+                                    fontWeight: FontWeight.w600,
+                                    color: isActive
+                                        ? Colors.white
+                                        : AppTheme.foreground)),
+                          ],
+                        ),
                       ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            cat.icon,
-                            size: r.fs(16),
-                            color: isActive ? Colors.white : AppTheme.primary,
-                          ),
-                          SizedBox(width: r.s(8)),
-                          Text(cat.label,
-                              style: TextStyle(
-                                  fontSize: r.fs(12),
-                                  fontWeight: FontWeight.w600,
-                                  color: isActive
-                                      ? Colors.white
-                                      : AppTheme.foreground)),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
+                    );
+                  },
+                );
+              }),
             ),
           ),
 
@@ -295,6 +318,7 @@ class HomeBody extends StatelessWidget {
 
           SliverToBoxAdapter(child: SizedBox(height: r.s(100))),
         ],
+      ),
       ),
     );
   }

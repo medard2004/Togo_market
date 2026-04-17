@@ -1,22 +1,27 @@
 class Category {
   final int id;
   final String nom;
-  final String? emoji;
+  final String slug;
   final int? parentId;
+  final List<Category> children;
 
   Category({
     required this.id,
     required this.nom,
-    this.emoji,
+    required this.slug,
     this.parentId,
-  });
+    List<Category>? children,
+  }) : children = children ?? [];
 
   factory Category.fromJson(Map<String, dynamic> json) {
     return Category(
       id: json['id'],
       nom: json['nom'],
-      emoji: json['emoji'],
+      slug: json['slug'] ?? '',
       parentId: json['parent_id'],
+      children: json['children'] != null
+          ? (json['children'] as List).map((i) => Category.fromJson(i)).toList()
+          : [],
     );
   }
 
@@ -24,8 +29,9 @@ class Category {
     return {
       'id': id,
       'nom': nom,
-      'emoji': emoji,
+      'slug': slug,
       'parent_id': parentId,
+      'children': children.map((i) => i.toJson()).toList(),
     };
   }
 }

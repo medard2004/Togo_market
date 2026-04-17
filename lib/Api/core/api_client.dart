@@ -110,6 +110,10 @@ class ApiClient {
         return UnauthorizedException(message);
       }
 
+      if (statusCode == 404) {
+        return NotFoundException(message);
+      }
+
       return ServerException('$statusCode: $message');
     } else {
       // Network errors, Timeouts, etc.
@@ -147,6 +151,14 @@ class ServerException implements Exception {
 class NetworkException implements Exception {
   final String message;
   NetworkException(this.message);
+
+  @override
+  String toString() => message;
+}
+
+class NotFoundException implements Exception {
+  final String message;
+  NotFoundException(this.message);
 
   @override
   String toString() => message;

@@ -3,7 +3,9 @@ import 'package:get/get.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../theme/app_theme.dart';
 import '../../../controllers/app_controller.dart';
+import '../../../Api/provider/auth_controller.dart';
 import '../../../utils/responsive.dart';
+import '../../../widgets/user_avatar.dart';
 
 class HomeTopBar extends StatelessWidget {
   final AppController ctrl;
@@ -28,12 +30,17 @@ class HomeTopBar extends StatelessWidget {
                     Icon(Icons.waving_hand_rounded, size: r.fs(16), color: Colors.orangeAccent),
                     SizedBox(width: r.s(6)),
                     Flexible(
-                      child: Text(
-                        ctrl.userName.value.split(' ').first,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(fontSize: r.fs(14), fontWeight: FontWeight.w600, color: AppTheme.foreground),
-                      ),
+                      child: Obx(() {
+                        final authCtrl = Get.find<AuthController>();
+                        final user = authCtrl.currentUser.value;
+                        final name = user?.nom?.isNotEmpty == true ? user!.nom!.split(' ').first : 'Utilisateur';
+                        return Text(
+                          name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(fontSize: r.fs(14), fontWeight: FontWeight.w600, color: AppTheme.foreground),
+                        );
+                      }),
                     ),
                   ],
                 ),
@@ -66,10 +73,15 @@ class HomeTopBar extends StatelessWidget {
           SizedBox(width: r.s(10)),
           GestureDetector(
             onTap: () => Get.toNamed('/profile'),
-            child: CircleAvatar(
-              radius: r.s(21),
-              backgroundImage: CachedNetworkImageProvider(ctrl.userAvatar.value),
-            ),
+            child: Obx(() {
+              final authCtrl = Get.find<AuthController>();
+              final user = authCtrl.currentUser.value;
+              return UserAvatar(
+                url: user?.avatarUrl,
+                name: user?.nom,
+                radius: r.s(20),
+              );
+            }),
           ),
         ],
       ),

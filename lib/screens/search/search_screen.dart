@@ -4,7 +4,7 @@ import '../../theme/app_theme.dart';
 import '../../widgets/common_widgets.dart';
 import '../../widgets/bottom_nav.dart';
 import '../../controllers/app_controller.dart';
-import '../../data/mock_data.dart';
+import '../../utils/category_icon_helper.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -168,43 +168,47 @@ class _EmptyQueryContent extends StatelessWidget {
             style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 12),
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate:
-                const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3,
-              mainAxisSpacing: 10,
-              crossAxisSpacing: 10,
-              childAspectRatio: 1.1,
-            ),
-            itemCount: mockCategories.length - 1,
-            itemBuilder: (_, i) {
-              final cat = mockCategories[i + 1];
-              return GestureDetector(
-                onTap: () => onSearch(cat.label),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: AppTheme.cardColor,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: AppTheme.shadowCard,
+          Obx(() {
+            final apiCats = Get.find<AppController>().categories;
+            return GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3,
+                mainAxisSpacing: 10,
+                crossAxisSpacing: 10,
+                childAspectRatio: 1.1,
+              ),
+              itemCount: apiCats.length,
+              itemBuilder: (_, i) {
+                final cat = apiCats[i];
+                return GestureDetector(
+                  onTap: () => onSearch(cat.nom),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: AppTheme.cardColor,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: AppTheme.shadowCard,
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(CategoryIconHelper.getIcon(cat.slug),
+                            size: 26, color: AppTheme.primary),
+                        const SizedBox(height: 4),
+                        Text(cat.nom,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: AppTheme.foreground)),
+                      ],
+                    ),
                   ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(cat.icon, size: 26, color: AppTheme.primary),
-                      const SizedBox(height: 4),
-                      Text(cat.label,
-                          style: const TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: AppTheme.foreground)),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
+                );
+              },
+            );
+          }),
         ],
       ),
     );

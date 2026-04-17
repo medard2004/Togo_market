@@ -4,8 +4,9 @@ import '../../theme/app_theme.dart';
 import '../../widgets/common_widgets.dart';
 import '../../widgets/bottom_nav.dart';
 import '../../controllers/app_controller.dart';
-import '../../data/mock_data.dart';
-import '../../models/models.dart';
+import '../../Api/model/product_model.dart';
+import '../../Api/model/category_model.dart';
+import '../../utils/category_icon_helper.dart';
 
 class CategoryScreen extends StatefulWidget {
   const CategoryScreen({super.key});
@@ -130,54 +131,64 @@ class _CategoryScreenState extends State<CategoryScreen> {
 
             // ── Category pills ────────────────────────────────────────────────
             const SizedBox(height: 12),
+            const SizedBox(height: 12),
             SizedBox(
               height: 40,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                itemCount: mockCategories.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 8),
-                itemBuilder: (_, i) {
-                  final cat = mockCategories[i];
-                  final isActive = _selectedCat == cat.id;
-                  return GestureDetector(
-                    onTap: () => setState(() => _selectedCat = cat.id),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: isActive
-                            ? AppTheme.primary
-                            : AppTheme.cardColor,
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: isActive
-                            ? AppTheme.shadowPrimary
-                            : AppTheme.shadowCard,
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            cat.icon,
-                            size: 16,
-                            color: isActive ? Colors.white : AppTheme.primary,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            cat.label,
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: isActive ? Colors.white : AppTheme.foreground,
+              child: Obx(() {
+                final apiCats = Get.find<AppController>().categories;
+                final displayCats = [
+                  Category(id: -1, nom: 'Tout', slug: 'tout'),
+                  ...apiCats
+                ];
+
+                return ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemCount: displayCats.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 8),
+                  itemBuilder: (_, i) {
+                    final cat = displayCats[i];
+                    final catIdStr = cat.id == -1 ? 'all' : cat.id.toString();
+                    final isActive = _selectedCat == catIdStr;
+                    return GestureDetector(
+                      onTap: () => setState(() => _selectedCat = catIdStr),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: isActive ? AppTheme.primary : AppTheme.cardColor,
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: isActive
+                              ? AppTheme.shadowPrimary
+                              : AppTheme.shadowCard,
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              CategoryIconHelper.getIcon(cat.slug),
+                              size: 16,
+                              color: isActive ? Colors.white : AppTheme.primary,
                             ),
-                          ),
-                        ],
+                            const SizedBox(width: 8),
+                            Text(
+                              cat.nom,
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: isActive
+                                    ? Colors.white
+                                    : AppTheme.foreground,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                  );
-                },
-              ),
+                    );
+                  },
+                );
+              }),
             ),
 
             // ── Filters ───────────────────────────────────────────────────────

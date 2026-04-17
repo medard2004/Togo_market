@@ -4,6 +4,7 @@ import '../model/user_model.dart';
 import '../model/category_model.dart';
 import '../model/location_model.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:dio/dio.dart' as dio;
 
 class AuthService {
   final ApiClient _apiClient;
@@ -60,6 +61,14 @@ class AuthService {
     throw Exception('Register failed');
   }
 
+  Future<User> getCurrentUser() async {
+    final response = await _apiClient.get('/user');
+    if (response.statusCode == 200) {
+      return User.fromJson(response.data['user']);
+    }
+    throw Exception('Failed to load current user');
+  }
+
   Future<User> login(String telephone, String password) async {
     final response = await _apiClient.post(
       ApiConstants.loginEndpoint,
@@ -84,23 +93,52 @@ class AuthService {
     int? quartierId,
     List<int>? categories,
     String? details,
+    String? photoPath,
   }) async {
-    final Map<String, dynamic> body = {};
-    if (telephone != null && telephone.isNotEmpty) body['telephone'] = telephone;
-    if (nom != null) body['nom'] = nom;
-    if (quartierId != null) body['quartier_id'] = quartierId;
-    if (categories != null) body['categories'] = categories;
-    if (details != null && details.isNotEmpty) body['details'] = details;
+    if (photoPath != null && photoPath.isNotEmpty) {
+      final Map<String, dynamic> formDataMap = {};
+      if (telephone != null && telephone.isNotEmpty) formDataMap['telephone'] = telephone;
+      if (nom != null) formDataMap['nom'] = nom;
+      if (quartierId != null) formDataMap['quartier_id'] = quartierId;
+      if (details != null && details.isNotEmpty) formDataMap['details'] = details;
+      if (categories != null) {
+        for (int i = 0; i < categories.length; i++) {
+          formDataMap['categories[$i]'] = categories[i];
+        }
+      }
+      // Laravel best practice for multipart updates
+      formDataMap['_method'] = 'PUT';
+      formDataMap['photo'] = await dio.MultipartFile.fromFile(photoPath);
 
-    final response = await _apiClient.put(
-      ApiConstants.userProfileEndpoint,
-      data: body,
-    );
+      final payload = dio.FormData.fromMap(formDataMap);
 
-    if (response.statusCode == 200) {
-      return User.fromJson(response.data['user']);
+      final response = await _apiClient.post(
+        ApiConstants.userProfileEndpoint,
+        data: payload,
+      );
+
+      if (response.statusCode == 200) {
+        return User.fromJson(response.data['user']);
+      }
+      throw Exception('Profile update failed');
+    } else {
+      final Map<String, dynamic> body = {};
+      if (telephone != null && telephone.isNotEmpty) body['telephone'] = telephone;
+      if (nom != null) body['nom'] = nom;
+      if (quartierId != null) body['quartier_id'] = quartierId;
+      if (categories != null) body['categories'] = categories;
+      if (details != null && details.isNotEmpty) body['details'] = details;
+
+      final response = await _apiClient.put(
+        ApiConstants.userProfileEndpoint,
+        data: body,
+      );
+
+      if (response.statusCode == 200) {
+        return User.fromJson(response.data['user']);
+      }
+      throw Exception('Profile update failed');
     }
-    throw Exception('Profile update failed');
   }
 
   Future<String> requestPasswordReset(String telephone) async {

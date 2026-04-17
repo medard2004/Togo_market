@@ -3,6 +3,8 @@ import 'package:get/get.dart';
 import '../../theme/app_theme.dart';
 import '../../animations/togo_animation_system.dart';
 import '../../controllers/boutique_controller.dart';
+import '../../Api/config/api_constants.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class ShopSettingsScreen extends StatefulWidget {
   const ShopSettingsScreen({super.key});
@@ -16,6 +18,19 @@ class _ShopSettingsScreenState extends State<ShopSettingsScreen> {
   bool _notifMessages = true;
   bool _notifPromos = false;
   bool _vacationMode = false;
+
+  String _resolveUrl(String? url) {
+    if (url == null || url.isEmpty) return '';
+    if (url.startsWith('http')) return url;
+    if (url.startsWith('/storage/')) {
+      final baseUrl = ApiConstants.baseUrl;
+      final rootUrl = baseUrl.endsWith('/api')
+          ? baseUrl.substring(0, baseUrl.length - 4)
+          : baseUrl;
+      return '$rootUrl$url';
+    }
+    return url;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -69,11 +84,31 @@ class _ShopSettingsScreenState extends State<ShopSettingsScreen> {
                 child: Container(
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: Colors.black.withValues(alpha: 0.6),
                     borderRadius: BorderRadius.circular(30),
+                    image: boutique.bannerUrl.isNotEmpty
+                        ? DecorationImage(
+                            image: CachedNetworkImageProvider(_resolveUrl(boutique.bannerUrl)),
+                            fit: BoxFit.cover,
+                            colorFilter: ColorFilter.mode(
+                              Colors.black.withValues(alpha: 0.6),
+                              BlendMode.darken,
+                            ),
+                          )
+                        : null,
+                    gradient: boutique.bannerUrl.isEmpty
+                        ? LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              AppTheme.primary.withValues(alpha: 0.85),
+                              AppTheme.primary.withValues(alpha: 0.55),
+                            ],
+                          )
+                        : null,
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
+                        color: Colors.black.withValues(alpha: 0.1),
                         blurRadius: 20,
                         offset: const Offset(0, 10),
                       )
@@ -91,7 +126,7 @@ class _ShopSettingsScreenState extends State<ShopSettingsScreen> {
                               shape: BoxShape.circle,
                               image: boutique.logoUrl.isNotEmpty
                                   ? DecorationImage(
-                                      image: NetworkImage(boutique.logoUrl),
+                                      image: CachedNetworkImageProvider(_resolveUrl(boutique.logoUrl)),
                                       fit: BoxFit.cover)
                                   : null,
                             ),
@@ -110,7 +145,7 @@ class _ShopSettingsScreenState extends State<ShopSettingsScreen> {
                                   style: const TextStyle(
                                     fontSize: 19,
                                     fontWeight: FontWeight.w900,
-                                    color: AppTheme.foreground,
+                                    color: Colors.white,
                                   ),
                                 ),
                                 const SizedBox(height: 2),
@@ -118,7 +153,7 @@ class _ShopSettingsScreenState extends State<ShopSettingsScreen> {
                                   children: [
                                     const Icon(Icons.location_on_outlined,
                                         size: 14,
-                                        color: AppTheme.mutedForeground),
+                                        color: Colors.white70),
                                     Expanded(
                                       child: Text(
                                           ' $locationStr',
@@ -127,7 +162,7 @@ class _ShopSettingsScreenState extends State<ShopSettingsScreen> {
                                           style: const TextStyle(
                                               fontSize: 13,
                                               fontWeight: FontWeight.w500,
-                                              color: AppTheme.mutedForeground)),
+                                              color: Colors.white70)),
                                     ),
                                   ],
                                 ),
@@ -140,16 +175,16 @@ class _ShopSettingsScreenState extends State<ShopSettingsScreen> {
                                         style: const TextStyle(
                                             fontSize: 14,
                                             fontWeight: FontWeight.w800,
-                                            color: AppTheme.primary)),
+                                            color: Colors.white)),
                                     const Text('  •  ',
                                         style: TextStyle(
                                             fontSize: 13,
-                                            color: AppTheme.border)),
+                                            color: Colors.white38)),
                                     const Text('0 articles',
                                         style: TextStyle(
                                             fontSize: 13,
                                             fontWeight: FontWeight.w500,
-                                            color: AppTheme.mutedForeground)),
+                                            color: Colors.white70)),
                                   ],
                                 ),
                               ],
@@ -159,7 +194,7 @@ class _ShopSettingsScreenState extends State<ShopSettingsScreen> {
                       ),
                       const Padding(
                         padding: EdgeInsets.symmetric(vertical: 24),
-                        child: Divider(height: 1, color: AppTheme.border),
+                        child: Divider(height: 1, color: Colors.white24),
                       ),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -315,7 +350,7 @@ class _ShopSettingsScreenState extends State<ShopSettingsScreen> {
           style: TextStyle(
             fontSize: isUnavailable ? 14 : 22,
             fontWeight: isUnavailable ? FontWeight.w600 : FontWeight.w900,
-            color: isUnavailable ? AppTheme.mutedForeground : AppTheme.primary,
+            color: isUnavailable ? Colors.white54 : Colors.white,
           ),
         ),
         const SizedBox(height: 4),
@@ -324,7 +359,7 @@ class _ShopSettingsScreenState extends State<ShopSettingsScreen> {
           style: const TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w500,
-            color: AppTheme.mutedForeground,
+            color: Colors.white70,
           ),
         ),
       ],

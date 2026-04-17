@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shimmer/shimmer.dart';
-import '../../../models/models.dart';
+import '../../../Api/model/product_model.dart';
 import '../../../theme/app_theme.dart';
-import '../../../data/mock_data.dart';
+import '../../../utils/app_utils.dart';
 import '../../../utils/responsive.dart';
 import '../../../controllers/app_controller.dart';
 

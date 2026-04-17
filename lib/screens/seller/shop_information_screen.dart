@@ -7,10 +7,24 @@ import '../../utils/responsive.dart';
 import '../../widgets/common_widgets.dart';
 import '../../controllers/boutique_controller.dart';
 import '../../models/shop_info_model.dart';
+import '../../Api/config/api_constants.dart';
 import 'edit_shop_screen.dart';
 
 class ShopInformationScreen extends StatelessWidget {
   const ShopInformationScreen({super.key});
+
+  String _resolveUrl(String? url) {
+    if (url == null || url.isEmpty) return '';
+    if (url.startsWith('http')) return url;
+    if (url.startsWith('/storage/')) {
+      final baseUrl = ApiConstants.baseUrl;
+      final rootUrl = baseUrl.endsWith('/api')
+          ? baseUrl.substring(0, baseUrl.length - 4)
+          : baseUrl;
+      return '$rootUrl$url';
+    }
+    return url;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -76,11 +90,32 @@ class ShopInformationScreen extends StatelessWidget {
                   SizedBox(
                     height: r.s(160),
                     width: double.infinity,
-                    child: CachedNetworkImage(
-                      imageUrl: 'https://images.unsplash.com/photo-1556740738-b6a63e27c4df?q=80&w=600&auto=format&fit=crop',
-                      fit: BoxFit.cover,
-                      placeholder: (_, __) => Container(color: AppTheme.muted),
-                    ),
+                    child: boutique.bannerUrl.isNotEmpty
+                        ? CachedNetworkImage(
+                            imageUrl: _resolveUrl(boutique.bannerUrl),
+                            fit: BoxFit.cover,
+                            placeholder: (_, __) => Container(color: AppTheme.muted),
+                            errorWidget: (_, __, ___) => Container(color: AppTheme.muted),
+                          )
+                        : Container(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  AppTheme.primary.withValues(alpha: 0.25),
+                                  AppTheme.primaryLight,
+                                ],
+                              ),
+                            ),
+                            child: const Center(
+                              child: Icon(
+                                Icons.storefront_outlined,
+                                size: 48,
+                                color: AppTheme.primary,
+                              ),
+                            ),
+                          ),
                   ),
                   Padding(
                     padding: const EdgeInsets.all(16),
@@ -94,7 +129,7 @@ class ShopInformationScreen extends StatelessWidget {
                             shape: BoxShape.circle,
                             image: boutique.logoUrl.isNotEmpty 
                                 ? DecorationImage(
-                                    image: NetworkImage(boutique.logoUrl),
+                                    image: CachedNetworkImageProvider(_resolveUrl(boutique.logoUrl)),
                                     fit: BoxFit.cover,
                                   )
                                 : null,

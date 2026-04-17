@@ -4,7 +4,9 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/bottom_nav.dart';
 import '../../controllers/app_controller.dart';
+import '../../controllers/boutique_controller.dart';
 import '../../Api/provider/auth_controller.dart';
+import '../../widgets/user_avatar.dart';
 import 'widgets/profile_menu_item.dart';
 import 'widgets/profile_stat_card.dart';
 
@@ -30,15 +32,48 @@ class ProfileScreen extends StatelessWidget {
             // ── Profile card ──────────────────────────────────────────────────
             Obx(() {
               final user = authCtrl.currentUser.value;
-              final displayName = user?.nom?.isNotEmpty == true
-                  ? user!.nom!
-                  : appCtrl.userName.value;
-              final displayAvatar = user?.avatarUrl?.isNotEmpty == true
-                  ? user!.avatarUrl!
-                  : appCtrl.userAvatar.value;
-              final displayPhone = user?.telephone.isNotEmpty == true
-                  ? user!.telephone
-                  : appCtrl.userLocation.value;
+              final isComplete = user != null && user.nom != null && user.nom!.isNotEmpty;
+
+              if (!isComplete) {
+                return Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryLight,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: AppTheme.primary.withOpacity(0.3)),
+                  ),
+                  child: Column(
+                    children: [
+                      const Icon(Icons.account_circle, size: 64, color: AppTheme.primary),
+                      const SizedBox(height: 12),
+                      const Text(
+                        'Profil incomplet',
+                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppTheme.primary),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Veuillez configurer votre profil pour profiter pleinement de l\'application.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontSize: 14, color: AppTheme.primary),
+                      ),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: () => Get.toNamed('/profile-setup'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.primary,
+                          foregroundColor: Colors.white,
+                          minimumSize: const Size(200, 44),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        child: const Text('Configurer mon compte'),
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              final displayName = user.nom!;
+              final displayPhone = user.telephone;
 
               return Container(
                 padding: const EdgeInsets.all(20),
@@ -49,10 +84,10 @@ class ProfileScreen extends StatelessWidget {
                 ),
                 child: Column(
                   children: [
-                    CircleAvatar(
+                    UserAvatar(
+                      url: user.avatarUrl,
+                      name: displayName,
                       radius: 44,
-                      backgroundImage:
-                          CachedNetworkImageProvider(displayAvatar),
                     ),
                     const SizedBox(height: 12),
                     Text(
@@ -85,17 +120,7 @@ class ProfileScreen extends StatelessWidget {
                     const SizedBox(height: 12),
                     OutlinedButton(
                       onPressed: () {
-                        // TODO: naviguer vers la page d'édition du profil
-                        // Get.toNamed('/edit-profile');
-                        Get.snackbar(
-                          'Bientôt disponible',
-                          'La modification du profil sera disponible prochainement.',
-                          snackPosition: SnackPosition.BOTTOM,
-                          backgroundColor: AppTheme.cardColor,
-                          colorText: AppTheme.foreground,
-                          borderRadius: 16,
-                          margin: const EdgeInsets.all(16),
-                        );
+                        Get.toNamed('/profile-setup');
                       },
                       style: OutlinedButton.styleFrom(
                         minimumSize: const Size(160, 40),
@@ -124,7 +149,13 @@ class ProfileScreen extends StatelessWidget {
             ProfileMenuItem(
               icon: Icons.store_outlined,
               label: 'Espace vendeur',
-              onTap: () => Get.toNamed('/dashboard'),
+              onTap: () async {
+                if (Get.isRegistered<BoutiqueController>()) {
+                  await BoutiqueController.to.goToMyBoutique();
+                } else {
+                  Get.toNamed('/dashboard');
+                }
+              },
             ),
             ProfileMenuItem(
               icon: Icons.settings_outlined,

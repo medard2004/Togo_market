@@ -3,8 +3,9 @@ import 'package:get/get.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../theme/app_theme.dart';
-import '../../data/mock_data.dart';
 import '../../utils/responsive.dart';
+import '../../controllers/app_controller.dart';
+import '../../Api/config/api_constants.dart';
 import 'widgets/seller_stat_box.dart';
 import 'widgets/seller_product_card.dart';
 
@@ -14,12 +15,19 @@ class SellerScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final r = R(context);
-    final id = Get.parameters['id'] ?? 's1';
-    final seller = getSellerById(id);
-    if (seller == null) {
-      return const Scaffold(body: Center(child: Text('Vendeur introuvable')));
+    final id = Get.parameters['id'] ?? '';
+    final ctrl = Get.find<AppController>();
+
+    final products = ctrl.products.where((p) => p.boutiqueObj?.id.toString() == id).toList();
+
+    if (products.isEmpty) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Erreur')),
+        body: const Center(child: Text('Vendeur introuvable ou n\'a pas de produits actifs.'))
+      );
     }
-    final products = mockProducts.where((p) => p.sellerId == id).toList();
+    
+    final boutique = products.first.boutiqueObj!;
 
     return Scaffold(
       backgroundColor: AppTheme.background,
@@ -45,7 +53,7 @@ class SellerScreen extends StatelessWidget {
                 ),
               ),
             ),
-            title: Text(seller.shopName,
+            title: Text(boutique.nom,
                 style: TextStyle(
                     fontSize: r.fs(16),
                     fontWeight: FontWeight.w700,
@@ -98,7 +106,7 @@ class SellerScreen extends StatelessWidget {
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(r.rad(14)),
                               child: CachedNetworkImage(
-                                imageUrl: seller.avatar,
+                                imageUrl: ApiConstants.resolveImageUrl(boutique.logoUrl),
                                 fit: BoxFit.cover,
                                 placeholder: (_, __) => Shimmer.fromColors(
                                   baseColor: AppTheme.muted,
@@ -113,7 +121,7 @@ class SellerScreen extends StatelessWidget {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(seller.shopName,
+                                Text(boutique.nom,
                                     style: TextStyle(
                                         fontSize: r.fs(18),
                                         fontWeight: FontWeight.w800,
@@ -123,7 +131,7 @@ class SellerScreen extends StatelessWidget {
                                   Icon(Icons.star,
                                       size: r.s(14), color: Colors.amber),
                                   SizedBox(width: r.s(4)),
-                                  Text('${seller.rating} (124 avis)',
+                                  Text('${boutique.noteMoyenne} (0 avis)',
                                       style: TextStyle(
                                           fontSize: r.fs(13),
                                           fontWeight: FontWeight.w600,
@@ -136,7 +144,7 @@ class SellerScreen extends StatelessWidget {
                                       color: AppTheme.mutedForeground),
                                   SizedBox(width: r.s(2)),
                                   Flexible(
-                                      child: Text(seller.location,
+                                      child: Text(boutique.adresse ?? 'Lomé',
                                           maxLines: 1,
                                           overflow: TextOverflow.ellipsis,
                                           style: TextStyle(

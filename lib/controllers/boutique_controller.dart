@@ -1,7 +1,8 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:dio/dio.dart';
-import '../models/models.dart';
-import '../../Api/services/boutique_service.dart';
+import '../Api/model/boutique_model.dart';
+import '../Api/services/boutique_service.dart';
 
 class BoutiqueController extends GetxController {
   final BoutiqueService _boutiqueService;
@@ -22,15 +23,43 @@ class BoutiqueController extends GetxController {
   }
 
   /// Checks if the user has a boutique
-  Future<void> checkMyBoutique() async {
+  Future<bool> checkMyBoutique() async {
     isLoading.value = true;
     try {
       final boutique = await _boutiqueService.getMe();
       myBoutique.value = boutique;
+      return true;
     } catch (e) {
-      myBoutique.value = null;
+      Get.snackbar('Erreur de connexion', 'Veuillez vérifier votre réseau.');
+      return false;
     } finally {
       isLoading.value = false;
+    }
+  }
+
+  Future<void> goToMyBoutique() async {
+    if (myBoutique.value != null) {
+      Get.toNamed('/dashboard');
+      return;
+    }
+
+    Get.dialog(
+      const Center(child: CircularProgressIndicator()),
+      barrierDismissible: false,
+    );
+
+    bool checked = await checkMyBoutique();
+
+    if (Get.isDialogOpen == true) {
+      Get.back(); // close dialog
+    }
+
+    if (!checked) return;
+
+    if (myBoutique.value != null) {
+      Get.toNamed('/dashboard');
+    } else {
+      Get.toNamed('/store-settings');
     }
   }
 

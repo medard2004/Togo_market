@@ -1,8 +1,7 @@
-import 'package:dio/dio.dart';
-import '../../models/models.dart';
+import 'package:get/get.dart';
+import '../model/product_model.dart';
 import '../core/api_client.dart';
 import '../config/api_constants.dart';
-import 'package:get/get.dart';
 
 class ProduitService extends GetxService {
   final ApiClient _apiClient;
@@ -11,24 +10,43 @@ class ProduitService extends GetxService {
 
   static ProduitService get to => Get.find();
 
-  /// Get public list of products
+  /// Parse a response that may be paginated {"data":[...]} or a bare array []
+  List<dynamic> _parseList(dynamic rawData) {
+    if (rawData is List) return rawData;
+    if (rawData is Map && rawData.containsKey('data') && rawData['data'] is List) {
+      return rawData['data'] as List;
+    }
+    return [];
+  }
+
+  /// Get public list of products (paginated or not)
   Future<List<Product>> getPublicProducts() async {
     final response = await _apiClient.get(ApiConstants.productsEndpoint);
-    final List<dynamic> data = response.data['data'] ?? response.data;
-    return data.map((json) => Product.fromJson(json)).toList();
+    final list = _parseList(response.data);
+    return list.map((json) => Product.fromJson(json)).toList();
+  }
+
+  /// Get products belonging to the authenticated user's boutique
+  Future<List<Product>> getMyBoutiqueProducts(String boutiqueId) async {
+    final response = await _apiClient.get(
+      '/boutiques/$boutiqueId/produits',
+    );
+    final list = _parseList(response.data);
+    return list.map((json) => Product.fromJson(json)).toList();
   }
 
   /// Create a new product for the store
   Future<Product> addStoreProduct(dynamic formData) async {
     final response = await _apiClient.post(ApiConstants.productsEndpoint, data: formData);
-    return Product.fromJson(response.data['data'] ?? response.data);
+    final raw = response.data;
+    return Product.fromJson(raw is Map && raw.containsKey('data') ? raw['data'] : raw);
   }
 
   /// Update an existing product
   Future<Product> updateProduct(String id, dynamic formData) async {
-    // If formData is FormData, we use POST with _method=PUT to fake a PUT request to Laravel
     final response = await _apiClient.post('${ApiConstants.productsEndpoint}/$id', data: formData);
-    return Product.fromJson(response.data['data'] ?? response.data);
+    final raw = response.data;
+    return Product.fromJson(raw is Map && raw.containsKey('data') ? raw['data'] : raw);
   }
 
   /// Delete a product

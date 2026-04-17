@@ -1,19 +1,17 @@
 import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:get/get.dart';
-import '../models/models.dart';
-import '../data/mock_data.dart';
+import '../Api/model/product_model.dart';
+import '../Api/model/boutique_model.dart';
+import '../Api/model/category_model.dart';
+import '../models/models.dart'; // Still needed for ChatMessage/Conversation
 import '../Api/services/produit_service.dart';
+import '../Api/services/category_service.dart';
 import 'boutique_controller.dart';
 
 // ── AppController (global state) ──────────────────────────────────────────────
 class AppController extends GetxController {
   // Auth state
   final isLoggedIn = false.obs;
-  final userName = 'Koffi Mensah'.obs;
-  final userLocation = 'Tokoin, Lomé'.obs;
-  final userAvatar =
-      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop'
-          .obs;
 
   // Products
   final products = <Product>[].obs;
@@ -26,15 +24,40 @@ class AppController extends GetxController {
   // Selected category on Home
   final selectedCategory = 'all'.obs;
 
+  // Categories
+  final categories = <Category>[].obs;
+
   @override
   void onInit() {
     super.onInit();
-    // Load mocks by default for UI
-    products.assignAll(mockProducts);
-    favorites.assignAll(mockProducts.where((p) => p.isFavorite).toList());
-    
-    // Attempt to fetch real products
+    // Start with empty lists, then fetch from API
+    fetchCategories();
     fetchProduits();
+  }
+
+  Future<void> fetchCategories() async {
+    try {
+      final apiCategories = await CategoryService.to.getCategories();
+      categories.assignAll(apiCategories);
+    } catch (e) {
+      debugPrint("Error fetching categories: $e");
+    }
+  }
+
+  /// Returns a flat list of all categories (parents and children)
+  List<Category> get allFlatCategories {
+    List<Category> flat = [];
+    void traverse(List<Category> list) {
+      for (var cat in list) {
+        flat.add(cat);
+        if (cat.children != null && cat.children!.isNotEmpty) {
+          traverse(cat.children!);
+        }
+      }
+    }
+
+    traverse(categories);
+    return flat;
   }
 
   Future<void> fetchProduits() async {
@@ -49,8 +72,9 @@ class AppController extends GetxController {
     }
   }
 
-  void toggleFavorite(String productId) {
-    final idx = products.indexWhere((p) => p.id == productId);
+  void toggleFavorite(dynamic productId) {
+    final idStr = productId.toString();
+    final idx = products.indexWhere((p) => p.id.toString() == idStr);
     if (idx == -1) return;
     products[idx].isFavorite = !products[idx].isFavorite;
     products.refresh();
@@ -58,8 +82,9 @@ class AppController extends GetxController {
     update(); // déclenche GetBuilder (home, productCard, etc.)
   }
 
-  bool isFavorite(String productId) {
-    return products.any((p) => p.id == productId && p.isFavorite);
+  bool isFavorite(dynamic productId) {
+    final idStr = productId.toString();
+    return products.any((p) => p.id.toString() == idStr && p.isFavorite);
   }
 
   List<Product> getFilteredProducts(String categoryId) {
@@ -100,7 +125,7 @@ class ChatController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    conversations.assignAll(mockConversations);
+    conversations.assignAll([]);
   }
 
   void loadConversation(String conversationId) {
@@ -155,27 +180,28 @@ class ChatController extends GetxController {
 class DashboardController extends GetxController {
   final selectedTab = 0.obs;
   final myProducts = <Product>[].obs;
+  final isLoading = true.obs;
 
   @override
   void onInit() {
     super.onInit();
-    myProducts.assignAll(sellerDashboardProducts);
-    _loadRealMyProducts();
+    loadMyProducts();
   }
 
-  Future<void> _loadRealMyProducts() async {
-    // If we have a boutique id, we can filter the AppController products or fetch them
-    final boutique = Get.isRegistered<BoutiqueController>() ? BoutiqueController.to.myBoutique.value : null;
-    if (boutique != null) {
-      try {
-        final realProducts = await ProduitService.to.getPublicProducts();
-        final mine = realProducts.where((p) => p.boutiqueId.toString() == boutique.id.toString()).toList();
-        if (mine.isNotEmpty) {
-          myProducts.assignAll(mine);
-        }
-      } catch (e) {
-        debugPrint("Error loading real products for dashboard: $e");
+  Future<void> loadMyProducts() async {
+    isLoading.value = true;
+    try {
+      final boutique = Get.isRegistered<BoutiqueController>()
+          ? BoutiqueController.to.myBoutique.value
+          : null;
+      if (boutique != null) {
+        final products = await ProduitService.to.getMyBoutiqueProducts(boutique.id.toString());
+        myProducts.assignAll(products);
       }
+    } catch (e) {
+      debugPrint("Error loading boutique products: $e");
+    } finally {
+      isLoading.value = false;
     }
   }
 
@@ -183,10 +209,10 @@ class DashboardController extends GetxController {
     try {
       // Call API
       await ProduitService.to.deleteProduct(productId);
-      myProducts.removeWhere((p) => p.id == productId);
+      myProducts.removeWhere((p) => p.id.toString() == productId);
       // Also remove from global list
       if (Get.isRegistered<AppController>()) {
-        Get.find<AppController>().products.removeWhere((p) => p.id == productId);
+        Get.find<AppController>().products.removeWhere((p) => p.id.toString() == productId);
       }
       Get.snackbar('Succès', 'Produit supprimé avec succès');
     } catch (e) {
@@ -194,3 +220,4 @@ class DashboardController extends GetxController {
     }
   }
 }
+

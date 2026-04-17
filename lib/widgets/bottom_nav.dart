@@ -43,14 +43,7 @@ class BottomNavBar extends StatelessWidget {
                     behavior: HitTestBehavior.opaque,
                     onTap: () async {
                       if (Get.isRegistered<BoutiqueController>()) {
-                        Get.dialog(const Center(child: CircularProgressIndicator()), barrierDismissible: false);
-                        await BoutiqueController.to.checkMyBoutique();
-                        if (Get.isDialogOpen ?? false) Get.back(); // close dialog
-                        if (BoutiqueController.to.myBoutique.value != null) {
-                          Get.toNamed('/dashboard');
-                        } else {
-                          Get.toNamed('/store-settings');
-                        }
+                        await BoutiqueController.to.goToMyBoutique();
                       } else {
                         Get.toNamed('/store-settings');
                       }

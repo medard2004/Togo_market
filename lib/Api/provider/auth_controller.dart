@@ -4,6 +4,7 @@ import '../model/user_model.dart';
 import '../model/category_model.dart';
 import '../model/location_model.dart';
 import '../services/auth_service.dart';
+import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class AuthController extends GetxController {
@@ -26,6 +27,15 @@ class AuthController extends GetxController {
     super.onInit();
     _checkInitialState();
     _loadPublicData();
+
+    ever(currentUser, (user) async {
+      const storage = FlutterSecureStorage();
+      if (user != null) {
+        await storage.write(key: 'user_data', value: jsonEncode(user.toJson()));
+      } else {
+        await storage.delete(key: 'user_data');
+      }
+    });
   }
 
   bool get isAuthenticated => currentUser.value != null;
@@ -41,11 +51,22 @@ class AuthController extends GetxController {
 
     if (token != null && token.isNotEmpty) {
       hasToken.value = true;
-      // User has token, maybe fetch profile to ensure it's valid
-      // For now we assume optimistic login or fetch user data here
-      // Example: currentUser.value = await _authService.getCurrentUser();
-      // Since backend gives token on login/register, we will consider them logged in.
-      // But we should Ideally verify the token by fetching the profile.
+      try {
+        // Load cached user instantly to avoid UI flicker
+        final cachedUser = await storage.read(key: 'user_data');
+        if (cachedUser != null) {
+          currentUser.value = User.fromJson(jsonDecode(cachedUser));
+        }
+
+        isLoading.value = true;
+        final user = await _authService.getCurrentUser();
+        currentUser.value = user;
+        await storage.write(key: 'user_data', value: jsonEncode(user.toJson()));
+      } catch (e) {
+        debugPrint('Failed to load user on startup: $e');
+      } finally {
+        isLoading.value = false;
+      }
     }
   }
 
@@ -60,10 +81,10 @@ class AuthController extends GetxController {
       var cats = await _authService.getCategories();
       if (cats.isEmpty) {
         cats = [
-          Category(id: 1, nom: 'Électronique', emoji: '📱'),
-          Category(id: 2, nom: 'Mode', emoji: '👗'),
-          Category(id: 3, nom: 'Alimentation', emoji: '🍔'),
-          Category(id: 4, nom: 'Maison', emoji: '🏠'),
+          Category(id: 1, nom: 'Électronique', slug: 'electronique'),
+          Category(id: 2, nom: 'Mode', slug: 'mode'),
+          Category(id: 3, nom: 'Alimentation', slug: 'alimentation'),
+          Category(id: 4, nom: 'Maison', slug: 'maison'),
         ];
       }
       categories.assignAll(cats);
@@ -89,9 +110,9 @@ class AuthController extends GetxController {
       debugPrint("Failed to load public data: $e");
       // Fallback
       categories.assignAll([
-        Category(id: 1, nom: 'Électronique', emoji: '📱'),
-        Category(id: 2, nom: 'Mode', emoji: '👗'),
-        Category(id: 3, nom: 'Alimentation', emoji: '🍔'),
+        Category(id: 1, nom: 'Électronique', slug: 'electronique'),
+        Category(id: 2, nom: 'Mode', slug: 'mode'),
+        Category(id: 3, nom: 'Alimentation', slug: 'alimentation'),
       ]);
       locations.assignAll([
         Ville(id: 1, nom: 'Lomé', quartiers: [
@@ -159,6 +180,7 @@ class AuthController extends GetxController {
     int? quartierId,
     List<int>? selectedCategories,
     String? details,
+    String? photoPath,
   }) async {
     try {
       isLoading.value = true;
@@ -168,6 +190,7 @@ class AuthController extends GetxController {
         quartierId: quartierId,
         categories: selectedCategories,
         details: details,
+        photoPath: photoPath,
       );
       currentUser.value = updatedUser;
     } catch (e) {

@@ -3,6 +3,10 @@ import 'package:get/get.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../theme/app_theme.dart';
 import '../../animations/togo_animation_system.dart';
+import '../../controllers/app_controller.dart';
+import '../../Api/config/api_constants.dart';
+import '../../Api/model/product_model.dart';
+import '../../utils/app_utils.dart';
 import 'add_product_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -14,6 +18,15 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   int _tabIndex = 0; // 0: Articles, 1: Commandes, 2: Messages
+  late final DashboardController _ctrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = Get.find<DashboardController>();
+    // Reload products when entering dashboard (boutique may have just been created)
+    WidgetsBinding.instance.addPostFrameCallback((_) => _ctrl.loadMyProducts());
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -170,7 +183,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _buildAddButton() {
     return GestureDetector(
-      onTap: () => Get.to(() => const AddProductScreen()),
+      onTap: () async {
+        await Get.to(() => const AddProductScreen());
+        // Refresh products list after returning from add product
+        _ctrl.loadMyProducts();
+      },
       child: Container(
         width: double.infinity,
         height: 64,
@@ -186,9 +203,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
               width: 1,
             ),
           ),
-          child: Row(
+          child: const Row(
             mainAxisAlignment: MainAxisAlignment.center,
-            children: const [
+            children: [
               Icon(Icons.add, color: AppTheme.primary),
               SizedBox(width: 8),
               Text(
@@ -207,342 +224,100 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildArticlesTab() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        TogoSlideUp(
-          child: const Text(
-            '3 articles actifs',
-            style: TextStyle(
-              fontSize: 15,
-              color: AppTheme.mutedForeground,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ),
-        const SizedBox(height: 12),
-        TogoSlideUp(
-          delay: const Duration(milliseconds: 100),
-          child: _buildProductTile(
-            'sd1',
-            'iPhone 13 Pro Max 256Go',
-            '350 000 F',
-            'Occasion',
-            'https://images.unsplash.com/photo-1632661674596-df8be070a5c5?w=400&h=400&fit=crop',
-          ),
-        ),
-        TogoSlideUp(
-          delay: const Duration(milliseconds: 200),
-          child: _buildProductTile(
-            'sd2',
-            'Canapé 3 places cuir',
-            '85 000 F',
-            'Occasion',
-            'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400&h=400&fit=crop',
-          ),
-        ),
-        TogoSlideUp(
-          delay: const Duration(milliseconds: 300),
-          child: _buildProductTile(
-            'sd3',
-            'Laptop HP EliteBook',
-            '220 000 F',
-            'Occasion',
-            'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=400&h=400&fit=crop',
-          ),
-        ),
-      ],
-    );
-  }
+    return Obx(() {
+      if (_ctrl.isLoading.value) {
+        return const Padding(
+          padding: EdgeInsets.only(top: 40),
+          child: Center(child: CircularProgressIndicator()),
+        );
+      }
 
-  Widget _buildOrdersTab() {
-    return Column(
-      children: [
-        TogoSlideUp(
-          child: _buildOrderTile(
-            'iPhone 13 Pro Max 256Go',
-            'Kafui A.',
-            '350 000 F',
-            'https://images.unsplash.com/photo-1632661674596-df8be070a5c5?w=200&h=200&fit=crop',
-            'En attente',
-            isPending: true,
-          ),
-        ),
-        TogoSlideUp(
-          delay: const Duration(milliseconds: 100),
-          child: _buildOrderTile(
-            'Canapé 3 places cuir',
-            'Mawuli K.',
-            '85 000 F',
-            'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=200&h=200&fit=crop',
-            'Acceptée',
-            isPending: false,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildMessagesTab() {
-    return Column(
-      children: [
-        TogoSlideUp(
-          child: _buildMessageTile(
-            'Kofi Mensah',
-            'Oui, il est toujours disponible !',
-            '10:32',
-            'iPhone 13 Pro Max 256Go',
-            'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=200&auto=format&fit=crop',
-            unreadCount: 2,
-          ),
-        ),
-        TogoSlideUp(
-          delay: const Duration(milliseconds: 100),
-          child: _buildMessageTile(
-            'Ama Koffi',
-            'Je peux faire 13 000 FCFA',
-            'Hier',
-            'Robe Ankara colorée',
-            'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=200&auto=format&fit=crop',
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildOrderTile(
-      String title, String buyer, String price, String img, String status,
-      {bool isPending = true}) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          )
-        ],
-      ),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: CachedNetworkImage(
-                    imageUrl: img, width: 64, height: 64, fit: BoxFit.cover),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            title,
-                            style: const TextStyle(
-                                fontSize: 15, fontWeight: FontWeight.w800),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: isPending
-                                ? AppTheme.primaryLight
-                                : Colors.green.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            status,
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              color:
-                                  isPending ? AppTheme.primary : Colors.green,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    Text('Acheteur: $buyer',
-                        style: const TextStyle(
-                            fontSize: 13, color: AppTheme.mutedForeground)),
-                    const SizedBox(height: 2),
-                    Text(price,
-                        style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w800,
-                            color: AppTheme.primary)),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          if (isPending) ...[
-            const SizedBox(height: 12),
-            Row(
+      final products = _ctrl.myProducts;
+      if (products.isEmpty) {
+        return Padding(
+          padding: const EdgeInsets.only(top: 48),
+          child: Center(
+            child: Column(
               children: [
-                Expanded(
-                  flex: 2,
-                  child: TogoPressableScale(
-                    onTap: () {},
-                    child: Container(
-                      height: 48,
-                      decoration: BoxDecoration(
-                        color: AppTheme.primary,
-                        borderRadius: BorderRadius.circular(24),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: const [
-                          Icon(Icons.check_circle_outline,
-                              color: Colors.white, size: 20),
-                          SizedBox(width: 8),
-                          Text('Accepter',
-                              style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w700)),
-                        ],
-                      ),
-                    ),
+                Icon(Icons.inventory_2_outlined,
+                    size: 64, color: AppTheme.mutedForeground.withOpacity(0.4)),
+                const SizedBox(height: 16),
+                const Text(
+                  'Aucun article pour le moment',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.mutedForeground,
                   ),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  flex: 2,
-                  child: TogoPressableScale(
-                    onTap: () {},
-                    child: Container(
-                      height: 48,
-                      decoration: BoxDecoration(
-                        color: AppTheme.destructive.withOpacity(0.08),
-                        borderRadius: BorderRadius.circular(24),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: const [
-                          Icon(Icons.cancel_outlined,
-                              color: AppTheme.destructive, size: 20),
-                          SizedBox(width: 8),
-                          Text('Refuser',
-                              style: TextStyle(
-                                  color: AppTheme.destructive,
-                                  fontWeight: FontWeight.w700)),
-                        ],
-                      ),
-                    ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Ajoutez votre premier produit\nen cliquant sur le bouton ci-dessus.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: AppTheme.mutedForeground,
                   ),
                 ),
               ],
             ),
-          ],
-        ],
-      ),
-    );
-  }
+          ),
+        );
+      }
 
-  Widget _buildMessageTile(
-      String name, String message, String time, String product, String avatar,
-      {int unreadCount = 0}) {
-    return TogoPressableScale(
-      onTap: () {},
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(24),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 20,
-              offset: const Offset(0, 10),
-            )
-          ],
-        ),
-        child: Row(
-          children: [
-            CircleAvatar(
-              radius: 28,
-              backgroundImage: CachedNetworkImageProvider(avatar),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(name,
-                          style: const TextStyle(
-                              fontSize: 15, fontWeight: FontWeight.w800)),
-                      Text(time,
-                          style: const TextStyle(
-                              fontSize: 11, color: AppTheme.mutedForeground)),
-                    ],
-                  ),
-                  const SizedBox(height: 2),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          message,
-                          style: const TextStyle(
-                              fontSize: 13, color: AppTheme.mutedForeground),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      if (unreadCount > 0)
-                        Container(
-                          padding: const EdgeInsets.all(6),
-                          decoration: const BoxDecoration(
-                              color: AppTheme.primary, shape: BoxShape.circle),
-                          child: Text(
-                            unreadCount.toString(),
-                            style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 10,
-                                fontWeight: FontWeight.w800),
-                          ),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  Row(
-                    children: [
-                      const Icon(Icons.inventory_2_outlined,
-                          size: 14, color: AppTheme.primary),
-                      const SizedBox(width: 4),
-                      Text(product,
-                          style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: AppTheme.primary)),
-                    ],
-                  ),
-                ],
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          TogoSlideUp(
+            child: Text(
+              '${products.length} article${products.length > 1 ? 's' : ''} actif${products.length > 1 ? 's' : ''}',
+              style: const TextStyle(
+                fontSize: 15,
+                color: AppTheme.mutedForeground,
+                fontWeight: FontWeight.w500,
               ),
             ),
-          ],
+          ),
+          const SizedBox(height: 12),
+          ...products.asMap().entries.map((entry) {
+            final i = entry.key;
+            final p = entry.value;
+            return TogoSlideUp(
+              delay: Duration(milliseconds: i * 80),
+              child: _buildProductTile(p),
+            );
+          }),
+        ],
+      );
+    });
+  }
+
+  Widget _buildOrdersTab() {
+    return const Padding(
+      padding: EdgeInsets.only(top: 40),
+      child: Center(
+        child: Text(
+          'Aucune commande pour le moment',
+          style: TextStyle(color: AppTheme.mutedForeground),
         ),
       ),
     );
   }
 
-  Widget _buildProductTile(
-      String productId, String title, String price, String cond, String img) {
+  Widget _buildMessagesTab() {
+    return const Padding(
+      padding: EdgeInsets.only(top: 40),
+      child: Center(
+        child: Text(
+          'Aucun message pour le moment',
+          style: TextStyle(color: AppTheme.mutedForeground),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProductTile(Product p) {
+    final imageUrl = ApiConstants.resolveImageUrl(p.image);
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(12),
@@ -561,12 +336,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(20),
-            child: CachedNetworkImage(
-              imageUrl: img,
-              width: 72,
-              height: 72,
-              fit: BoxFit.cover,
-            ),
+            child: imageUrl.isNotEmpty
+                ? CachedNetworkImage(
+                    imageUrl: imageUrl,
+                    width: 72,
+                    height: 72,
+                    fit: BoxFit.cover,
+                    errorWidget: (_, __, ___) => _imagePlaceholder(),
+                    placeholder: (_, __) => _imagePlaceholder(),
+                  )
+                : _imagePlaceholder(),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -574,15 +353,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  title,
+                  p.title,
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
                     color: AppTheme.foreground,
                   ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 Text(
-                  price,
+                  formatPrice(p.price),
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w800,
@@ -598,7 +379,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
-                    cond,
+                    p.condition,
                     style: const TextStyle(
                       fontSize: 11,
                       color: AppTheme.mutedForeground,
@@ -612,15 +393,51 @@ class _DashboardScreenState extends State<DashboardScreen> {
           Row(
             children: [
               TogoPressableScale(
-                onTap: () => Get.toNamed('/edit-product/$productId'),
+                onTap: () async {
+                  await Get.toNamed('/edit-product/${p.id}');
+                  _ctrl.loadMyProducts();
+                },
                 child: _buildActionBtn(Icons.edit_outlined),
               ),
               const SizedBox(width: 8),
               TogoPressableScale(
-                onTap: () {},
+                onTap: () => _confirmDelete(p),
                 child: _buildActionBtn(Icons.delete_outline, isDelete: true),
               ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _imagePlaceholder() {
+    return Container(
+      width: 72,
+      height: 72,
+      color: AppTheme.muted,
+      child: const Icon(Icons.image_not_supported,
+          color: AppTheme.mutedForeground, size: 28),
+    );
+  }
+
+  void _confirmDelete(Product p) {
+    Get.dialog(
+      AlertDialog(
+        title: const Text('Supprimer ce produit ?'),
+        content: Text('Voulez-vous vraiment supprimer "${p.title}" ?'),
+        actions: [
+          TextButton(
+            onPressed: Get.back,
+            child: const Text('Annuler'),
+          ),
+          TextButton(
+            onPressed: () {
+              Get.back();
+              _ctrl.deleteProduct(p.id.toString());
+            },
+            child: const Text('Supprimer',
+                style: TextStyle(color: AppTheme.destructive)),
           ),
         ],
       ),

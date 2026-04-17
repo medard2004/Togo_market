@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:get/get.dart';
-import '../models/models.dart';
-import '../data/mock_data.dart';
+import '../models/models.dart'; // Exports Product, Boutique, Category
 import '../theme/app_theme.dart';
+import '../utils/app_utils.dart';
 import '../controllers/app_controller.dart';
 import '../utils/responsive.dart';
 import '../animations/togo_animation_system.dart';
+import '../utils/category_icon_helper.dart';
+import '../Api/config/api_constants.dart';
 
 // ── ProductCard ───────────────────────────────────────────────────────────────
 class ProductCard extends StatelessWidget {
@@ -123,21 +125,34 @@ class ProductCard extends StatelessWidget {
     );
   }
 
-  Widget _buildImage() => CachedNetworkImage(
-        imageUrl: product.image,
-        fit: BoxFit.cover,
-        width: double.infinity,
-        height: double.infinity,
-        placeholder: (_, __) => Shimmer.fromColors(
-          baseColor: AppTheme.muted,
-          highlightColor: Colors.white,
-          child: Container(color: AppTheme.muted),
-        ),
-        errorWidget: (_, __, ___) => Container(
-          color: AppTheme.muted,
-          child: const Icon(Icons.image_not_supported, color: AppTheme.mutedForeground),
+  Widget _buildImage() {
+    final imageUrl = ApiConstants.resolveImageUrl(product.image);
+    if (imageUrl.isEmpty) {
+      return Container(
+        color: AppTheme.muted,
+        child: const Center(
+          child: Icon(Icons.image_not_supported, color: AppTheme.mutedForeground),
         ),
       );
+    }
+    return CachedNetworkImage(
+      imageUrl: imageUrl,
+      fit: BoxFit.cover,
+      width: double.infinity,
+      height: double.infinity,
+      placeholder: (_, __) => Shimmer.fromColors(
+        baseColor: AppTheme.muted,
+        highlightColor: Colors.white,
+        child: Container(color: AppTheme.muted),
+      ),
+      errorWidget: (_, __, ___) => Container(
+        color: AppTheme.muted,
+        child: const Center(
+          child: Icon(Icons.image_not_supported, color: AppTheme.mutedForeground),
+        ),
+      ),
+    );
+  }
 }
 
 class _ConditionBadge extends StatelessWidget {
@@ -187,44 +202,44 @@ class FavoriteTicketCard extends StatelessWidget {
   final Product product;
   const FavoriteTicketCard({super.key, required this.product});
 
-  // Couleur + emoji par catégorie
-  static const _catColors = {
-    'electronique': Color(0xFF1E6EBF),
-    'mode':         Color(0xFFB0387A),
-    'friperie':     Color(0xFF7B3FB5),
-    'maison':       Color(0xFF2A7A4B),
-    'beaute':       Color(0xFFD44A6A),
-    'services':     Color(0xFF4A7AB5),
-  };
-  static const _catIcons = {
-    'electronique': Icons.devices_rounded,
-    'mode':         Icons.shopping_bag_rounded,
-    'friperie':     Icons.checkroom_rounded,
-    'maison':       Icons.home_rounded,
-    'beaute':       Icons.face_retouching_natural_rounded,
-    'services':     Icons.build_rounded,
-  };
+  static const _fallbackIcons = [
+    Icons.shopping_bag_rounded,
+    Icons.devices_rounded,
+    Icons.checkroom_rounded,
+    Icons.home_rounded,
+    Icons.face_retouching_natural_rounded,
+    Icons.build_rounded,
+  ];
+
+  static const _fallbackColors = [
+    Color(0xFF1E6EBF),
+    Color(0xFFB0387A),
+    Color(0xFF7B3FB5),
+    Color(0xFF2A7A4B),
+    Color(0xFFD44A6A),
+    Color(0xFF4A7AB5),
+  ];
 
   Color _stripeColor() {
-    final base = _catColors[product.category] ?? const Color(0xFFF9591F);
-    return base;
+    if (product.categoryObj != null) {
+      final id = product.categoryObj!.id;
+      return _fallbackColors[id % _fallbackColors.length];
+    }
+    final intId = int.tryParse(product.category) ?? 0;
+    return _fallbackColors[intId % _fallbackColors.length];
   }
 
   @override
   Widget build(BuildContext context) {
     final r = R(context);
     final ctrl = Get.find<AppController>();
-    final seller = getSellerById(product.sellerId);
+    
+    // Use real boutique name if available
+    final shopName = product.boutiqueObj?.nom ?? 'Boutique';
+    
     final stripe = _stripeColor();
-    final iconData = _catIcons[product.category] ?? Icons.shopping_cart_rounded;
-    final catLabel = {
-      'electronique': 'Électronique',
-      'mode':         'Mode',
-      'friperie':     'Friperie',
-      'maison':       'Maison',
-      'beaute':       'Beauté',
-      'services':     'Services',
-    }[product.category] ?? product.category;
+    final catLabel = product.categoryObj?.nom ?? 'Produit';
+    final iconData = CategoryIconHelper.getIcon(product.categoryObj?.slug);
 
     return GestureDetector(
       onTap: () => Get.toNamed('/product/${product.id}'),
@@ -257,22 +272,27 @@ class FavoriteTicketCard extends StatelessWidget {
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  CachedNetworkImage(
-                    imageUrl: product.image,
-                    fit: BoxFit.cover,
-                    placeholder: (_, __) => Container(
-                      color: stripe.withOpacity(0.12),
-                      child: Center(
-                        child: Icon(iconData, size: r.s(32), color: stripe),
+                  Builder(builder: (_) {
+                    final imgUrl = ApiConstants.resolveImageUrl(product.image);
+                    if (imgUrl.isEmpty) {
+                      return Container(
+                        color: stripe.withOpacity(0.12),
+                        child: Center(child: Icon(iconData, size: r.s(32), color: stripe)),
+                      );
+                    }
+                    return CachedNetworkImage(
+                      imageUrl: imgUrl,
+                      fit: BoxFit.cover,
+                      placeholder: (_, __) => Container(
+                        color: stripe.withOpacity(0.12),
+                        child: Center(child: Icon(iconData, size: r.s(32), color: stripe)),
                       ),
-                    ),
-                    errorWidget: (_, __, ___) => Container(
-                      color: stripe.withOpacity(0.12),
-                      child: Center(
-                        child: Icon(iconData, size: r.s(32), color: stripe),
+                      errorWidget: (_, __, ___) => Container(
+                        color: stripe.withOpacity(0.12),
+                        child: Center(child: Icon(iconData, size: r.s(32), color: stripe)),
                       ),
-                    ),
-                  ),
+                    );
+                  }),
                   // Overlay léger sur l'image
                   Container(
                     decoration: BoxDecoration(
@@ -307,6 +327,8 @@ class FavoriteTicketCard extends StatelessWidget {
                     // Catégorie
                     Text(
                       catLabel.toUpperCase(),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontSize: r.fs(9),
                         fontWeight: FontWeight.w700,
@@ -339,23 +361,22 @@ class FavoriteTicketCard extends StatelessWidget {
                           ),
                         ),
                         const Spacer(),
-                        if (seller != null)
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.storefront_rounded, size: r.s(10), color: AppTheme.mutedForeground),
-                              SizedBox(width: r.s(3)),
-                              ConstrainedBox(
-                                constraints: BoxConstraints(maxWidth: r.s(72)),
-                                child: Text(
-                                  seller.shopName,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(fontSize: r.fs(9), color: AppTheme.mutedForeground),
-                                ),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.storefront_rounded, size: r.s(10), color: AppTheme.mutedForeground),
+                            SizedBox(width: r.s(3)),
+                            ConstrainedBox(
+                              constraints: BoxConstraints(maxWidth: r.s(72)),
+                              child: Text(
+                                shopName,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(fontSize: r.fs(9), color: AppTheme.mutedForeground),
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
+                        ),
                       ],
                     ),
                   ],

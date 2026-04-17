@@ -1,6 +1,8 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/common_widgets.dart';
@@ -9,7 +11,9 @@ import '../../Api/core/api_client.dart';
 import '../../Api/config/api_constants.dart';
 import '../../models/models.dart';
 import '../../utils/app_toasts.dart';
-
+import '../../utils/category_icon_helper.dart';
+import '../../controllers/app_controller.dart';
+import '../../widgets/category_picker_bottom_sheet.dart';
 class StoreConfigurationScreen extends StatefulWidget {
   const StoreConfigurationScreen({super.key});
 
@@ -25,6 +29,9 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
   final _phone2Ctrl = TextEditingController();
   final _detailsCtrl = TextEditingController();
 
+  String? _bannerPath;
+  String? _logoPath;
+
   String _zone = 'Tokoin';
   List<String> _selectedCategoryIds = [];
 
@@ -35,8 +42,6 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
 
   Map<String, dynamic> _errors = {};
   bool _isLoading = false;
-  bool _isLoadingCategories = true;
-  List<AppCategory> _dbCategories = [];
 
   final _zones = [
     'Tokoin',
@@ -54,49 +59,7 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
   @override
   void initState() {
     super.initState();
-    _fetchCategories();
-  }
-
-  Future<void> _fetchCategories() async {
-    try {
-      final response =
-          await Get.find<ApiClient>().get(ApiConstants.categoriesEndpoint);
-      if (response.statusCode == 200) {
-        final List<dynamic> data = response.data;
-        if (mounted) {
-          setState(() {
-            _dbCategories = data.map((e) {
-              final nom = e['nom'].toString();
-              IconData iconData = Icons.category_rounded;
-              if (e['slug'] == 'mode')
-                iconData = Icons.shopping_bag_rounded;
-              else if (e['slug'] == 'beaute-sante')
-                iconData = Icons.face_retouching_natural_rounded;
-              else if (e['slug'] == 'electronique')
-                iconData = Icons.devices_rounded;
-              else if (e['slug'] == 'alimentation')
-                iconData = Icons.restaurant_rounded;
-              else if (e['slug'] == 'maison-decoration')
-                iconData = Icons.home_rounded;
-              else if (e['slug'] == 'immobilier')
-                iconData = Icons.apartment_rounded;
-              else if (e['slug'] == 'vehicules')
-                iconData = Icons.directions_car_rounded;
-              else if (e['slug'] == 'services') iconData = Icons.build_rounded;
-
-              return AppCategory(
-                  id: e['id'].toString(), label: nom, icon: iconData);
-            }).toList();
-
-            _isLoadingCategories = false;
-          });
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() => _isLoadingCategories = false);
-      }
-    }
+    // Les catégories sont déjà loadées dans AppController.
   }
 
   String _formatPhoneNumber(String phone) {
@@ -106,6 +69,20 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
       return '+228$cleanPhone';
     }
     return cleanPhone;
+  }
+
+  Future<void> _pickImage(bool isBanner) async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      setState(() {
+        if (isBanner) {
+          _bannerPath = pickedFile.path;
+        } else {
+          _logoPath = pickedFile.path;
+        }
+      });
+    }
   }
 
   Future<void> _pickTime(bool isOpening) async {
@@ -206,9 +183,7 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
           title: const Text('Configurer ma boutique'),
           leading: const BackButton(),
         ),
-        body: _isLoadingCategories
-            ? const Center(child: CircularProgressIndicator())
-            : SingleChildScrollView(
+        body: SingleChildScrollView(
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -219,51 +194,77 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
                         clipBehavior: Clip.none,
                         alignment: Alignment.bottomCenter,
                         children: [
-                          Container(
-                            width: double.infinity,
-                            height: 140,
-                            decoration: BoxDecoration(
-                              color: AppTheme.primaryLight,
-                              borderRadius: BorderRadius.circular(16),
-                              image: const DecorationImage(
-                                image: CachedNetworkImageProvider(
-                                    'https://images.unsplash.com/photo-1556740738-b6a63e27c4df?q=80&w=600&auto=format&fit=crop'),
-                                fit: BoxFit.cover,
+                          GestureDetector(
+                            onTap: () => _pickImage(true),
+                            child: Container(
+                              width: double.infinity,
+                              height: 140,
+                              decoration: BoxDecoration(
+                                color: AppTheme.primaryLight,
+                                borderRadius: BorderRadius.circular(16),
+                                image: _bannerPath != null
+                                    ? DecorationImage(
+                                        image: FileImage(File(_bannerPath!)),
+                                        fit: BoxFit.cover,
+                                      )
+                                    : null,
                               ),
-                            ),
-                            child: Align(
-                              alignment: Alignment.topRight,
-                              child: Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: CircleAvatar(
-                                  backgroundColor:
-                                      Colors.white.withOpacity(0.4),
-                                  child: const Icon(Icons.camera_alt,
-                                      color: AppTheme.primary),
-                                ),
-                              ),
+                              child: _bannerPath == null
+                                  ? Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(Icons.panorama_outlined,
+                                            size: 40,
+                                            color: AppTheme.primary.withOpacity(0.5)),
+                                        const SizedBox(height: 8),
+                                        Text('Ajouter une bannière',
+                                            style: TextStyle(
+                                                color: AppTheme.primary.withOpacity(0.7),
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w600)),
+                                      ],
+                                    )
+                                  : Align(
+                                      alignment: Alignment.topRight,
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(8.0),
+                                        child: CircleAvatar(
+                                          backgroundColor: Colors.white.withOpacity(0.8),
+                                          child: const Icon(Icons.edit,
+                                              color: AppTheme.primary),
+                                        ),
+                                      ),
+                                    ),
                             ),
                           ),
                           Positioned(
                             bottom: -40,
-                            child: Container(
-                              padding: const EdgeInsets.all(4),
-                              decoration: const BoxDecoration(
-                                color: AppTheme.background,
-                                shape: BoxShape.circle,
-                              ),
-                              child: const CircleAvatar(
-                                radius: 40,
-                                backgroundImage: CachedNetworkImageProvider(
-                                    'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=200&auto=format&fit=crop'),
-                                child: Align(
-                                  alignment: Alignment.bottomRight,
-                                  child: CircleAvatar(
-                                    radius: 12,
-                                    backgroundColor: AppTheme.primary,
-                                    child: Icon(Icons.edit,
-                                        size: 14, color: Colors.white),
-                                  ),
+                            child: GestureDetector(
+                              onTap: () => _pickImage(false),
+                              child: Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: const BoxDecoration(
+                                  color: AppTheme.background,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: CircleAvatar(
+                                  radius: 40,
+                                  backgroundColor: AppTheme.cardColor,
+                                  backgroundImage: _logoPath != null
+                                      ? FileImage(File(_logoPath!))
+                                      : null,
+                                  child: _logoPath == null
+                                      ? const Icon(Icons.storefront,
+                                          size: 40, color: AppTheme.primary)
+                                      : const Align(
+                                          alignment: Alignment.bottomRight,
+                                          child: CircleAvatar(
+                                            radius: 12,
+                                            backgroundColor: AppTheme.primary,
+                                            child: Icon(Icons.edit,
+                                                size: 14, color: Colors.white),
+                                          ),
+                                        ),
                                 ),
                               ),
                             ),
@@ -301,39 +302,66 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
                         style: TextStyle(
                             fontSize: 14, fontWeight: FontWeight.w600)),
                     const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: _dbCategories.map((c) {
-                        final isSelected = _selectedCategoryIds.contains(c.id);
-                        return FilterChip(
-                          label: Text(c.label),
-                          labelStyle: TextStyle(
-                            color: isSelected ? Colors.white : AppTheme.foreground,
-                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                          ),
-                          selected: isSelected,
-                          onSelected: (bool selected) {
+                    GestureDetector(
+                      onTap: () {
+                        final rootCats = Get.find<AppController>().categories;
+                        CategoryPickerBottomSheet.show(
+                          context,
+                          categories: rootCats,
+                          onCategorySelected: (cat) {
                             setState(() {
-                              if (selected) {
-                                _selectedCategoryIds.add(c.id);
-                              } else {
-                                _selectedCategoryIds.remove(c.id);
+                              if (!_selectedCategoryIds.contains(cat.id.toString())) {
+                                _selectedCategoryIds.add(cat.id.toString());
                               }
                             });
                           },
-                          backgroundColor: AppTheme.cardColor,
-                          selectedColor: AppTheme.primary,
-                          checkmarkColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20),
-                            side: BorderSide(
-                              color: isSelected ? AppTheme.primary : AppTheme.border,
-                            ),
-                          ),
                         );
-                      }).toList(),
+                      },
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        decoration: BoxDecoration(
+                          color: AppTheme.cardColor,
+                          border: Border.all(color: AppTheme.border),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text('Ajouter une catégorie', style: TextStyle(fontSize: 14, color: AppTheme.foreground)),
+                            const Icon(Icons.add_circle_outline, color: AppTheme.primary),
+                          ],
+                        ),
+                      ),
                     ),
+                    const SizedBox(height: 12),
+                    Obx(() {
+                      final appCtrl = Get.find<AppController>();
+                      final flatCats = appCtrl.allFlatCategories;
+
+                      return Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: _selectedCategoryIds.map((idStr) {
+                          final matchingCat = flatCats.firstWhereOrNull((c) => c.id.toString() == idStr);
+                          if (matchingCat == null) return const SizedBox.shrink();
+
+                          return Chip(
+                            label: Text(matchingCat.nom),
+                            avatar: Icon(CategoryIconHelper.getIcon(matchingCat.slug), size: 16, color: AppTheme.primary),
+                            onDeleted: () {
+                              setState(() {
+                                _selectedCategoryIds.remove(idStr);
+                              });
+                            },
+                            deleteIconColor: AppTheme.mutedForeground,
+                            backgroundColor: AppTheme.primaryLight.withOpacity(0.5),
+                            side: BorderSide(color: AppTheme.primary.withOpacity(0.2)),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                          );
+                        }).toList(),
+                      );
+                    }),
                     const SizedBox(height: 16),
 
                     // Description
@@ -601,8 +629,9 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
                             'ouverture': _formatTime(_openingTime),
                             'fermeture': _formatTime(_closingTime),
                           },
-                          // On envoie le tableau des identifiants des catégories
                           'categories': _selectedCategoryIds,
+                          if (_bannerPath != null) 'bannerPath': _bannerPath,
+                          if (_logoPath != null) 'logoPath': _logoPath,
                         };
 
                         try {

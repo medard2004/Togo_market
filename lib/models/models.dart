@@ -1,7 +1,8 @@
 import 'package:flutter/widgets.dart';
 
-export 'product_model.dart';
-export 'boutique_model.dart';
+export '../Api/model/product_model.dart';
+export '../Api/model/boutique_model.dart';
+export '../Api/model/category_model.dart';
 
 // ── Seller ───────────────────────────────────────────────────────────────────
 class Seller {

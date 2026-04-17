@@ -10,6 +10,7 @@ class Boutique {
   final double latitude;
   final double longitude;
   final String logoUrl;
+  final String bannerUrl;
   final String description;
   final double noteMoyenne;
 
@@ -25,6 +26,7 @@ class Boutique {
     required this.latitude,
     required this.longitude,
     required this.logoUrl,
+    required this.bannerUrl,
     required this.description,
     this.noteMoyenne = 0.0,
   });
@@ -42,6 +44,7 @@ class Boutique {
       latitude: double.tryParse(json['latitude']?.toString() ?? '0') ?? 0.0,
       longitude: double.tryParse(json['longitude']?.toString() ?? '0') ?? 0.0,
       logoUrl: json['logo_url'] ?? '',
+      bannerUrl: json['banner_url'] ?? '',
       description: json['description'] ?? '',
       noteMoyenne: double.tryParse(json['note_moyenne']?.toString() ?? '0') ?? 0.0,
     );
@@ -60,6 +63,7 @@ class Boutique {
       'latitude': latitude,
       'longitude': longitude,
       'logo_url': logoUrl,
+      'banner_url': bannerUrl,
       'description': description,
       'note_moyenne': noteMoyenne,
     };
