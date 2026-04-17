@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../theme/app_theme.dart';
@@ -39,20 +40,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
             _SettingsTile(
               icon: Icons.notifications_outlined,
               label: 'Notifications',
-              trailing: Switch.adaptive(
-                value: _notifs,
-                activeColor: AppTheme.primary,
-                onChanged: (v) => setState(() => _notifs = v),
+              trailing: Transform.scale(
+                scale: 0.7,
+                alignment: Alignment.centerRight,
+                child: CupertinoSwitch(
+                  value: _notifs,
+                  activeTrackColor: AppTheme.primary,
+                  inactiveTrackColor: const Color(0xFFEEEEEE),
+                  onChanged: (v) => setState(() => _notifs = v),
+                ),
               ),
               onTap: () {},
             ),
             _SettingsTile(
               icon: Icons.location_on_outlined,
               label: 'Localisation',
-              trailing: Switch.adaptive(
-                value: _location,
-                activeColor: AppTheme.primary,
-                onChanged: (v) => setState(() => _location = v),
+              trailing: Transform.scale(
+                scale: 0.7,
+                alignment: Alignment.centerRight,
+                child: CupertinoSwitch(
+                  value: _location,
+                  activeTrackColor: AppTheme.primary,
+                  inactiveTrackColor: const Color(0xFFEEEEEE),
+                  onChanged: (v) => setState(() => _location = v),
+                ),
               ),
               onTap: () {},
             ),

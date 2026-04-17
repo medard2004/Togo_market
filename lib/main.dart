@@ -37,6 +37,8 @@ import 'screens/notifications/notifications_screen.dart';
 import 'screens/settings/settings_screen.dart';
 import 'screens/favorites/favorites_screen.dart';
 import 'screens/help/help_screen.dart';
+import 'screens/product/trending_explorer_screen.dart';
+import 'screens/product/nearby_explorer_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -115,6 +117,8 @@ class TogoMarketApp extends StatelessWidget {
         togoPage('/favorites', () => const FavoritesScreen()),
         togoPage('/orders', () => const OrdersScreen()),
         togoPage('/help', () => const HelpScreen()),
+        togoPage('/trends', () => const TrendingExplorerScreen()),
+        togoPage('/nearby', () => const NearbyExplorerScreen()),
       ],
     );
   }

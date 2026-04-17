@@ -100,9 +100,8 @@ class _OpeningHoursScreenState extends State<OpeningHoursScreen> {
           TextButton(
             onPressed: hasOpenDay ? Get.back : null,
             style: TextButton.styleFrom(
-              foregroundColor: hasOpenDay
-                  ? AppTheme.primary
-                  : AppTheme.mutedForeground,
+              foregroundColor:
+                  hasOpenDay ? AppTheme.primary : AppTheme.mutedForeground,
             ),
             child: const Text(
               'Sauvegarder',

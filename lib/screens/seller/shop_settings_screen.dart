@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../theme/app_theme.dart';
@@ -79,7 +80,8 @@ class _ShopSettingsScreenState extends State<ShopSettingsScreen> {
                               Row(
                                 children: const [
                                   Icon(Icons.location_on_outlined,
-                                      size: 14, color: AppTheme.mutedForeground),
+                                      size: 14,
+                                      color: AppTheme.mutedForeground),
                                   Text(' Tokoin, Lomé',
                                       style: TextStyle(
                                           fontSize: 13,
@@ -90,7 +92,8 @@ class _ShopSettingsScreenState extends State<ShopSettingsScreen> {
                               const SizedBox(height: 4),
                               Row(
                                 children: const [
-                                  Icon(Icons.star, size: 14, color: Colors.amber),
+                                  Icon(Icons.star,
+                                      size: 14, color: Colors.amber),
                                   Text(' 4.8',
                                       style: TextStyle(
                                           fontSize: 14,
@@ -370,8 +373,7 @@ class _ShopSettingsScreenState extends State<ShopSettingsScreen> {
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
                           color: AppTheme.foreground)),
-                  if (subtitle != null)
-                    const SizedBox(height: 1),
+                  if (subtitle != null) const SizedBox(height: 1),
                   if (subtitle != null)
                     Text(subtitle,
                         style: const TextStyle(
@@ -382,10 +384,15 @@ class _ShopSettingsScreenState extends State<ShopSettingsScreen> {
               ),
             ),
             if (hasSwitch)
-              Switch.adaptive(
-                value: switchValue,
-                activeColor: AppTheme.primary,
-                onChanged: onSwitchChanged,
+              Transform.scale(
+                scale: 0.7,
+                alignment: Alignment.centerRight,
+                child: CupertinoSwitch(
+                  value: switchValue,
+                  activeTrackColor: AppTheme.primary,
+                  inactiveTrackColor: const Color(0xFFEEEEEE),
+                  onChanged: onSwitchChanged,
+                ),
               )
             else
               const Icon(Icons.chevron_right,
