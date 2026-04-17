@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 
 import '../../controllers/app_controller.dart';
 import '../../theme/app_theme.dart';
-import '../../animations/togo_animation_system.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -15,10 +13,10 @@ class EditProfileScreen extends StatefulWidget {
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
   late final TextEditingController _nameController;
-  late final TextEditingController _locationController;
-  late final TextEditingController _bioController;
   late final TextEditingController _emailController;
   late final TextEditingController _phoneController;
+  late final TextEditingController _locationController;
+  late final TextEditingController _bioController;
   final _formKey = GlobalKey<FormState>();
 
   @override
@@ -26,19 +24,19 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     super.initState();
     final ctrl = Get.find<AppController>();
     _nameController = TextEditingController(text: ctrl.userName.value);
-    _locationController = TextEditingController(text: ctrl.userLocation.value);
-    _bioController = TextEditingController(text: ctrl.userBio.value);
     _emailController = TextEditingController(text: ctrl.userEmail.value);
     _phoneController = TextEditingController(text: ctrl.userPhone.value);
+    _locationController = TextEditingController(text: ctrl.userLocation.value);
+    _bioController = TextEditingController(text: ctrl.userBio.value);
   }
 
   @override
   void dispose() {
     _nameController.dispose();
-    _locationController.dispose();
-    _bioController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
+    _locationController.dispose();
+    _bioController.dispose();
     super.dispose();
   }
 
@@ -46,91 +44,99 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     if (!_formKey.currentState!.validate()) return;
     final ctrl = Get.find<AppController>();
     ctrl.userName.value = _nameController.text.trim();
-    ctrl.userLocation.value = _locationController.text.trim();
-    ctrl.userBio.value = _bioController.text.trim();
     ctrl.userEmail.value = _emailController.text.trim();
     ctrl.userPhone.value = _phoneController.text.trim();
+    ctrl.userLocation.value = _locationController.text.trim();
+    ctrl.userBio.value = _bioController.text.trim();
+    Get.back();
 
     Get.snackbar(
-      'Succès',
-      'Profil mis à jour avec succès',
+      'Profil mis à jour',
+      'Vos modifications ont été enregistrées avec succès.',
       snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: Colors.green,
+      backgroundColor: AppTheme.primary,
       colorText: Colors.white,
       margin: const EdgeInsets.all(16),
       borderRadius: 12,
     );
-    Get.back();
   }
 
   @override
   Widget build(BuildContext context) {
-    final ctrl = Get.find<AppController>();
-
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppTheme.cardColor,
         elevation: 0,
         title: const Text(
           'Modifier le profil',
           style: TextStyle(
-              fontWeight: FontWeight.w800,
-              fontSize: 18,
-              color: AppTheme.foreground),
+            fontWeight: FontWeight.w800,
+            fontSize: 18,
+            color: AppTheme.foreground,
+          ),
         ),
+        centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: AppTheme.foreground),
           onPressed: Get.back,
         ),
         actions: [
-          // Ajouter un texte enregistrer de cette couleur AppTheme.primary juste un texte pas vraiment un bouton
           TextButton(
             onPressed: _saveProfile,
             child: const Text(
               'Enregistrer',
               style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: AppTheme.primary),
+                color: AppTheme.primary,
+                fontWeight: FontWeight.w700,
+                fontSize: 15,
+              ),
             ),
           ),
+          const SizedBox(width: 8),
         ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Divider(height: 1, thickness: 1, color: AppTheme.border),
+        ),
       ),
       body: Form(
         key: _formKey,
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 10, 16, 40),
+          padding: const EdgeInsets.fromLTRB(16, 24, 16, 40),
           children: [
-            // ── Photo de Profil ──────────────────────────────────────────────
+            // Avatar Section
             Center(
               child: Column(
                 children: [
                   Stack(
                     children: [
-                      Obx(() => Container(
-                            width: 110,
-                            height: 110,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              border: Border.all(color: Colors.white, width: 4),
-                              boxShadow: AppTheme.shadowCard,
-                              image: DecorationImage(
-                                image: CachedNetworkImageProvider(
-                                    ctrl.userAvatar.value),
-                                fit: BoxFit.cover,
-                              ),
+                      Obx(() {
+                        final ctrl = Get.find<AppController>();
+                        return Container(
+                          width: 110,
+                          height: 110,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border:
+                                Border.all(color: AppTheme.primary, width: 3),
+                            boxShadow: AppTheme.shadowCard,
+                            image: DecorationImage(
+                              image: NetworkImage(ctrl.userAvatar.value),
+                              fit: BoxFit.cover,
                             ),
-                          )),
+                          ),
+                        );
+                      }),
                       Positioned(
-                        bottom: 0,
                         right: 0,
-                        child: TogoPressableScale(
+                        bottom: 0,
+                        child: GestureDetector(
                           onTap: () {
-                            // Ici on pourrait ouvrir un sélecteur d'image
+                            // Simulation de choix d'image
                             Get.snackbar(
-                              'Info',
-                              'Sélecteur d\'image bientôt disponible',
+                              'Modifier la photo',
+                              'L\'ouverture de la galerie sera bientôt disponible.',
                               snackPosition: SnackPosition.BOTTOM,
                             );
                           },
@@ -140,8 +146,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                               color: AppTheme.primary,
                               shape: BoxShape.circle,
                             ),
-                            child: const Icon(Icons.camera_alt,
-                                color: Colors.white, size: 18),
+                            child: const Icon(
+                              Icons.camera_alt_rounded,
+                              color: Colors.white,
+                              size: 20,
+                            ),
                           ),
                         ),
                       ),
@@ -149,87 +158,80 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   ),
                   const SizedBox(height: 12),
                   const Text(
-                    'Tapotez pour changer la photo',
+                    'Appuyez pour changer la photo',
                     style: TextStyle(
-                        fontSize: 12, color: AppTheme.mutedForeground),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.primary,
+                    ),
                   ),
                 ],
               ),
             ),
-
             const SizedBox(height: 32),
 
-            // ── Champs de formulaire ────────────────────────────────────────
+            // Form Section
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 color: AppTheme.cardColor,
-                borderRadius: BorderRadius.circular(28),
+                borderRadius: BorderRadius.circular(24),
                 boxShadow: AppTheme.shadowCard,
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildSectionTitle('Informations de base'),
-                  const SizedBox(height: 16),
+                  const Text(
+                    'Informations personnelles',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                      color: AppTheme.foreground,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
                   _buildField('Nom complet', _nameController,
-                      icon: Icons.person_outline),
-                  const SizedBox(height: 16),
+                      hintText: 'Koffi Mensah', icon: Icons.person_outline),
+                  const SizedBox(height: 18),
                   _buildField('Email', _emailController,
+                      hintText: 'koffi.mensah@email.com',
                       icon: Icons.email_outlined,
                       keyboardType: TextInputType.emailAddress),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 18),
                   _buildField('Téléphone', _phoneController,
-                      icon: Icons.phone_outlined,
+                      hintText: '+228 90 00 00 00',
+                      icon: Icons.phone_android_outlined,
                       keyboardType: TextInputType.phone),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 18),
                   _buildField('Localisation', _locationController,
+                      hintText: 'Tokoin, Lomé',
                       icon: Icons.location_on_outlined),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 20),
-
-            // ── Bio ──────────────────────────────────────────────────────────
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: AppTheme.cardColor,
-                borderRadius: BorderRadius.circular(28),
-                boxShadow: AppTheme.shadowCard,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildSectionTitle('À propos de vous'),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 18),
                   _buildBioField(),
                 ],
               ),
             ),
+            const SizedBox(height: 32),
 
-            const SizedBox(height: 30),
-
-            // ── Bouton Sauvegarder ──────────────────────────────────────────
-            TogoPressableScale(
-              onTap: _saveProfile,
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                decoration: BoxDecoration(
-                  color: AppTheme.primary,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: AppTheme.shadowPrimary,
+            // Bottom Save Button
+            ElevatedButton(
+              onPressed: _saveProfile,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primary,
+                foregroundColor: Colors.white,
+                elevation: 2,
+                shadowColor: AppTheme.primary.withOpacity(0.4),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(18),
                 ),
-                child: const Center(
-                  child: Text(
-                    'Enregistrer les modifications',
-                    style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.white),
-                  ),
+                padding: const EdgeInsets.symmetric(vertical: 16),
+              ),
+              child: const Text(
+                'Enregistrer les modifications',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.5,
                 ),
               ),
             ),
@@ -239,45 +241,48 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     );
   }
 
-  Widget _buildSectionTitle(String title) {
-    return Text(
-      title.toUpperCase(),
-      style: const TextStyle(
-        fontSize: 11,
-        fontWeight: FontWeight.w800,
-        color: AppTheme.primary,
-        letterSpacing: 1.1,
-      ),
-    );
-  }
-
   Widget _buildField(
     String label,
     TextEditingController controller, {
+    String? hintText,
     IconData? icon,
     TextInputType keyboardType = TextInputType.text,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: const TextStyle(
+        Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: 8),
+          child: Text(
+            label,
+            style: const TextStyle(
               fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: AppTheme.mutedForeground),
+              fontWeight: FontWeight.w700,
+              color: AppTheme.mutedForeground,
+            ),
+          ),
         ),
-        const SizedBox(height: 8),
         TextFormField(
           controller: controller,
           keyboardType: keyboardType,
-          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: AppTheme.foreground,
+          ),
+          validator: (value) {
+            if (value == null || value.trim().isEmpty) {
+              return 'Ce champ est requis';
+            }
+            return null;
+          },
           decoration: InputDecoration(
+            hintText: hintText,
             prefixIcon: icon != null
-                ? Icon(icon, size: 20, color: AppTheme.primary.withOpacity(0.7))
+                ? Icon(icon, size: 20, color: AppTheme.primary)
                 : null,
             filled: true,
-            fillColor: AppTheme.background,
+            fillColor: AppTheme.muted,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
               borderSide: BorderSide.none,
@@ -285,8 +290,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             contentPadding:
                 const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           ),
-          validator: (value) =>
-              value == null || value.trim().isEmpty ? 'Requis' : null,
         ),
       ],
     );
@@ -299,45 +302,58 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
-              'Biographie',
-              style: TextStyle(
+            const Padding(
+              padding: EdgeInsets.only(left: 4, bottom: 8),
+              child: Text(
+                'Bio / Description',
+                style: TextStyle(
                   fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: AppTheme.mutedForeground),
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.mutedForeground,
+                ),
+              ),
             ),
-            ValueListenableBuilder<TextEditingValue>(
+            ValueListenableBuilder(
               valueListenable: _bioController,
-              builder: (context, value, child) {
+              builder: (context, value, _) {
                 final count = value.text.length;
-                return Text(
-                  '$count/150',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: count > 140 ? Colors.red : AppTheme.mutedForeground,
+                return Padding(
+                  padding: const EdgeInsets.only(right: 4, bottom: 8),
+                  child: Text(
+                    '$count / 150',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: count > 150 ? AppTheme.red : AppTheme.mutedForeground,
+                    ),
                   ),
                 );
               },
             ),
           ],
         ),
-        const SizedBox(height: 8),
         TextFormField(
           controller: _bioController,
-          maxLength: 150,
           maxLines: 4,
-          style: const TextStyle(fontSize: 14, height: 1.5),
+          maxLength: 150,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: AppTheme.foreground,
+          ),
+          buildCounter: (context,
+                  {required currentLength,
+                  required isFocused,
+                  required maxLength}) =>
+              null, // On utilise notre propre compteur
           decoration: InputDecoration(
-            counterText:
-                "", // On cache le compteur par défaut car on a le nôtre
+            hintText: 'Présentez votre boutique',
             filled: true,
-            fillColor: AppTheme.background,
+            fillColor: AppTheme.muted,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
               borderSide: BorderSide.none,
             ),
-            hintText: 'Décrivez-vous en quelques mots...',
             contentPadding: const EdgeInsets.all(16),
           ),
         ),

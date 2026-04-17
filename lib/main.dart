@@ -26,6 +26,11 @@ import 'screens/seller/store_configuration_screen.dart';
 import 'screens/seller/add_product_screen.dart';
 import 'screens/seller/edit_product_screen.dart';
 import 'screens/seller/seller_stats_screen.dart';
+import 'screens/seller/coverage_zones_screen.dart';
+import 'screens/seller/opening_hours_screen.dart';
+import 'screens/seller/product_categories_screen.dart';
+import 'screens/seller/return_policy_screen.dart';
+import 'screens/seller/seller_help_center_screen.dart';
 import 'screens/profile/profile_screen.dart';
 import 'screens/profile/edit_profile_screen.dart';
 import 'screens/notifications/notifications_screen.dart';
@@ -97,6 +102,11 @@ class TogoMarketApp extends StatelessWidget {
         togoPage('/edit-product/:id', () => const EditProductScreen(),
             style: TogoRouteStyle.modalLift),
         togoPage('/seller-stats', () => const SellerStatsScreen()),
+        togoPage('/coverage-zones', () => const CoverageZonesScreen()),
+        togoPage('/opening-hours', () => const OpeningHoursScreen()),
+        togoPage('/product-categories', () => const ProductCategoriesScreen()),
+        togoPage('/return-policy', () => const ReturnPolicyScreen()),
+        togoPage('/seller-help-center', () => const SellerHelpCenterScreen()),
         togoPage('/notifications', () => const NotificationsScreen()),
         togoPage('/profile', () => const ProfileScreen()),
         togoPage('/edit-profile', () => const EditProfileScreen(),

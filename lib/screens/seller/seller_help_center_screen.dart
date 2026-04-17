@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../theme/app_theme.dart';
@@ -41,19 +42,23 @@ class _SellerHelpCenterScreenState extends State<SellerHelpCenterScreen> {
   final List<Map<String, String>> _faqs = [
     {
       'q': 'Comment sont calculées les commissions ?',
-      'a': 'Togo Market prélève une commission de 5% uniquement sur les ventes réussies. L\'inscription et la mise en ligne d\'articles restent gratuites.'
+      'a':
+          'Togo Market prélève une commission de 5% uniquement sur les ventes réussies. L\'inscription et la mise en ligne d\'articles restent gratuites.'
     },
     {
       'q': 'Comment demander un retrait de mes gains ?',
-      'a': 'Allez dans votre portefeuille vendeur et cliquez sur "Retirer". Les fonds sont transférés via Flooz ou TMoney sous 24h.'
+      'a':
+          'Allez dans votre portefeuille vendeur et cliquez sur "Retirer". Les fonds sont transférés via Flooz ou TMoney sous 24h.'
     },
     {
       'q': 'Quels sont les délais de livraison conseillés ?',
-      'a': 'Nous recommandons d\'expédier les commandes sous 48h pour maintenir une bonne note de performance.'
+      'a':
+          'Nous recommandons d\'expédier les commandes sous 48h pour maintenir une bonne note de performance.'
     },
     {
       'q': 'Comment booster la visibilité de mes produits ?',
-      'a': 'Utilisez des photos de haute qualité et remplissez précisément les descriptions. Les vendeurs ayant de bonnes notes sont mis en avant.'
+      'a':
+          'Utilisez des photos de haute qualité et remplissez précisément les descriptions. Les vendeurs ayant de bonnes notes sont mis en avant.'
     },
   ];
 
@@ -61,56 +66,53 @@ class _SellerHelpCenterScreenState extends State<SellerHelpCenterScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.background,
-      body: CustomScrollView(
-        slivers: [
-          // ── App Bar Premium ──────────────────────────────────────────────
-          SliverAppBar(
-            expandedHeight: 180,
-            pinned: true,
-            backgroundColor: AppTheme.primary,
-            elevation: 0,
-            leading: const BackButton(color: Colors.white),
-            flexibleSpace: FlexibleSpaceBar(
-              background: Container(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [AppTheme.primary, Color(0xFFFF8C42)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
+      appBar: _HelpAppBar(
+        onBack: () => Get.back(),
+      ),
+      body: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        child: Column(
+          children: [
+            // ── Header Gradient Section ──────────────────────────────────────
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(20, 30, 20, 60),
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [AppTheme.primary, Color(0xFFFF8C42)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 30),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Centre d\'aide',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 24,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Comment pouvons-nous vous aider ?',
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.9),
-                          fontSize: 14,
-                        ),
-                      ),
-                    ],
-                  ),
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(32),
+                  bottomRight: Radius.circular(32),
                 ),
               ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Comment pouvons-nous\nvous aider ?',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 24,
+                      fontWeight: FontWeight.w900,
+                      height: 1.2,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Trouvez des réponses à vos questions ou contactez-nous.',
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.9),
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
 
-          // ── Search & Content ─────────────────────────────────────────────
-          SliverToBoxAdapter(
-            child: Column(
+            Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Search Bar Overlay
@@ -128,11 +130,13 @@ class _SellerHelpCenterScreenState extends State<SellerHelpCenterScreen> {
                         controller: _searchController,
                         decoration: InputDecoration(
                           hintText: 'Rechercher une solution...',
-                          prefixIcon: const Icon(Icons.search, color: AppTheme.primary),
+                          prefixIcon:
+                              const Icon(Icons.search, color: AppTheme.primary),
                           border: InputBorder.none,
                           enabledBorder: InputBorder.none,
                           focusedBorder: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(vertical: 15),
+                          contentPadding:
+                              const EdgeInsets.symmetric(vertical: 15),
                         ),
                       ),
                     ),
@@ -201,13 +205,16 @@ class _SellerHelpCenterScreenState extends State<SellerHelpCenterScreen> {
                       return TogoSlideUp(
                         delay: Duration(milliseconds: 400 + (i * 100)),
                         child: GestureDetector(
-                          onTap: () => setState(() => _expandedFaq = isExpanded ? null : i),
+                          onTap: () => setState(
+                              () => _expandedFaq = isExpanded ? null : i),
                           child: Container(
                             decoration: BoxDecoration(
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(16),
                               border: Border.all(
-                                color: isExpanded ? AppTheme.primary : AppTheme.border,
+                                color: isExpanded
+                                    ? AppTheme.primary
+                                    : AppTheme.border,
                                 width: isExpanded ? 1.5 : 1,
                               ),
                             ),
@@ -223,13 +230,19 @@ class _SellerHelpCenterScreenState extends State<SellerHelpCenterScreen> {
                                           style: TextStyle(
                                             fontSize: 14,
                                             fontWeight: FontWeight.w700,
-                                            color: isExpanded ? AppTheme.primary : AppTheme.foreground,
+                                            color: isExpanded
+                                                ? AppTheme.primary
+                                                : AppTheme.foreground,
                                           ),
                                         ),
                                       ),
                                       Icon(
-                                        isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
-                                        color: isExpanded ? AppTheme.primary : AppTheme.mutedForeground,
+                                        isExpanded
+                                            ? Icons.keyboard_arrow_up
+                                            : Icons.keyboard_arrow_down,
+                                        color: isExpanded
+                                            ? AppTheme.primary
+                                            : AppTheme.mutedForeground,
                                       ),
                                     ],
                                   ),
@@ -239,7 +252,8 @@ class _SellerHelpCenterScreenState extends State<SellerHelpCenterScreen> {
                                   curve: Curves.easeInOut,
                                   child: isExpanded
                                       ? Padding(
-                                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                                          padding: const EdgeInsets.fromLTRB(
+                                              16, 0, 16, 16),
                                           child: Text(
                                             faq['a']!,
                                             style: const TextStyle(
@@ -272,11 +286,13 @@ class _SellerHelpCenterScreenState extends State<SellerHelpCenterScreen> {
                       decoration: BoxDecoration(
                         color: AppTheme.primary.withOpacity(0.05),
                         borderRadius: BorderRadius.circular(24),
-                        border: Border.all(color: AppTheme.primary.withOpacity(0.1)),
+                        border: Border.all(
+                            color: AppTheme.primary.withOpacity(0.1)),
                       ),
                       child: Column(
                         children: [
-                          const Icon(Icons.headset_mic_rounded, size: 40, color: AppTheme.primary),
+                          const Icon(Icons.headset_mic_rounded,
+                              size: 40, color: AppTheme.primary),
                           const SizedBox(height: 12),
                           const Text(
                             'Besoin d\'une assistance directe ?',
@@ -324,8 +340,50 @@ class _SellerHelpCenterScreenState extends State<SellerHelpCenterScreen> {
                 const SizedBox(height: 60),
               ],
             ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _HelpAppBar extends StatelessWidget implements PreferredSizeWidget {
+  final VoidCallback onBack;
+  const _HelpAppBar({required this.onBack});
+
+  @override
+  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
+
+  @override
+  Widget build(BuildContext context) {
+    final bg = AppTheme.background.withAlpha(204); // ~0.8
+    return ClipRect(
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: AppBar(
+          backgroundColor: bg,
+          elevation: 0,
+          centerTitle: true,
+          title: const Text(
+            'Centre d\'aide',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              letterSpacing: -0.3,
+              color: AppTheme.foreground,
+            ),
           ),
-        ],
+          leading: IconButton(
+            onPressed: onBack,
+            icon:
+                const Icon(Icons.arrow_back, size: 20, color: AppTheme.primary),
+          ),
+          actions: const [SizedBox(width: 36)],
+          bottom: const PreferredSize(
+            preferredSize: Size.fromHeight(1),
+            child: Divider(height: 1, thickness: 1, color: AppTheme.border),
+          ),
+        ),
       ),
     );
   }

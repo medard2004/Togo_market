@@ -59,10 +59,12 @@ class ProfileScreen extends StatelessWidget {
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      CircleAvatar(
-                        radius: 40,
-                        backgroundImage:
-                            CachedNetworkImageProvider(ctrl.userAvatar.value),
+                      Obx(
+                        () => CircleAvatar(
+                          radius: 40,
+                          backgroundImage:
+                              CachedNetworkImageProvider(ctrl.userAvatar.value),
+                        ),
                       ),
                       const SizedBox(width: 16),
                       Expanded(
@@ -82,30 +84,6 @@ class ProfileScreen extends StatelessWidget {
                                     color: AppTheme.mutedForeground),
                                 const SizedBox(width: 4),
                                 Obx(() => Text(ctrl.userLocation.value,
-                                    style: const TextStyle(
-                                        fontSize: 13,
-                                        color: AppTheme.mutedForeground))),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-                            Row(
-                              children: [
-                                const Icon(Icons.email_outlined,
-                                    size: 14, color: AppTheme.mutedForeground),
-                                const SizedBox(width: 4),
-                                Obx(() => Text(ctrl.userEmail.value,
-                                    style: const TextStyle(
-                                        fontSize: 13,
-                                        color: AppTheme.mutedForeground))),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-                            Row(
-                              children: [
-                                const Icon(Icons.phone_outlined,
-                                    size: 14, color: AppTheme.mutedForeground),
-                                const SizedBox(width: 4),
-                                Obx(() => Text(ctrl.userPhone.value,
                                     style: const TextStyle(
                                         fontSize: 13,
                                         color: AppTheme.mutedForeground))),
@@ -151,69 +129,55 @@ class ProfileScreen extends StatelessWidget {
                           height: 1.6),
                       textAlign: TextAlign.center)),
                   const SizedBox(height: 18),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: () => Get.toNamed('/edit-profile'),
-                          icon: const Icon(Icons.edit, size: 18),
-                          label: const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 12),
-                            child: Text('Modifier le profil',
-                                style: TextStyle(fontSize: 15)),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppTheme.primary,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                          ),
-                        ),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () => Get.toNamed('/edit-profile'),
+                      icon: const Icon(Icons.edit, size: 18),
+                      label: const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 12),
+                        child: Text('Modifier le profil',
+                            style: TextStyle(fontSize: 15)),
                       ),
-                      const SizedBox(width: 12),
-                      Container(
-                        decoration: BoxDecoration(
-                          color: AppTheme.primaryLight,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primary,
+                        shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(20),
                         ),
-                        child: IconButton(
-                          onPressed: () => Get.toNamed('/share-profile'),
-                          icon: const Icon(Icons.share_outlined, color: AppTheme.primary),
-                        ),
                       ),
-                    ],
+                    ),
                   ),
                 ],
               ),
             ),
             const SizedBox(height: 18),
             Row(
-              children: const [
-                Expanded(
+              children: [
+                const Expanded(
                   child: ProfileStatCard(
                     icon: Icons.inventory_2_outlined,
                     value: '12',
                     label: 'Annonces',
                   ),
                 ),
-                SizedBox(width: 10),
-                Expanded(
+                const SizedBox(width: 10),
+                const Expanded(
                   child: ProfileStatCard(
                     icon: Icons.shopping_bag_outlined,
                     value: '24',
                     label: 'Ventes',
                   ),
                 ),
-                SizedBox(width: 10),
-                Expanded(
+                const SizedBox(width: 10),
+                const Expanded(
                   child: ProfileStatCard(
                     icon: Icons.star_border,
                     value: '4.8',
                     label: 'Note',
                   ),
                 ),
-                SizedBox(width: 10),
-                Expanded(
+                const SizedBox(width: 10),
+                const Expanded(
                   child: ProfileStatCard(
                     icon: Icons.remove_red_eye_outlined,
                     value: '156',

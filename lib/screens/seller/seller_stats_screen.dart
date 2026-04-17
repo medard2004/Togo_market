@@ -3,7 +3,7 @@ import 'dart:ui';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
-import '../../theme/app_colors.dart';
+import '../../theme/app_theme.dart';
 
 class SellerStatsScreen extends StatefulWidget {
   const SellerStatsScreen({super.key});
@@ -95,7 +95,7 @@ class _SellerStatsScreenState extends State<SellerStatsScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppTheme.background,
       appBar: _StatsAppBar(
         onBack: () => Navigator.of(context).maybePop(),
       ),
@@ -165,7 +165,7 @@ class _SellerStatsScreenState extends State<SellerStatsScreen>
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
-                          color: AppColors.foreground,
+                          color: AppTheme.foreground,
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -173,7 +173,7 @@ class _SellerStatsScreenState extends State<SellerStatsScreen>
                         'Évolution des visites sur votre boutique',
                         style: TextStyle(
                           fontSize: 12,
-                          color: AppColors.mutedForeground,
+                          color: AppTheme.mutedForeground,
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -206,7 +206,7 @@ class _SellerStatsScreenState extends State<SellerStatsScreen>
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
-                          color: AppColors.foreground,
+                          color: AppTheme.foreground,
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -214,7 +214,7 @@ class _SellerStatsScreenState extends State<SellerStatsScreen>
                         'Nombre de ventes par mois',
                         style: TextStyle(
                           fontSize: 12,
-                          color: AppColors.mutedForeground,
+                          color: AppTheme.mutedForeground,
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -247,7 +247,7 @@ class _SellerStatsScreenState extends State<SellerStatsScreen>
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
-                          color: AppColors.foreground,
+                          color: AppTheme.foreground,
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -255,7 +255,7 @@ class _SellerStatsScreenState extends State<SellerStatsScreen>
                         'Catégories les plus consultées',
                         style: TextStyle(
                           fontSize: 12,
-                          color: AppColors.mutedForeground,
+                          color: AppTheme.mutedForeground,
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -271,22 +271,22 @@ class _SellerStatsScreenState extends State<SellerStatsScreen>
                                 sections: [
                                   PieChartSectionData(
                                       value: 45,
-                                      color: AppColors.primary,
+                                      color: AppTheme.primary,
                                       radius: 25,
                                       showTitle: false),
                                   PieChartSectionData(
                                       value: 25,
-                                      color: AppColors.secondary,
+                                      color: AppTheme.secondary,
                                       radius: 25,
                                       showTitle: false),
                                   PieChartSectionData(
                                       value: 20,
-                                      color: AppColors.amber,
+                                      color: const Color(0xFFF59E0B),
                                       radius: 25,
                                       showTitle: false),
                                   PieChartSectionData(
                                       value: 10,
-                                      color: AppColors.slate,
+                                      color: const Color(0xFF94A3B8),
                                       radius: 25,
                                       showTitle: false),
                                 ],
@@ -320,7 +320,7 @@ class _SellerStatsScreenState extends State<SellerStatsScreen>
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
-                        color: AppColors.foreground,
+                        color: AppTheme.foreground,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -328,14 +328,14 @@ class _SellerStatsScreenState extends State<SellerStatsScreen>
                       'Top 3 produits',
                       style: TextStyle(
                         fontSize: 12,
-                        color: AppColors.mutedForeground,
+                        color: AppTheme.mutedForeground,
                       ),
                     ),
                     const SizedBox(height: 6),
                     for (var i = 0; i < topProducts.length; i++) ...[
                       if (i != 0)
                         const Divider(
-                          color: AppColors.border,
+                          color: AppTheme.border,
                           height: 1,
                           thickness: 1,
                         ),
@@ -385,14 +385,14 @@ class _SellerStatsScreenState extends State<SellerStatsScreen>
       maxY: 60,
       barTouchData: BarTouchData(
         touchTooltipData: BarTouchTooltipData(
-          getTooltipColor: (_) => AppColors.card,
-          tooltipBorder: const BorderSide(color: AppColors.border),
+          getTooltipColor: (_) => AppTheme.cardColor,
+          tooltipBorder: const BorderSide(color: AppTheme.border),
           tooltipBorderRadius: BorderRadius.circular(12),
           getTooltipItem: (group, groupIndex, rod, rodIndex) {
             return BarTooltipItem(
               '${rod.toY.toInt()} vues',
               const TextStyle(
-                color: AppColors.foreground,
+                color: AppTheme.foreground,
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
               ),
@@ -414,7 +414,7 @@ class _SellerStatsScreenState extends State<SellerStatsScreen>
                   days[i],
                   style: const TextStyle(
                     fontSize: 11,
-                    color: AppColors.mutedForeground,
+                    color: AppTheme.mutedForeground,
                   ),
                 ),
               );
@@ -431,7 +431,7 @@ class _SellerStatsScreenState extends State<SellerStatsScreen>
                 '${value.toInt()}',
                 style: const TextStyle(
                   fontSize: 11,
-                  color: AppColors.mutedForeground,
+                  color: AppTheme.mutedForeground,
                 ),
               );
             },
@@ -445,7 +445,7 @@ class _SellerStatsScreenState extends State<SellerStatsScreen>
         drawVerticalLine: false,
         horizontalInterval: 15,
         getDrawingHorizontalLine: (value) => const FlLine(
-          color: AppColors.border,
+          color: AppTheme.border,
           strokeWidth: 1,
           dashArray: [3, 3],
         ),
@@ -457,7 +457,7 @@ class _SellerStatsScreenState extends State<SellerStatsScreen>
           barRods: [
             BarChartRodData(
               toY: e.value.toDouble(),
-              color: AppColors.primary,
+              color: AppTheme.primary,
               width: 20,
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(6),
@@ -479,7 +479,7 @@ class _SellerStatsScreenState extends State<SellerStatsScreen>
         drawVerticalLine: false,
         horizontalInterval: 10,
         getDrawingHorizontalLine: (value) => const FlLine(
-          color: AppColors.border,
+          color: AppTheme.border,
           strokeWidth: 1,
           dashArray: [3, 3],
         ),
@@ -498,7 +498,7 @@ class _SellerStatsScreenState extends State<SellerStatsScreen>
                   months[i],
                   style: const TextStyle(
                     fontSize: 11,
-                    color: AppColors.mutedForeground,
+                    color: AppTheme.mutedForeground,
                   ),
                 ),
               );
@@ -514,7 +514,7 @@ class _SellerStatsScreenState extends State<SellerStatsScreen>
               '${value.toInt()}',
               style: const TextStyle(
                 fontSize: 11,
-                color: AppColors.mutedForeground,
+                color: AppTheme.mutedForeground,
               ),
             ),
           ),
@@ -534,14 +534,14 @@ class _SellerStatsScreenState extends State<SellerStatsScreen>
             FlSpot(5, 22),
           ],
           isCurved: true,
-          color: AppColors.primary,
+          color: AppTheme.primary,
           barWidth: 2.5,
           dotData: FlDotData(
             show: true,
             getDotPainter: (spot, percent, bar, index) =>
                 FlDotCirclePainter(
               radius: 4,
-              color: AppColors.primary,
+              color: AppTheme.primary,
               strokeWidth: 0,
             ),
           ),
@@ -550,8 +550,8 @@ class _SellerStatsScreenState extends State<SellerStatsScreen>
       ],
       lineTouchData: LineTouchData(
         touchTooltipData: LineTouchTooltipData(
-          getTooltipColor: (_) => AppColors.card,
-          tooltipBorder: const BorderSide(color: AppColors.border),
+          getTooltipColor: (_) => AppTheme.cardColor,
+          tooltipBorder: const BorderSide(color: AppTheme.border),
           tooltipBorderRadius: BorderRadius.circular(12),
         ),
       ),
@@ -568,7 +568,7 @@ class _StatsAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bg = AppColors.background.withAlpha(204); // ~0.8
+    final bg = AppTheme.background.withAlpha(204); // ~0.8
     return ClipRect(
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
@@ -582,17 +582,17 @@ class _StatsAppBar extends StatelessWidget implements PreferredSizeWidget {
               fontSize: 18,
               fontWeight: FontWeight.w700,
               letterSpacing: -0.3,
-              color: AppColors.foreground,
+              color: AppTheme.foreground,
             ),
           ),
           leading: IconButton(
             onPressed: onBack,
-            icon: const Icon(Icons.arrow_back, size: 20, color: AppColors.primary),
+            icon: const Icon(Icons.arrow_back, size: 20, color: AppTheme.primary),
           ),
           actions: const [SizedBox(width: 36)],
           bottom: const PreferredSize(
             preferredSize: Size.fromHeight(1),
-            child: Divider(height: 1, thickness: 1, color: AppColors.border),
+            child: Divider(height: 1, thickness: 1, color: AppTheme.border),
           ),
         ),
       ),
@@ -625,12 +625,12 @@ class _PeriodSelector extends StatelessWidget {
                 padding:
                     const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
                 decoration: BoxDecoration(
-                  color: active ? AppColors.primary : const Color(0xFFF1EDE8),
+                  color: active ? AppTheme.primary : const Color(0xFFF1EDE8),
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: active
                       ? [
                           BoxShadow(
-                            color: AppColors.primary.withAlpha(77), // 0.3
+                            color: AppTheme.primary.withAlpha(77), // 0.3
                             blurRadius: 8,
                             offset: const Offset(0, 2),
                           )
@@ -643,7 +643,7 @@ class _PeriodSelector extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: active ? Colors.white : AppColors.mutedForeground,
+                      color: active ? Colors.white : AppTheme.mutedForeground,
                     ),
                   ),
                 ),
@@ -665,9 +665,9 @@ class _Card extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.card,
+        color: AppTheme.cardColor,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: const [AppColors.shadowSm],
+        boxShadow: AppTheme.shadowCard,
       ),
       child: child,
     );
@@ -696,15 +696,15 @@ class _KpiCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final changeColor = kpi.positive ? AppColors.green : AppColors.red;
+    final changeColor = kpi.positive ? AppTheme.green : AppTheme.red;
     final changeIcon =
         kpi.positive ? Icons.trending_up : Icons.trending_down;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.card,
+        color: AppTheme.cardColor,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: const [AppColors.shadowSm],
+        boxShadow: AppTheme.shadowCard,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -716,10 +716,10 @@ class _KpiCard extends StatelessWidget {
                 width: 32,
                 height: 32,
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withAlpha(26), // 0.1
+                  color: AppTheme.primary.withAlpha(26), // 0.1
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(kpi.icon, size: 14, color: AppColors.primary),
+                child: Icon(kpi.icon, size: 14, color: AppTheme.primary),
               ),
               Row(
                 children: [
@@ -743,7 +743,7 @@ class _KpiCard extends StatelessWidget {
             style: const TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.w700,
-              color: AppColors.foreground,
+              color: AppTheme.foreground,
             ),
           ),
           const SizedBox(height: 4),
@@ -752,7 +752,7 @@ class _KpiCard extends StatelessWidget {
             style: const TextStyle(
               fontSize: 10,
               fontWeight: FontWeight.w500,
-              color: AppColors.mutedForeground,
+              color: AppTheme.mutedForeground,
             ),
           ),
         ],
@@ -767,10 +767,10 @@ class _DonutLegend extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const items = [
-      ('Électronique', 45, AppColors.primary),
-      ('Mode', 25, AppColors.secondary),
-      ('Maison', 20, AppColors.amber),
-      ('Autres', 10, AppColors.slate),
+      ('Électronique', 45, AppTheme.primary),
+      ('Mode', 25, AppTheme.secondary),
+      ('Maison', 20, Color(0xFFF59E0B)),
+      ('Autres', 10, Color(0xFF94A3B8)),
     ];
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -789,7 +789,7 @@ class _DonutLegend extends StatelessWidget {
                   it.$1,
                   style: const TextStyle(
                     fontSize: 12,
-                    color: AppColors.foreground,
+                    color: AppTheme.foreground,
                   ),
                 ),
               ),
@@ -798,7 +798,7 @@ class _DonutLegend extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.mutedForeground,
+                  color: AppTheme.mutedForeground,
                 ),
               ),
             ],
@@ -831,7 +831,7 @@ class _TopProductRow extends StatelessWidget {
           width: 32,
           height: 32,
           decoration: BoxDecoration(
-            color: AppColors.primary.withAlpha(26),
+            color: AppTheme.primary.withAlpha(26),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Center(
@@ -840,7 +840,7 @@ class _TopProductRow extends StatelessWidget {
               style: const TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
-                color: AppColors.primary,
+                color: AppTheme.primary,
               ),
             ),
           ),
@@ -857,31 +857,31 @@ class _TopProductRow extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.foreground,
+                  color: AppTheme.foreground,
                 ),
               ),
               const SizedBox(height: 4),
               Row(
                 children: [
                   const Icon(Icons.visibility,
-                      size: 10, color: AppColors.mutedForeground),
+                      size: 10, color: AppTheme.mutedForeground),
                   const SizedBox(width: 4),
                   Text(
                     '$views vues',
                     style: const TextStyle(
                       fontSize: 10,
-                      color: AppColors.mutedForeground,
+                      color: AppTheme.mutedForeground,
                     ),
                   ),
                   const SizedBox(width: 12),
                   const Icon(Icons.inventory_2,
-                      size: 10, color: AppColors.mutedForeground),
+                      size: 10, color: AppTheme.mutedForeground),
                   const SizedBox(width: 4),
                   Text(
                     '$orders ventes',
                     style: const TextStyle(
                       fontSize: 10,
-                      color: AppColors.mutedForeground,
+                      color: AppTheme.mutedForeground,
                     ),
                   ),
                 ],
