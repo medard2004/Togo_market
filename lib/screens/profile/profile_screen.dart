@@ -22,11 +22,34 @@ class ProfileScreen extends StatelessWidget {
       resizeToAvoidBottomInset: true,
       backgroundColor: AppTheme.background,
       appBar: AppBar(
-        title: const Text('Mon Profil'),
+        backgroundColor: AppTheme.cardColor,
+        elevation: 1,
+        shadowColor: Colors.black.withOpacity(0.08),
         automaticallyImplyLeading: false,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(bottom: Radius.circular(22)),
+        ),
+        title: const Text(
+          'Profil',
+          style: TextStyle(
+            fontWeight: FontWeight.w800,
+            fontSize: 20,
+            color: AppTheme.foreground,
+          ),
+        ),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: IconButton(
+              onPressed: () => Get.toNamed('/settings'),
+              icon: const Icon(Icons.settings_outlined,
+                  color: AppTheme.foreground),
+            ),
+          ),
+        ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
         child: Column(
           children: [
             // ── Profile card ──────────────────────────────────────────────────
@@ -190,7 +213,8 @@ class ProfileScreen extends StatelessWidget {
                 Get.offAllNamed('/auth');
               },
               child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 14),
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 16),
                 decoration: BoxDecoration(
                   color: AppTheme.cardColor,
                   borderRadius: BorderRadius.circular(16),
@@ -202,7 +226,7 @@ class ProfileScreen extends StatelessWidget {
                     'Se déconnecter',
                     style: TextStyle(
                       fontSize: 15,
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w700,
                       color: AppTheme.destructive,
                     ),
                   ),

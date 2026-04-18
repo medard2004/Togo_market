@@ -5,8 +5,17 @@ class ProfileMenuItem extends StatelessWidget {
   final IconData icon;
   final String label;
   final VoidCallback onTap;
-  const ProfileMenuItem(
-      {super.key, required this.icon, required this.label, required this.onTap});
+  final bool flat;
+  final String? badge;
+
+  const ProfileMenuItem({
+    super.key,
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.flat = false,
+    this.badge,
+  });
 
   @override
   Widget build(BuildContext context) => GestureDetector(
@@ -17,7 +26,7 @@ class ProfileMenuItem extends StatelessWidget {
           decoration: BoxDecoration(
             color: AppTheme.cardColor,
             borderRadius: BorderRadius.circular(16),
-            boxShadow: AppTheme.shadowCard,
+            boxShadow: flat ? null : AppTheme.shadowCard,
           ),
           child: Row(
             children: [
@@ -35,7 +44,25 @@ class ProfileMenuItem extends StatelessWidget {
                   child: Text(label,
                       style: const TextStyle(
                           fontSize: 14, fontWeight: FontWeight.w600))),
-              const Icon(Icons.chevron_right, color: AppTheme.mutedForeground, size: 20),
+              if (badge != null) ...[
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryLight,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Text(
+                    badge!,
+                    style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.primary),
+                  ),
+                ),
+                const SizedBox(width: 10),
+              ],
+              const Icon(Icons.chevron_right,
+                  color: AppTheme.mutedForeground, size: 20),
             ],
           ),
         ),

@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../theme/app_theme.dart';
@@ -222,7 +223,25 @@ class _ShopSettingsScreenState extends State<ShopSettingsScreen> {
                         ? boutique.description
                         : 'Nom, description, logo',
                     onTap: () => Get.toNamed('/shop-information'),
-                  )
+                  ),
+                  _buildSettingsTile(
+                    icon: Icons.location_on_outlined,
+                    title: 'Zones de couverture',
+                    subtitle: locationStr,
+                    onTap: () => Get.toNamed('/coverage-zones'),
+                  ),
+                  _buildSettingsTile(
+                    icon: Icons.access_time,
+                    title: 'Horaires d\'ouverture',
+                    subtitle: horString,
+                    onTap: () => Get.toNamed('/opening-hours'),
+                  ),
+                  _buildSettingsTile(
+                    icon: Icons.category_outlined,
+                    title: 'Catégories de produits',
+                    subtitle: 'Gérer les catégories',
+                    onTap: () => Get.toNamed('/product-categories'),
+                  ),
                 ]),
               ),
               const SizedBox(height: 24),
@@ -274,13 +293,13 @@ class _ShopSettingsScreenState extends State<ShopSettingsScreen> {
                     icon: Icons.policy_outlined,
                     title: 'Politique de retour',
                     subtitle: 'Non configurée',
-                    onTap: () {},
+                    onTap: () => Get.toNamed('/return-policy'),
                   ),
                   _buildSettingsTile(
                     icon: Icons.bar_chart_outlined,
                     title: 'Statistiques détaillées',
                     subtitle: 'Vues, ventes, performances',
-                    onTap: () {},
+                    onTap: () => Get.toNamed('/seller-stats'),
                   ),
                 ]),
               ),
@@ -295,7 +314,7 @@ class _ShopSettingsScreenState extends State<ShopSettingsScreen> {
                     icon: Icons.help_outline,
                     title: 'Centre d\'aide vendeur',
                     subtitle: 'FAQ, guides, contact support',
-                    onTap: () {},
+                    onTap: () => Get.toNamed('/seller-help-center'),
                   ),
                 ]),
               ),
@@ -453,10 +472,15 @@ class _ShopSettingsScreenState extends State<ShopSettingsScreen> {
               ),
             ),
             if (hasSwitch)
-              Switch.adaptive(
-                value: switchValue,
-                activeColor: AppTheme.primary,
-                onChanged: onSwitchChanged,
+              Transform.scale(
+                scale: 0.7,
+                alignment: Alignment.centerRight,
+                child: CupertinoSwitch(
+                  value: switchValue,
+                  activeTrackColor: AppTheme.primary,
+                  inactiveTrackColor: const Color(0xFFEEEEEE),
+                  onChanged: onSwitchChanged,
+                ),
               )
             else
               const Icon(Icons.chevron_right,

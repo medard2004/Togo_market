@@ -150,7 +150,7 @@ class HomeBody extends StatelessWidget {
                       iconColor: Colors.orange,
                       title: 'Tendances',
                       actionLabel: 'Voir tout',
-                      onAction: () => Get.toNamed('/category'),
+                      onAction: () => Get.toNamed('/trends'),
                     ),
                   ),
                 ),
@@ -200,7 +200,7 @@ class HomeBody extends StatelessWidget {
                             iconColor: AppTheme.primary,
                             title: 'Près de chez vous',
                             actionLabel: 'Voir tout',
-                            onAction: () => Get.toNamed('/category'),
+                            onAction: () => Get.toNamed('/nearby'),
                           ),
                         ),
                         // Bouton de sélection de zone

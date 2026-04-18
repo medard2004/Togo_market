@@ -2,31 +2,40 @@ import 'package:flutter/material.dart';
 import '../../../theme/app_theme.dart';
 
 class ProfileStatCard extends StatelessWidget {
+  final IconData icon;
   final String value;
   final String label;
-  const ProfileStatCard({super.key, required this.value, required this.label});
+  const ProfileStatCard({
+    super.key,
+    required this.icon,
+    required this.value,
+    required this.label,
+  });
 
   @override
-  Widget build(BuildContext context) => Expanded(
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          decoration: BoxDecoration(
-            color: AppTheme.cardColor,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: AppTheme.shadowCard,
-          ),
-          child: Column(
-            children: [
-              Text(value,
-                  style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w800,
-                      color: AppTheme.primary)),
-              Text(label,
-                  style: const TextStyle(
-                      fontSize: 11, color: AppTheme.mutedForeground)),
-            ],
-          ),
+  Widget build(BuildContext context) => Container(
+        padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 12),
+        decoration: BoxDecoration(
+          color: AppTheme.cardColor,
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: AppTheme.shadowCard,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 20, color: AppTheme.primary),
+            const SizedBox(height: 10),
+            Text(value,
+                style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                    color: AppTheme.foreground)),
+            const SizedBox(height: 4),
+            Text(label,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                    fontSize: 12, color: AppTheme.mutedForeground)),
+          ],
         ),
       );
 }

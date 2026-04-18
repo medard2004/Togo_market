@@ -12,145 +12,429 @@ class OrdersScreen extends StatefulWidget {
 }
 
 class _OrdersScreenState extends State<OrdersScreen> {
-  int _tab = 0;
+  int _activeTab = 0; // 0 = Achats, 1 = Ventes
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      resizeToAvoidBottomInset: true,
       backgroundColor: AppTheme.background,
       appBar: AppBar(
-        title: const Text('Mes Commandes'),
-        leading: const BackButton(),
+        backgroundColor: AppTheme.background,
+        elevation: 0,
+        leading: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: IconButton(
+              icon: const Icon(Icons.arrow_back, color: Colors.black, size: 20),
+              onPressed: () => Get.back(),
+            ),
+          ),
+        ),
+        title: const Text(
+          'Mes commandes',
+          style: TextStyle(
+            color: Colors.black,
+            fontSize: 20,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        centerTitle: false,
       ),
       body: Column(
         children: [
-          // Tab pills
+          const SizedBox(height: 12),
+          // ── Tabs (Achats / Ventes) ──────────────────────────────────────────
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Container(
+              height: 54,
+              padding: const EdgeInsets.all(5),
               decoration: BoxDecoration(
-                color: AppTheme.muted,
-                borderRadius: BorderRadius.circular(16),
+                color: const Color(0xFFF5F2EF),
+                borderRadius: BorderRadius.circular(25),
               ),
               child: Row(
                 children: [
-                  Expanded(
-                      child: _TabPill(
-                          'Achats', 0, _tab, (v) => setState(() => _tab = v))),
-                  Expanded(
-                      child: _TabPill(
-                          'Ventes', 1, _tab, (v) => setState(() => _tab = v))),
+                  _buildTabPill('Achats', 0),
+                  _buildTabPill('Ventes', 1),
                 ],
               ),
             ),
           ),
-          // Orders list
+          const SizedBox(height: 20),
+          Divider(height: 1, thickness: 1, color: Colors.grey.withOpacity(0.1)),
+          // ── Orders List ───────────────────────────────────────────────────
           Expanded(
-            child: ListView.separated(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: 2,
-              separatorBuilder: (_, __) => const SizedBox(height: 10),
-              itemBuilder: (_, i) {
-                final product = mockProducts[i];
-                return Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: AppTheme.cardColor,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: AppTheme.shadowCard,
-                  ),
-                  child: Row(
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(10),
-                        child: CachedNetworkImage(
-                          imageUrl: product.image,
-                          width: 60,
-                          height: 60,
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(product.title,
-                                style: const TextStyle(
-                                    fontSize: 13, fontWeight: FontWeight.w600)),
-                            Text(formatPrice(product.price),
-                                style: const TextStyle(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w800,
-                                    color: AppTheme.primary)),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 3),
-                              decoration: BoxDecoration(
-                                color: i == 0
-                                    ? Colors.amber.withValues(alpha: 0.15)
-                                    : Colors.green.withValues(alpha: 0.15),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text(
-                                i == 0 ? 'En attente' : 'Acceptée',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                  color: i == 0 ? Colors.orange : Colors.green,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      GestureDetector(
-                        onTap: () => Get.toNamed('/chat/c1'),
-                        child: const Icon(Icons.chat_bubble_outline,
-                            color: AppTheme.primary),
-                      ),
-                    ],
-                  ),
-                );
-              },
+            child: IndexedStack(
+              index: _activeTab,
+              children: [
+                _buildPurchasesList(),
+                _buildSalesList(),
+              ],
             ),
           ),
         ],
       ),
     );
   }
-}
 
-class _TabPill extends StatelessWidget {
-  final String label;
-  final int index;
-  final int current;
-  final Function(int) onTap;
-
-  const _TabPill(this.label, this.index, this.current, this.onTap);
-
-  @override
-  Widget build(BuildContext context) => GestureDetector(
-        onTap: () => onTap(index),
+  Widget _buildTabPill(String label, int index) {
+    bool isActive = _activeTab == index;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => setState(() => _activeTab = index),
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 250),
-          padding: const EdgeInsets.symmetric(vertical: 12),
+          duration: const Duration(milliseconds: 200),
           decoration: BoxDecoration(
-            color: current == index ? AppTheme.cardColor : Colors.transparent,
-            borderRadius: BorderRadius.circular(14),
-            boxShadow: current == index ? AppTheme.shadowCard : null,
+            color: isActive ? Colors.white : Colors.transparent,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: isActive
+                ? [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ]
+                : null,
           ),
           child: Center(
             child: Text(
               label,
               style: TextStyle(
                 fontSize: 14,
-                fontWeight: current == index ? FontWeight.w700 : FontWeight.w500,
-                color: current == index ? AppTheme.primary : AppTheme.mutedForeground,
+                fontWeight: isActive ? FontWeight.w800 : FontWeight.w600,
+                color: isActive ? Colors.black : const Color(0xFF8E8E93),
               ),
             ),
           ),
         ),
-      );
+      ),
+    );
+  }
+
+  Widget _buildPurchasesList() {
+    final purchases = [
+      {
+        'title': 'iPhone 13 Pro Max 256Go',
+        'price': '350 000 F',
+        'vendor': 'Koffi Mensah',
+        'image': 'https://images.unsplash.com/photo-1632661674596-df8be070a5c5?w=200',
+        'status': 'Confirmé',
+        'statusColor': const Color(0xFFE8F5E9),
+        'textColor': const Color(0xFF2E7D32),
+      },
+      {
+        'title': 'Sneakers Nike Air Force',
+        'price': '28 000 F',
+        'vendor': 'Ama Koffi',
+        'image': 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=200',
+        'status': 'En attente',
+        'statusColor': const Color(0xFFFFF7E6),
+        'textColor': const Color(0xFFB45309),
+      },
+      {
+        'title': 'Kit beauté complet',
+        'price': '22 000 F',
+        'vendor': 'Yao Attiogbé',
+        'image': 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=200',
+        'status': 'Terminé',
+        'statusColor': const Color(0xFFF2F2F7),
+        'textColor': const Color(0xFF8E8E93),
+      },
+    ];
+
+    return ListView.builder(
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 30),
+      itemCount: purchases.length,
+      itemBuilder: (context, i) {
+        final order = purchases[i];
+        return _OrderCard(
+          title: order['title'] as String,
+          price: order['price'] as String,
+          partnerLabel: 'Vendeur:',
+          partnerName: order['vendor'] as String,
+          image: order['image'] as String,
+          status: order['status'] as String,
+          statusColor: order['statusColor'] as Color,
+          textColor: order['textColor'] as Color,
+          isSale: false,
+        );
+      },
+    );
+  }
+
+  Widget _buildSalesList() {
+    final sales = [
+      {
+        'title': 'Canapé 3 places cuir',
+        'price': '85 000 F',
+        'buyer': 'Mawuli K.',
+        'image': 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=200',
+        'status': 'En attente',
+        'statusColor': const Color(0xFFFFF7E6),
+        'textColor': const Color(0xFFB45309),
+      },
+      {
+        'title': 'Laptop HP EliteBook',
+        'price': '220 000 F',
+        'buyer': 'Kafui A.',
+        'image': 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=200',
+        'status': 'Confirmé',
+        'statusColor': const Color(0xFFE8F5E9),
+        'textColor': const Color(0xFF2E7D32),
+      },
+    ];
+
+    return ListView.builder(
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 30),
+      itemCount: sales.length,
+      itemBuilder: (context, i) {
+        final order = sales[i];
+        return _OrderCard(
+          title: order['title'] as String,
+          price: order['price'] as String,
+          partnerLabel: 'Acheteur:',
+          partnerName: order['buyer'] as String,
+          image: order['image'] as String,
+          status: order['status'] as String,
+          statusColor: order['statusColor'] as Color,
+          textColor: order['textColor'] as Color,
+          isSale: true,
+        );
+      },
+    );
+  }
+}
+
+class _OrderCard extends StatelessWidget {
+  final String title;
+  final String price;
+  final String partnerLabel;
+  final String partnerName;
+  final String image;
+  final String status;
+  final Color statusColor;
+  final Color textColor;
+  final bool isSale;
+
+  const _OrderCard({
+    required this.title,
+    required this.price,
+    required this.partnerLabel,
+    required this.partnerName,
+    required this.image,
+    required this.status,
+    required this.statusColor,
+    required this.textColor,
+    required this.isSale,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Product Image
+              ClipRRect(
+                borderRadius: BorderRadius.circular(18),
+                child: CachedNetworkImage(
+                  imageUrl: image,
+                  width: 70,
+                  height: 70,
+                  fit: BoxFit.cover,
+                ),
+              ),
+              const SizedBox(width: 14),
+              // Info
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            title,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF262626),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        // Status Badge
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                          decoration: BoxDecoration(
+                            color: statusColor,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            status,
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: textColor,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      price,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                        color: AppTheme.primary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    RichText(
+                      text: TextSpan(
+                        style: const TextStyle(fontSize: 12, color: Color(0xFF8E8E93)),
+                        children: [
+                          TextSpan(text: '$partnerLabel '),
+                          TextSpan(
+                            text: partnerName,
+                            style: const TextStyle(fontWeight: FontWeight.w500),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          // Actions
+          if (isSale && status == 'En attente')
+            Row(
+              children: [
+                Expanded(
+                  child: _ActionButton(
+                    label: 'Chat',
+                    icon: Icons.chat_bubble_outline,
+                    onTap: () {},
+                    isOutline: true,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _ActionButton(
+                    label: 'Accepter',
+                    onTap: () {},
+                    color: AppTheme.primary,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _ActionButton(
+                    label: 'Refuser',
+                    onTap: () {},
+                    color: const Color(0xFFF2F2F7),
+                    textColor: Colors.black,
+                  ),
+                ),
+              ],
+            )
+          else
+            _ActionButton(
+              label: 'Chat',
+              icon: Icons.chat_bubble_outline,
+              onTap: () {},
+              isOutline: true,
+              width: double.infinity,
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ActionButton extends StatelessWidget {
+  final String label;
+  final IconData? icon;
+  final VoidCallback onTap;
+  final bool isOutline;
+  final Color? color;
+  final Color? textColor;
+  final double? width;
+
+  const _ActionButton({
+    required this.label,
+    this.icon,
+    required this.onTap,
+    this.isOutline = false,
+    this.color,
+    this.textColor,
+    this.width,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: width,
+        height: 44,
+        decoration: BoxDecoration(
+          color: isOutline ? Colors.transparent : (color ?? AppTheme.primary),
+          borderRadius: BorderRadius.circular(14),
+          border: isOutline ? Border.all(color: AppTheme.primary) : null,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            if (icon != null) ...[
+              Icon(icon, size: 16, color: isOutline ? AppTheme.primary : Colors.white),
+              const SizedBox(width: 8),
+            ],
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: isOutline ? AppTheme.primary : (textColor ?? Colors.white),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }

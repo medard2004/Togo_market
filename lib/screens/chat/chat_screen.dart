@@ -62,7 +62,7 @@ class _ChatScreenState extends State<ChatScreen> {
         elevation: 0,
         titleSpacing: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, size: 18),
+          icon: const Icon(Icons.arrow_back, size: 18),
           onPressed: Get.back,
         ),
         title: Row(

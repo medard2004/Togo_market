@@ -31,12 +31,21 @@ import 'screens/seller/edit_shop_screen.dart';
 import 'screens/seller/store_configuration_screen.dart';
 import 'screens/seller/add_product_screen.dart';
 import 'screens/seller/edit_product_screen.dart';
+import 'screens/seller/seller_stats_screen.dart';
+import 'screens/seller/coverage_zones_screen.dart';
+import 'screens/seller/opening_hours_screen.dart';
+import 'screens/seller/product_categories_screen.dart';
+import 'screens/seller/return_policy_screen.dart';
+import 'screens/seller/seller_help_center_screen.dart';
 import 'screens/profile/profile_screen.dart';
 import 'screens/profile/profile_setup_screen.dart';
+import 'screens/profile/edit_profile_screen.dart';
 import 'screens/notifications/notifications_screen.dart';
 import 'screens/settings/settings_screen.dart';
 import 'screens/favorites/favorites_screen.dart';
 import 'screens/help/help_screen.dart';
+import 'screens/product/trending_explorer_screen.dart';
+import 'screens/product/nearby_explorer_screen.dart';
 
 // API
 import 'Api/core/api_client.dart';
@@ -147,18 +156,27 @@ class TogoMarketApp extends StatelessWidget {
             '/edit-product/:id',
             () => const EditProductScreen(),
           ),
+          togoPage('/seller-stats', () => const SellerStatsScreen()),
+          togoPage('/coverage-zones', () => const CoverageZonesScreen()),
+          togoPage('/opening-hours', () => const OpeningHoursScreen()),
+          togoPage('/product-categories', () => const ProductCategoriesScreen()),
+          togoPage('/return-policy', () => const ReturnPolicyScreen()),
+          togoPage('/seller-help-center', () => const SellerHelpCenterScreen()),
           GetPage(
               name: '/notifications', page: () => const NotificationsScreen()),
           GetPage(name: '/profile', page: () => const ProfileScreen()),
           GetPage(name: '/profile-setup', page: () => const ProfileSetupScreen()),
+          togoPage('/edit-profile', () => const EditProfileScreen(),
+              style: TogoRouteStyle.modalLift),
           GetPage(
               name: '/shop-settings', page: () => const ShopSettingsScreen()),
           GetPage(name: '/settings', page: () => const SettingsScreen()),
           GetPage(name: '/favorites', page: () => const FavoritesScreen()),
           GetPage(name: '/orders', page: () => const OrdersScreen()),
           GetPage(name: '/help', page: () => const HelpScreen()),
+          togoPage('/trends', () => const TrendingExplorerScreen()),
+          togoPage('/nearby', () => const NearbyExplorerScreen()),
         ],
-      ),
     );
   }
 }
