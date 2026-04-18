@@ -21,9 +21,8 @@ class AppButtonThemes {
   static OutlinedButtonThemeData get outlinedButtonTheme =>
       OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: const Color.fromARGB(255, 31, 249, 107),
-          side: const BorderSide(
-              color: Color.fromARGB(255, 31, 249, 34), width: 2),
+          foregroundColor: AppColors.primary,
+          side: const BorderSide(color: AppColors.primary, width: 2),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.lg),
           ),
@@ -34,7 +33,7 @@ class AppButtonThemes {
 
   static TextButtonThemeData get textButtonTheme => TextButtonThemeData(
         style: TextButton.styleFrom(
-          foregroundColor: const Color.fromARGB(255, 82, 249, 31),
+          foregroundColor: AppColors.primary,
           textStyle: AppTypography.buttonText.copyWith(fontSize: 14),
         ),
       );
