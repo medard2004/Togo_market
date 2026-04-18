@@ -177,6 +177,7 @@ class TogoMarketApp extends StatelessWidget {
           togoPage('/trends', () => const TrendingExplorerScreen()),
           togoPage('/nearby', () => const NearbyExplorerScreen()),
         ],
+      ),
     );
   }
 }

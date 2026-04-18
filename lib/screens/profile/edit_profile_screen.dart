@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../controllers/app_controller.dart';
+import '../../Api/provider/auth_controller.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/user_avatar.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -13,52 +14,63 @@ class EditProfileScreen extends StatefulWidget {
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
   late final TextEditingController _nameController;
-  late final TextEditingController _emailController;
   late final TextEditingController _phoneController;
   late final TextEditingController _locationController;
-  late final TextEditingController _bioController;
   final _formKey = GlobalKey<FormState>();
+  bool _isSaving = false;
 
   @override
   void initState() {
     super.initState();
-    final ctrl = Get.find<AppController>();
-    _nameController = TextEditingController(text: ctrl.userName.value);
-    _emailController = TextEditingController(text: ctrl.userEmail.value);
-    _phoneController = TextEditingController(text: ctrl.userPhone.value);
-    _locationController = TextEditingController(text: ctrl.userLocation.value);
-    _bioController = TextEditingController(text: ctrl.userBio.value);
+    final user = Get.find<AuthController>().currentUser.value;
+    _nameController     = TextEditingController(text: user?.nom ?? '');
+    _phoneController    = TextEditingController(text: user?.telephone ?? '');
+    _locationController = TextEditingController(text: '');
   }
 
   @override
   void dispose() {
     _nameController.dispose();
-    _emailController.dispose();
     _phoneController.dispose();
     _locationController.dispose();
-    _bioController.dispose();
     super.dispose();
   }
 
-  void _saveProfile() {
+  Future<void> _saveProfile() async {
     if (!_formKey.currentState!.validate()) return;
-    final ctrl = Get.find<AppController>();
-    ctrl.userName.value = _nameController.text.trim();
-    ctrl.userEmail.value = _emailController.text.trim();
-    ctrl.userPhone.value = _phoneController.text.trim();
-    ctrl.userLocation.value = _locationController.text.trim();
-    ctrl.userBio.value = _bioController.text.trim();
-    Get.back();
+    setState(() => _isSaving = true);
 
-    Get.snackbar(
-      'Profil mis à jour',
-      'Vos modifications ont été enregistrées avec succès.',
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: AppTheme.primary,
-      colorText: Colors.white,
-      margin: const EdgeInsets.all(16),
-      borderRadius: 12,
-    );
+    try {
+      await Get.find<AuthController>().updateProfile(
+        nom: _nameController.text.trim(),
+        telephone: _phoneController.text.trim(),
+        details: _locationController.text.trim().isNotEmpty
+            ? _locationController.text.trim()
+            : null,
+      );
+      Get.back();
+      Get.snackbar(
+        'Profil mis à jour',
+        'Vos modifications ont été enregistrées avec succès.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: AppTheme.primary,
+        colorText: Colors.white,
+        margin: const EdgeInsets.all(16),
+        borderRadius: 12,
+      );
+    } catch (e) {
+      Get.snackbar(
+        'Erreur',
+        e.toString(),
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: AppTheme.destructive,
+        colorText: Colors.white,
+        margin: const EdgeInsets.all(16),
+        borderRadius: 12,
+      );
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
+    }
   }
 
   @override
@@ -82,17 +94,26 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           onPressed: Get.back,
         ),
         actions: [
-          TextButton(
-            onPressed: _saveProfile,
-            child: const Text(
-              'Enregistrer',
-              style: TextStyle(
-                color: AppTheme.primary,
-                fontWeight: FontWeight.w700,
-                fontSize: 15,
-              ),
-            ),
-          ),
+          _isSaving
+              ? const Padding(
+                  padding: EdgeInsets.all(14),
+                  child: SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                )
+              : TextButton(
+                  onPressed: _saveProfile,
+                  child: const Text(
+                    'Enregistrer',
+                    style: TextStyle(
+                      color: AppTheme.primary,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 15,
+                    ),
+                  ),
+                ),
           const SizedBox(width: 8),
         ],
         bottom: PreferredSize(
@@ -107,66 +128,56 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           children: [
             // Avatar Section
             Center(
-              child: Column(
-                children: [
-                  Stack(
-                    children: [
-                      Obx(() {
-                        final ctrl = Get.find<AppController>();
-                        return Container(
-                          width: 110,
-                          height: 110,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border:
-                                Border.all(color: AppTheme.primary, width: 3),
-                            boxShadow: AppTheme.shadowCard,
-                            image: DecorationImage(
-                              image: NetworkImage(ctrl.userAvatar.value),
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                        );
-                      }),
-                      Positioned(
-                        right: 0,
-                        bottom: 0,
-                        child: GestureDetector(
-                          onTap: () {
-                            // Simulation de choix d'image
-                            Get.snackbar(
-                              'Modifier la photo',
-                              'L\'ouverture de la galerie sera bientôt disponible.',
-                              snackPosition: SnackPosition.BOTTOM,
-                            );
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: const BoxDecoration(
-                              color: AppTheme.primary,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.camera_alt_rounded,
-                              color: Colors.white,
-                              size: 20,
+              child: Obx(() {
+                final user = Get.find<AuthController>().currentUser.value;
+                return Column(
+                  children: [
+                    Stack(
+                      children: [
+                        UserAvatar(
+                          url: user?.avatarUrl,
+                          name: user?.nom ?? '',
+                          radius: 55,
+                        ),
+                        Positioned(
+                          right: 0,
+                          bottom: 0,
+                          child: GestureDetector(
+                            onTap: () {
+                              Get.snackbar(
+                                'Modifier la photo',
+                                "L'ouverture de la galerie sera bientôt disponible.",
+                                snackPosition: SnackPosition.BOTTOM,
+                              );
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: const BoxDecoration(
+                                color: AppTheme.primary,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.camera_alt_rounded,
+                                color: Colors.white,
+                                size: 20,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  const Text(
-                    'Appuyez pour changer la photo',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: AppTheme.primary,
+                      ],
                     ),
-                  ),
-                ],
-              ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'Appuyez pour changer la photo',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.primary,
+                      ),
+                    ),
+                  ],
+                );
+              }),
             ),
             const SizedBox(height: 32),
 
@@ -191,12 +202,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   ),
                   const SizedBox(height: 20),
                   _buildField('Nom complet', _nameController,
-                      hintText: 'Koffi Mensah', icon: Icons.person_outline),
-                  const SizedBox(height: 18),
-                  _buildField('Email', _emailController,
-                      hintText: 'koffi.mensah@email.com',
-                      icon: Icons.email_outlined,
-                      keyboardType: TextInputType.emailAddress),
+                      hintText: 'Votre nom', icon: Icons.person_outline),
                   const SizedBox(height: 18),
                   _buildField('Téléphone', _phoneController,
                       hintText: '+228 90 00 00 00',
@@ -206,8 +212,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   _buildField('Localisation', _locationController,
                       hintText: 'Tokoin, Lomé',
                       icon: Icons.location_on_outlined),
-                  const SizedBox(height: 18),
-                  _buildBioField(),
                 ],
               ),
             ),
@@ -215,25 +219,32 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
             // Bottom Save Button
             ElevatedButton(
-              onPressed: _saveProfile,
+              onPressed: _isSaving ? null : _saveProfile,
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.primary,
                 foregroundColor: Colors.white,
                 elevation: 2,
-                shadowColor: AppTheme.primary.withOpacity(0.4),
+                shadowColor: AppTheme.primary.withValues(alpha: 0.4),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(18),
                 ),
                 padding: const EdgeInsets.symmetric(vertical: 16),
               ),
-              child: const Text(
-                'Enregistrer les modifications',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 0.5,
-                ),
-              ),
+              child: _isSaving
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: Colors.white),
+                    )
+                  : const Text(
+                      'Enregistrer les modifications',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
             ),
           ],
         ),
@@ -289,72 +300,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             ),
             contentPadding:
                 const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildBioField() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Padding(
-              padding: EdgeInsets.only(left: 4, bottom: 8),
-              child: Text(
-                'Bio / Description',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: AppTheme.mutedForeground,
-                ),
-              ),
-            ),
-            ValueListenableBuilder(
-              valueListenable: _bioController,
-              builder: (context, value, _) {
-                final count = value.text.length;
-                return Padding(
-                  padding: const EdgeInsets.only(right: 4, bottom: 8),
-                  child: Text(
-                    '$count / 150',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: count > 150 ? AppTheme.red : AppTheme.mutedForeground,
-                    ),
-                  ),
-                );
-              },
-            ),
-          ],
-        ),
-        TextFormField(
-          controller: _bioController,
-          maxLines: 4,
-          maxLength: 150,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: AppTheme.foreground,
-          ),
-          buildCounter: (context,
-                  {required currentLength,
-                  required isFocused,
-                  required maxLength}) =>
-              null, // On utilise notre propre compteur
-          decoration: InputDecoration(
-            hintText: 'Présentez votre boutique',
-            filled: true,
-            fillColor: AppTheme.muted,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide.none,
-            ),
-            contentPadding: const EdgeInsets.all(16),
           ),
         ),
       ],
