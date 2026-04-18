@@ -7,7 +7,7 @@ class AppButtonThemes {
   static ElevatedButtonThemeData get elevatedButtonTheme =>
       ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color.fromARGB(255, 27, 226, 43),
+          backgroundColor: const Color.fromARGB(255, 226, 80, 27),
           foregroundColor: AppColors.white,
           elevation: 0,
           shape: RoundedRectangleBorder(
