@@ -1,185 +1,70 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'app_colors.dart';
+import 'app_typography.dart';
+import 'app_button_themes.dart';
+import 'app_input_themes.dart';
+import 'app_shadows.dart';
 
 class AppTheme {
-  // ── Palette principale ──────────────────────────────────────────────────────
-  static const Color primary = Color(0xFFF9591F);        // Corail-orange
-  static const Color primaryLight = Color(0xFFFEEEE8);   // Primaire clair
-  static const Color primaryMuted = Color(0xFFF4A98A);   // Primaire atténué
-  static const Color secondary = Color(0xFF5D4A66);      // Prune douce
-  static const Color secondaryLight = Color(0xFFEDE8F0); // Secondaire clair
-  static const Color background = Color(0xFFFCF9F8);     // Blanc cassé chaud
-  static const Color foreground = Color(0xFF1C110D);     // Brun foncé
-  static const Color cardColor = Color(0xFFFFFFFF);
-  static const Color muted = Color(0xFFF3EEE9);
-  static const Color mutedForeground = Color(0xFF726660);
-  static const Color accent = Color(0xFFFEEEE8);
-  static const Color accentForeground = Color(0xFFD4451A);
-  static const Color destructive = Color(0xFFE53E3E);
-  static const Color green = Color(0xFF16A34A);         // Vert positif
-  static const Color red = Color(0xFFEF4444);           // Rouge négatif
-  static const Color border = Color(0xFFE8E0DA);
+  // ── Redirects for backwards compatibility ──────────────────────────────────
+  static const Color primary = AppColors.primary;
+  static const Color primaryLight = AppColors.primaryLight;
+  static const Color primaryMuted = AppColors.primaryMuted;
+  static const Color secondary = AppColors.secondary;
+  static const Color secondaryLight = AppColors.secondaryLight;
+  static const Color background = AppColors.background;
+  static const Color foreground = AppColors.foreground;
+  static const Color cardColor = AppColors.card;
+  static const Color muted = AppColors.muted;
+  static const Color mutedForeground = AppColors.mutedForeground;
+  static const Color border = AppColors.border;
+  static const Color destructive = AppColors.destructive;
+  static const Color success = AppColors.success;
+  static const Color green = AppColors.green;
+  static const Color error = AppColors.error;
+  static const Color red = AppColors.red;
 
-  // ── Ombres ──────────────────────────────────────────────────────────────────
-  static List<BoxShadow> shadowCard = [
-    BoxShadow(
-      color: Colors.black.withOpacity(0.08),
-      blurRadius: 12,
-      offset: const Offset(0, 2),
-    ),
-  ];
+  static List<BoxShadow> shadowCard = AppShadows.shadowMd;
+  static List<BoxShadow> shadowCardLg = AppShadows.shadowLg;
+  static List<BoxShadow> shadowPrimary = AppShadows.shadowPrimary;
 
-  static List<BoxShadow> shadowCardLg = [
-    BoxShadow(
-      color: Colors.black.withOpacity(0.10),
-      blurRadius: 24,
-      offset: const Offset(0, 4),
-    ),
-  ];
+  static ThemeData get theme => lightTheme;
 
-  static List<BoxShadow> shadowPrimary = [
-    BoxShadow(
-      color: const Color(0xFFE8523A).withOpacity(0.25),
-      blurRadius: 16,
-      offset: const Offset(0, 4),
-    ),
-  ];
-
-  // ── ThemeData ────────────────────────────────────────────────────────────────
-  static ThemeData get theme => ThemeData(
+  static ThemeData get lightTheme => ThemeData(
         useMaterial3: true,
+        brightness: Brightness.light,
         colorScheme: const ColorScheme.light(
-          primary: primary,
-          secondary: secondary,
-          surface: cardColor,
-          error: destructive,
-          onPrimary: Colors.white,
-          onSecondary: Colors.white,
-          onSurface: foreground,
+          primary: AppColors.primary,
+          secondary: AppColors.secondary,
+          surface: AppColors.card,
+          error: AppColors.destructive,
+          onPrimary: AppColors.white,
+          onSecondary: AppColors.white,
+          onSurface: AppColors.foreground,
         ),
-        scaffoldBackgroundColor: background,
-        cardColor: cardColor,
-        textTheme: GoogleFonts.plusJakartaSansTextTheme(
-          const TextTheme(
-            displayLarge: TextStyle(
-              fontSize: 30,
-              fontWeight: FontWeight.w800,
-              color: foreground,
-            ),
-            displayMedium: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.w700,
-              color: foreground,
-            ),
-            headlineMedium: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
-              color: foreground,
-            ),
-            titleLarge: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: foreground,
-            ),
-            titleMedium: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: foreground,
-            ),
-            bodyLarge: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w400,
-              color: foreground,
-            ),
-            bodyMedium: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w400,
-              color: foreground,
-            ),
-            bodySmall: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w400,
-              color: mutedForeground,
-            ),
-            labelLarge: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: Colors.white,
-            ),
-          ),
-        ),
+        scaffoldBackgroundColor: AppColors.background,
+        cardColor: AppColors.card,
+        textTheme: AppTypography.textTheme,
+        
         appBarTheme: const AppBarTheme(
-          backgroundColor: background,
+          backgroundColor: AppColors.background,
           elevation: 0,
           scrolledUnderElevation: 0,
-          iconTheme: IconThemeData(color: foreground),
-          titleTextStyle: TextStyle(
-            fontFamily: 'Plus Jakarta Sans',
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-            color: foreground,
-          ),
+          iconTheme: IconThemeData(color: AppColors.foreground),
+          titleTextStyle: AppTypography.appBarTitle,
         ),
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: primary,
-            foregroundColor: Colors.white,
-            elevation: 0,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            minimumSize: const Size(double.infinity, 56),
-            textStyle: const TextStyle(
-              fontFamily: 'Plus Jakarta Sans',
-              fontSize: 15,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ),
-        outlinedButtonTheme: OutlinedButtonThemeData(
-          style: OutlinedButton.styleFrom(
-            foregroundColor: primary,
-            side: const BorderSide(color: primary, width: 2),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            minimumSize: const Size(double.infinity, 56),
-            textStyle: const TextStyle(
-              fontFamily: 'Plus Jakarta Sans',
-              fontSize: 15,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ),
-        inputDecorationTheme: InputDecorationTheme(
-          filled: true,
-          fillColor: muted,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide.none,
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide(color: border),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(color: primary, width: 2),
-          ),
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 14,
-          ),
-          hintStyle: const TextStyle(
-            fontFamily: 'Plus Jakarta Sans',
-            color: mutedForeground,
-            fontSize: 14,
-          ),
-        ),
+        
+        elevatedButtonTheme: AppButtonThemes.elevatedButtonTheme,
+        outlinedButtonTheme: AppButtonThemes.outlinedButtonTheme,
+        textButtonTheme: AppButtonThemes.textButtonTheme,
+        
+        inputDecorationTheme: AppInputThemes.inputDecorationTheme,
+        
         dividerTheme: const DividerThemeData(
-          color: border,
+          color: AppColors.border,
           thickness: 1,
         ),
+        
         pageTransitionsTheme: const PageTransitionsTheme(
           builders: {
             TargetPlatform.android: CupertinoPageTransitionsBuilder(),
@@ -187,4 +72,10 @@ class AppTheme {
           },
         ),
       );
+
+  // You can easily add a darkTheme here in the future
+  static ThemeData get darkTheme => lightTheme.copyWith(
+    brightness: Brightness.dark,
+    // Add dark mode overrides here
+  );
 }

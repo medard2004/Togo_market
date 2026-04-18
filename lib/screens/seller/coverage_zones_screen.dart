@@ -4,7 +4,6 @@ import 'package:get/get.dart';
 import '../../theme/app_theme.dart';
 import '../../animations/togo_animation_system.dart';
 import '../../utils/responsive.dart';
-import '../../widgets/common_widgets.dart';
 
 class CoverageZonesScreen extends StatefulWidget {
   const CoverageZonesScreen({super.key});
