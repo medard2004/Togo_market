@@ -49,7 +49,13 @@ class ApiConstants {
 
   // Example Endpoints
   static const String productsEndpoint = '/produits';
+  static const String trendingProductsEndpoint = '/produits/trending';
+  static const String productsByZoneEndpoint = '/produits/zone';
   static const String ordersEndpoint = '/commandes';
+
+  // Favoris Endpoints
+  static const String favoritesEndpoint = '/favoris';
+  static String toggleFavoriteEndpoint(dynamic productId) => '/produits/$productId/toggle-favori';
 
   // API Configuration
   static const int connectTimeout = 10000;

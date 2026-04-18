@@ -49,6 +49,23 @@ class ProduitService extends GetxService {
     return Product.fromJson(raw is Map && raw.containsKey('data') ? raw['data'] : raw);
   }
 
+  /// Get trending products (best score: vues + favoris)
+  Future<List<Product>> getTrendingProducts() async {
+    final response = await _apiClient.get(ApiConstants.trendingProductsEndpoint);
+    final list = _parseList(response.data);
+    return list.map((json) => Product.fromJson(json)).toList();
+  }
+
+  /// Get products by zone (text match on localisation)
+  Future<List<Product>> getProductsByZone(String zone) async {
+    final response = await _apiClient.get(
+      ApiConstants.productsByZoneEndpoint,
+      queryParameters: {'zone': zone},
+    );
+    final list = _parseList(response.data);
+    return list.map((json) => Product.fromJson(json)).toList();
+  }
+
   /// Delete a product
   Future<void> deleteProduct(String id) async {
     await _apiClient.dio.delete('${ApiConstants.productsEndpoint}/$id');

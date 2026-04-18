@@ -44,6 +44,7 @@ import 'Api/services/auth_service.dart';
 import 'Api/services/boutique_service.dart';
 import 'Api/services/produit_service.dart';
 import 'Api/services/category_service.dart';
+import 'Api/services/favori_service.dart';
 import 'Api/provider/auth_controller.dart';
 import 'controllers/boutique_controller.dart';
 
@@ -81,6 +82,7 @@ void main() async {
   Get.put(boutiqueService, permanent: true);
   Get.put(produitService, permanent: true);
   Get.put(categoryService, permanent: true);
+  Get.put(FavoriService(apiClient), permanent: true);
 
   Get.put(AuthController(authService), permanent: true);
   Get.put(BoutiqueController(boutiqueService), permanent: true);
