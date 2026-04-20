@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../theme/app_theme.dart';
 import '../utils/responsive.dart';
+import '../screens/seller/sell_choice_sheet.dart';
 
 class BottomNavBar extends StatelessWidget {
   final int currentIndex;
@@ -11,7 +12,7 @@ class BottomNavBar extends StatelessWidget {
   static const _items = [
     _NavItem(icon: Icons.home_outlined,      label: 'Accueil',  route: '/home'),
     _NavItem(icon: Icons.search,             label: 'Chercher', route: '/search'),
-    _NavItem(icon: Icons.add,                label: 'Vendre',   route: '/store-config'),
+    _NavItem(icon: Icons.add,                label: 'Vendre',   route: '/sell-choice'),
     _NavItem(icon: Icons.chat_bubble_outline,label: 'Chat',     route: '/messages'),
     _NavItem(icon: Icons.person_outline,     label: 'Profil',   route: '/profile'),
   ];
@@ -39,7 +40,7 @@ class BottomNavBar extends StatelessWidget {
                 final btnSize = (r.bottomNavH * 0.82).clamp(44.0, 58.0);
                 return Expanded(
                   child: GestureDetector(
-                    onTap: () => Get.toNamed(_items[i].route),
+                    onTap: () => SellChoiceSheet.show(),
                     child: Center(
                       child: Transform.translate(
                         offset: Offset(0, -r.s(10)),

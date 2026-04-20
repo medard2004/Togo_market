@@ -3,6 +3,8 @@ import 'package:get/get.dart';
 
 import '../../controllers/app_controller.dart';
 import '../../theme/app_theme.dart';
+import 'change_email_screen.dart';
+import 'change_phone_screen.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -13,8 +15,6 @@ class EditProfileScreen extends StatefulWidget {
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
   late final TextEditingController _nameController;
-  late final TextEditingController _emailController;
-  late final TextEditingController _phoneController;
   late final TextEditingController _locationController;
   late final TextEditingController _bioController;
   final _formKey = GlobalKey<FormState>();
@@ -24,8 +24,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     super.initState();
     final ctrl = Get.find<AppController>();
     _nameController = TextEditingController(text: ctrl.userName.value);
-    _emailController = TextEditingController(text: ctrl.userEmail.value);
-    _phoneController = TextEditingController(text: ctrl.userPhone.value);
     _locationController = TextEditingController(text: ctrl.userLocation.value);
     _bioController = TextEditingController(text: ctrl.userBio.value);
   }
@@ -33,8 +31,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   @override
   void dispose() {
     _nameController.dispose();
-    _emailController.dispose();
-    _phoneController.dispose();
     _locationController.dispose();
     _bioController.dispose();
     super.dispose();
@@ -44,8 +40,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     if (!_formKey.currentState!.validate()) return;
     final ctrl = Get.find<AppController>();
     ctrl.userName.value = _nameController.text.trim();
-    ctrl.userEmail.value = _emailController.text.trim();
-    ctrl.userPhone.value = _phoneController.text.trim();
     ctrl.userLocation.value = _locationController.text.trim();
     ctrl.userBio.value = _bioController.text.trim();
     Get.back();
@@ -193,15 +187,25 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   _buildField('Nom complet', _nameController,
                       hintText: 'Koffi Mensah', icon: Icons.person_outline),
                   const SizedBox(height: 18),
-                  _buildField('Email', _emailController,
-                      hintText: 'koffi.mensah@email.com',
+                  Obx(() {
+                    final ctrl = Get.find<AppController>();
+                    return _buildReadOnlyField(
+                      'Email',
+                      ctrl.userEmail.value,
                       icon: Icons.email_outlined,
-                      keyboardType: TextInputType.emailAddress),
+                      onTap: () => Get.to(() => const ChangeEmailScreen()),
+                    );
+                  }),
                   const SizedBox(height: 18),
-                  _buildField('Téléphone', _phoneController,
-                      hintText: '+228 90 00 00 00',
+                  Obx(() {
+                    final ctrl = Get.find<AppController>();
+                    return _buildReadOnlyField(
+                      'Téléphone',
+                      ctrl.userPhone.value,
                       icon: Icons.phone_android_outlined,
-                      keyboardType: TextInputType.phone),
+                      onTap: () => Get.to(() => const ChangePhoneScreen()),
+                    );
+                  }),
                   const SizedBox(height: 18),
                   _buildField('Localisation', _locationController,
                       hintText: 'Tokoin, Lomé',
@@ -294,6 +298,61 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       ],
     );
   }
+
+  Widget _buildReadOnlyField(
+    String label,
+    String value, {
+    IconData? icon,
+    VoidCallback? onTap,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: 8),
+          child: Text(
+            label,
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: AppTheme.mutedForeground,
+            ),
+          ),
+        ),
+        GestureDetector(
+          onTap: onTap,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            decoration: BoxDecoration(
+              color: AppTheme.muted,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Row(
+              children: [
+                if (icon != null) ...[
+                  Icon(icon, size: 20, color: AppTheme.primary),
+                  const SizedBox(width: 12),
+                ],
+                Expanded(
+                  child: Text(
+                    value,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.foreground,
+                    ),
+                  ),
+                ),
+                const Icon(Icons.arrow_forward_ios_rounded,
+                    size: 14, color: AppTheme.mutedForeground),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
 
   Widget _buildBioField() {
     return Column(

@@ -206,6 +206,81 @@ class HomeBody extends StatelessWidget {
 
             SliverToBoxAdapter(child: SizedBox(height: r.vGap)),
 
+            // Boutiques tendances titre
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(r.hPad, 0, r.hPad, r.s(12)),
+                child: SectionTitle(
+                  icon: Icons.star_rounded,
+                  iconColor: Colors.amber,
+                  title: 'Boutiques en tendances',
+                  actionLabel: 'Voir tout',
+                  onAction: () => Get.toNamed('/trending-shops'),
+                ),
+              ),
+            ),
+            // Boutiques tendances scroll
+            SliverToBoxAdapter(
+              child: SizedBox(
+                height: r.s(165),
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  padding: EdgeInsets.symmetric(horizontal: r.hPad),
+                  itemCount: mockSellers.length,
+                  separatorBuilder: (_, __) => SizedBox(width: r.s(12)),
+                  itemBuilder: (_, i) => AnimationConfiguration.staggeredList(
+                    position: i,
+                    duration: const Duration(milliseconds: 260),
+                    child: FadeInAnimation(
+                      curve: Curves.easeOutCubic,
+                      child: ShopCarouselCard(seller: mockSellers[i]),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            SliverToBoxAdapter(child: SizedBox(height: r.vGap)),
+
+            // Boutiques près de chez vous titre
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(r.hPad, 0, r.hPad, r.s(12)),
+                child: SectionTitle(
+                  icon: Icons.near_me_rounded,
+                  iconColor: AppTheme.secondary,
+                  title: 'Boutiques près de chez vous',
+                  actionLabel: 'Parcourir',
+                  onAction: () => Get.toNamed('/nearby-shops'),
+                ),
+              ),
+            ),
+            // Boutiques près de chez vous scroll
+            SliverToBoxAdapter(
+              child: SizedBox(
+                height: r.s(165),
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  padding: EdgeInsets.symmetric(horizontal: r.hPad),
+                  itemCount: mockSellers.length,
+                  separatorBuilder: (_, __) => SizedBox(width: r.s(12)),
+                  itemBuilder: (_, i) {
+                    final idx = (mockSellers.length - 1 - i) % mockSellers.length;
+                    return AnimationConfiguration.staggeredList(
+                      position: i,
+                      duration: const Duration(milliseconds: 260),
+                      child: FadeInAnimation(
+                        curve: Curves.easeOutCubic,
+                        child: ShopCarouselCard(seller: mockSellers[idx]),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+
+            SliverToBoxAdapter(child: SizedBox(height: r.vGap)),
+
             // Tous les articles titre
             SliverToBoxAdapter(
               child: Padding(

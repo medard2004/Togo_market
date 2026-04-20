@@ -26,6 +26,7 @@ class AppTheme {
 
   static List<BoxShadow> shadowCard = AppShadows.shadowMd;
   static List<BoxShadow> shadowCardLg = AppShadows.shadowLg;
+  static List<BoxShadow> shadowSm = AppShadows.shadowSm;
   static List<BoxShadow> shadowPrimary = AppShadows.shadowPrimary;
 
   static ThemeData get theme => lightTheme;

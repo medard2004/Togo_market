@@ -54,21 +54,25 @@ class ProductCard extends StatelessWidget {
                         child: _buildImage(),
                       ),
                 Positioned(
-                  top: r.s(7), left: r.s(7),
+                  top: r.s(7),
+                  left: r.s(7),
                   child: _ConditionBadge(condition: product.condition, r: r),
                 ),
                 Positioned(
-                  bottom: r.s(7), left: r.s(7),
+                  bottom: r.s(7),
+                  left: r.s(7),
                   child: _PriceBadge(price: product.price, r: r),
                 ),
                 Positioned(
-                  top: r.s(7), right: r.s(7),
+                  top: r.s(7),
+                  right: r.s(7),
                   child: Obx(() {
                     final fav = ctrl.isFavorite(product.id);
                     return GestureDetector(
                       onTap: () => ctrl.toggleFavorite(product.id),
                       child: Container(
-                        width: r.s(30), height: r.s(30),
+                        width: r.s(30),
+                        height: r.s(30),
                         decoration: BoxDecoration(
                           color: Colors.white.withOpacity(0.92),
                           shape: BoxShape.circle,
@@ -76,7 +80,8 @@ class ProductCard extends StatelessWidget {
                         child: Icon(
                           fav ? Icons.favorite : Icons.favorite_border,
                           size: r.s(14),
-                          color: fav ? AppTheme.primary : AppTheme.mutedForeground,
+                          color:
+                              fav ? AppTheme.primary : AppTheme.mutedForeground,
                         ),
                       ),
                     );
@@ -104,14 +109,17 @@ class ProductCard extends StatelessWidget {
                   SizedBox(height: r.s(3)),
                   Row(
                     children: [
-                      Icon(Icons.location_on, size: r.s(10), color: AppTheme.mutedForeground),
+                      Icon(Icons.location_on,
+                          size: r.s(10), color: AppTheme.mutedForeground),
                       SizedBox(width: r.s(2)),
                       Expanded(
                         child: Text(
                           product.location,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: TextStyle(fontSize: r.fs(10), color: AppTheme.mutedForeground),
+                          style: TextStyle(
+                              fontSize: r.fs(10),
+                              color: AppTheme.mutedForeground),
                         ),
                       ),
                     ],
@@ -137,7 +145,8 @@ class ProductCard extends StatelessWidget {
         ),
         errorWidget: (_, __, ___) => Container(
           color: AppTheme.muted,
-          child: const Icon(Icons.image_not_supported, color: AppTheme.mutedForeground),
+          child: const Icon(Icons.image_not_supported,
+              color: AppTheme.mutedForeground),
         ),
       );
 }
@@ -159,7 +168,8 @@ class _ConditionBadge extends StatelessWidget {
           style: TextStyle(
             fontSize: r.fs(9),
             fontWeight: FontWeight.w700,
-            color: condition == 'Neuf' ? Colors.white : AppTheme.mutedForeground,
+            color:
+                condition == 'Neuf' ? Colors.white : AppTheme.mutedForeground,
           ),
         ),
       );
@@ -179,7 +189,10 @@ class _PriceBadge extends StatelessWidget {
         ),
         child: Text(
           formatPrice(price),
-          style: TextStyle(fontSize: r.fs(10), fontWeight: FontWeight.w700, color: Colors.white),
+          style: TextStyle(
+              fontSize: r.fs(10),
+              fontWeight: FontWeight.w700,
+              color: Colors.white),
         ),
       );
 }
@@ -192,19 +205,19 @@ class FavoriteTicketCard extends StatelessWidget {
   // Couleur + emoji par catégorie
   static const _catColors = {
     'electronique': Color(0xFF1E6EBF),
-    'mode':         Color(0xFFB0387A),
-    'friperie':     Color(0xFF7B3FB5),
-    'maison':       Color(0xFF2A7A4B),
-    'beaute':       Color(0xFFD44A6A),
-    'services':     Color(0xFF4A7AB5),
+    'mode': Color(0xFFB0387A),
+    'friperie': Color(0xFF7B3FB5),
+    'maison': Color(0xFF2A7A4B),
+    'beaute': Color(0xFFD44A6A),
+    'services': Color(0xFF4A7AB5),
   };
   static const _catIcons = {
     'electronique': Icons.devices_rounded,
-    'mode':         Icons.shopping_bag_rounded,
-    'friperie':     Icons.checkroom_rounded,
-    'maison':       Icons.home_rounded,
-    'beaute':       Icons.face_retouching_natural_rounded,
-    'services':     Icons.build_rounded,
+    'mode': Icons.shopping_bag_rounded,
+    'friperie': Icons.checkroom_rounded,
+    'maison': Icons.home_rounded,
+    'beaute': Icons.face_retouching_natural_rounded,
+    'services': Icons.build_rounded,
   };
 
   Color _stripeColor() {
@@ -220,13 +233,14 @@ class FavoriteTicketCard extends StatelessWidget {
     final stripe = _stripeColor();
     final iconData = _catIcons[product.category] ?? Icons.shopping_cart_rounded;
     final catLabel = {
-      'electronique': 'Électronique',
-      'mode':         'Mode',
-      'friperie':     'Friperie',
-      'maison':       'Maison',
-      'beaute':       'Beauté',
-      'services':     'Services',
-    }[product.category] ?? product.category;
+          'electronique': 'Électronique',
+          'mode': 'Mode',
+          'friperie': 'Friperie',
+          'maison': 'Maison',
+          'beaute': 'Beauté',
+          'services': 'Services',
+        }[product.category] ??
+        product.category;
 
     return GestureDetector(
       onTap: () => Get.toNamed('/product/${product.id}'),
@@ -281,7 +295,10 @@ class FavoriteTicketCard extends StatelessWidget {
                       gradient: LinearGradient(
                         begin: Alignment.centerLeft,
                         end: Alignment.centerRight,
-                        colors: [Colors.transparent, Colors.white.withOpacity(0.08)],
+                        colors: [
+                          Colors.transparent,
+                          Colors.white.withOpacity(0.08)
+                        ],
                       ),
                     ),
                   ),
@@ -294,7 +311,8 @@ class FavoriteTicketCard extends StatelessWidget {
               padding: EdgeInsets.symmetric(vertical: r.s(10)),
               child: SizedBox(
                 width: r.s(14),
-                child: CustomPaint(painter: _DashedLinePainter(color: AppTheme.muted)),
+                child: CustomPaint(
+                    painter: _DashedLinePainter(color: AppTheme.muted)),
               ),
             ),
 
@@ -345,7 +363,9 @@ class FavoriteTicketCard extends StatelessWidget {
                           Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.storefront_rounded, size: r.s(10), color: AppTheme.mutedForeground),
+                              Icon(Icons.storefront_rounded,
+                                  size: r.s(10),
+                                  color: AppTheme.mutedForeground),
                               SizedBox(width: r.s(3)),
                               ConstrainedBox(
                                 constraints: BoxConstraints(maxWidth: r.s(72)),
@@ -353,7 +373,9 @@ class FavoriteTicketCard extends StatelessWidget {
                                   seller.shopName,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(fontSize: r.fs(9), color: AppTheme.mutedForeground),
+                                  style: TextStyle(
+                                      fontSize: r.fs(9),
+                                      color: AppTheme.mutedForeground),
                                 ),
                               ),
                             ],
@@ -375,7 +397,9 @@ class FavoriteTicketCard extends StatelessWidget {
                   color: Colors.transparent,
                   child: Center(
                     child: Icon(
-                      fav ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                      fav
+                          ? Icons.favorite_rounded
+                          : Icons.favorite_border_rounded,
                       size: r.s(22),
                       color: fav ? AppTheme.primary : AppTheme.mutedForeground,
                     ),
@@ -399,10 +423,13 @@ class _DashedLinePainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     const dashH = 4.0;
     const gap = 4.0;
-    final paint = Paint()..color = color..strokeWidth = 1.5;
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 1.5;
     double y = 0;
     while (y < size.height) {
-      canvas.drawLine(Offset(size.width / 2, y), Offset(size.width / 2, (y + dashH).clamp(0, size.height)), paint);
+      canvas.drawLine(Offset(size.width / 2, y),
+          Offset(size.width / 2, (y + dashH).clamp(0, size.height)), paint);
       y += dashH + gap;
     }
   }
@@ -490,7 +517,8 @@ class SellerCard extends StatelessWidget {
   final VoidCallback? onChat;
   final VoidCallback? onVisit;
 
-  const SellerCard({super.key, required this.seller, this.onChat, this.onVisit});
+  const SellerCard(
+      {super.key, required this.seller, this.onChat, this.onVisit});
 
   @override
   Widget build(BuildContext context) {
@@ -506,12 +534,19 @@ class SellerCard extends StatelessWidget {
         children: [
           Stack(
             children: [
-              CircleAvatar(radius: r.s(24), backgroundImage: CachedNetworkImageProvider(seller.avatar)),
+              CircleAvatar(
+                  radius: r.s(24),
+                  backgroundImage: CachedNetworkImageProvider(seller.avatar)),
               Positioned(
-                bottom: 0, right: 0,
+                bottom: 0,
+                right: 0,
                 child: Container(
-                  width: r.s(11), height: r.s(11),
-                  decoration: BoxDecoration(color: Colors.green, shape: BoxShape.circle, border: Border.all(color: Colors.white, width: 2)),
+                  width: r.s(11),
+                  height: r.s(11),
+                  decoration: BoxDecoration(
+                      color: Colors.green,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 2)),
                 ),
               ),
             ],
@@ -521,16 +556,32 @@ class SellerCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(seller.shopName, maxLines: 1, overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontSize: r.fs(13), fontWeight: FontWeight.w700)),
+                Text(seller.shopName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                        fontSize: r.fs(13), fontWeight: FontWeight.w700)),
                 SizedBox(height: r.s(2)),
                 Row(children: [
                   Icon(Icons.flash_on, size: r.s(11), color: AppTheme.primary),
-                  Flexible(child: Text('Répond en ${seller.responseTime}', maxLines: 1, overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontSize: r.fs(10), color: AppTheme.mutedForeground))),
+                  Flexible(
+                      child: Text('Répond en ${seller.responseTime}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                              fontSize: r.fs(10),
+                              color: AppTheme.mutedForeground))),
                 ]),
                 SizedBox(height: r.s(3)),
-                Row(children: List.generate(5, (i) => Icon(i < seller.rating.floor() ? Icons.star : Icons.star_border, size: r.s(12), color: Colors.amber))),
+                Row(
+                    children: List.generate(
+                        5,
+                        (i) => Icon(
+                            i < seller.rating.floor()
+                                ? Icons.star
+                                : Icons.star_border,
+                            size: r.s(12),
+                            color: Colors.amber))),
               ],
             ),
           ),
@@ -542,21 +593,181 @@ class SellerCard extends StatelessWidget {
               if (onVisit != null)
                 GestureDetector(
                   onTap: onVisit,
-                  child: Text('Voir boutique', style: TextStyle(fontSize: r.fs(11), fontWeight: FontWeight.w600, color: AppTheme.primary)),
+                  child: Text('Voir boutique',
+                      style: TextStyle(
+                          fontSize: r.fs(11),
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.primary)),
                 ),
               SizedBox(height: r.s(6)),
               if (onChat != null)
                 GestureDetector(
                   onTap: onChat,
                   child: Container(
-                    padding: EdgeInsets.symmetric(horizontal: r.s(10), vertical: r.s(5)),
-                    decoration: BoxDecoration(color: AppTheme.primaryLight, borderRadius: BorderRadius.circular(r.rad(10))),
-                    child: Text('Chat', style: TextStyle(fontSize: r.fs(12), fontWeight: FontWeight.w700, color: AppTheme.primary)),
+                    padding: EdgeInsets.symmetric(
+                        horizontal: r.s(10), vertical: r.s(5)),
+                    decoration: BoxDecoration(
+                        color: AppTheme.primaryLight,
+                        borderRadius: BorderRadius.circular(r.rad(10))),
+                    child: Text('Chat',
+                        style: TextStyle(
+                            fontSize: r.fs(12),
+                            fontWeight: FontWeight.w700,
+                            color: AppTheme.primary)),
                   ),
                 ),
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ── ShopCarouselCard ─────────────────────────────────────────────────────────
+class ShopCarouselCard extends StatelessWidget {
+  final Seller seller;
+  final VoidCallback? onTap;
+
+  const ShopCarouselCard({super.key, required this.seller, this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final r = R(context);
+    return GestureDetector(
+      onTap: onTap ?? () => Get.toNamed('/seller/${seller.id}'),
+      child: Container(
+        width: r.s(160),
+        decoration: BoxDecoration(
+          color: AppTheme.cardColor,
+          borderRadius: BorderRadius.circular(r.rad(24)),
+          boxShadow: AppTheme.shadowCard,
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Stack(
+          children: [
+            // Background / Avatar-based design
+            Column(
+              children: [
+                Container(
+                  height: r.s(85),
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        AppTheme.primary.withOpacity(0.1),
+                        AppTheme.secondary.withOpacity(0.05),
+                      ],
+                    ),
+                  ),
+                  child: Center(
+                    child: Opacity(
+                      opacity: 0.1,
+                      child: Icon(Icons.storefront_rounded,
+                          size: r.s(54), color: AppTheme.primary),
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding:
+                      EdgeInsets.fromLTRB(r.s(12), r.s(24), r.s(12), r.s(12)),
+                  child: Column(
+                    children: [
+                      Text(
+                        seller.shopName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: r.fs(13),
+                          fontWeight: FontWeight.w800,
+                          color: AppTheme.foreground,
+                        ),
+                      ),
+                      SizedBox(height: r.s(4)),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.location_on_rounded,
+                              size: r.s(10), color: AppTheme.mutedForeground),
+                          SizedBox(width: r.s(2)),
+                          Flexible(
+                            child: Text(
+                              seller.location,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: r.fs(10),
+                                color: AppTheme.mutedForeground,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            // Floating Avatar
+            Positioned(
+              top: r.s(55),
+              left: 0,
+              right: 0,
+              child: Center(
+                child: Container(
+                  padding: EdgeInsets.all(r.s(3)),
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                          color: Colors.black12,
+                          blurRadius: 8,
+                          offset: Offset(0, 4)),
+                    ],
+                  ),
+                  child: CircleAvatar(
+                    radius: r.s(20),
+                    backgroundImage: CachedNetworkImageProvider(seller.avatar),
+                  ),
+                ),
+              ),
+            ),
+            // Rating Badge
+            Positioned(
+              top: r.s(8),
+              right: r.s(8),
+              child: Container(
+                padding:
+                    EdgeInsets.symmetric(horizontal: r.s(8), vertical: r.s(4)),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.9),
+                  borderRadius: BorderRadius.circular(r.rad(12)),
+                  boxShadow: AppTheme.shadowSm,
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.star_rounded,
+                        color: Colors.amber, size: 12),
+                    const SizedBox(width: 2),
+                    Text(
+                      seller.rating.toString(),
+                      style: TextStyle(
+                        fontSize: r.fs(10),
+                        fontWeight: FontWeight.w800,
+                        color: AppTheme.foreground,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
