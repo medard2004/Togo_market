@@ -8,6 +8,40 @@ import '../../../controllers/app_controller.dart';
 import '../../../utils/responsive.dart';
 import '../../../Api/model/category_model.dart';
 import '../../../utils/category_icon_helper.dart';
+import '../../../models/models.dart';
+
+final List<Seller> mockSellers = [
+  Seller(
+    id: '1',
+    name: 'Koffi',
+    shopName: 'Koffi Électronique',
+    avatar: 'https://i.pravatar.cc/150?img=11',
+    rating: 4.8,
+    responseTime: '1h',
+    location: 'Lomé',
+    products: [],
+  ),
+  Seller(
+    id: '2',
+    name: 'Awa',
+    shopName: 'Awa Mode',
+    avatar: 'https://i.pravatar.cc/150?img=5',
+    rating: 4.5,
+    responseTime: '30m',
+    location: 'Lomé',
+    products: [],
+  ),
+  Seller(
+    id: '3',
+    name: 'Kodjo',
+    shopName: 'Kodjo Tech',
+    avatar: 'https://i.pravatar.cc/150?img=8',
+    rating: 4.9,
+    responseTime: '15m',
+    location: 'Lomé',
+    products: [],
+  ),
+];
 
 class HomeBody extends StatelessWidget {
   final AppController ctrl;

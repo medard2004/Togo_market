@@ -12,6 +12,12 @@ class AppController extends GetxController {
   // Auth state
   final isLoggedIn = false.obs;
 
+  // Fake Profile Data
+  final userName = 'Utilisateur Test'.obs;
+  final userLocation = 'Lomé, Togo'.obs;
+  final userBio = 'Ceci est une fausse bio pour éviter les erreurs de compilation.'.obs;
+  final userAvatar = 'https://i.pravatar.cc/150?img=11'.obs;
+
   // Products
   final products        = <Product>[].obs;
   final favorites       = <Product>[].obs;

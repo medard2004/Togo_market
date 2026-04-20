@@ -136,6 +136,17 @@ class AuthController extends GetxController {
     }
   }
 
+  Future<bool> verifyEmail(String email) async {
+    try {
+      isLoading.value = true;
+      return await _authService.verifyEmail(email);
+    } catch (e) {
+      rethrow;
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
   Future<void> login(String telephone, String password) async {
     try {
       isLoading.value = true;
@@ -176,6 +187,7 @@ class AuthController extends GetxController {
 
   Future<void> updateProfile({
     String? telephone,
+    String? email,
     String? nom,
     int? quartierId,
     List<int>? selectedCategories,
@@ -186,6 +198,7 @@ class AuthController extends GetxController {
       isLoading.value = true;
       final updatedUser = await _authService.updateProfile(
         telephone: telephone,
+        email: email,
         nom: nom,
         quartierId: quartierId,
         categories: selectedCategories,

@@ -6,6 +6,7 @@ class User {
   final String? avatarUrl;
   final String? role;
   final bool? actif;
+  final String? providerName;
 
   User({
     this.id,
@@ -15,7 +16,11 @@ class User {
     this.avatarUrl,
     this.role,
     this.actif,
+    this.providerName,
   });
+
+  /// L'utilisateur s'est inscrit via un réseau social (Google, Facebook, Apple)
+  bool get isSocialLogin => providerName != null && providerName!.isNotEmpty;
 
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
@@ -26,6 +31,7 @@ class User {
       avatarUrl: json['avatar_url'],
       role: json['role'],
       actif: json['actif'] == 1 || json['actif'] == true, // Handle boolean or tinyint
+      providerName: json['provider_name'],
     );
   }
 
@@ -38,6 +44,7 @@ class User {
       'avatar_url': avatarUrl,
       'role': role,
       'actif': actif,
+      'provider_name': providerName,
     };
   }
 
@@ -50,6 +57,7 @@ class User {
     String? avatarUrl,
     String? role,
     bool? actif,
+    String? providerName,
   }) {
     return User(
       id: id ?? this.id,
@@ -59,6 +67,7 @@ class User {
       avatarUrl: avatarUrl ?? this.avatarUrl,
       role: role ?? this.role,
       actif: actif ?? this.actif,
+      providerName: providerName ?? this.providerName,
     );
   }
 }

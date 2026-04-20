@@ -43,6 +43,14 @@ class AuthService {
     return response.statusCode == 200;
   }
 
+  Future<bool> verifyEmail(String email) async {
+    final response = await _apiClient.post(
+      ApiConstants.verifyEmailEndpoint,
+      data: {'email': email},
+    );
+    return response.statusCode == 200;
+  }
+
   Future<User> register(String telephone, String password) async {
     final response = await _apiClient.post(
       ApiConstants.registerEndpoint,
@@ -89,6 +97,7 @@ class AuthService {
 
   Future<User> updateProfile({
     String? telephone,
+    String? email,
     String? nom,
     int? quartierId,
     List<int>? categories,
@@ -98,6 +107,7 @@ class AuthService {
     if (photoPath != null && photoPath.isNotEmpty) {
       final Map<String, dynamic> formDataMap = {};
       if (telephone != null && telephone.isNotEmpty) formDataMap['telephone'] = telephone;
+      if (email != null && email.isNotEmpty) formDataMap['email'] = email;
       if (nom != null) formDataMap['nom'] = nom;
       if (quartierId != null) formDataMap['quartier_id'] = quartierId;
       if (details != null && details.isNotEmpty) formDataMap['details'] = details;
@@ -124,6 +134,7 @@ class AuthService {
     } else {
       final Map<String, dynamic> body = {};
       if (telephone != null && telephone.isNotEmpty) body['telephone'] = telephone;
+      if (email != null && email.isNotEmpty) body['email'] = email;
       if (nom != null) body['nom'] = nom;
       if (quartierId != null) body['quartier_id'] = quartierId;
       if (categories != null) body['categories'] = categories;

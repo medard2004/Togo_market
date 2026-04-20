@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../controllers/app_controller.dart';
+import '../../Api/provider/auth_controller.dart';
 import '../../theme/app_theme.dart';
+import 'package:toastification/toastification.dart';
+import '../../Api/core/api_client.dart';
 
 class ChangePhoneScreen extends StatefulWidget {
   const ChangePhoneScreen({super.key});
@@ -17,8 +19,8 @@ class _ChangePhoneScreenState extends State<ChangePhoneScreen> {
   @override
   void initState() {
     super.initState();
-    final ctrl = Get.find<AppController>();
-    _phoneController = TextEditingController(text: ctrl.userPhone.value);
+    final authCtrl = Get.find<AuthController>();
+    _phoneController = TextEditingController(text: authCtrl.currentUser.value?.telephone ?? '');
   }
 
   @override
@@ -27,21 +29,65 @@ class _ChangePhoneScreenState extends State<ChangePhoneScreen> {
     super.dispose();
   }
 
-  void _savePhone() {
-    if (!_formKey.currentState!.validate()) return;
-    final ctrl = Get.find<AppController>();
-    ctrl.userPhone.value = _phoneController.text.trim();
-    Get.back();
+  bool _isLoading = false;
 
-    Get.snackbar(
-      'Téléphone mis à jour',
-      'Votre numéro de téléphone a été modifié avec succès.',
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: AppTheme.primary,
-      colorText: Colors.white,
-      margin: const EdgeInsets.all(16),
-      borderRadius: 12,
-    );
+  Future<void> _savePhone() async {
+    if (!_formKey.currentState!.validate()) return;
+    
+    final newPhone = _phoneController.text.trim();
+    final authCtrl = Get.find<AuthController>();
+    final user = authCtrl.currentUser.value;
+
+    if (user?.telephone == newPhone) {
+      toastification.show(
+        context: context,
+        type: ToastificationType.info,
+        style: ToastificationStyle.flat,
+        title: const Text('Aucun changement'),
+        description: const Text("C'est déjà votre numéro actuel."),
+        autoCloseDuration: const Duration(seconds: 3),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+    
+    try {
+      // 1. Vérification
+      await authCtrl.verifyPhone(newPhone);
+      
+      // 2. Mise à jour
+      await authCtrl.updateProfile(telephone: newPhone);
+
+      Get.back();
+
+      toastification.show(
+        context: context,
+        type: ToastificationType.success,
+        style: ToastificationStyle.flat,
+        title: const Text('Téléphone mis à jour'),
+        description: const Text('Votre numéro a été modifié avec succès.'),
+        autoCloseDuration: const Duration(seconds: 4),
+      );
+    } catch (e) {
+      String errorMessage;
+      if (e is ValidationException) {
+        errorMessage = e.message;
+      } else {
+        errorMessage = "Une erreur est survenue.";
+      }
+      
+      toastification.show(
+        context: context,
+        type: ToastificationType.error,
+        style: ToastificationStyle.flat,
+        title: const Text('Erreur'),
+        description: Text(errorMessage),
+        autoCloseDuration: const Duration(seconds: 4),
+      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   @override
@@ -145,8 +191,8 @@ class _ChangePhoneScreenState extends State<ChangePhoneScreen> {
               ),
             ),
             const SizedBox(height: 40),
-            ElevatedButton(
-              onPressed: _savePhone,
+              ElevatedButton(
+              onPressed: _isLoading ? null : _savePhone,
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.primary,
                 foregroundColor: Colors.white,
@@ -157,7 +203,13 @@ class _ChangePhoneScreenState extends State<ChangePhoneScreen> {
                 ),
                 padding: const EdgeInsets.symmetric(vertical: 16),
               ),
-              child: const Text(
+              child: _isLoading 
+                ? const SizedBox(
+                    width: 24, 
+                    height: 24, 
+                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
+                  )
+                : const Text(
                 'Enregistrer le numéro',
                 style: TextStyle(
                   fontSize: 16,

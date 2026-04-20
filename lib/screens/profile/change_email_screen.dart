@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../controllers/app_controller.dart';
+import '../../Api/provider/auth_controller.dart';
 import '../../theme/app_theme.dart';
+import 'package:toastification/toastification.dart';
+import '../../Api/core/api_client.dart';
 
 class ChangeEmailScreen extends StatefulWidget {
   const ChangeEmailScreen({super.key});
@@ -17,8 +19,8 @@ class _ChangeEmailScreenState extends State<ChangeEmailScreen> {
   @override
   void initState() {
     super.initState();
-    final ctrl = Get.find<AppController>();
-    _emailController = TextEditingController(text: ctrl.userEmail.value);
+    final authCtrl = Get.find<AuthController>();
+    _emailController = TextEditingController(text: authCtrl.currentUser.value?.email ?? '');
   }
 
   @override
@@ -27,21 +29,92 @@ class _ChangeEmailScreenState extends State<ChangeEmailScreen> {
     super.dispose();
   }
 
-  void _saveEmail() {
-    if (!_formKey.currentState!.validate()) return;
-    final ctrl = Get.find<AppController>();
-    ctrl.userEmail.value = _emailController.text.trim();
-    Get.back();
+  bool _isLoading = false;
 
-    Get.snackbar(
-      'Email mis à jour',
-      'Votre adresse email a été modifiée avec succès.',
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: AppTheme.primary,
-      colorText: Colors.white,
-      margin: const EdgeInsets.all(16),
-      borderRadius: 12,
+  Future<void> _saveEmail() async {
+    if (!_formKey.currentState!.validate()) return;
+    
+    final newEmail = _emailController.text.trim();
+    final authCtrl = Get.find<AuthController>();
+    final user = authCtrl.currentUser.value;
+
+    if (user?.email == newEmail) {
+      toastification.show(
+        context: context,
+        type: ToastificationType.info,
+        style: ToastificationStyle.flat,
+        title: const Text('Aucun changement'),
+        description: const Text("C'est déjà votre adresse email actuelle."),
+        autoCloseDuration: const Duration(seconds: 3),
+      );
+      return;
+    }
+
+    // Confirmation avant d'attribuer
+    final bool? confirm = await Get.dialog<bool>(
+      AlertDialog(
+        title: const Text('Confirmation'),
+        content: const Text('Voulez-vous vraiment changer votre adresse email ?'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(result: false),
+            child: const Text('Annuler'),
+          ),
+          ElevatedButton(
+            onPressed: () => Get.back(result: true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primary,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: const Text('Confirmer'),
+          ),
+        ],
+      ),
     );
+
+    if (confirm != true) return;
+
+    setState(() => _isLoading = true);
+    
+    try {
+      // 1. Vérification
+      await authCtrl.verifyEmail(newEmail);
+      
+      // 2. Mise à jour
+      await authCtrl.updateProfile(email: newEmail);
+
+      Get.back();
+
+      toastification.show(
+        context: context,
+        type: ToastificationType.success,
+        style: ToastificationStyle.flat,
+        title: const Text('Email mis à jour'),
+        description: const Text('Votre adresse email a été modifiée avec succès.'),
+        autoCloseDuration: const Duration(seconds: 4),
+      );
+    } catch (e) {
+      String errorMessage;
+      if (e is ValidationException) {
+        errorMessage = e.message;
+      } else {
+        errorMessage = "Une erreur est survenue.";
+      }
+      
+      toastification.show(
+        context: context,
+        type: ToastificationType.error,
+        style: ToastificationStyle.flat,
+        title: const Text('Erreur'),
+        description: Text(errorMessage),
+        autoCloseDuration: const Duration(seconds: 4),
+      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   @override
@@ -148,7 +221,7 @@ class _ChangeEmailScreenState extends State<ChangeEmailScreen> {
             ),
             const SizedBox(height: 40),
             ElevatedButton(
-              onPressed: _saveEmail,
+              onPressed: _isLoading ? null : _saveEmail,
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.primary,
                 foregroundColor: Colors.white,
@@ -159,7 +232,13 @@ class _ChangeEmailScreenState extends State<ChangeEmailScreen> {
                 ),
                 padding: const EdgeInsets.symmetric(vertical: 16),
               ),
-              child: const Text(
+              child: _isLoading 
+                ? const SizedBox(
+                    width: 24, 
+                    height: 24, 
+                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
+                  )
+                : const Text(
                 'Enregistrer l\'email',
                 style: TextStyle(
                   fontSize: 16,
