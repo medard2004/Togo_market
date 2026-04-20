@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import '../../../theme/app_theme.dart';
-import '../../../data/mock_data.dart';
+import '../../theme/app_theme.dart';
 
 class OrdersScreen extends StatefulWidget {
   const OrdersScreen({super.key});

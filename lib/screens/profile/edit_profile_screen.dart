@@ -3,7 +3,8 @@ import 'package:get/get.dart';
 
 import '../../Api/provider/auth_controller.dart';
 import '../../theme/app_theme.dart';
-import '../../widgets/user_avatar.dart';
+import 'change_email_screen.dart';
+import 'change_phone_screen.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -14,7 +15,6 @@ class EditProfileScreen extends StatefulWidget {
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
   late final TextEditingController _nameController;
-  late final TextEditingController _phoneController;
   late final TextEditingController _locationController;
   final _formKey = GlobalKey<FormState>();
   bool _isSaving = false;
@@ -22,55 +22,36 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   @override
   void initState() {
     super.initState();
-    final user = Get.find<AuthController>().currentUser.value;
-    _nameController     = TextEditingController(text: user?.nom ?? '');
-    _phoneController    = TextEditingController(text: user?.telephone ?? '');
-    _locationController = TextEditingController(text: '');
+    final ctrl = Get.find<AppController>();
+    _nameController = TextEditingController(text: ctrl.userName.value);
+    _locationController = TextEditingController(text: ctrl.userLocation.value);
+    _bioController = TextEditingController(text: ctrl.userBio.value);
   }
 
   @override
   void dispose() {
     _nameController.dispose();
-    _phoneController.dispose();
     _locationController.dispose();
     super.dispose();
   }
 
   Future<void> _saveProfile() async {
     if (!_formKey.currentState!.validate()) return;
-    setState(() => _isSaving = true);
+    final ctrl = Get.find<AppController>();
+    ctrl.userName.value = _nameController.text.trim();
+    ctrl.userLocation.value = _locationController.text.trim();
+    ctrl.userBio.value = _bioController.text.trim();
+    Get.back();
 
-    try {
-      await Get.find<AuthController>().updateProfile(
-        nom: _nameController.text.trim(),
-        telephone: _phoneController.text.trim(),
-        details: _locationController.text.trim().isNotEmpty
-            ? _locationController.text.trim()
-            : null,
-      );
-      Get.back();
-      Get.snackbar(
-        'Profil mis à jour',
-        'Vos modifications ont été enregistrées avec succès.',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: AppTheme.primary,
-        colorText: Colors.white,
-        margin: const EdgeInsets.all(16),
-        borderRadius: 12,
-      );
-    } catch (e) {
-      Get.snackbar(
-        'Erreur',
-        e.toString(),
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: AppTheme.destructive,
-        colorText: Colors.white,
-        margin: const EdgeInsets.all(16),
-        borderRadius: 12,
-      );
-    } finally {
-      if (mounted) setState(() => _isSaving = false);
-    }
+    Get.snackbar(
+      'Profil mis à jour',
+      'Vos modifications ont été enregistrées avec succès.',
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: AppTheme.primary,
+      colorText: Colors.white,
+      margin: const EdgeInsets.all(16),
+      borderRadius: 12,
+    );
   }
 
   @override
@@ -202,12 +183,27 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   ),
                   const SizedBox(height: 20),
                   _buildField('Nom complet', _nameController,
-                      hintText: 'Votre nom', icon: Icons.person_outline),
+                      hintText: 'Koffi Mensah', icon: Icons.person_outline),
                   const SizedBox(height: 18),
-                  _buildField('Téléphone', _phoneController,
-                      hintText: '+228 90 00 00 00',
+                  Obx(() {
+                    final ctrl = Get.find<AppController>();
+                    return _buildReadOnlyField(
+                      'Email',
+                      ctrl.userEmail.value,
+                      icon: Icons.email_outlined,
+                      onTap: () => Get.to(() => const ChangeEmailScreen()),
+                    );
+                  }),
+                  const SizedBox(height: 18),
+                  Obx(() {
+                    final ctrl = Get.find<AppController>();
+                    return _buildReadOnlyField(
+                      'Téléphone',
+                      ctrl.userPhone.value,
                       icon: Icons.phone_android_outlined,
-                      keyboardType: TextInputType.phone),
+                      onTap: () => Get.to(() => const ChangePhoneScreen()),
+                    );
+                  }),
                   const SizedBox(height: 18),
                   _buildField('Localisation', _locationController,
                       hintText: 'Tokoin, Lomé',
@@ -300,6 +296,127 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             ),
             contentPadding:
                 const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildReadOnlyField(
+    String label,
+    String value, {
+    IconData? icon,
+    VoidCallback? onTap,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: 8),
+          child: Text(
+            label,
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: AppTheme.mutedForeground,
+            ),
+          ),
+        ),
+        GestureDetector(
+          onTap: onTap,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            decoration: BoxDecoration(
+              color: AppTheme.muted,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Row(
+              children: [
+                if (icon != null) ...[
+                  Icon(icon, size: 20, color: AppTheme.primary),
+                  const SizedBox(width: 12),
+                ],
+                Expanded(
+                  child: Text(
+                    value,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.foreground,
+                    ),
+                  ),
+                ),
+                const Icon(Icons.arrow_forward_ios_rounded,
+                    size: 14, color: AppTheme.mutedForeground),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBioField() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Padding(
+              padding: EdgeInsets.only(left: 4, bottom: 8),
+              child: Text(
+                'Bio / Description',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.mutedForeground,
+                ),
+              ),
+            ),
+            ValueListenableBuilder(
+              valueListenable: _bioController,
+              builder: (context, value, _) {
+                final count = value.text.length;
+                return Padding(
+                  padding: const EdgeInsets.only(right: 4, bottom: 8),
+                  child: Text(
+                    '$count / 150',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color:
+                          count > 150 ? AppTheme.red : AppTheme.mutedForeground,
+                    ),
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+        TextFormField(
+          controller: _bioController,
+          maxLines: 4,
+          maxLength: 150,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: AppTheme.foreground,
+          ),
+          buildCounter: (context,
+                  {required currentLength,
+                  required isFocused,
+                  required maxLength}) =>
+              null, // On utilise notre propre compteur
+          decoration: InputDecoration(
+            hintText: 'Présentez votre boutique',
+            filled: true,
+            fillColor: AppTheme.muted,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide.none,
+            ),
+            contentPadding: const EdgeInsets.all(16),
           ),
         ),
       ],

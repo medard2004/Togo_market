@@ -20,14 +20,14 @@ class HomeBody extends StatelessWidget {
 
     return AnimationLimiter(
       child: Obx(() {
-        final selectedCat   = ctrl.selectedCategory.value;
-        final allProducts   = ctrl.products.toList();
+        final selectedCat = ctrl.selectedCategory.value;
+        final allProducts = ctrl.products.toList();
         final filteredProds = ctrl.getFilteredProducts(selectedCat);
-        final trending      = ctrl.trendingProducts.isNotEmpty
+        final trending = ctrl.trendingProducts.isNotEmpty
             ? ctrl.trendingProducts.toList()
             : allProducts.take(8).toList();
-        final selectedZone  = ctrl.selectedZone.value;
-        final nearbyProds   = ctrl.getProductsByZone(selectedZone ?? '');
+        final selectedZone = ctrl.selectedZone.value;
+        final nearbyProds = ctrl.getProductsByZone(selectedZone ?? '');
 
         return RefreshIndicator(
           onRefresh: () async {
@@ -92,7 +92,8 @@ class HomeBody extends StatelessWidget {
                       separatorBuilder: (_, __) => SizedBox(width: r.s(8)),
                       itemBuilder: (_, i) {
                         final cat = displayCats[i];
-                        final catIdStr = cat.id == -1 ? 'all' : cat.id.toString();
+                        final catIdStr =
+                            cat.id == -1 ? 'all' : cat.id.toString();
                         final isActive = selectedCat == catIdStr;
 
                         return GestureDetector(
@@ -104,7 +105,9 @@ class HomeBody extends StatelessWidget {
                             padding: EdgeInsets.symmetric(
                                 horizontal: r.s(14), vertical: r.s(8)),
                             decoration: BoxDecoration(
-                              color: isActive ? AppTheme.primary : AppTheme.cardColor,
+                              color: isActive
+                                  ? AppTheme.primary
+                                  : AppTheme.cardColor,
                               borderRadius: BorderRadius.circular(r.rad(20)),
                               boxShadow: isActive
                                   ? AppTheme.shadowPrimary
@@ -116,7 +119,9 @@ class HomeBody extends StatelessWidget {
                                 Icon(
                                   CategoryIconHelper.getIcon(cat.slug),
                                   size: r.fs(16),
-                                  color: isActive ? Colors.white : AppTheme.primary,
+                                  color: isActive
+                                      ? Colors.white
+                                      : AppTheme.primary,
                                 ),
                                 SizedBox(width: r.s(8)),
                                 Text(cat.nom,
@@ -140,7 +145,6 @@ class HomeBody extends StatelessWidget {
 
               // ── Contenu ────────────────────────────────────────────────────
               if (selectedCat == 'all') ...[
-
                 // ── Section Tendances ─────────────────────────────────────────
                 SliverToBoxAdapter(
                   child: Padding(
@@ -163,88 +167,6 @@ class HomeBody extends StatelessWidget {
                             scrollDirection: Axis.horizontal,
                             padding: EdgeInsets.symmetric(horizontal: r.hPad),
                             itemCount: trending.length,
-                            separatorBuilder: (_, __) => SizedBox(width: r.s(12)),
-                            itemBuilder: (_, i) =>
-                                AnimationConfiguration.staggeredList(
-                              position: i,
-                              duration: const Duration(milliseconds: 260),
-                              child: SlideAnimation(
-                                horizontalOffset: 28,
-                                curve: Curves.easeOutCubic,
-                                child: FadeInAnimation(
-                                  curve: Curves.easeOutCubic,
-                                  child: SizedBox(
-                                    width: r.cardW,
-                                    child: ProductCard(
-                                        product: trending[i], isHorizontal: true),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                ),
-
-                SliverToBoxAdapter(child: SizedBox(height: r.vGap)),
-
-                // ── Section Près de chez vous ─────────────────────────────────
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding:
-                        EdgeInsets.fromLTRB(r.hPad, 0, r.hPad, r.s(12)),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: SectionTitle(
-                            icon: Icons.location_on_rounded,
-                            iconColor: AppTheme.primary,
-                            title: 'Près de chez vous',
-                            actionLabel: 'Voir tout',
-                            onAction: () => Get.toNamed('/nearby'),
-                          ),
-                        ),
-                        // Bouton de sélection de zone
-                        GestureDetector(
-                          onTap: () => _showZonePicker(context, ctrl),
-                          child: Container(
-                            padding: EdgeInsets.symmetric(
-                                horizontal: r.s(10), vertical: r.s(5)),
-                            decoration: BoxDecoration(
-                              color: AppTheme.primaryLight,
-                              borderRadius: BorderRadius.circular(r.rad(20)),
-                              border: Border.all(color: AppTheme.primary.withOpacity(0.3)),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.tune_rounded,
-                                    size: r.s(14), color: AppTheme.primary),
-                                SizedBox(width: r.s(4)),
-                                Text(
-                                  selectedZone ?? 'Zone',
-                                  style: TextStyle(
-                                      fontSize: r.fs(11),
-                                      fontWeight: FontWeight.w600,
-                                      color: AppTheme.primary),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                SliverToBoxAdapter(
-                  child: nearbyProds.isEmpty
-                      ? _buildZoneEmptyState(r, context, ctrl)
-                      : SizedBox(
-                          height: hScrollHeight,
-                          child: ListView.separated(
-                            scrollDirection: Axis.horizontal,
-                            padding:
-                                EdgeInsets.symmetric(horizontal: r.hPad),
-                            itemCount: nearbyProds.length,
                             separatorBuilder: (_, __) =>
                                 SizedBox(width: r.s(12)),
                             itemBuilder: (_, i) =>
@@ -259,7 +181,7 @@ class HomeBody extends StatelessWidget {
                                   child: SizedBox(
                                     width: r.cardW,
                                     child: ProductCard(
-                                        product: nearbyProds[i],
+                                        product: trending[i],
                                         isHorizontal: true),
                                   ),
                                 ),
@@ -271,11 +193,136 @@ class HomeBody extends StatelessWidget {
 
                 SliverToBoxAdapter(child: SizedBox(height: r.vGap)),
 
+                // Près de chez vous titre
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(r.hPad, 0, r.hPad, r.s(12)),
+                    child: SectionTitle(
+                      icon: Icons.location_on_rounded,
+                      iconColor: AppTheme.primary,
+                      title: 'Près de chez vous',
+                      actionLabel: 'Voir tout',
+                      onAction: () => Get.toNamed('/nearby'),
+                    ),
+                  ),
+                ),
+                // Près de chez vous scroll
+                SliverToBoxAdapter(
+                  child: SizedBox(
+                    height: hScrollHeight,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      padding: EdgeInsets.symmetric(horizontal: r.hPad),
+                      itemCount: allProducts.length,
+                      separatorBuilder: (_, __) => SizedBox(width: r.s(12)),
+                      itemBuilder: (_, i) {
+                        final idx =
+                            (allProducts.length - 1 - i) % allProducts.length;
+                        return AnimationConfiguration.staggeredList(
+                          position: i,
+                          duration: const Duration(milliseconds: 260),
+                          child: SlideAnimation(
+                            horizontalOffset: 28,
+                            curve: Curves.easeOutCubic,
+                            child: FadeInAnimation(
+                              curve: Curves.easeOutCubic,
+                              child: SizedBox(
+                                width: r.cardW,
+                                child: ProductCard(
+                                    product: allProducts[idx],
+                                    isHorizontal: true),
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+
+                SliverToBoxAdapter(child: SizedBox(height: r.vGap)),
+
+                // Boutiques tendances titre
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(r.hPad, 0, r.hPad, r.s(12)),
+                    child: SectionTitle(
+                      icon: Icons.star_rounded,
+                      iconColor: Colors.amber,
+                      title: 'Boutiques en tendances',
+                      actionLabel: 'Voir tout',
+                      onAction: () => Get.toNamed('/trending-shops'),
+                    ),
+                  ),
+                ),
+                // Boutiques tendances scroll
+                SliverToBoxAdapter(
+                  child: SizedBox(
+                    height: r.s(165),
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      padding: EdgeInsets.symmetric(horizontal: r.hPad),
+                      itemCount: mockSellers.length,
+                      separatorBuilder: (_, __) => SizedBox(width: r.s(12)),
+                      itemBuilder: (_, i) =>
+                          AnimationConfiguration.staggeredList(
+                        position: i,
+                        duration: const Duration(milliseconds: 260),
+                        child: FadeInAnimation(
+                          curve: Curves.easeOutCubic,
+                          child: ShopCarouselCard(seller: mockSellers[i]),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+
+                SliverToBoxAdapter(child: SizedBox(height: r.vGap)),
+
+                // Boutiques près de chez vous titre
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(r.hPad, 0, r.hPad, r.s(12)),
+                    child: SectionTitle(
+                      icon: Icons.near_me_rounded,
+                      iconColor: AppTheme.secondary,
+                      title: 'Boutiques près de chez vous',
+                      actionLabel: 'Parcourir',
+                      onAction: () => Get.toNamed('/nearby-shops'),
+                    ),
+                  ),
+                ),
+                // Boutiques près de chez vous scroll
+                SliverToBoxAdapter(
+                  child: SizedBox(
+                    height: r.s(165),
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      padding: EdgeInsets.symmetric(horizontal: r.hPad),
+                      itemCount: mockSellers.length,
+                      separatorBuilder: (_, __) => SizedBox(width: r.s(12)),
+                      itemBuilder: (_, i) {
+                        final idx =
+                            (mockSellers.length - 1 - i) % mockSellers.length;
+                        return AnimationConfiguration.staggeredList(
+                          position: i,
+                          duration: const Duration(milliseconds: 260),
+                          child: FadeInAnimation(
+                            curve: Curves.easeOutCubic,
+                            child: ShopCarouselCard(seller: mockSellers[idx]),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+
+                SliverToBoxAdapter(child: SizedBox(height: r.vGap)),
+
                 // ── Tous les articles ─────────────────────────────────────────
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding:
-                        EdgeInsets.fromLTRB(r.hPad, 0, r.hPad, r.s(12)),
+                    padding: EdgeInsets.fromLTRB(r.hPad, 0, r.hPad, r.s(12)),
                     child: const SectionTitle(title: 'Tous les articles'),
                   ),
                 ),
@@ -332,8 +379,7 @@ class HomeBody extends StatelessWidget {
                   SliverPadding(
                     padding: EdgeInsets.symmetric(horizontal: r.hPad),
                     sliver: SliverGrid(
-                      gridDelegate:
-                          SliverGridDelegateWithFixedCrossAxisCount(
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 2,
                         mainAxisSpacing: r.s(12),
                         crossAxisSpacing: r.s(12),
@@ -396,19 +442,26 @@ class HomeBody extends StatelessWidget {
               padding: EdgeInsets.all(r.s(16)),
               child: Text('Sélectionner votre zone',
                   style: TextStyle(
-                      fontSize: r.fs(16), fontWeight: FontWeight.w700,
+                      fontSize: r.fs(16),
+                      fontWeight: FontWeight.w700,
                       color: AppTheme.foreground)),
             ),
             // Option "Toutes les zones"
             ListTile(
               leading: Icon(Icons.public_rounded,
-                  color: current == null ? AppTheme.primary : AppTheme.mutedForeground),
+                  color: current == null
+                      ? AppTheme.primary
+                      : AppTheme.mutedForeground),
               title: Text('Toutes les zones',
                   style: TextStyle(
-                      fontWeight: current == null ? FontWeight.w700 : FontWeight.w500,
-                      color: current == null ? AppTheme.primary : AppTheme.foreground)),
+                      fontWeight:
+                          current == null ? FontWeight.w700 : FontWeight.w500,
+                      color: current == null
+                          ? AppTheme.primary
+                          : AppTheme.foreground)),
               trailing: current == null
-                  ? Icon(Icons.check_circle, color: AppTheme.primary, size: r.s(20))
+                  ? Icon(Icons.check_circle,
+                      color: AppTheme.primary, size: r.s(20))
                   : null,
               onTap: () {
                 ctrl.setSelectedZone(null);
@@ -433,14 +486,21 @@ class HomeBody extends StatelessWidget {
                     final isSelected = current == zone;
                     return ListTile(
                       leading: Icon(Icons.location_on_outlined,
-                          color: isSelected ? AppTheme.primary : AppTheme.mutedForeground,
+                          color: isSelected
+                              ? AppTheme.primary
+                              : AppTheme.mutedForeground,
                           size: r.s(20)),
                       title: Text(zone,
                           style: TextStyle(
-                              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                              color: isSelected ? AppTheme.primary : AppTheme.foreground)),
+                              fontWeight: isSelected
+                                  ? FontWeight.w700
+                                  : FontWeight.w500,
+                              color: isSelected
+                                  ? AppTheme.primary
+                                  : AppTheme.foreground)),
                       trailing: isSelected
-                          ? Icon(Icons.check_circle, color: AppTheme.primary, size: r.s(20))
+                          ? Icon(Icons.check_circle,
+                              color: AppTheme.primary, size: r.s(20))
                           : null,
                       onTap: () {
                         ctrl.setSelectedZone(zone);
@@ -463,8 +523,8 @@ class HomeBody extends StatelessWidget {
       padding: EdgeInsets.symmetric(vertical: r.s(20)),
       child: Center(
         child: Text(message,
-            style: TextStyle(
-                fontSize: r.fs(13), color: AppTheme.mutedForeground)),
+            style:
+                TextStyle(fontSize: r.fs(13), color: AppTheme.mutedForeground)),
       ),
     );
   }
@@ -495,9 +555,11 @@ class HomeBody extends StatelessWidget {
                             fontSize: r.fs(14),
                             fontWeight: FontWeight.w700,
                             color: AppTheme.primary)),
-                    Text('Sélectionnez votre quartier ou ville pour voir les produits proches.',
+                    Text(
+                        'Sélectionnez votre quartier ou ville pour voir les produits proches.',
                         style: TextStyle(
-                            fontSize: r.fs(12), color: AppTheme.mutedForeground)),
+                            fontSize: r.fs(12),
+                            color: AppTheme.mutedForeground)),
                   ],
                 ),
               ),
