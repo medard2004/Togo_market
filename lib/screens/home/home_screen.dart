@@ -19,8 +19,15 @@ class HomeScreen extends StatelessWidget {
           children: [
             GetBuilder<AppController>(builder: (ctrl) => HomeTopBar(ctrl: ctrl)),
             Obx(() {
-              final user = Get.find<AuthController>().currentUser.value;
-              if (user != null && (user.nom == null || user.nom!.isEmpty)) {
+              final authCtrl = Get.find<AuthController>();
+              final user = authCtrl.currentUser.value;
+
+              final needsName = user == null || user.nom == null || user.nom!.isEmpty;
+              final needsPhone = user == null || user.telephone.isEmpty || user.telephone.startsWith('tmp_');
+              final isFirstTime = authCtrl.isFirstTime.value;
+
+              // Show prompt if any essential profile piece is missing or onboarding not completed
+              if (user != null && (needsName || needsPhone || isFirstTime)) {
                 return Container(
                   margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   padding: const EdgeInsets.all(12),
