@@ -5,6 +5,7 @@ import '../../theme/app_theme.dart';
 import '../../theme/app_colors.dart';
 import '../../animations/togo_animation_system.dart';
 import '../../utils/responsive.dart';
+import '../../controllers/boutique_controller.dart';
 
 class SellChoiceSheet extends StatelessWidget {
   const SellChoiceSheet({super.key});
@@ -100,9 +101,9 @@ class SellChoiceSheet extends StatelessWidget {
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                         ),
-                        onTap: () {
+                        onTap: () async {
                           Get.back();
-                          Get.toNamed('/store-config');
+                          await Get.find<BoutiqueController>().goToMyBoutique();
                         },
                       ),
                     ),
