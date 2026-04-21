@@ -1,4 +1,6 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -85,22 +87,26 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
       child: Scaffold(
         backgroundColor: AppColors.background,
         body: SafeArea(
-          child: Column(
+          child: Stack(
             children: [
-              _buildModernHeader(),
-              Expanded(
-                child: PageView(
-                  controller: _pageController,
-                  physics: const NeverScrollableScrollPhysics(),
-                  onPageChanged: (idx) => setState(() => _currentStep = idx),
-                  children: [
-                    _buildStep1Identity(),
-                    _buildStep2Visuals(),
-                    _buildStep3Location(),
-                    _buildStep4Hours(),
-                    _buildStep5Review(),
-                  ],
-                ),
+              Column(
+                children: [
+                  _buildModernHeader(),
+                  Expanded(
+                    child: PageView(
+                      controller: _pageController,
+                      physics: const NeverScrollableScrollPhysics(),
+                      onPageChanged: (idx) => setState(() => _currentStep = idx),
+                      children: [
+                        _buildStep1Identity(),
+                        _buildStep2Visuals(),
+                        _buildStep3Location(),
+                        _buildStep4Hours(),
+                        _buildStep5Review(),
+                      ],
+                    ),
+                  ),
+                ],
               ),
               _buildBottomBar(),
             ],
@@ -200,7 +206,7 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
   // --- STEP 1: IDENTITY ---
   Widget _buildStep1Identity() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+      padding: const EdgeInsets.fromLTRB(24, 0, 24, 120),
       child: TogoFadeInEntry(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -229,8 +235,8 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
               icon: Icons.auto_fix_high_rounded,
               onChanged: (v) => _data.slogan = v,
             ),
-            _buildFieldLabel('Quelle est votre catégorie ?'),
-            _buildCategoryDropdown(),
+            _buildFieldLabel('Quelles sont vos catégories ? (Plusieurs possibles)'),
+            _buildCategorySelector(),
             const SizedBox(height: 24),
             _buildCharmingField(
               label: 'Votre histoire (Description)',
@@ -249,7 +255,7 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
   // --- STEP 2: VISUALS ---
   Widget _buildStep2Visuals() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+      padding: const EdgeInsets.fromLTRB(24, 0, 24, 120),
       child: TogoFadeInEntry(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -318,7 +324,7 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
   // --- STEP 3: LOCATION ---
   Widget _buildStep3Location() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+      padding: const EdgeInsets.fromLTRB(24, 0, 24, 120),
       child: TogoFadeInEntry(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -383,7 +389,7 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
   Widget _buildStep4Hours() {
     return TogoFadeInEntry(
       child: ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 24),
+        padding: const EdgeInsets.fromLTRB(24, 0, 24, 120),
         children: [
           const Text('Vos horaires',
               style: TextStyle(
@@ -404,7 +410,7 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
   // --- STEP 5: REVIEW ---
   Widget _buildStep5Review() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+      padding: const EdgeInsets.fromLTRB(24, 0, 24, 120),
       child: TogoFadeInEntry(
         child: Column(
           children: [
@@ -488,39 +494,56 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
     );
   }
 
-  Widget _buildCategoryDropdown() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: AppRadius.lgBorderRadius,
-        boxShadow: AppShadows.shadowSm,
-        border: Border.all(color: AppColors.border.withOpacity(0.5)),
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: _data.categoryId,
-          isExpanded: true,
-          icon: const Icon(Icons.keyboard_arrow_down_rounded,
-              color: AppColors.primary),
-          items: mockCategories
-              .where((c) => c.id != 'all')
-              .map((c) => DropdownMenuItem(
-                    value: c.id,
-                    child: Row(
-                      children: [
-                        Icon(c.icon, size: 18, color: AppColors.primary),
-                        const SizedBox(width: 12),
-                        Text(c.label,
-                            style:
-                                const TextStyle(fontWeight: FontWeight.w600)),
-                      ],
+  Widget _buildCategorySelector() {
+    return Wrap(
+      spacing: 10,
+      runSpacing: 10,
+      children: mockCategories
+          .where((c) => c.id != 'all')
+          .map((c) {
+            final isSelected = _data.categoryIds.contains(c.id);
+            return TogoPressableScale(
+              onTap: () {
+                setState(() {
+                  if (isSelected) {
+                    _data.categoryIds.remove(c.id);
+                  } else {
+                    _data.categoryIds.add(c.id);
+                  }
+                });
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                decoration: BoxDecoration(
+                  color: isSelected ? AppColors.primary : Colors.white,
+                  borderRadius: AppRadius.lgBorderRadius,
+                  boxShadow: isSelected ? AppShadows.shadowPrimary : AppShadows.shadowSm,
+                  border: Border.all(
+                    color: isSelected ? AppColors.primary : AppColors.border.withOpacity(0.5),
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(c.icon,
+                        size: 16,
+                        color: isSelected ? Colors.white : AppColors.primary),
+                    const SizedBox(width: 8),
+                    Text(
+                      c.label,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: isSelected ? Colors.white : AppColors.foreground,
+                      ),
                     ),
-                  ))
-              .toList(),
-          onChanged: (v) => setState(() => _data.categoryId = v!),
-        ),
-      ),
+                  ],
+                ),
+              ),
+            );
+          })
+          .toList(),
     );
   }
 
@@ -648,10 +671,15 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
                     child: Text(h.day,
                         style: const TextStyle(
                             fontSize: 16, fontWeight: FontWeight.w900))),
-                Switch.adaptive(
-                  value: h.isOpen,
-                  activeColor: AppColors.primary,
-                  onChanged: (v) => setState(() => h.isOpen = v),
+                Transform.scale(
+                  scale: 0.7,
+                  alignment: Alignment.centerRight,
+                  child: CupertinoSwitch(
+                    value: h.isOpen,
+                    activeTrackColor: AppColors.primary,
+                    inactiveTrackColor: const Color(0xFFEEEEEE),
+                    onChanged: (v) => setState(() => h.isOpen = v),
+                  ),
                 ),
               ],
             ),
@@ -660,34 +688,67 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
               Row(
                 children: [
                   _buildCharmingTime(
-                      h.openingTime!, (t) => setState(() => h.openingTime = t)),
+                      h.openingTime!,
+                      enabled: !h.isHalfDay,
+                      (t) => setState(() {
+                            h.openingTime = t;
+                            if (h.openingTime?.hour == 9 &&
+                                h.openingTime?.minute == 0 &&
+                                h.closingTime?.hour == 12 &&
+                                h.closingTime?.minute == 0) {
+                              h.isHalfDay = true;
+                            } else {
+                              h.isHalfDay = false;
+                            }
+                          })),
                   const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 10),
+                    padding: EdgeInsets.symmetric(horizontal: 8),
                     child: Text('→',
                         style: TextStyle(
                             fontWeight: FontWeight.bold,
                             color: AppColors.mutedForeground)),
                   ),
                   _buildCharmingTime(
-                      h.closingTime!, (t) => setState(() => h.closingTime = t)),
+                      h.closingTime!,
+                      enabled: !h.isHalfDay,
+                      (t) => setState(() {
+                            h.closingTime = t;
+                            if (h.openingTime?.hour == 9 &&
+                                h.openingTime?.minute == 0 &&
+                                h.closingTime?.hour == 12 &&
+                                h.closingTime?.minute == 0) {
+                              h.isHalfDay = true;
+                            } else {
+                              h.isHalfDay = false;
+                            }
+                          })),
                   const Spacer(),
                   TogoPressableScale(
-                    onTap: () => setState(() => h.isHalfDay = !h.isHalfDay),
+                    onTap: () => setState(() {
+                      h.isHalfDay = !h.isHalfDay;
+                      if (h.isHalfDay) {
+                        h.openingTime = const TimeOfDay(hour: 9, minute: 0);
+                        h.closingTime = const TimeOfDay(hour: 12, minute: 0);
+                      }
+                    }),
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 6),
+                          horizontal: 8, vertical: 6),
                       decoration: BoxDecoration(
                         color:
                             h.isHalfDay ? AppColors.primary : AppColors.muted,
                         borderRadius: BorderRadius.circular(20),
                       ),
-                      child: Text('Demi-journée',
-                          style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w800,
-                              color: h.isHalfDay
-                                  ? Colors.white
-                                  : AppColors.mutedForeground)),
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text('Demi-journée',
+                            style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w800,
+                                color: h.isHalfDay
+                                    ? Colors.white
+                                    : AppColors.mutedForeground)),
+                      ),
                     ),
                   ),
                 ],
@@ -699,21 +760,38 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
     );
   }
 
-  Widget _buildCharmingTime(TimeOfDay time, Function(TimeOfDay) onPicked) {
+  Widget _buildCharmingTime(TimeOfDay time, Function(TimeOfDay) onPicked,
+      {bool enabled = true}) {
     return GestureDetector(
-      onTap: () async {
-        final t = await showTimePicker(context: context, initialTime: time);
-        if (t != null) onPicked(t);
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        decoration: BoxDecoration(
-          color: AppColors.muted,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Text(
-          '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}',
-          style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13),
+      onTap: enabled
+          ? () async {
+              final t =
+                  await showTimePicker(context: context, initialTime: time);
+              if (t != null) onPicked(t);
+            }
+          : null,
+      child: AnimatedOpacity(
+        duration: const Duration(milliseconds: 200),
+        opacity: enabled ? 1.0 : 0.5,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          decoration: BoxDecoration(
+            color: AppColors.muted,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: enabled
+                  ? Colors.transparent
+                  : AppColors.border.withOpacity(0.3),
+            ),
+          ),
+          child: Text(
+            '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}',
+            style: TextStyle(
+              fontWeight: FontWeight.w900,
+              fontSize: 13,
+              color: enabled ? AppColors.foreground : AppColors.mutedForeground,
+            ),
+          ),
         ),
       ),
     );
@@ -789,7 +867,9 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
                 _buildReviewRow(
                     Icons.pin_drop_rounded, '${_data.zone}, ${_data.address}'),
                 _buildReviewRow(Icons.auto_awesome_mosaic_rounded,
-                    _data.categoryId.capitalizeFirst ?? ''),
+                    _data.categoryIds.isEmpty 
+                      ? 'Aucune catégorie' 
+                      : _data.categoryIds.map((id) => mockCategories.firstWhere((c) => c.id == id).label).join(', ')),
               ],
             ),
           ),
@@ -822,53 +902,88 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
 
   Widget _buildBottomBar() {
     bool isLast = _currentStep == _totalSteps - 1;
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border:
-            Border(top: BorderSide(color: AppColors.border.withOpacity(0.3))),
-      ),
-      child: Row(
-        children: [
-          if (_currentStep == 0)
-            Expanded(
-              child: ElevatedButton(
-                onPressed: _nextStep,
-                style: ElevatedButton.styleFrom(
-                  minimumSize: const Size(double.infinity, 56),
-                ),
-                child: const Text('C\'est parti !'),
+    return Positioned(
+      bottom: 20,
+      left: 0,
+      right: 0,
+      child: Center(
+        child: Container(
+          width: MediaQuery.of(context).size.width * 0.88,
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(35),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.08),
+                blurRadius: 30,
+                offset: const Offset(0, 10),
               ),
-            )
-          else ...[
-            TogoPressableScale(
-              onTap: _prevStep,
-              child: Container(
-                height: 56,
-                width: 56,
-                decoration: BoxDecoration(
-                  color: AppColors.muted,
-                  borderRadius: AppRadius.lgBorderRadius,
-                  border: Border.all(color: AppColors.border.withOpacity(0.5)),
+            ],
+            border: Border.all(color: AppColors.border.withOpacity(0.3)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (_currentStep > 0) ...[
+                TogoPressableScale(
+                  onTap: _prevStep,
+                  child: Container(
+                    height: 52,
+                    width: 52,
+                    decoration: BoxDecoration(
+                      color: AppColors.muted,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.arrow_back_rounded,
+                        size: 20, color: AppColors.foreground),
+                  ),
                 ),
-                child: const Icon(Icons.arrow_back_rounded,
-                    color: AppColors.foreground),
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: ElevatedButton(
-                onPressed: _nextStep,
-                style: ElevatedButton.styleFrom(
-                  minimumSize: const Size(double.infinity, 56),
-                  backgroundColor: AppColors.primary,
+                const SizedBox(width: 10),
+              ],
+              Expanded(
+                child: TogoPressableScale(
+                  onTap: _nextStep,
+                  child: Container(
+                    height: 54,
+                    decoration: BoxDecoration(
+                      gradient: AppColors.primaryGradient,
+                      borderRadius: BorderRadius.circular(30),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.primary.withOpacity(0.35),
+                          blurRadius: 15,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: Center(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            isLast ? 'C\'est parti !' : 'Continuer',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Icon(
+                            isLast ? Icons.rocket_launch_rounded : Icons.double_arrow_rounded,
+                            color: Colors.white.withOpacity(0.9),
+                            size: 18,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
-                child: Text(isLast ? 'Lancer ma boutique' : 'Continuer'),
               ),
-            ),
-          ],
-        ],
+            ],
+          ),
+        ),
       ),
     );
   }

@@ -82,11 +82,15 @@ class _ShopSettingsScreenState extends State<ShopSettingsScreen> {
                                   Icon(Icons.location_on_outlined,
                                       size: 14,
                                       color: AppTheme.mutedForeground),
-                                  Text(' Tokoin, Lomé',
-                                      style: TextStyle(
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.w500,
-                                          color: AppTheme.mutedForeground)),
+                                  Flexible(
+                                    child: Text(' Tokoin, Lomé',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w500,
+                                            color: AppTheme.mutedForeground)),
+                                  ),
                                 ],
                               ),
                               const SizedBox(height: 4),
@@ -103,11 +107,15 @@ class _ShopSettingsScreenState extends State<ShopSettingsScreen> {
                                       style: TextStyle(
                                           fontSize: 13,
                                           color: AppTheme.border)),
-                                  Text('3 articles',
-                                      style: TextStyle(
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.w500,
-                                          color: AppTheme.mutedForeground)),
+                                  Flexible(
+                                    child: Text('3 articles',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w500,
+                                            color: AppTheme.mutedForeground)),
+                                  ),
                                 ],
                               ),
                             ],

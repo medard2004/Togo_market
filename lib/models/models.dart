@@ -57,6 +57,7 @@ class ChatMessage {
   final String senderId;
   final String timestamp;
   final bool isMe;
+  final String? productId;
 
   const ChatMessage({
     required this.id,
@@ -64,6 +65,7 @@ class ChatMessage {
     required this.senderId,
     required this.timestamp,
     required this.isMe,
+    this.productId,
   });
 }
 

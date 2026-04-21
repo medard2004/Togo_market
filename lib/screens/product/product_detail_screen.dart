@@ -450,7 +450,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   // Bouton Discuter (plein)
                   Expanded(
                     child: GestureDetector(
-                      onTap: () => Get.toNamed('/chat/c1'),
+                      onTap: () => Get.toNamed('/chat/c1', arguments: product),
                       child: Container(
                         height: r.s(50).clamp(44, 56),
                         decoration: BoxDecoration(

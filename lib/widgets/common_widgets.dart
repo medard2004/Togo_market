@@ -350,12 +350,16 @@ class FavoriteTicketCard extends StatelessWidget {
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        Text(
-                          formatPrice(product.price),
-                          style: TextStyle(
-                            fontSize: r.fs(14),
-                            fontWeight: FontWeight.w800,
-                            color: AppTheme.primary,
+                        Flexible(
+                          child: Text(
+                            formatPrice(product.price),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: r.fs(14),
+                              fontWeight: FontWeight.w800,
+                              color: AppTheme.primary,
+                            ),
                           ),
                         ),
                         const Spacer(),

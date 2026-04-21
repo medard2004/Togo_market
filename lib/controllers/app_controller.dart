@@ -97,13 +97,14 @@ class ChatController extends GetxController {
   }
 
   Future<void> sendMessage(
-      String conversationId, String content, String sellerId) async {
+      String conversationId, String content, String sellerId, {String? productId}) async {
     final newMsg = ChatMessage(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       content: content,
       senderId: 'me',
       timestamp: _formatTime(),
       isMe: true,
+      productId: productId,
     );
     currentMessages.add(newMsg);
 

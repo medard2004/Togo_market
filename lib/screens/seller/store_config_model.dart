@@ -21,7 +21,7 @@ class StoreConfigData {
   String name = '';
   String slogan = '';
   String description = '';
-  String categoryId = 'friperie';
+  List<String> categoryIds = [];
   String phone = '';
   String zone = 'Tokoin';
   String address = '';

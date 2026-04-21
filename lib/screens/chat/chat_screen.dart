@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:togo_market/animations/togo_animation_system.dart';
+import 'package:togo_market/theme/app_colors.dart';
 import '../../theme/app_theme.dart';
 import '../../controllers/app_controller.dart';
 import '../../data/mock_data.dart';
+import '../../models/models.dart';
+import '../../utils/responsive.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -25,19 +29,40 @@ class _ChatScreenState extends State<ChatScreen> {
     '🤝 Négociable ?',
   ];
 
+  late Product? _activeProduct;
+  bool _showProductPreview = false;
+
   @override
   void initState() {
     super.initState();
     final convId = Get.parameters['id'] ?? 'c1';
     _chatCtrl.loadConversation(convId);
+
+    _activeProduct =
+        (Get.arguments is Product) ? Get.arguments as Product : null;
+    _showProductPreview = _activeProduct != null;
+
+    // Auto-fill context message
+    if (_showProductPreview) {
+      _msgCtrl.text = 'Bonjour, je suis intéressé par votre annonce.';
+    }
   }
 
   void _send([String? text]) {
     final content = text ?? _msgCtrl.text.trim();
-    if (content.isEmpty) return;
+    if (content.isEmpty) return; // Prevent sending empty messages
+
     _msgCtrl.clear();
     final convId = Get.parameters['id'] ?? 'c1';
-    _chatCtrl.sendMessage(convId, content, 's1');
+
+    // Send message with product context if it's the first one or specifically attached
+    _chatCtrl.sendMessage(convId, content, 's1',
+        productId: _showProductPreview ? _activeProduct?.id : null);
+
+    // Clear product preview after sending
+    if (_showProductPreview) {
+      setState(() => _showProductPreview = false);
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollCtrl.hasClients) {
         _scrollCtrl.animateTo(
@@ -51,11 +76,14 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final r = R(context);
     final seller = getSellerById('s1');
-    final product = getProductById('p1');
+    final product = (Get.arguments is Product)
+        ? Get.arguments as Product
+        : getProductById('p1');
 
     return Scaffold(
-        resizeToAvoidBottomInset: true,
+      resizeToAvoidBottomInset: true,
       backgroundColor: AppTheme.background,
       appBar: AppBar(
         backgroundColor: AppTheme.cardColor,
@@ -70,8 +98,7 @@ class _ChatScreenState extends State<ChatScreen> {
             if (seller != null)
               CircleAvatar(
                 radius: 18,
-                backgroundImage:
-                    CachedNetworkImageProvider(seller.avatar),
+                backgroundImage: CachedNetworkImageProvider(seller.avatar),
               ),
             const SizedBox(width: 10),
             Expanded(
@@ -145,8 +172,8 @@ class _ChatScreenState extends State<ChatScreen> {
               itemBuilder: (_, i) => GestureDetector(
                 onTap: () => _send(_quickReplies[i]),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 14, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                   decoration: BoxDecoration(
                     color: AppTheme.cardColor,
                     borderRadius: BorderRadius.circular(20),
@@ -162,46 +189,73 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
           const SizedBox(height: 8),
           // Input
-          Padding(
+          Container(
             padding: EdgeInsets.fromLTRB(
                 16, 4, 16, MediaQuery.of(context).padding.bottom + 8),
-            child: Row(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              border: Border(
+                  top: BorderSide(color: AppTheme.border.withOpacity(0.3))),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Expanded(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: AppTheme.muted,
-                      borderRadius: BorderRadius.circular(24),
+                if (_activeProduct != null && _showProductPreview)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8.0),
+                    child: _ProductInputPreview(
+                      product: _activeProduct!,
+                      onClose: () =>
+                          setState(() => _showProductPreview = false),
                     ),
-                    child: TextField(
-                      controller: _msgCtrl,
-                      decoration: const InputDecoration(
-                        hintText: 'Écrivez un message...',
-                        border: InputBorder.none,
-                        enabledBorder: InputBorder.none,
-                        focusedBorder: InputBorder.none,
-                        contentPadding: EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 12),
-                        fillColor: Colors.transparent,
-                        filled: false,
+                  ),
+                Row(
+                  children: [
+                    GestureDetector(
+                      onTap: () {}, // Add attachment logic here later
+                      child: Container(
+                        padding: const EdgeInsets.only(right: 12),
+                        child: Icon(Icons.add,
+                            color: AppTheme.primary, size: r.s(24)),
                       ),
                     ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                GestureDetector(
-                  onTap: _send,
-                  child: Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: AppTheme.primary,
-                      shape: BoxShape.circle,
-                      boxShadow: AppTheme.shadowPrimary,
+                    Expanded(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: AppTheme.muted,
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                        child: TextField(
+                          controller: _msgCtrl,
+                          decoration: const InputDecoration(
+                            hintText: 'Écrivez un message...',
+                            border: InputBorder.none,
+                            enabledBorder: InputBorder.none,
+                            focusedBorder: InputBorder.none,
+                            contentPadding: EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 12),
+                            fillColor: Colors.transparent,
+                            filled: false,
+                          ),
+                        ),
+                      ),
                     ),
-                    child:
-                        const Icon(Icons.send, color: Colors.white, size: 20),
-                  ),
+                    const SizedBox(width: 8),
+                    GestureDetector(
+                      onTap: _send,
+                      child: Container(
+                        width: r.s(48),
+                        height: r.s(48),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primary,
+                          shape: BoxShape.circle,
+                          boxShadow: AppTheme.shadowPrimary,
+                        ),
+                        child: const Icon(Icons.send,
+                            color: Colors.white, size: 20),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -220,6 +274,7 @@ class _MessageBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final r = R(context);
     final isMe = message.isMe as bool;
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
@@ -244,8 +299,7 @@ class _MessageBubble extends StatelessWidget {
             constraints: BoxConstraints(
               maxWidth: MediaQuery.of(context).size.width * 0.65,
             ),
-            padding:
-                const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
               color: isMe ? AppTheme.primary : AppTheme.cardColor,
               borderRadius: BorderRadius.only(
@@ -259,16 +313,25 @@ class _MessageBubble extends StatelessWidget {
               boxShadow: isMe ? null : AppTheme.shadowCard,
             ),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
+              crossAxisAlignment:
+                  isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
               children: [
-                Text(
-                  message.content as String,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: isMe ? Colors.white : AppTheme.foreground,
-                    height: 1.4,
+                if (message.productId != null)
+                  _MessageProductPreview(
+                      productId: message.productId!, isMe: isMe),
+                if ((message.content as String).isNotEmpty)
+                  Padding(
+                    padding: EdgeInsets.only(
+                        top: message.productId != null ? r.s(8) : 0),
+                    child: Text(
+                      message.content as String,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: isMe ? Colors.white : AppTheme.foreground,
+                        height: 1.4,
+                      ),
+                    ),
                   ),
-                ),
                 const SizedBox(height: 4),
                 Text(
                   message.timestamp as String,
@@ -307,8 +370,7 @@ class _TypingIndicator extends StatelessWidget {
             ),
           const SizedBox(width: 8),
           Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             decoration: BoxDecoration(
               color: AppTheme.cardColor,
               borderRadius: BorderRadius.circular(16),
@@ -373,6 +435,139 @@ class _DotState extends State<_Dot> with SingleTickerProviderStateMixin {
             color: AppTheme.mutedForeground,
             shape: BoxShape.circle,
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ProductInputPreview extends StatelessWidget {
+  final Product product;
+  final VoidCallback onClose;
+
+  const _ProductInputPreview({required this.product, required this.onClose});
+
+  @override
+  Widget build(BuildContext context) {
+    final r = R(context);
+    return Container(
+      padding: EdgeInsets.all(r.s(6)),
+      decoration: BoxDecoration(
+        color: AppTheme.primaryLight.withOpacity(0.5),
+        borderRadius: BorderRadius.circular(r.rad(14)),
+      ),
+      child: Row(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(r.rad(10)),
+            child: CachedNetworkImage(
+              imageUrl: product.image,
+              width: r.s(32),
+              height: r.s(32),
+              fit: BoxFit.cover,
+            ),
+          ),
+          SizedBox(width: r.s(10)),
+          Expanded(
+            child: Text(
+              'Réponse à : ${product.title}',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: r.fs(12),
+                fontWeight: FontWeight.w600,
+                color: AppTheme.primary,
+              ),
+            ),
+          ),
+          IconButton(
+            onPressed: onClose,
+            constraints: const BoxConstraints(),
+            padding: EdgeInsets.zero,
+            icon: Icon(Icons.close_rounded,
+                size: r.s(16), color: AppTheme.primary),
+          ),
+          SizedBox(width: r.s(4)),
+        ],
+      ),
+    );
+  }
+}
+
+class _MessageProductPreview extends StatelessWidget {
+  final String productId;
+  final bool isMe;
+
+  const _MessageProductPreview({required this.productId, required this.isMe});
+
+  @override
+  Widget build(BuildContext context) {
+    final r = R(context);
+    final product = getProductById(productId);
+    if (product == null) return const SizedBox.shrink();
+
+    return GestureDetector(
+      onTap: () => Get.toNamed('/product/$productId'),
+      child: Container(
+        margin: EdgeInsets.only(bottom: r.s(6)),
+        padding: EdgeInsets.all(r.s(2)),
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(r.rad(18)),
+          boxShadow: [
+            BoxShadow(
+                color: Colors.black.withOpacity(0.04),
+                blurRadius: 8,
+                offset: const Offset(0, 3)),
+          ],
+        ),
+        child: Column(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(r.rad(16)),
+              child: CachedNetworkImage(
+                imageUrl: product.image,
+                height: r.s(110),
+                width: double.infinity,
+                fit: BoxFit.cover,
+              ),
+            ),
+            Padding(
+              padding: EdgeInsets.all(r.s(10)),
+              child: Column(
+                children: [
+                  Text(
+                    product.title,
+                    maxLines: 1,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: r.fs(13),
+                      fontWeight: FontWeight.w700,
+                      color: AppTheme.foreground,
+                    ),
+                  ),
+                  SizedBox(height: r.s(4)),
+                  Container(
+                    padding: EdgeInsets.symmetric(
+                        horizontal: r.s(10), vertical: r.s(3)),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryLight,
+                      borderRadius: BorderRadius.circular(r.rad(20)),
+                    ),
+                    child: Text(
+                      '${formatPrice(product.price).replaceAll(' F', '')} FCFA',
+                      style: TextStyle(
+                        fontSize: r.fs(11),
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.primary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
