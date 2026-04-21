@@ -6,6 +6,8 @@ import '../Api/model/product_model.dart';
 import '../utils/app_toasts.dart';
 import '../Api/services/produit_service.dart';
 import 'app_controller.dart';
+import '../Api/core/api_client.dart';
+import 'boutique_controller.dart';
 
 class ProductFormController extends GetxController {
   final formKey = GlobalKey<FormState>();
@@ -134,6 +136,16 @@ class ProductFormController extends GetxController {
       return;
     }
 
+    // Ensure user has a boutique before publishing store product
+    if (Get.isRegistered<BoutiqueController>()) {
+      final bc = Get.find<BoutiqueController>();
+      if (bc.myBoutique.value == null) {
+        // Redirect user to create/configure boutique flow
+        await bc.goToMyBoutique();
+        return;
+      }
+    }
+
     isLoading.value = true;
 
     try {
@@ -174,8 +186,17 @@ class ProductFormController extends GetxController {
 
       Get.back(); // Pop screen
     } catch (e) {
-      if (Get.context != null) {
-        AppToasts.error(Get.context!, 'Erreur', 'Échec de la publication : $e');
+      // More explicit error handling for common API exceptions
+      if (e is ValidationException) {
+        if (Get.context != null) AppToasts.error(Get.context!, 'Erreur', e.message);
+      } else if (e is UnauthorizedException) {
+        if (Get.context != null) AppToasts.error(Get.context!, 'Erreur', e.message);
+        // Force re-authentication
+        Get.offAllNamed('/auth');
+      } else {
+        if (Get.context != null) {
+          AppToasts.error(Get.context!, 'Erreur', 'Échec de la publication : $e');
+        }
       }
     } finally {
       isLoading.value = false;
