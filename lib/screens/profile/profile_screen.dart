@@ -123,24 +123,28 @@ class ProfileScreen extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 18),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: () => Get.toNamed('/edit-profile'),
-                      icon: const Icon(Icons.edit, size: 18),
-                      label: const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 12),
-                        child: Text('Modifier le profil',
-                            style: TextStyle(fontSize: 15)),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primary,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
+                  Obx(() {
+                      final user = authCtrl.currentUser.value;
+                      final isIncomplete = user == null || user.nom == null || user.nom!.isEmpty;
+                      return SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: () => Get.toNamed(isIncomplete ? '/profile-setup' : '/edit-profile'),
+                          icon: Icon(isIncomplete ? Icons.person_add : Icons.edit, size: 18),
+                          label: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            child: Text(isIncomplete ? 'Compléter le profil' : 'Modifier le profil',
+                                style: const TextStyle(fontSize: 15)),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.primary,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
-                  ),
+                      );
+                    }),
                 ],
               ),
             ),
