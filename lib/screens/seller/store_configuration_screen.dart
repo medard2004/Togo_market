@@ -1,16 +1,11 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import '../../theme/app_theme.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_radius.dart';
-import '../../theme/app_spacing.dart';
 import '../../theme/app_shadows.dart';
 import '../../animations/togo_animation_system.dart';
-import '../../widgets/common_widgets.dart';
 import '../../data/mock_data.dart';
 import 'store_config_model.dart';
 
@@ -96,7 +91,8 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
                     child: PageView(
                       controller: _pageController,
                       physics: const NeverScrollableScrollPhysics(),
-                      onPageChanged: (idx) => setState(() => _currentStep = idx),
+                      onPageChanged: (idx) =>
+                          setState(() => _currentStep = idx),
                       children: [
                         _buildStep1Identity(),
                         _buildStep2Visuals(),
@@ -235,7 +231,8 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
               icon: Icons.auto_fix_high_rounded,
               onChanged: (v) => _data.slogan = v,
             ),
-            _buildFieldLabel('Quelles sont vos catégories ? (Plusieurs possibles)'),
+            _buildFieldLabel(
+                'Quelles sont vos catégories ? (Plusieurs possibles)'),
             _buildCategorySelector(),
             const SizedBox(height: 24),
             _buildCharmingField(
@@ -498,52 +495,52 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
     return Wrap(
       spacing: 10,
       runSpacing: 10,
-      children: mockCategories
-          .where((c) => c.id != 'all')
-          .map((c) {
-            final isSelected = _data.categoryIds.contains(c.id);
-            return TogoPressableScale(
-              onTap: () {
-                setState(() {
-                  if (isSelected) {
-                    _data.categoryIds.remove(c.id);
-                  } else {
-                    _data.categoryIds.add(c.id);
-                  }
-                });
-              },
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                decoration: BoxDecoration(
-                  color: isSelected ? AppColors.primary : Colors.white,
-                  borderRadius: AppRadius.lgBorderRadius,
-                  boxShadow: isSelected ? AppShadows.shadowPrimary : AppShadows.shadowSm,
-                  border: Border.all(
-                    color: isSelected ? AppColors.primary : AppColors.border.withOpacity(0.5),
+      children: mockCategories.where((c) => c.id != 'all').map((c) {
+        final isSelected = _data.categoryIds.contains(c.id);
+        return TogoPressableScale(
+          onTap: () {
+            setState(() {
+              if (isSelected) {
+                _data.categoryIds.remove(c.id);
+              } else {
+                _data.categoryIds.add(c.id);
+              }
+            });
+          },
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            decoration: BoxDecoration(
+              color: isSelected ? AppColors.primary : Colors.white,
+              borderRadius: AppRadius.lgBorderRadius,
+              boxShadow:
+                  isSelected ? AppShadows.shadowPrimary : AppShadows.shadowSm,
+              border: Border.all(
+                color: isSelected
+                    ? AppColors.primary
+                    : AppColors.border.withOpacity(0.5),
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(c.icon,
+                    size: 16,
+                    color: isSelected ? Colors.white : AppColors.primary),
+                const SizedBox(width: 8),
+                Text(
+                  c.label,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: isSelected ? Colors.white : AppColors.foreground,
                   ),
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(c.icon,
-                        size: 16,
-                        color: isSelected ? Colors.white : AppColors.primary),
-                    const SizedBox(width: 8),
-                    Text(
-                      c.label,
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: isSelected ? Colors.white : AppColors.foreground,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          })
-          .toList(),
+              ],
+            ),
+          ),
+        );
+      }).toList(),
     );
   }
 
@@ -671,15 +668,10 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
                     child: Text(h.day,
                         style: const TextStyle(
                             fontSize: 16, fontWeight: FontWeight.w900))),
-                Transform.scale(
-                  scale: 0.7,
-                  alignment: Alignment.centerRight,
-                  child: CupertinoSwitch(
-                    value: h.isOpen,
-                    activeTrackColor: AppColors.primary,
-                    inactiveTrackColor: const Color(0xFFEEEEEE),
-                    onChanged: (v) => setState(() => h.isOpen = v),
-                  ),
+                Switch.adaptive(
+                  value: h.isOpen,
+                  activeColor: AppColors.primary,
+                  onChanged: (v) => setState(() => h.isOpen = v),
                 ),
               ],
             ),
@@ -866,10 +858,15 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
                         : _phoneCtrl.text),
                 _buildReviewRow(
                     Icons.pin_drop_rounded, '${_data.zone}, ${_data.address}'),
-                _buildReviewRow(Icons.auto_awesome_mosaic_rounded,
-                    _data.categoryIds.isEmpty 
-                      ? 'Aucune catégorie' 
-                      : _data.categoryIds.map((id) => mockCategories.firstWhere((c) => c.id == id).label).join(', ')),
+                _buildReviewRow(
+                    Icons.auto_awesome_mosaic_rounded,
+                    _data.categoryIds.isEmpty
+                        ? 'Aucune catégorie'
+                        : _data.categoryIds
+                            .map((id) => mockCategories
+                                .firstWhere((c) => c.id == id)
+                                .label)
+                            .join(', ')),
               ],
             ),
           ),
@@ -971,7 +968,9 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
                           ),
                           const SizedBox(width: 8),
                           Icon(
-                            isLast ? Icons.rocket_launch_rounded : Icons.double_arrow_rounded,
+                            isLast
+                                ? Icons.rocket_launch_rounded
+                                : Icons.double_arrow_rounded,
                             color: Colors.white.withOpacity(0.9),
                             size: 18,
                           ),

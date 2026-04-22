@@ -33,6 +33,7 @@ class Seller {
   final String name;
   final String shopName;
   final String avatar;
+  final String coverUrl;
   final double rating;
   final String responseTime;
   final String location;
@@ -43,6 +44,7 @@ class Seller {
     required this.name,
     required this.shopName,
     required this.avatar,
+    required this.coverUrl,
     required this.rating,
     required this.responseTime,
     required this.location,

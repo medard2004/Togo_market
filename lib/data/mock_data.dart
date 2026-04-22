@@ -24,6 +24,8 @@ final List<Seller> mockSellers = [
     shopName: 'Kofi Tech Shop',
     avatar:
         'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop',
+    coverUrl:
+        'https://images.unsplash.com/photo-1556740738-b6a63e27c4df?q=80&w=600&auto=format&fit=crop',
     rating: 4.8,
     responseTime: '~10 min',
     location: 'Tokoin, Lomé',
@@ -35,6 +37,8 @@ final List<Seller> mockSellers = [
     shopName: 'Ama Fashion',
     avatar:
         'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=150&h=150&fit=crop',
+    coverUrl:
+        'https://images.unsplash.com/photo-1590744816866-cdc8f2f1bcc5?w=600&auto=format&fit=crop',
     rating: 4.6,
     responseTime: '~5 min',
     location: 'Bè, Lomé',
@@ -46,6 +50,8 @@ final List<Seller> mockSellers = [
     shopName: 'Yao Market',
     avatar:
         'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop',
+    coverUrl:
+        'https://images.unsplash.com/photo-1542838132-92c53300491e?q=80&w=600&auto=format&fit=crop',
     rating: 4.5,
     responseTime: '~20 min',
     location: 'Adidogomé, Lomé',

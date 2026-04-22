@@ -4,7 +4,6 @@ import 'package:get/get.dart';
 
 import '../../theme/app_theme.dart';
 import '../../utils/responsive.dart';
-import '../../widgets/common_widgets.dart';
 import 'edit_shop_screen.dart';
 
 class ShopInformationScreen extends StatelessWidget {
@@ -24,6 +23,13 @@ class ShopInformationScreen extends StatelessWidget {
           onPressed: Get.back,
         ),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.edit_outlined, color: AppTheme.primary),
+            onPressed: () => Get.toNamed('/edit-shop', arguments: shop),
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -147,12 +153,6 @@ class ShopInformationScreen extends StatelessWidget {
             const SizedBox(height: 12),
             _buildInfoRow(Icons.star, 'Note', '4.8 / 5'),
             const SizedBox(height: 32),
-            AppButton(
-              label: 'Modifier la boutique',
-              icon: Icons.edit_outlined,
-              onTap: () => Get.toNamed('/edit-shop', arguments: shop),
-            ),
-            const SizedBox(height: 24),
           ],
         ),
       ),

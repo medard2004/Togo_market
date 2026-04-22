@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:togo_market/animations/togo_animation_system.dart';
-import 'package:togo_market/theme/app_colors.dart';
 import '../../theme/app_theme.dart';
 import '../../controllers/app_controller.dart';
 import '../../data/mock_data.dart';
