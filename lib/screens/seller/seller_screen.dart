@@ -12,65 +12,230 @@ class SellerScreen extends StatelessWidget {
 
   final RxString selectedCategory = 'all'.obs;
   final RxString searchQuery = ''.obs;
+  final RxString selectedSort = 'newest'.obs;
+  final RxString selectedCondition = 'all'.obs;
+  final RxDouble minPrice = 0.0.obs;
+  final RxDouble maxPrice = 1000000.0.obs;
+  final RxInt minRating = 0.obs;
   final RxBool isSearching = false.obs;
   final TextEditingController searchController = TextEditingController();
 
   void _showFilterSheet(BuildContext context, R r) {
     Get.bottomSheet(
+      isScrollControlled: true,
       Container(
-        padding: EdgeInsets.all(r.s(20)),
+        padding: EdgeInsets.fromLTRB(r.s(20), r.s(16), r.s(20), r.s(30)),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(r.rad(30))),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(r.rad(40))),
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Filtrer par catégorie',
-                style: TextStyle(
-                    fontSize: r.fs(18),
-                    fontWeight: FontWeight.w800,
-                    color: Colors.black)),
-            SizedBox(height: r.s(16)),
-            Wrap(
-              spacing: r.s(10),
-              runSpacing: r.s(10),
-              children: mockCategories.map((cat) {
-                return Obx(() {
-                  final isSelected = selectedCategory.value == cat.id;
-                  return GestureDetector(
-                    onTap: () {
-                      selectedCategory.value = cat.id;
-                      Get.back();
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('Filtrer & Trier',
+                      style: TextStyle(
+                          fontSize: r.fs(22),
+                          fontWeight: FontWeight.w900,
+                          color: Colors.black)),
+                  TextButton(
+                    onPressed: () {
+                      selectedCategory.value = 'all';
+                      selectedSort.value = 'newest';
+                      selectedCondition.value = 'all';
+                      minPrice.value = 0.0;
+                      maxPrice.value = 1000000.0;
+                      minRating.value = 0;
                     },
-                    child: Container(
-                      padding: EdgeInsets.symmetric(
-                          horizontal: r.s(16), vertical: r.s(10)),
-                      decoration: BoxDecoration(
-                        color: isSelected
-                            ? AppTheme.primary
-                            : const Color(0xFFF5F6F8),
-                        borderRadius: BorderRadius.circular(r.rad(12)),
-                      ),
-                      child: Text(
-                        cat.label,
+                    child: Text('Réinitialiser',
                         style: TextStyle(
-                          fontSize: r.fs(14),
-                          fontWeight: FontWeight.w600,
-                          color: isSelected ? Colors.white : Colors.black,
+                            color: AppTheme.primary,
+                            fontWeight: FontWeight.w700,
+                            fontSize: r.fs(14))),
+                  ),
+                ],
+              ),
+              SizedBox(height: r.s(20)),
+
+              // Categories
+              _buildSectionTitle('Catégorie', r),
+              SizedBox(height: r.s(12)),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                child: Row(
+                  children: [
+                    _buildFilterChip('Tout', 'all', selectedCategory, r,
+                        icon: Icons.grid_view_rounded),
+                    ...mockCategories.where((c) => c.id != 'all').map((cat) =>
+                        _buildFilterChip(cat.label, cat.id, selectedCategory, r,
+                            icon: cat.icon)),
+                  ],
+                ),
+              ),
+              SizedBox(height: r.s(20)),
+
+              // Price Range
+              _buildSectionTitle('Tranche de prix', r),
+              SizedBox(height: r.s(8)),
+              Obx(() => Column(
+                    children: [
+                      RangeSlider(
+                        values: RangeValues(minPrice.value, maxPrice.value),
+                        min: 0,
+                        max: 1000000,
+                        divisions: 100,
+                        activeColor: AppTheme.primary,
+                        inactiveColor: const Color(0xFFF5F6F8),
+                        labels: RangeLabels(
+                          '${minPrice.value.toInt()} F',
+                          '${maxPrice.value.toInt()} F',
                         ),
+                        onChanged: (values) {
+                          minPrice.value = values.start;
+                          maxPrice.value = values.end;
+                        },
                       ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text('0 F',
+                              style: TextStyle(
+                                  fontSize: r.fs(12), color: Colors.grey)),
+                          Text('1M+ F',
+                              style: TextStyle(
+                                  fontSize: r.fs(12), color: Colors.grey)),
+                        ],
+                      ),
+                    ],
+                  )),
+              SizedBox(height: r.s(20)),
+
+              // Sort By
+              _buildSectionTitle('Trier par', r),
+              SizedBox(height: r.s(12)),
+              Wrap(
+                spacing: r.s(10),
+                runSpacing: r.s(10),
+                children: [
+                  _buildFilterChip('Plus récent', 'newest', selectedSort, r),
+                  _buildFilterChip(
+                      'Prix croissant', 'price_asc', selectedSort, r),
+                  _buildFilterChip(
+                      'Prix décroissant', 'price_desc', selectedSort, r),
+                ],
+              ),
+              SizedBox(height: r.s(20)),
+
+              // Condition & Rating
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildSectionTitle('État', r),
+                        SizedBox(height: r.s(12)),
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: [
+                              _buildFilterChip(
+                                  'Tous', 'all', selectedCondition, r),
+                              _buildFilterChip(
+                                  'Neuf', 'Neuf', selectedCondition, r),
+                              _buildFilterChip(
+                                  'Occasion', 'Occasion', selectedCondition, r),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                  );
-                });
-              }).toList(),
-            ),
-            SizedBox(height: r.s(20)),
-          ],
+                  ),
+                ],
+              ),
+              SizedBox(height: r.s(32)),
+
+              // Apply Button
+              SizedBox(
+                width: double.infinity,
+                height: r.s(56),
+                child: ElevatedButton(
+                  onPressed: () => Get.back(),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primary,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(r.rad(20))),
+                    elevation: 0,
+                  ),
+                  child: Text('Appliquer les filtres',
+                      style: TextStyle(
+                          fontSize: r.fs(16),
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white)),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
+  }
+
+  Widget _buildSectionTitle(String title, R r) {
+    return Text(title,
+        style: TextStyle(
+            fontSize: r.fs(16),
+            fontWeight: FontWeight.w800,
+            color: Colors.black.withOpacity(0.8)));
+  }
+
+  Widget _buildFilterChip(String label, String value, RxString groupValue, R r,
+      {IconData? icon}) {
+    return Obx(() {
+      final isSelected = groupValue.value == value;
+      return GestureDetector(
+        onTap: () => groupValue.value = value,
+        child: Container(
+          margin: EdgeInsets.only(right: r.s(8)),
+          padding: EdgeInsets.symmetric(horizontal: r.s(16), vertical: r.s(10)),
+          decoration: BoxDecoration(
+            color: isSelected ? AppTheme.primary : const Color(0xFFF5F6F8),
+            borderRadius: BorderRadius.circular(r.rad(14)),
+            border: Border.all(
+              color: isSelected ? AppTheme.primary : Colors.transparent,
+              width: 1.5,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (icon != null) ...[
+                Icon(
+                  icon,
+                  size: r.s(16),
+                  color: isSelected ? Colors.white : Colors.black54,
+                ),
+                SizedBox(width: r.s(8)),
+              ],
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: r.fs(13),
+                  fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                  color: isSelected ? Colors.white : Colors.black,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    });
   }
 
   @override
@@ -307,7 +472,8 @@ class SellerScreen extends StatelessWidget {
                         SizedBox(height: r.s(20)),
                         // Action Button
                         GestureDetector(
-                          onTap: () => Get.toNamed('/chat/c1'),
+                          onTap: () => Get.toNamed('/chat/${seller.id}',
+                              arguments: seller),
                           child: Container(
                             height: r.s(54),
                             decoration: BoxDecoration(
@@ -370,6 +536,10 @@ class SellerScreen extends StatelessWidget {
                             p.sellerId == id &&
                             (selectedCategory.value == 'all' ||
                                 p.category == selectedCategory.value) &&
+                            (selectedCondition.value == 'all' ||
+                                p.condition == selectedCondition.value) &&
+                            (p.price >= minPrice.value &&
+                                p.price <= maxPrice.value) &&
                             (searchQuery.value.isEmpty ||
                                 p.title
                                     .toLowerCase()
@@ -413,16 +583,30 @@ class SellerScreen extends StatelessWidget {
           SliverPadding(
             padding: EdgeInsets.fromLTRB(r.s(16), 0, r.s(16), r.s(40)),
             sliver: Obx(() {
-              final filteredProducts = mockProducts
+              var filteredProducts = mockProducts
                   .where((p) =>
                       p.sellerId == id &&
                       (selectedCategory.value == 'all' ||
                           p.category == selectedCategory.value) &&
+                      (selectedCondition.value == 'all' ||
+                          p.condition == selectedCondition.value) &&
+                      (p.price >= minPrice.value &&
+                          p.price <= maxPrice.value) &&
                       (searchQuery.value.isEmpty ||
                           p.title
                               .toLowerCase()
                               .contains(searchQuery.value.toLowerCase())))
                   .toList();
+
+              // Sorting logic
+              if (selectedSort.value == 'price_asc') {
+                filteredProducts.sort((a, b) => a.price.compareTo(b.price));
+              } else if (selectedSort.value == 'price_desc') {
+                filteredProducts.sort((a, b) => b.price.compareTo(a.price));
+              } else {
+                // Newest (using ID as proxy or just keeping default if mock data has no date)
+                filteredProducts.sort((a, b) => b.id.compareTo(a.id));
+              }
 
               if (filteredProducts.isEmpty) {
                 return SliverToBoxAdapter(
@@ -440,7 +624,7 @@ class SellerScreen extends StatelessWidget {
                               : 'Aucun produit dans cette catégorie',
                           textAlign: TextAlign.center,
                           style:
-                              TextStyle(color: Colors.grey, fontSize: r.fs(14)),
+                              TextStyle(color: Colors.grey, fontSize: r.fs(12)),
                         ),
                       ],
                     ),
@@ -453,7 +637,7 @@ class SellerScreen extends StatelessWidget {
                   crossAxisCount: 2,
                   mainAxisSpacing: r.s(16),
                   crossAxisSpacing: r.s(12),
-                  childAspectRatio: 0.75,
+                  childAspectRatio: 0.88,
                 ),
                 delegate: SliverChildBuilderDelegate(
                   (_, i) =>
@@ -506,7 +690,7 @@ class _StatBox extends StatelessWidget {
             SizedBox(height: r.s(4)),
             Text(value,
                 style: TextStyle(
-                    fontSize: r.fs(18),
+                    fontSize: r.fs(14),
                     fontWeight: isBold ? FontWeight.w900 : FontWeight.w700,
                     color: Colors.black)),
           ],

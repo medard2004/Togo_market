@@ -37,6 +37,7 @@ class Seller {
   final double rating;
   final String responseTime;
   final String location;
+  final bool isShop;
   final List<String> products;
 
   const Seller({
@@ -48,6 +49,7 @@ class Seller {
     required this.rating,
     required this.responseTime,
     required this.location,
+    required this.isShop,
     required this.products,
   });
 }

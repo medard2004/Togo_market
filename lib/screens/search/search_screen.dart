@@ -5,6 +5,7 @@ import '../../widgets/common_widgets.dart';
 import '../../widgets/bottom_nav.dart';
 import '../../controllers/app_controller.dart';
 import '../../data/mock_data.dart';
+import '../../utils/responsive.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -38,9 +39,15 @@ class _SearchScreenState extends State<SearchScreen> {
     final appCtrl = Get.find<AppController>();
     final results = _query.isEmpty ? [] : appCtrl.searchProducts(_query);
 
-    return Scaffold(
+    return PopScope(
+      canPop: false,
+      onPopInvoked: (didPop) {
+        if (didPop) return;
+        Get.offAllNamed('/home');
+      },
+      child: Scaffold(
         resizeToAvoidBottomInset: true,
-      backgroundColor: AppTheme.background,
+        backgroundColor: AppTheme.background,
       body: SafeArea(
         child: Column(
           children: [
@@ -49,7 +56,7 @@ class _SearchScreenState extends State<SearchScreen> {
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
               child: Row(
                 children: [
-                  AppBackButton(),
+                  AppBackButton(onTap: () => Get.offAllNamed('/home')),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Container(
@@ -109,7 +116,7 @@ class _SearchScreenState extends State<SearchScreen> {
         ),
       ),
       bottomNavigationBar: const BottomNavBar(currentIndex: 1),
-    );
+    ));
   }
 }
 
@@ -246,6 +253,15 @@ class _ResultsList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final r = R(context);
+    // Largeur d'une colonne (2 colonnes + 1 gap + 2x padding horizontal)
+    final cardW = (r.screenW - 32 - 12) / 2;
+    // Hauteur info section (mesurée depuis ProductCard):
+    //   padding top r.s(8) + titre 1 ligne + gap r.s(3) + localisation + padding bas r.s(9) + marge
+    final infoH = r.s(8) + r.fs(12) * 1.3 + r.s(3) + r.fs(10) * 1.3 + r.s(9) + r.s(14);
+    final cardH = r.cardImageH + infoH;
+    final ratio = (cardW / cardH).clamp(0.55, 0.90);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -262,11 +278,11 @@ class _ResultsList extends StatelessWidget {
         Expanded(
           child: GridView.builder(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
               mainAxisSpacing: 12,
               crossAxisSpacing: 12,
-              childAspectRatio: 0.65,
+              childAspectRatio: ratio,
             ),
             itemCount: results.length,
             itemBuilder: (_, i) => ProductCard(product: results[i]),

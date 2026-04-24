@@ -13,7 +13,13 @@ class ProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ctrl = Get.find<AppController>();
-    return Scaffold(
+    return PopScope(
+      canPop: false,
+      onPopInvoked: (didPop) {
+        if (didPop) return;
+        Get.offAllNamed('/home');
+      },
+      child: Scaffold(
       resizeToAvoidBottomInset: true,
       backgroundColor: AppTheme.background,
       appBar: AppBar(
@@ -274,6 +280,6 @@ class ProfileScreen extends StatelessWidget {
         ),
       ),
       bottomNavigationBar: const BottomNavBar(currentIndex: 4),
-    );
+    ));
   }
 }

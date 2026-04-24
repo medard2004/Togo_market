@@ -25,6 +25,7 @@ class ProductCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final r = R(context);
+    final seller = getSellerById(product.sellerId);
     final ctrl = Get.find<AppController>();
 
     return GestureDetector(
@@ -36,100 +37,484 @@ class ProductCard extends StatelessWidget {
           boxShadow: AppTheme.shadowCard,
         ),
         clipBehavior: Clip.antiAlias,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
+        child: Stack(
+          clipBehavior: Clip.none,
           children: [
-            // ── Image ───────────────────────────────────────────────────────
-            Stack(
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                isHorizontal
-                    ? SizedBox(
-                        height: r.cardImageH,
-                        width: double.infinity,
-                        child: _buildImage(),
-                      )
-                    : AspectRatio(
-                        aspectRatio: 4 / 3,
-                        child: _buildImage(),
+                // ── Image ───────────────────────────────────────────────────────
+                Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    isHorizontal
+                        ? SizedBox(
+                            height: r.cardImageH,
+                            width: double.infinity,
+                            child: _buildImage(),
+                          )
+                        : AspectRatio(
+                            aspectRatio: 4 / 3,
+                            child: _buildImage(),
+                          ),
+                    Positioned(
+                      top: r.s(7),
+                      left: r.s(7),
+                      child:
+                          _ConditionBadge(condition: product.condition, r: r),
+                    ),
+                    Positioned(
+                      bottom: r.s(7),
+                      right: r.s(7),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _PriceBadge(price: product.price, r: r),
+                          if (seller != null && seller.isShop) ...[
+                            SizedBox(height: r.s(6)),
+                            _buildShopBadge(context, seller, r),
+                          ],
+                        ],
                       ),
-                Positioned(
-                  top: r.s(7),
-                  left: r.s(7),
-                  child: _ConditionBadge(condition: product.condition, r: r),
+                    ),
+                    Positioned(
+                      top: r.s(7),
+                      right: r.s(7),
+                      child: Obx(() {
+                        final fav = ctrl.isFavorite(product.id);
+                        return GestureDetector(
+                          onTap: () => ctrl.toggleFavorite(product.id),
+                          child: Container(
+                            width: r.s(30),
+                            height: r.s(30),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.92),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              fav ? Icons.favorite : Icons.favorite_border,
+                              size: r.s(14),
+                              color: fav
+                                  ? AppTheme.primary
+                                  : AppTheme.mutedForeground,
+                            ),
+                          ),
+                        );
+                      }),
+                    ),
+                  ],
                 ),
-                Positioned(
-                  bottom: r.s(7),
-                  left: r.s(7),
-                  child: _PriceBadge(price: product.price, r: r),
-                ),
-                Positioned(
-                  top: r.s(7),
-                  right: r.s(7),
-                  child: Obx(() {
-                    final fav = ctrl.isFavorite(product.id);
-                    return GestureDetector(
-                      onTap: () => ctrl.toggleFavorite(product.id),
-                      child: Container(
-                        width: r.s(30),
-                        height: r.s(30),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.92),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          fav ? Icons.favorite : Icons.favorite_border,
-                          size: r.s(14),
-                          color:
-                              fav ? AppTheme.primary : AppTheme.mutedForeground,
+                // ── Infos ──────────────────────────────────────────────────────
+                Padding(
+                  padding: EdgeInsets.fromLTRB(r.s(9), r.s(8), r.s(9), r.s(9)),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        product.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: r.fs(12),
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.foreground,
                         ),
                       ),
-                    );
-                  }),
+                      SizedBox(height: r.s(3)),
+                      Row(
+                        children: [
+                          Icon(Icons.location_on,
+                              size: r.s(10), color: AppTheme.mutedForeground),
+                          SizedBox(width: r.s(2)),
+                          Expanded(
+                            child: Text(
+                              product.location,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                  fontSize: r.fs(10),
+                                  color: AppTheme.mutedForeground),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
-            // ── Infos ──────────────────────────────────────────────────────
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildShopBadge(BuildContext context, Seller seller, R r) {
+    return GestureDetector(
+      onTap: () => _showShopInfo(context, seller, r),
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        padding: EdgeInsets.all(r.s(3)),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(r.rad(20)),
+          boxShadow: AppTheme.shadowSm,
+          border: Border.all(color: Colors.white, width: 1.5),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircleAvatar(
+              radius: r.s(6),
+              backgroundImage: CachedNetworkImageProvider(seller.avatar),
+            ),
+            SizedBox(width: r.s(5)),
             Padding(
-              padding: EdgeInsets.fromLTRB(r.s(9), r.s(7), r.s(9), r.s(9)),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    product.title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: r.fs(12),
-                      fontWeight: FontWeight.w600,
-                      color: AppTheme.foreground,
+              padding: EdgeInsets.only(right: r.s(8)),
+              child: Text(
+                seller.shopName,
+                style: TextStyle(
+                  fontSize: r.fs(9),
+                  fontWeight: FontWeight.w800,
+                  color: AppTheme.foreground,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showShopInfo(BuildContext context, Seller seller, R r) {
+    Get.bottomSheet(
+      Container(
+        decoration: BoxDecoration(
+          color: AppTheme.cardColor,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(r.rad(30))),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // ── Banner Image ──
+            Stack(
+              clipBehavior: Clip.none,
+              alignment: Alignment.bottomCenter,
+              children: [
+                // Banner
+                ClipRRect(
+                  borderRadius:
+                      BorderRadius.vertical(top: Radius.circular(r.rad(30))),
+                  child: SizedBox(
+                    height: r.s(130),
+                    width: double.infinity,
+                    child: seller.coverUrl.isNotEmpty
+                        ? CachedNetworkImage(
+                            imageUrl: seller.coverUrl, fit: BoxFit.cover)
+                        : Container(color: AppTheme.primary.withOpacity(0.1)),
+                  ),
+                ),
+                // Gradient overlay
+                Container(
+                  height: r.s(130),
+                  decoration: BoxDecoration(
+                    borderRadius:
+                        BorderRadius.vertical(top: Radius.circular(r.rad(30))),
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.black.withOpacity(0.4),
+                        Colors.transparent,
+                        Colors.black.withOpacity(0.1)
+                      ],
                     ),
                   ),
-                  SizedBox(height: r.s(3)),
+                ),
+                // Drag Handle
+                Positioned(
+                  top: r.s(12),
+                  child: Container(
+                    width: r.s(40),
+                    height: r.s(4),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.8),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                // Avatar (Overflowing)
+                Positioned(
+                  bottom: -r.s(40),
+                  child: Container(
+                    padding: EdgeInsets.all(r.s(4)),
+                    decoration: BoxDecoration(
+                        color: AppTheme.cardColor,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ]),
+                    child: CircleAvatar(
+                      radius: r.s(42),
+                      backgroundColor: Colors.grey[200],
+                      backgroundImage: seller.avatar.isNotEmpty
+                          ? CachedNetworkImageProvider(seller.avatar)
+                          : null,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+
+            SizedBox(height: r.s(48)), // Espace pour l'avatar qui déborde
+
+            // ── Infos ──
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: r.hPad),
+              child: Column(
+                children: [
+                  Text(seller.shopName,
+                      style: TextStyle(
+                          fontSize: r.fs(18),
+                          fontWeight: FontWeight.w900,
+                          color: AppTheme.foreground)),
+                  SizedBox(height: r.s(6)),
                   Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.location_on,
-                          size: r.s(10), color: AppTheme.mutedForeground),
-                      SizedBox(width: r.s(2)),
-                      Expanded(
-                        child: Text(
-                          product.location,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                      Icon(Icons.location_on_rounded,
+                          size: r.s(12), color: AppTheme.mutedForeground),
+                      SizedBox(width: r.s(4)),
+                      Text(seller.location,
                           style: TextStyle(
-                              fontSize: r.fs(10),
-                              color: AppTheme.mutedForeground),
+                              fontSize: r.fs(11),
+                              color: AppTheme.mutedForeground,
+                              fontWeight: FontWeight.w600)),
+                    ],
+                  ),
+                  SizedBox(height: r.s(20)),
+
+                  // ── Stats Row (Réduit) ──
+                  Container(
+                    padding: EdgeInsets.symmetric(vertical: r.s(10)),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(r.rad(16)),
+                      border: Border.all(color: Colors.grey.withOpacity(0.1)),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        _buildStatBox(
+                            r,
+                            Icons.star_rounded,
+                            Colors.amber,
+                            seller.rating > 0 ? seller.rating.toString() : '-',
+                            'Note'),
+                        Container(
+                            height: r.s(20),
+                            width: 1,
+                            color: Colors.grey.withOpacity(0.2)),
+                        _buildStatBox(
+                            r,
+                            Icons.shopping_bag_rounded,
+                            AppTheme.primary,
+                            seller.products.length.toString(),
+                            'Articles'),
+                        Container(
+                            height: r.s(20),
+                            width: 1,
+                            color: Colors.grey.withOpacity(0.2)),
+                        _buildStatBox(r, Icons.flash_on_rounded, Colors.green,
+                            seller.responseTime, 'Réponse'),
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: r.s(20)),
+
+                  // ── Articles récents ──
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text('Articles récents',
+                        style: TextStyle(
+                            fontSize: r.fs(11),
+                            fontWeight: FontWeight.w800,
+                            color: AppTheme.foreground)),
+                  ),
+                  SizedBox(height: r.s(12)),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: r.s(100),
+                        height: r.s(100),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(r.rad(12)),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(r.rad(12)),
+                          child: seller.coverUrl.isNotEmpty
+                              ? CachedNetworkImage(
+                                  imageUrl: seller.coverUrl, fit: BoxFit.cover)
+                              : Container(color: Colors.grey[200]),
+                        ),
+                      ),
+                      SizedBox(width: r.s(12)),
+                      Container(
+                        width: r.s(100),
+                        height: r.s(100),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(r.rad(12)),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(r.rad(12)),
+                          child: seller.avatar.isNotEmpty
+                              ? CachedNetworkImage(
+                                  imageUrl: seller.avatar, fit: BoxFit.cover)
+                              : Container(color: Colors.grey[200]),
+                        ),
+                      ),
+                      SizedBox(width: r.s(12)),
+                      Container(
+                        width: r.s(100),
+                        height: r.s(100),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(r.rad(12)),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(r.rad(12)),
+                          child: seller.coverUrl.isNotEmpty
+                              ? CachedNetworkImage(
+                                  imageUrl: seller.coverUrl, fit: BoxFit.cover)
+                              : Container(color: Colors.grey[200]),
                         ),
                       ),
                     ],
                   ),
+                  SizedBox(height: r.s(28)),
+
+                  // ── Premium Action Buttons ──
+                  Row(
+                    children: [
+                      // Chat Button
+                      Container(
+                        height: r.s(56),
+                        width: r.s(56),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primary.withOpacity(0.08),
+                          borderRadius: BorderRadius.circular(r.rad(18)),
+                          border: Border.all(
+                              color: AppTheme.primary.withOpacity(0.2),
+                              width: 1.5),
+                        ),
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(r.rad(18)),
+                            onTap: () {
+                              Get.back();
+                              Get.toNamed('/chat/${seller.id}',
+                                  arguments: seller);
+                            },
+                            child: Center(
+                              child: Icon(Icons.forum_rounded,
+                                  color: AppTheme.primary, size: r.s(26)),
+                            ),
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: r.s(16)),
+
+                      // Visit Shop Button
+                      Expanded(
+                        child: Container(
+                          height: r.s(56),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(r.rad(18)),
+                            gradient: LinearGradient(
+                              colors: [
+                                AppTheme.primary,
+                                Color.lerp(
+                                    AppTheme.primary, Colors.black, 0.15)!
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppTheme.primary.withOpacity(0.35),
+                                blurRadius: 12,
+                                offset: const Offset(0, 6),
+                              )
+                            ],
+                          ),
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(r.rad(18)),
+                              onTap: () {
+                                Get.back();
+                                Get.toNamed('/seller/${seller.id}');
+                              },
+                              child: Center(
+                                child: Text(
+                                  'Visiter la boutique',
+                                  style: TextStyle(
+                                    fontSize: r.fs(16),
+                                    fontWeight: FontWeight.w800,
+                                    color: Colors.white,
+                                    letterSpacing: 0.3,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: r.s(32)),
                 ],
               ),
             ),
           ],
         ),
       ),
+      isScrollControlled: true,
+    );
+  }
+
+  Widget _buildStatBox(
+      R r, IconData icon, Color color, String value, String label) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: r.s(14), color: color),
+            SizedBox(width: r.s(4)),
+            Text(value,
+                style: TextStyle(
+                    fontSize: r.fs(14),
+                    fontWeight: FontWeight.w800,
+                    color: AppTheme.foreground)),
+          ],
+        ),
+        SizedBox(height: r.s(2)),
+        Text(label,
+            style: TextStyle(
+                fontSize: r.fs(10),
+                color: AppTheme.mutedForeground,
+                fontWeight: FontWeight.w600)),
+      ],
     );
   }
 

@@ -29,33 +29,48 @@ final List<Seller> mockSellers = [
     rating: 4.8,
     responseTime: '~10 min',
     location: 'Tokoin, Lomé',
+    isShop: true,
     products: ['p1', 'p4', 'p7'],
   ),
   Seller(
     id: 's2',
     name: 'Ama Koffi',
-    shopName: 'Ama Fashion',
+    shopName: '',
     avatar:
         'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=150&h=150&fit=crop',
-    coverUrl:
-        'https://images.unsplash.com/photo-1590744816866-cdc8f2f1bcc5?w=600&auto=format&fit=crop',
+    coverUrl: '',
     rating: 4.6,
-    responseTime: '~5 min',
+    responseTime: '~1h',
     location: 'Bè, Lomé',
+    isShop: false,
     products: ['p2', 'p5', 'p8'],
   ),
   Seller(
     id: 's3',
     name: 'Yao Attiogbé',
-    shopName: 'Yao Market',
+    shopName: '',
     avatar:
         'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop',
-    coverUrl:
-        'https://images.unsplash.com/photo-1542838132-92c53300491e?q=80&w=600&auto=format&fit=crop',
-    rating: 4.5,
-    responseTime: '~20 min',
+    coverUrl: '',
+    rating: 4.2,
+    responseTime: '~2h',
     location: 'Adidogomé, Lomé',
+    isShop: false,
     products: ['p3', 'p6', 'p9'],
+  ),
+  Seller(
+    id: 's4',
+    name: 'Mélissa Yao',
+    shopName: 'Méli Beauty',
+    avatar:
+        'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&h=150&fit=crop',
+    coverUrl:
+        'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=600&auto=format&fit=crop',
+    rating: 4.9,
+    responseTime: '~5 min',
+    location: 'Agoè, Lomé',
+    isShop: true,
+    products: ['p10'],
   ),
 ];
 

@@ -10,11 +10,36 @@ class BottomNavBar extends StatelessWidget {
   const BottomNavBar({super.key, required this.currentIndex});
 
   static const _items = [
-    _NavItem(icon: Icons.home_outlined,      label: 'Accueil',  route: '/home'),
-    _NavItem(icon: Icons.search,             label: 'Chercher', route: '/search'),
-    _NavItem(icon: Icons.add,                label: 'Vendre',   route: '/sell-choice'),
-    _NavItem(icon: Icons.chat_bubble_outline,label: 'Chat',     route: '/messages'),
-    _NavItem(icon: Icons.person_outline,     label: 'Profil',   route: '/profile'),
+    _NavItem(
+      icon: Icons.home_rounded,
+      inactiveIcon: Icons.home_outlined,
+      label: 'ACCUEIL',
+      route: '/home',
+    ),
+    _NavItem(
+      icon: Icons.search_rounded,
+      inactiveIcon: Icons.search_rounded,
+      label: 'RECHERCHE',
+      route: '/search',
+    ),
+    _NavItem(
+      icon: Icons.add,
+      inactiveIcon: Icons.add,
+      label: 'VENDRE',
+      route: '/sell-choice',
+    ),
+    _NavItem(
+      icon: Icons.forum_rounded,
+      inactiveIcon: Icons.forum_outlined,
+      label: 'MESSAGES',
+      route: '/messages',
+    ),
+    _NavItem(
+      icon: Icons.person_rounded,
+      inactiveIcon: Icons.person_outline_rounded,
+      label: 'PROFIL',
+      route: '/profile',
+    ),
   ];
 
   @override
@@ -23,75 +48,127 @@ class BottomNavBar extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppTheme.cardColor,
-        border: Border(top: BorderSide(color: AppTheme.border, width: 1)),
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(r.rad(30))),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 20, offset: const Offset(0, -4)),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 30,
+            offset: const Offset(0, -5),
+          ),
         ],
       ),
       child: SafeArea(
         top: false,
         child: SizedBox(
-          height: r.bottomNavH,
+          height: r.s(72).clamp(68.0, 84.0),
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: List.generate(_items.length, (i) {
+              final isActive = currentIndex == i;
+              final item = _items[i];
+
               // ── Bouton central Vendre ──────────────────────────────────────
               if (i == 2) {
-                final btnSize = (r.bottomNavH * 0.82).clamp(44.0, 58.0);
+                final btnSize = r.s(54).clamp(50.0, 62.0);
                 return Expanded(
                   child: GestureDetector(
                     onTap: () => SellChoiceSheet.show(),
-                    child: Center(
-                      child: Transform.translate(
-                        offset: Offset(0, -r.s(10)),
-                        child: Container(
-                          width: btnSize,
-                          height: btnSize,
-                          decoration: BoxDecoration(
-                            color: AppTheme.primary,
-                            shape: BoxShape.circle,
-                            boxShadow: AppTheme.shadowPrimary,
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      alignment: Alignment.center,
+                      children: [
+                        Positioned(
+                          top: -r.s(24),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              // Base du bouton (Cercle blanc pour la bordure + Ombre)
+                              Container(
+                                width: btnSize + r.s(8),
+                                height: btnSize + r.s(8),
+                                clipBehavior: Clip.antiAliasWithSaveLayer,
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: AppTheme.primary.withOpacity(0.25),
+                                      blurRadius: 15,
+                                      spreadRadius: 0,
+                                      offset: const Offset(0, 6),
+                                    ),
+                                  ],
+                                ),
+                                child: Center(
+                                  // Coeur du bouton (Orange)
+                                  child: Container(
+                                    width: btnSize,
+                                    height: btnSize,
+                                    clipBehavior: Clip.antiAliasWithSaveLayer,
+                                    decoration: BoxDecoration(
+                                      color: AppTheme.primary,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Icon(
+                                      Icons.add_rounded,
+                                      color: Colors.white,
+                                      size: r.s(34),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              SizedBox(height: r.s(5)),
+                              Text(
+                                'VENDRE',
+                                style: TextStyle(
+                                  fontSize: r.fs(9),
+                                  fontWeight: FontWeight.w900,
+                                  color: Colors.black54,
+                                  letterSpacing: 0.8,
+                                ),
+                              ),
+                            ],
                           ),
-                          child: Icon(Icons.add, color: Colors.white, size: r.s(24)),
                         ),
-                      ),
+                      ],
                     ),
                   ),
                 );
               }
 
               // ── Onglets normaux ────────────────────────────────────────────
-              final isActive = currentIndex == i;
               return Expanded(
                 child: GestureDetector(
-                  onTap: () { if (!isActive) Get.offNamed(_items[i].route); },
+                  onTap: () {
+                    if (!isActive) Get.offNamed(item.route);
+                  },
                   behavior: HitTestBehavior.opaque,
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
-                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        padding: EdgeInsets.all(r.s(5)),
+                      Container(
+                        padding: EdgeInsets.all(r.s(10)),
                         decoration: BoxDecoration(
-                          color: isActive ? AppTheme.primaryLight : Colors.transparent,
-                          borderRadius: BorderRadius.circular(r.rad(10)),
+                          color: isActive
+                              ? AppTheme.primary.withOpacity(0.12)
+                              : Colors.transparent,
+                          shape: BoxShape.circle,
                         ),
-                        child: Icon(
-                          _items[i].icon,
-                          size: r.s(20),
-                          color: isActive ? AppTheme.primary : AppTheme.mutedForeground,
-                        ),
+                        child: Icon(isActive ? item.icon : item.inactiveIcon,
+                            size: r.s(24),
+                            color:
+                                isActive ? AppTheme.primary : Colors.black54),
                       ),
-                      SizedBox(height: r.s(2)),
+                      SizedBox(height: r.s(4)),
                       Text(
-                        _items[i].label,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                        item.label,
                         style: TextStyle(
-                          fontSize: r.fs(10),
-                          fontWeight: FontWeight.w600,
-                          color: isActive ? AppTheme.primary : AppTheme.mutedForeground,
+                          fontSize: r.fs(9),
+                          fontWeight:
+                              isActive ? FontWeight.w900 : FontWeight.w700,
+                          color: isActive ? AppTheme.primary : Colors.black54,
+                          letterSpacing: 0.5,
                         ),
                       ),
                     ],
@@ -108,7 +185,13 @@ class BottomNavBar extends StatelessWidget {
 
 class _NavItem {
   final IconData icon;
+  final IconData inactiveIcon;
   final String label;
   final String route;
-  const _NavItem({required this.icon, required this.label, required this.route});
+  const _NavItem({
+    required this.icon,
+    required this.inactiveIcon,
+    required this.label,
+    required this.route,
+  });
 }

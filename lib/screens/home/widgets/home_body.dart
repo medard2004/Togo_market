@@ -20,7 +20,7 @@ class HomeBody extends StatelessWidget {
     final filteredProducts = ctrl.getFilteredProducts(selectedCat);
 
     // Hauteur du scroll horizontal = image + info + padding
-    final hScrollHeight = r.cardImageH + r.s(58);
+    final hScrollHeight = r.cardImageH + r.s(62);
 
     return AnimationLimiter(
       child: CustomScrollView(
@@ -83,8 +83,9 @@ class HomeBody extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: isActive ? AppTheme.primary : AppTheme.cardColor,
                         borderRadius: BorderRadius.circular(r.rad(20)),
-                        boxShadow:
-                            isActive ? AppTheme.shadowPrimary : AppTheme.shadowCard,
+                        boxShadow: isActive
+                            ? AppTheme.shadowPrimary
+                            : AppTheme.shadowCard,
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -182,7 +183,8 @@ class HomeBody extends StatelessWidget {
                   itemCount: allProducts.length,
                   separatorBuilder: (_, __) => SizedBox(width: r.s(12)),
                   itemBuilder: (_, i) {
-                    final idx = (allProducts.length - 1 - i) % allProducts.length;
+                    final idx =
+                        (allProducts.length - 1 - i) % allProducts.length;
                     return AnimationConfiguration.staggeredList(
                       position: i,
                       duration: const Duration(milliseconds: 260),
@@ -265,7 +267,8 @@ class HomeBody extends StatelessWidget {
                   itemCount: mockSellers.length,
                   separatorBuilder: (_, __) => SizedBox(width: r.s(12)),
                   itemBuilder: (_, i) {
-                    final idx = (mockSellers.length - 1 - i) % mockSellers.length;
+                    final idx =
+                        (mockSellers.length - 1 - i) % mockSellers.length;
                     return AnimationConfiguration.staggeredList(
                       position: i,
                       duration: const Duration(milliseconds: 260),
@@ -379,7 +382,8 @@ class HomeBody extends StatelessWidget {
     final r = R(context);
     final colW = (r.screenW - r.hPad * 2 - r.s(12)) / 2;
     final imgH = colW * (3 / 4); // ratio 4:3
-    final infoH = r.s(56); // titre + localisation + padding
+    final infoH =
+        r.s(72); // titre + localisation + padding augmenté pour éviter overflow
     final totalH = imgH + infoH;
     return colW / totalH;
   }
