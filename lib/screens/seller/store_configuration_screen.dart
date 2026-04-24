@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -668,10 +669,15 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
                     child: Text(h.day,
                         style: const TextStyle(
                             fontSize: 16, fontWeight: FontWeight.w900))),
-                Switch.adaptive(
-                  value: h.isOpen,
-                  activeColor: AppColors.primary,
-                  onChanged: (v) => setState(() => h.isOpen = v),
+                Transform.scale(
+                  scale: 0.7,
+                  alignment: Alignment.centerRight,
+                  child: CupertinoSwitch(
+                    value: h.isOpen,
+                    activeTrackColor: AppColors.primary,
+                    inactiveTrackColor: const Color(0xFFEEEEEE),
+                    onChanged: (v) => setState(() => h.isOpen = v),
+                  ),
                 ),
               ],
             ),
