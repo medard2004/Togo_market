@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
@@ -7,6 +8,8 @@ import '../utils/app_toasts.dart';
 import '../Api/services/produit_service.dart';
 import 'app_controller.dart';
 import '../Api/core/api_client.dart';
+import '../utils/boutique_category_filter.dart';
+import '../widgets/category_picker_bottom_sheet.dart';
 import 'boutique_controller.dart';
 
 class ProductFormController extends GetxController {
@@ -57,6 +60,15 @@ class ProductFormController extends GetxController {
     condition.value = product.condition;
     isPriceNegotiable.value = product.isPriceNegotiable;
     selectedCategory.value = int.tryParse(product.category);
+    if (Get.isRegistered<BoutiqueController>() && Get.isRegistered<AppController>()) {
+      final b = Get.find<BoutiqueController>().myBoutique.value;
+      final ids = parseBoutiqueCategoryIds(b?.categories);
+      final flat = Get.find<AppController>().allFlatCategories;
+      final catId = selectedCategory.value;
+      if (ids.isEmpty || catId == null || !isProductCategoryAllowedForBoutique(catId, ids, flat)) {
+        selectedCategory.value = null;
+      }
+    }
     images.clear();
     existingImages.clear();
     existingImageIds.clear();
@@ -96,7 +108,19 @@ class ProductFormController extends GetxController {
                 'Seules les premières $availableSlots images ont été ajoutées.');
           }
         }
-        final toAdd = picked.take(availableSlots).toList();
+        final toAdd = <XFile>[];
+        for (var file in picked.take(availableSlots)) {
+          final fileSize = await File(file.path).length();
+          if (fileSize > 5242880) {
+            // 5 Mo = 5242880 bytes
+            if (Get.context != null) {
+              AppToasts.warning(Get.context!, 'Image trop volumineuse',
+                  '${file.name} dépasse 5 Mo et a été ignorée.');
+            }
+          } else {
+            toAdd.add(file);
+          }
+        }
         images.addAll(toAdd);
       }
     } catch (e) {
@@ -143,6 +167,32 @@ class ProductFormController extends GetxController {
         // Redirect user to create/configure boutique flow
         await bc.goToMyBoutique();
         return;
+      }
+      final boutique = bc.myBoutique.value!;
+      final allowedIds = parseBoutiqueCategoryIds(boutique.categories);
+      if (allowedIds.isEmpty) {
+        if (Get.context != null) {
+          AppToasts.warning(
+            Get.context!,
+            'Catégories manquantes',
+            'Ajoutez d’abord les catégories de votre boutique dans les paramètres.',
+          );
+        }
+        return;
+      }
+      if (Get.isRegistered<AppController>()) {
+        final flat = Get.find<AppController>().allFlatCategories;
+        if (!isProductCategoryAllowedForBoutique(
+            selectedCategory.value!, allowedIds, flat)) {
+          if (Get.context != null) {
+            AppToasts.error(
+              Get.context!,
+              'Erreur',
+              'Choisissez une catégorie parmi celles de votre boutique.',
+            );
+          }
+          return;
+        }
       }
     }
 
@@ -213,6 +263,43 @@ class ProductFormController extends GetxController {
       return;
     }
 
+    if (selectedCategory.value == null) {
+      if (Get.context != null) {
+        AppToasts.error(
+            Get.context!, 'Erreur', 'Veuillez sélectionner une catégorie.');
+      }
+      return;
+    }
+
+    if (Get.isRegistered<BoutiqueController>() && Get.isRegistered<AppController>()) {
+      final boutique = Get.find<BoutiqueController>().myBoutique.value;
+      if (boutique != null) {
+        final allowedIds = parseBoutiqueCategoryIds(boutique.categories);
+        if (allowedIds.isEmpty) {
+          if (Get.context != null) {
+            AppToasts.warning(
+              Get.context!,
+              'Catégories manquantes',
+              'Ajoutez d’abord les catégories de votre boutique dans les paramètres.',
+            );
+          }
+          return;
+        }
+        final flat = Get.find<AppController>().allFlatCategories;
+        if (!isProductCategoryAllowedForBoutique(
+            selectedCategory.value!, allowedIds, flat)) {
+          if (Get.context != null) {
+            AppToasts.error(
+              Get.context!,
+              'Erreur',
+              'Choisissez une catégorie parmi celles de votre boutique.',
+            );
+          }
+          return;
+        }
+      }
+    }
+
     isLoading.value = true;
 
     try {
@@ -266,5 +353,59 @@ class ProductFormController extends GetxController {
     } finally {
       isLoading.value = false;
     }
+  }
+
+  /// Ouvre le sélecteur limité aux catégories de la boutique (règle B : sous-arbres).
+  Future<void> openBoutiqueCategoryPicker(BuildContext context) async {
+    if (!Get.isRegistered<AppController>() || !Get.isRegistered<BoutiqueController>()) {
+      AppToasts.error(
+        context,
+        'Erreur',
+        'Impossible de charger les catégories. Redémarrez l’application ou reconnectez-vous.',
+      );
+      return;
+    }
+    final appCtrl = Get.find<AppController>();
+    final bc = Get.find<BoutiqueController>();
+
+    await bc.silentRefreshMyBoutique();
+
+    final boutique = bc.myBoutique.value;
+
+    if (boutique == null) {
+      bc.goToMyBoutique();
+      return;
+    }
+
+    final allowedIds = parseBoutiqueCategoryIds(boutique.categories);
+    if (allowedIds.isEmpty) {
+      AppToasts.warning(
+        context,
+        'Catégories manquantes',
+        'Définissez les catégories de votre boutique (Paramètres > Modifier la boutique) avant de publier un article.',
+      );
+      return;
+    }
+
+    final filtered = filterCategoryTreeForBoutiqueProducts(
+      appCtrl.categories,
+      allowedIds,
+    );
+    if (filtered.isEmpty) {
+      AppToasts.warning(
+        context,
+        'Catégories',
+        'Aucune catégorie compatible avec votre configuration. Vérifiez les paramètres de la boutique.',
+      );
+      return;
+    }
+
+    CategoryPickerBottomSheet.show(
+      context,
+      categories: filtered,
+      onCategorySelected: (cat) {
+        selectedCategory.value = cat.id;
+      },
+    );
   }
 }

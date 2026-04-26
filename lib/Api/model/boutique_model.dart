@@ -32,6 +32,10 @@ class Boutique {
   });
 
   factory Boutique.fromJson(Map<String, dynamic> json) {
+    // Accept multiple possible keys returned by different backends/versions
+    final String logo = json['logo_url'] ?? json['logo'] ?? json['logoUrl'] ?? json['logo_path'] ?? json['logoPath'] ?? '';
+    final String banner = json['banner_url'] ?? json['banner'] ?? json['bannerUrl'] ?? json['banner_path'] ?? json['bannerPath'] ?? '';
+
     return Boutique(
       id: json['id'],
       nom: json['nom'] ?? '',
@@ -43,8 +47,8 @@ class Boutique {
       horaires: json['horaires'] ?? {},
       latitude: double.tryParse(json['latitude']?.toString() ?? '0') ?? 0.0,
       longitude: double.tryParse(json['longitude']?.toString() ?? '0') ?? 0.0,
-      logoUrl: json['logo_url'] ?? '',
-      bannerUrl: json['banner_url'] ?? '',
+      logoUrl: logo,
+      bannerUrl: banner,
       description: json['description'] ?? '',
       noteMoyenne: double.tryParse(json['note_moyenne']?.toString() ?? '0') ?? 0.0,
     );

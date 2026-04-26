@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:dio/dio.dart';
 import '../Api/model/boutique_model.dart';
 import '../Api/services/boutique_service.dart';
+import '../Api/provider/auth_controller.dart';
 
 class BoutiqueController extends GetxController {
   final BoutiqueService _boutiqueService;
@@ -18,8 +19,13 @@ class BoutiqueController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    // Initially check boutique status when initialized if logged in
-    // checkMyBoutique();
+    if (Get.isRegistered<AuthController>()) {
+      ever(Get.find<AuthController>().currentUser, (user) {
+        if (user == null) {
+          myBoutique.value = null;
+        }
+      });
+    }
   }
 
   /// Checks if the user has a boutique
@@ -35,6 +41,14 @@ class BoutiqueController extends GetxController {
     } finally {
       isLoading.value = false;
     }
+  }
+
+  /// Recharge la boutique sans indicateur global (ex. avant le picker catégories produit).
+  Future<void> silentRefreshMyBoutique() async {
+    try {
+      final boutique = await _boutiqueService.getMe();
+      myBoutique.value = boutique;
+    } catch (_) {}
   }
 
   Future<void> goToMyBoutique() async {
@@ -87,6 +101,23 @@ class BoutiqueController extends GetxController {
     try {
       final boutique = await _boutiqueService.update(data);
       myBoutique.value = boutique;
+      return true;
+    } catch (e) {
+      if (e is DioException && e.response?.statusCode == 422) {
+        return e.response?.data['errors'];
+      }
+      Get.snackbar('Erreur', e.toString());
+      return false;
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  /// Validate a step
+  Future<dynamic> validateStep(int step, Map<String, dynamic> data) async {
+    isLoading.value = true;
+    try {
+      await _boutiqueService.validateStep(step, data);
       return true;
     } catch (e) {
       if (e is DioException && e.response?.statusCode == 422) {

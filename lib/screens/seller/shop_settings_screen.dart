@@ -23,14 +23,13 @@ class _ShopSettingsScreenState extends State<ShopSettingsScreen> {
   String _resolveUrl(String? url) {
     if (url == null || url.isEmpty) return '';
     if (url.startsWith('http')) return url;
-    if (url.startsWith('/storage/')) {
-      final baseUrl = ApiConstants.baseUrl;
-      final rootUrl = baseUrl.endsWith('/api')
-          ? baseUrl.substring(0, baseUrl.length - 4)
-          : baseUrl;
-      return '$rootUrl$url';
-    }
-    return url;
+    final baseUrl = ApiConstants.baseUrl;
+    final rootUrl = baseUrl.endsWith('/api')
+        ? baseUrl.substring(0, baseUrl.length - 4)
+        : baseUrl;
+    // Ensure any relative/storage path becomes an absolute URL
+    if (url.startsWith('/')) return '$rootUrl$url';
+    return '$rootUrl/$url';
   }
 
   @override

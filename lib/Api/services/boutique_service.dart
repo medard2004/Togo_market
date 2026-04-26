@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:dio/dio.dart';
 import '../model/boutique_model.dart';
 import '../core/api_client.dart';
@@ -24,6 +25,20 @@ class BoutiqueService extends GetxService {
     }
   }
 
+  /// Retrieve all boutiques
+  Future<List<Boutique>> getBoutiques() async {
+    try {
+      final response = await _apiClient.get(ApiConstants.boutiqueEndpoint);
+      if (response.statusCode == 200) {
+        final List data = response.data is List ? response.data : (response.data['data'] ?? []);
+        return data.map((json) => Boutique.fromJson(json)).toList();
+      }
+      return [];
+    } catch (e) {
+      return [];
+    }
+  }
+
   Future<FormData> _buildFormData(Map<String, dynamic> payload, {bool isUpdate = false}) async {
     final Map<String, dynamic> formDataMap = {};
     if (isUpdate) {
@@ -33,8 +48,11 @@ class BoutiqueService extends GetxService {
     for (var entry in payload.entries) {
       if (entry.key == 'logoPath' || entry.key == 'bannerPath') {
         if (entry.value != null && (entry.value as String).isNotEmpty) {
-          final fileKey = entry.key == 'logoPath' ? 'logo' : 'banner';
-          formDataMap[fileKey] = await MultipartFile.fromFile(entry.value as String);
+          final file = File(entry.value as String);
+          if (await file.exists()) {
+            final fileKey = entry.key == 'logoPath' ? 'logo' : 'banner';
+            formDataMap[fileKey] = await MultipartFile.fromFile(file.path);
+          }
         }
       } else if (entry.value is List) {
         final list = entry.value as List;
@@ -75,5 +93,12 @@ class BoutiqueService extends GetxService {
       );
       return Boutique.fromJson(response.data['boutique'] ?? response.data['data'] ?? response.data);
     }
+  }
+
+  /// Validate a specific step data
+  Future<bool> validateStep(int step, Map<String, dynamic> data) async {
+    data['step'] = step;
+    await _apiClient.post('${ApiConstants.boutiqueEndpoint}/validate-step', data: data);
+    return true; // If no exception thrown, validation passed
   }
 }

@@ -12,7 +12,6 @@ import '../../animations/togo_animation_system.dart';
 import '../../widgets/common_widgets.dart';
 import '../../controllers/product_form_controller.dart';
 import '../../controllers/app_controller.dart';
-import '../../widgets/category_picker_bottom_sheet.dart';
 import '../../utils/category_icon_helper.dart';
 import '../../Api/config/api_constants.dart';
 // Note: We reuse FormSubmitBottomBar from add_product_screen.dart or recreate it here.
@@ -309,16 +308,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
                             const Text('Catégorie', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
                             const SizedBox(height: 8),
                             GestureDetector(
-                              onTap: () {
-                                final rootCats = Get.find<AppController>().categories;
-                                CategoryPickerBottomSheet.show(
-                                  context,
-                                  categories: rootCats,
-                                  onCategorySelected: (cat) {
-                                    _controller.selectedCategory.value = cat.id;
-                                  },
-                                );
-                              },
+                              onTap: () => _controller.openBoutiqueCategoryPicker(context),
                               child: Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
                                 decoration: BoxDecoration(

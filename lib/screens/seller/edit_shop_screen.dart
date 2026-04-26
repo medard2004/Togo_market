@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:geolocator/geolocator.dart';
 
 import '../../theme/app_theme.dart';
 import '../../widgets/common_widgets.dart';
@@ -12,6 +13,7 @@ import '../../Api/model/boutique_model.dart';
 import '../../controllers/boutique_controller.dart';
 import '../../Api/core/api_client.dart';
 import '../../Api/config/api_constants.dart';
+import '../../Api/provider/auth_controller.dart';
 import '../../utils/app_toasts.dart';
 
 class EditShopScreen extends StatefulWidget {
@@ -31,7 +33,7 @@ class _EditShopScreenState extends State<EditShopScreen> {
   String? _bannerPath;
   String? _logoPath;
 
-  String _zone = 'Tokoin';
+  String _ville = '';
   List<String> _selectedCategoryIds = [];
 
   TimeOfDay? _openingTime = const TimeOfDay(hour: 8, minute: 0);
@@ -43,27 +45,19 @@ class _EditShopScreenState extends State<EditShopScreen> {
   bool _isLoading = false;
   bool _isLoadingCategories = true;
   bool _isPickingImage = false;
+  bool _gpsLoading = false;
+  double? _latitude;
+  double? _longitude;
   List<AppCategory> _dbCategories = [];
   final ImagePicker _picker = ImagePicker();
 
   late Boutique _boutique;
-
-  final _zones = [
-    'Tokoin',
-    'Avépozo',
-    'Adidogomé',
-    'Bè',
-    'Kégué',
-    'Nyékonakpoè',
-    'Agbalépédo',
-    'Amadahomé',
-    'Agoè',
-    'Legbassito',
-  ];
+  late final AuthController _authCtrl;
 
   @override
   void initState() {
     super.initState();
+    _authCtrl = Get.find<AuthController>();
     _boutique = BoutiqueController.to.myBoutique.value!;
     _initFromBoutique();
     _fetchCategories();
@@ -78,11 +72,13 @@ class _EditShopScreenState extends State<EditShopScreen> {
         : '';
     _detailsCtrl.text = _boutique.detailsAdresse ?? '';
 
-    // Préremplir la zone si elle correspond à une valeur connue
+    // Préremplir la ville
     final adresse = _boutique.adresse ?? '';
-    if (_zones.contains(adresse)) {
-      _zone = adresse;
-    }
+    _ville = adresse;
+    
+    // Préremplir GPS
+    _latitude = _boutique.latitude;
+    _longitude = _boutique.longitude;
 
     // Préremplir les horaires
     if (_boutique.horaires is Map) {
@@ -163,14 +159,12 @@ class _EditShopScreenState extends State<EditShopScreen> {
   String _resolveUrl(String? url) {
     if (url == null || url.isEmpty) return '';
     if (url.startsWith('http')) return url;
-    if (url.startsWith('/storage/')) {
-      final baseUrl = ApiConstants.baseUrl;
-      final rootUrl = baseUrl.endsWith('/api')
-          ? baseUrl.substring(0, baseUrl.length - 4)
-          : baseUrl;
-      return '$rootUrl$url';
-    }
-    return url;
+    final baseUrl = ApiConstants.baseUrl;
+    final rootUrl = baseUrl.endsWith('/api')
+        ? baseUrl.substring(0, baseUrl.length - 4)
+        : baseUrl;
+    if (url.startsWith('/')) return '$rootUrl$url';
+    return '$rootUrl/$url';
   }
 
   Future<void> _pickImage(bool isBanner) async {
@@ -180,6 +174,15 @@ class _EditShopScreenState extends State<EditShopScreen> {
     try {
       final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
       if (pickedFile != null && mounted) {
+        // Check size (5 Mo = 5242880 bytes)
+        final fileSize = await File(pickedFile.path).length();
+        if (fileSize > 5242880) {
+          if (mounted) {
+            AppToasts.error(context, 'Image trop volumineuse',
+                'L\'image dépasse 5 Mo. Veuillez choisir une image plus légère.');
+          }
+          return;
+        }
         setState(() {
           if (isBanner) {
             _bannerPath = pickedFile.path;
@@ -244,6 +247,43 @@ class _EditShopScreenState extends State<EditShopScreen> {
   String _formatTime(TimeOfDay? time) {
     if (time == null) return '--:--';
     return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+  }
+
+  Future<void> _requestGpsPosition() async {
+    setState(() { _gpsLoading = true; });
+    try {
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        if (mounted) AppToasts.error(context, 'Erreur GPS', 'Services de localisation désactivés');
+        setState(() { _gpsLoading = false; });
+        return;
+      }
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          if (mounted) AppToasts.error(context, 'Erreur GPS', 'Permission refusée');
+          setState(() { _gpsLoading = false; });
+          return;
+        }
+      }
+      if (permission == LocationPermission.deniedForever) {
+        if (mounted) AppToasts.error(context, 'Erreur GPS', 'Permission refusée définitivement');
+        setState(() { _gpsLoading = false; });
+        return;
+      }
+      final position = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high);
+      setState(() {
+        _latitude = position.latitude;
+        _longitude = position.longitude;
+        _gpsLoading = false;
+      });
+      if (mounted) AppToasts.success(context, 'GPS', 'Position détectée avec succès');
+    } catch (e) {
+      if (mounted) AppToasts.error(context, 'Erreur GPS', e.toString().substring(0, 50));
+      setState(() { _gpsLoading = false; });
+    }
   }
 
   void _toggleDay(String day) {
@@ -606,37 +646,100 @@ class _EditShopScreenState extends State<EditShopScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Localisation / Zone
-                    const Text('Localisation de la boutique *',
+                    // Localisation / Ville
+                    const Text('Ville *',
                         style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
                     const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: AppTheme.border),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<String>(
-                          value: _zone,
-                          isExpanded: true,
-                          items: _zones
-                              .map((z) => DropdownMenuItem(value: z, child: Text(z)))
-                              .toList(),
-                          onChanged: (v) => setState(() => _zone = v!),
+                    Obx(() {
+                      final villes = _authCtrl.locations;
+                      final villeNames = villes.map((v) => v.nom).toList();
+                      if (villeNames.isNotEmpty && !villeNames.contains(_ville) && _ville.isEmpty) {
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          if (mounted) setState(() => _ville = villeNames.first);
+                        });
+                      }
+                      return Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: AppTheme.border),
+                          borderRadius: BorderRadius.circular(16),
                         ),
-                      ),
-                    ),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<String>(
+                            value: villeNames.contains(_ville) ? _ville : null,
+                            isExpanded: true,
+                            hint: const Text('Sélectionner une ville'),
+                            items: villeNames
+                                .map((v) => DropdownMenuItem(value: v, child: Text(v)))
+                                .toList(),
+                            onChanged: (v) => setState(() => _ville = v!),
+                          ),
+                        ),
+                      );
+                    }),
                     const SizedBox(height: 16),
 
                     // Détails de l'adresse
-                    const Text('Détails de l\'adresse (Optionnel)',
+                    const Text('Adresse / Quartier',
                         style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
                     const SizedBox(height: 8),
                     TextField(
                       controller: _detailsCtrl,
                       decoration: const InputDecoration(
-                          hintText: 'Ex: Près de la pharmacie XYZ...'),
+                          hintText: 'Ex: Quartier Tokoin, près de la pharmacie XYZ...'),
+                    ),
+                    const SizedBox(height: 24),
+                    
+                    // Bouton GPS
+                    GestureDetector(
+                      onTap: _gpsLoading ? null : _requestGpsPosition,
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: _latitude != null
+                              ? AppTheme.primary.withOpacity(0.08)
+                              : AppTheme.primary.withOpacity(0.05),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: _latitude != null
+                                ? AppTheme.primary.withOpacity(0.4)
+                                : AppTheme.primary.withOpacity(0.1),
+                          ),
+                        ),
+                        child: Center(
+                          child: _gpsLoading
+                              ? const Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    SizedBox(width: 20, height: 20,
+                                        child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.primary)),
+                                    SizedBox(width: 12),
+                                    Text('Recherche de la position...', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w600)),
+                                  ],
+                                )
+                              : Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(_latitude != null ? Icons.check_circle : Icons.pin_drop_rounded,
+                                            color: AppTheme.primary),
+                                        const SizedBox(width: 12),
+                                        Text(_latitude != null ? 'Position détectée ✅' : 'Mettre à jour la position GPS',
+                                            style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primary)),
+                                      ],
+                                    ),
+                                    if (_latitude != null) ...[
+                                      const SizedBox(height: 6),
+                                      Text('${_latitude!.toStringAsFixed(4)}, ${_longitude!.toStringAsFixed(4)}',
+                                          style: TextStyle(fontSize: 12, color: AppTheme.mutedForeground)),
+                                    ],
+                                  ],
+                                ),
+                        ),
+                      ),
                     ),
                     const SizedBox(height: 32),
                   ],
@@ -678,7 +781,7 @@ class _EditShopScreenState extends State<EditShopScreen> {
                         final payload = {
                           'nom': _nameCtrl.text.trim(),
                           'telephone': telephoneFormatted,
-                          'adresse': _zone,
+                          'adresse': _ville,
                           'details_adresse': _detailsCtrl.text.trim(),
                           'description': _descCtrl.text.trim(),
                           'contacts': contacts,
@@ -688,6 +791,8 @@ class _EditShopScreenState extends State<EditShopScreen> {
                             'fermeture': _formatTime(_closingTime),
                           },
                           'categories': _selectedCategoryIds,
+                          if (_latitude != null) 'latitude': _latitude,
+                          if (_longitude != null) 'longitude': _longitude,
                           if (_bannerPath != null) 'bannerPath': _bannerPath,
                           if (_logoPath != null) 'logoPath': _logoPath,
                         };

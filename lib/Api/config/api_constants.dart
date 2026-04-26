@@ -51,6 +51,7 @@ class ApiConstants {
   // Example Endpoints
   static const String productsEndpoint = '/produits';
   static const String trendingProductsEndpoint = '/produits/trending';
+  static const String trendingProductsPaginatedEndpoint = '/produits/trending/paginated';
   static const String productsByZoneEndpoint = '/produits/zone';
   static const String ordersEndpoint = '/commandes';
 

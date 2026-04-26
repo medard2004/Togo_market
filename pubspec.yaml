@@ -49,6 +49,7 @@ dependencies:
   toastification: ^3.0.3
   flutter_dotenv: ^5.2.1
   pinput: ^6.0.2
+  geolocator: ^14.0.2
 
 dev_dependencies:
   flutter_test:

@@ -5,6 +5,7 @@ import '../../theme/app_theme.dart';
 import '../../widgets/bottom_nav.dart';
 import '../../Api/provider/auth_controller.dart';
 import '../../widgets/user_avatar.dart';
+import '../../controllers/app_controller.dart';
 import 'widgets/profile_menu_item.dart';
 import 'widgets/profile_stat_card.dart';
 
@@ -125,7 +126,8 @@ class ProfileScreen extends StatelessWidget {
                   const SizedBox(height: 18),
                   Obx(() {
                       final user = authCtrl.currentUser.value;
-                      final isIncomplete = user == null || user.nom == null || user.nom!.isEmpty;
+                      final isIncomplete =
+                          user == null || user.needsOnboardingProfile;
                       return SizedBox(
                         width: double.infinity,
                         child: ElevatedButton.icon(
@@ -179,12 +181,17 @@ class ProfileScreen extends StatelessWidget {
                     flat: true,
                   ),
                   const Divider(height: 1, color: AppTheme.border),
-                  ProfileMenuItem(
-                    icon: Icons.favorite_border,
-                    label: 'Mes favoris',
-                    onTap: () => Get.toNamed('/favorites'),
-                    flat: true,
-                  ),
+                  Obx(() {
+                    final favCount =
+                        Get.find<AppController>().favorites.length;
+                    return ProfileMenuItem(
+                      icon: Icons.favorite_border,
+                      label: 'Mes favoris',
+                      badge: '$favCount',
+                      onTap: () => Get.toNamed('/favorites'),
+                      flat: true,
+                    );
+                  }),
                   const Divider(height: 1, color: AppTheme.border),
                   ProfileMenuItem(
                     icon: Icons.inventory_2_outlined,
@@ -212,7 +219,15 @@ class ProfileScreen extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             GestureDetector(
-              onTap: () => Get.offAllNamed('/auth'),
+              onTap: () async {
+                Get.dialog(
+                  const Center(child: CircularProgressIndicator()),
+                  barrierDismissible: false,
+                );
+                await authCtrl.logout();
+                if (Get.isDialogOpen ?? false) Get.back();
+                Get.offAllNamed('/auth');
+              },
               child: Container(
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(vertical: 16),

@@ -8,7 +8,6 @@ import '../../animations/togo_animation_system.dart';
 import '../../widgets/common_widgets.dart';
 import '../../controllers/product_form_controller.dart';
 import '../../controllers/app_controller.dart';
-import '../../widgets/category_picker_bottom_sheet.dart';
 import '../../utils/category_icon_helper.dart';
 
 class AddProductScreen extends StatefulWidget {
@@ -64,6 +63,9 @@ class _AddProductScreenState extends State<AddProductScreen> {
                       ),
                       const SizedBox(height: 4),
                       const Text('Ajoutez au moins 1 photo (5 maximum).', style: TextStyle(fontSize: 12, color: AppTheme.mutedForeground)),
+                      const SizedBox(height: 4),
+                      const Text('Formats : JPEG, PNG, WebP • Taille max : 5 Mo par image',
+                          style: TextStyle(fontSize: 11, color: AppTheme.primary, fontWeight: FontWeight.w500)),
                       const SizedBox(height: 12),
                       Obx(() {
                         if (_controller.images.isEmpty) {
@@ -213,16 +215,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                             const Text('Catégorie', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
                             const SizedBox(height: 8),
                             GestureDetector(
-                              onTap: () {
-                                final rootCats = Get.find<AppController>().categories;
-                                CategoryPickerBottomSheet.show(
-                                  context,
-                                  categories: rootCats,
-                                  onCategorySelected: (cat) {
-                                    _controller.selectedCategory.value = cat.id;
-                                  },
-                                );
-                              },
+                              onTap: () => _controller.openBoutiqueCategoryPicker(context),
                               child: Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
                                 decoration: BoxDecoration(

@@ -93,7 +93,7 @@ class Product {
       boutiqueId: json['boutique_id'],
       stock: int.tryParse((json['stock'] ?? 1).toString()) ?? 1,
       isPriceNegotiable: json['prix_negociable'] == 1 || json['prix_negociable'] == true,
-      isFavorite: json['isFavorite'] ?? false,
+      isFavorite: json['is_favoris'] == true || json['is_favoris'] == 1 || json['isFavorite'] == true,
       categoryObj: json['categorie'] != null ? Category.fromJson(json['categorie']) : null,
       boutiqueObj: json['boutique'] != null ? Boutique.fromJson(json['boutique']) : null,
     );

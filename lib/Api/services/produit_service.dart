@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 import '../model/product_model.dart';
+import '../model/trending_products_page.dart';
 import '../core/api_client.dart';
 import '../config/api_constants.dart';
 
@@ -49,11 +50,30 @@ class ProduitService extends GetxService {
     return Product.fromJson(raw is Map && raw.containsKey('data') ? raw['data'] : raw);
   }
 
-  /// Get trending products (best score: vues + favoris)
+  /// Aperçu tendances (10 premiers) pour la page d'accueil.
   Future<List<Product>> getTrendingProducts() async {
     final response = await _apiClient.get(ApiConstants.trendingProductsEndpoint);
     final list = _parseList(response.data);
     return list.map((json) => Product.fromJson(json)).toList();
+  }
+
+  /// Tendances paginées (écran « Voir tout »), même ordre que l'aperçu.
+  Future<TrendingProductsPage> getTrendingProductsPage({
+    int page = 1,
+    int perPage = 20,
+  }) async {
+    final response = await _apiClient.get(
+      ApiConstants.trendingProductsPaginatedEndpoint,
+      queryParameters: {
+        'page': page,
+        'per_page': perPage,
+      },
+    );
+    final data = response.data;
+    if (data is! Map<String, dynamic>) {
+      return TrendingProductsPage(items: [], currentPage: 1, lastPage: 1);
+    }
+    return TrendingProductsPage.fromJson(data);
   }
 
   /// Get products by zone (text match on localisation)

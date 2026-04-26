@@ -233,6 +233,7 @@ class AuthController extends GetxController {
   Future<void> logout() async {
     await _authService.logout();
     currentUser.value = null;
+    hasToken.value = false;
     // Redirect is now handled by the UI after the loading screen
   }
   Future<void> requestPasswordReset(String telephone) async {

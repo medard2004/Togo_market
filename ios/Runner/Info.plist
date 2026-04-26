@@ -66,5 +66,7 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Togo Market utilise votre position pour localiser votre boutique et afficher les produits proches de vous.</string>
 </dict>
 </plist>

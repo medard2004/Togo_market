@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../theme/app_theme.dart';
+import '../../../Api/provider/auth_controller.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -75,7 +76,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             const SizedBox(height: 20),
             GestureDetector(
-              onTap: () => Get.offAllNamed('/auth'),
+              onTap: () async {
+                final authCtrl = Get.find<AuthController>();
+                Get.dialog(
+                  const Center(child: CircularProgressIndicator()),
+                  barrierDismissible: false,
+                );
+                await authCtrl.logout();
+                if (Get.isDialogOpen ?? false) Get.back();
+                Get.offAllNamed('/auth');
+              },
               child: Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
