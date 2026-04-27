@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
-import 'package:togo_market/theme/app_colors.dart';
 import '../../../models/models.dart';
 import '../../../theme/app_theme.dart';
 import '../../../utils/responsive.dart';

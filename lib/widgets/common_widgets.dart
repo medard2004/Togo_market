@@ -752,14 +752,14 @@ class FavoriteTicketCard extends StatelessWidget {
                           Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.storefront_rounded,
+                              Icon(seller.isShop ? Icons.storefront_rounded : Icons.person_outline,
                                   size: r.s(10),
                                   color: AppTheme.mutedForeground),
                               SizedBox(width: r.s(3)),
                               ConstrainedBox(
                                 constraints: BoxConstraints(maxWidth: r.s(72)),
                                 child: Text(
-                                  seller.shopName,
+                                  seller.isShop ? seller.shopName : seller.name,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
@@ -945,7 +945,7 @@ class SellerCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(seller.shopName,
+                Text(seller.isShop ? seller.shopName : seller.name,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
@@ -982,7 +982,7 @@ class SellerCard extends StatelessWidget {
               if (onVisit != null)
                 GestureDetector(
                   onTap: onVisit,
-                  child: Text('Voir boutique',
+                  child: Text(seller.isShop ? 'Voir boutique' : 'Voir le profil',
                       style: TextStyle(
                           fontSize: r.fs(11),
                           fontWeight: FontWeight.w600,
@@ -1024,7 +1024,7 @@ class ShopCarouselCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final r = R(context);
     return GestureDetector(
-      onTap: onTap ?? () => Get.toNamed('/seller/${seller.id}'),
+      onTap: onTap ?? () => Get.toNamed(seller.isShop ? '/seller/${seller.id}' : '/profile/${seller.id}'),
       child: Container(
         width: r.s(160),
         decoration: BoxDecoration(
@@ -1054,7 +1054,7 @@ class ShopCarouselCard extends StatelessWidget {
                   child: Center(
                     child: Opacity(
                       opacity: 0.1,
-                      child: Icon(Icons.storefront_rounded,
+                      child: Icon(seller.isShop ? Icons.storefront_rounded : Icons.person_outline,
                           size: r.s(54), color: AppTheme.primary),
                     ),
                   ),
@@ -1065,7 +1065,7 @@ class ShopCarouselCard extends StatelessWidget {
                   child: Column(
                     children: [
                       Text(
-                        seller.shopName,
+                        seller.isShop ? seller.shopName : seller.name,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         textAlign: TextAlign.center,

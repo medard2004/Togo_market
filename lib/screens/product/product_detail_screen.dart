@@ -7,6 +7,7 @@ import '../../widgets/common_widgets.dart';
 import '../../controllers/app_controller.dart';
 import '../../data/mock_data.dart';
 import '../../utils/responsive.dart';
+import '../../models/models.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   const ProductDetailScreen({super.key});
@@ -226,86 +227,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       ),
                       SizedBox(height: r.s(20)),
 
-                      // Carte vendeur
+                      // ── Section Vendeur ─────────────────────────────────────────────
                       if (seller != null) ...[
-                        Container(
-                          padding: EdgeInsets.all(r.s(14)),
-                          decoration: BoxDecoration(
-                            color: AppTheme.cardColor,
-                            borderRadius: BorderRadius.circular(r.rad(16)),
-                            border: Border.all(color: AppTheme.border),
-                          ),
-                          child: Column(
-                            children: [
-                              Row(
-                                children: [
-                                  Stack(
-                                    children: [
-                                      CircleAvatar(
-                                        radius: r.s(26),
-                                        backgroundImage: CachedNetworkImageProvider(seller.avatar),
-                                      ),
-                                      Positioned(
-                                        bottom: 0, right: 0,
-                                        child: Container(
-                                          width: r.s(12), height: r.s(12),
-                                          decoration: BoxDecoration(
-                                            color: Colors.green, shape: BoxShape.circle,
-                                            border: Border.all(color: Colors.white, width: 2),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  SizedBox(width: r.s(12)),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(seller.shopName,
-                                            style: TextStyle(fontSize: r.fs(15), fontWeight: FontWeight.w700, color: AppTheme.foreground)),
-                                        SizedBox(height: r.s(2)),
-                                        Row(children: [
-                                          Icon(Icons.flash_on, size: r.s(12), color: AppTheme.primary),
-                                          SizedBox(width: r.s(2)),
-                                          Text('Répond en ~5 min',
-                                              style: TextStyle(fontSize: r.fs(12), color: AppTheme.mutedForeground)),
-                                        ]),
-                                        SizedBox(height: r.s(2)),
-                                        Text('MEMBRE DEPUIS JAN 2023',
-                                            style: TextStyle(fontSize: r.fs(10), fontWeight: FontWeight.w600,
-                                                letterSpacing: 0.5, color: AppTheme.mutedForeground)),
-                                      ],
-                                    ),
-                                  ),
-                                  Row(children: [
-                                    Icon(Icons.star, size: r.s(14), color: Colors.amber),
-                                    SizedBox(width: r.s(2)),
-                                    Text('${seller.rating}',
-                                        style: TextStyle(fontSize: r.fs(13), fontWeight: FontWeight.w700, color: AppTheme.foreground)),
-                                  ]),
-                                ],
-                              ),
-                              SizedBox(height: r.s(12)),
-                              GestureDetector(
-                                onTap: () => Get.toNamed('/seller/${seller.id}'),
-                                child: Container(
-                                  width: double.infinity,
-                                  padding: EdgeInsets.symmetric(vertical: r.s(11)),
-                                  decoration: BoxDecoration(
-                                    color: AppTheme.cardColor,
-                                    borderRadius: BorderRadius.circular(r.rad(10)),
-                                    border: Border.all(color: AppTheme.border),
-                                  ),
-                                  child: Center(
-                                    child: Text('Voir la boutique',
-                                        style: TextStyle(fontSize: r.fs(14), fontWeight: FontWeight.w600, color: AppTheme.foreground)),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+                        seller.isShop
+                            ? _buildShopCard(r, seller)
+                            : _buildIndividualProfileCard(r, seller),
                         SizedBox(height: r.s(20)),
                       ],
 
@@ -467,6 +393,199 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   ),
                 ],
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildShopCard(R r, Seller seller) {
+    return Container(
+      padding: EdgeInsets.all(r.s(14)),
+      decoration: BoxDecoration(
+        color: AppTheme.cardColor,
+        borderRadius: BorderRadius.circular(r.rad(16)),
+        border: Border.all(color: AppTheme.border),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Stack(
+                children: [
+                  CircleAvatar(
+                    radius: r.s(26),
+                    backgroundImage: CachedNetworkImageProvider(seller.avatar),
+                  ),
+                  Positioned(
+                    bottom: 0,
+                    right: 0,
+                    child: Container(
+                      width: r.s(12),
+                      height: r.s(12),
+                      decoration: BoxDecoration(
+                        color: Colors.green,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 2),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(width: r.s(12)),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(seller.shopName,
+                        style: TextStyle(
+                            fontSize: r.fs(15),
+                            fontWeight: FontWeight.w700,
+                            color: AppTheme.foreground)),
+                    SizedBox(height: r.s(2)),
+                    Row(children: [
+                      Icon(Icons.flash_on,
+                          size: r.s(12), color: AppTheme.primary),
+                      SizedBox(width: r.s(2)),
+                      Text('Répond en ~5 min',
+                          style: TextStyle(
+                              fontSize: r.fs(12),
+                              color: AppTheme.mutedForeground)),
+                    ]),
+                    SizedBox(height: r.s(2)),
+                    Text('MEMBRE DEPUIS JAN 2023',
+                        style: TextStyle(
+                            fontSize: r.fs(10),
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 0.5,
+                            color: AppTheme.mutedForeground)),
+                  ],
+                ),
+              ),
+              Row(children: [
+                Icon(Icons.star, size: r.s(14), color: Colors.amber),
+                SizedBox(width: r.s(2)),
+                Text('${seller.rating}',
+                    style: TextStyle(
+                        fontSize: r.fs(13),
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.foreground)),
+              ]),
+            ],
+          ),
+          SizedBox(height: r.s(12)),
+          GestureDetector(
+            onTap: () => Get.toNamed('/seller/${seller.id}'),
+            child: Container(
+              width: double.infinity,
+              padding: EdgeInsets.symmetric(vertical: r.s(11)),
+              decoration: BoxDecoration(
+                color: AppTheme.cardColor,
+                borderRadius: BorderRadius.circular(r.rad(10)),
+                border: Border.all(color: AppTheme.border),
+              ),
+              child: Center(
+                child: Text('Voir la boutique',
+                    style: TextStyle(
+                        fontSize: r.fs(14),
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.foreground)),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildIndividualProfileCard(R r, Seller seller) {
+    return Container(
+      padding: EdgeInsets.all(r.s(16)),
+      decoration: BoxDecoration(
+        color: AppTheme.cardColor,
+        borderRadius: BorderRadius.circular(r.rad(20)),
+        border: Border.all(color: AppTheme.border.withOpacity(0.5)),
+        boxShadow: [
+          BoxShadow(
+              color: Colors.black.withOpacity(0.02),
+              blurRadius: 10,
+              offset: const Offset(0, 4)),
+        ],
+      ),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: r.s(28),
+            backgroundImage: CachedNetworkImageProvider(seller.avatar),
+          ),
+          SizedBox(width: r.s(14)),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  seller.name,
+                  style: TextStyle(
+                    fontSize: r.fs(16),
+                    fontWeight: FontWeight.w800,
+                    color: AppTheme.foreground,
+                  ),
+                ),
+                SizedBox(height: r.s(2)),
+                Text(
+                  'Membre depuis Jan 2023',
+                  style: TextStyle(
+                    fontSize: r.fs(11),
+                    color: AppTheme.mutedForeground,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                SizedBox(height: r.s(4)),
+                Row(
+                  children: [
+                    Icon(Icons.star, size: r.s(12), color: Colors.amber),
+                    SizedBox(width: r.s(4)),
+                    Text(
+                      '${seller.rating}',
+                      style: TextStyle(
+                        fontSize: r.fs(12),
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.foreground,
+                      ),
+                    ),
+                    SizedBox(width: r.s(8)),
+                    Container(
+                      width: r.s(3),
+                      height: r.s(3),
+                      decoration: const BoxDecoration(
+                          color: AppTheme.mutedForeground,
+                          shape: BoxShape.circle),
+                    ),
+                    SizedBox(width: r.s(8)),
+                    Text(
+                      'Vendeur vérifié',
+                      style: TextStyle(
+                        fontSize: r.fs(11),
+                        color: Colors.green,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          GestureDetector(
+            onTap: () => Get.toNamed('/profile/${seller.id}'),
+            child: Container(
+              padding:
+                  EdgeInsets.symmetric(horizontal: r.s(12), vertical: r.s(8)),
+              decoration: BoxDecoration(
+                color: AppTheme.primaryLight,
+                borderRadius: BorderRadius.circular(r.rad(10)),
+              ),
+              child: Icon(Icons.chevron_right, color: AppTheme.primary),
             ),
           ),
         ],

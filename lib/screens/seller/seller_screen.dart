@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:togo_market/theme/app_colors.dart';
 import '../../theme/app_theme.dart';
 import '../../data/mock_data.dart';
 import '../../utils/responsive.dart';
@@ -300,7 +299,7 @@ class SellerScreen extends StatelessWidget {
               ),
             );
           }
-          return Text(seller.shopName,
+          return Text(seller.isShop ? seller.shopName : seller.name,
               style: TextStyle(
                   fontSize: r.fs(16),
                   fontWeight: FontWeight.w700,
@@ -424,7 +423,7 @@ class SellerScreen extends StatelessWidget {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(seller.shopName,
+                                  Text(seller.isShop ? seller.shopName : seller.name,
                                       style: TextStyle(
                                           fontSize: r.fs(20),
                                           fontWeight: FontWeight.w800,

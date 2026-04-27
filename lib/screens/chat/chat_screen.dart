@@ -104,7 +104,9 @@ class _ChatScreenState extends State<ChatScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    seller?.shopName ?? '',
+                    seller != null
+                        ? (seller.isShop ? seller.shopName : seller.name)
+                        : '',
                     style: const TextStyle(
                         fontSize: 14, fontWeight: FontWeight.w700),
                   ),
