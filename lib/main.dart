@@ -39,7 +39,9 @@ import 'screens/seller/return_policy_screen.dart';
 import 'screens/seller/seller_help_center_screen.dart';
 import 'screens/profile/profile_screen.dart';
 import 'screens/profile/profile_setup_screen.dart';
+import 'screens/profile/public_profile_screen.dart';
 import 'screens/profile/edit_profile_screen.dart';
+import 'screens/profile/my_products_screen.dart';
 import 'screens/notifications/notifications_screen.dart';
 import 'screens/settings/settings_screen.dart';
 import 'screens/favorites/favorites_screen.dart';
@@ -54,8 +56,10 @@ import 'Api/services/boutique_service.dart';
 import 'Api/services/produit_service.dart';
 import 'Api/services/category_service.dart';
 import 'Api/services/favori_service.dart';
+import 'Api/services/user_service.dart';
 import 'Api/provider/auth_controller.dart';
 import 'controllers/boutique_controller.dart';
+import 'controllers/my_products_controller.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -86,11 +90,13 @@ void main() async {
   final boutiqueService = BoutiqueService(apiClient);
   final produitService = ProduitService(apiClient);
   final categoryService = CategoryService(apiClient);
+  final userService = UserService(apiClient);
 
   Get.put(authService, permanent: true);
   Get.put(boutiqueService, permanent: true);
   Get.put(produitService, permanent: true);
   Get.put(categoryService, permanent: true);
+  Get.put(userService, permanent: true);
   Get.put(FavoriService(apiClient), permanent: true);
 
   Get.put(AuthController(authService), permanent: true);
@@ -100,6 +106,7 @@ void main() async {
   Get.put(AppController());
   Get.put(ChatController());
   Get.put(DashboardController());
+  Get.put(MyProductsController());
 
   runApp(const TogoMarketApp());
 }
@@ -115,8 +122,7 @@ class TogoMarketApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         theme: AppTheme.theme,
         initialRoute: '/splash',
-        defaultTransition: Transition.cupertino,
-        transitionDuration: const Duration(milliseconds: 280),
+        transitionDuration: const Duration(milliseconds: 300),
         builder: (context, child) {
           return GestureDetector(
             onTap: () {
@@ -126,22 +132,23 @@ class TogoMarketApp extends StatelessWidget {
           );
         },
         getPages: [
-          GetPage(name: '/splash', page: () => const SplashScreen()),
-          GetPage(name: '/onboarding', page: () => const OnboardingScreen()),
-          GetPage(name: '/auth', page: () => const AuthScreen()),
-          GetPage(name: '/home', page: () => const HomeScreen()),
+          togoPage('/splash', () => const SplashScreen(),
+              style: TogoRouteStyle.softFade),
+          togoPage('/onboarding', () => const OnboardingScreen(),
+              style: TogoRouteStyle.softFade),
+          togoPage('/auth', () => const AuthScreen(),
+              style: TogoRouteStyle.softFade),
+          togoPage('/home', () => const HomeScreen()),
           GetPage(name: '/category', page: () => const CategoryScreen()),
-          GetPage(name: '/search', page: () => const SearchScreen()),
-          GetPage(
-            name: '/product/:id',
-            page: () => const ProductDetailScreen(),
-          ),
-          GetPage(name: '/chat/:id', page: () => const ChatScreen()),
-          GetPage(name: '/messages', page: () => const MessagesScreen()),
-          GetPage(name: '/order', page: () => const OrderCheckoutScreen()),
-          GetPage(name: '/seller/:id', page: () => const SellerScreen()),
-          GetPage(name: '/dashboard', page: () => const DashboardScreen()),
-          GetPage(name: '/add-product', page: () => const AddProductScreen()),
+          togoPage('/search', () => const SearchScreen()),
+          togoPage('/product/:id', () => const ProductDetailScreen()),
+          togoPage('/chat/:id', () => const ChatScreen()),
+          togoPage('/messages', () => const MessagesScreen()),
+          togoPage('/order', () => const OrderCheckoutScreen()),
+          togoPage('/seller/:id', () => SellerScreen()),
+          togoPage('/dashboard', () => const DashboardScreen()),
+          togoPage('/add-product', () => const AddProductScreen(),
+              style: TogoRouteStyle.modalLift),
           togoPage('/shop-information', () => const ShopInformationScreen()),
           togoPage(
             '/edit-shop',
@@ -155,25 +162,30 @@ class TogoMarketApp extends StatelessWidget {
           togoPage(
             '/edit-product/:id',
             () => const EditProductScreen(),
+            style: TogoRouteStyle.modalLift,
           ),
           togoPage('/seller-stats', () => const SellerStatsScreen()),
           togoPage('/coverage-zones', () => const CoverageZonesScreen()),
           togoPage('/opening-hours', () => const OpeningHoursScreen()),
-          togoPage('/product-categories', () => const ProductCategoriesScreen()),
+          togoPage(
+              '/product-categories', () => const ProductCategoriesScreen()),
           togoPage('/return-policy', () => const ReturnPolicyScreen()),
-          togoPage('/seller-help-center', () => const SellerHelpCenterScreen()),
+          togoPage(
+              '/seller-help-center', () => const SellerHelpCenterScreen()),
+          togoPage('/notifications', () => const NotificationsScreen()),
+          togoPage('/profile', () => const ProfileScreen()),
           GetPage(
-              name: '/notifications', page: () => const NotificationsScreen()),
-          GetPage(name: '/profile', page: () => const ProfileScreen()),
-          GetPage(name: '/profile-setup', page: () => const ProfileSetupScreen()),
+              name: '/profile-setup',
+              page: () => const ProfileSetupScreen()),
+          togoPage('/profile/:id', () => const PublicProfileScreen()),
           togoPage('/edit-profile', () => const EditProfileScreen(),
               style: TogoRouteStyle.modalLift),
-          GetPage(
-              name: '/shop-settings', page: () => const ShopSettingsScreen()),
-          GetPage(name: '/settings', page: () => const SettingsScreen()),
-          GetPage(name: '/favorites', page: () => const FavoritesScreen()),
-          GetPage(name: '/orders', page: () => const OrdersScreen()),
-          GetPage(name: '/help', page: () => const HelpScreen()),
+          togoPage('/my-products', () => const MyProductsScreen()),
+          togoPage('/shop-settings', () => const ShopSettingsScreen()),
+          togoPage('/settings', () => const SettingsScreen()),
+          togoPage('/favorites', () => const FavoritesScreen()),
+          togoPage('/orders', () => const OrdersScreen()),
+          togoPage('/help', () => const HelpScreen()),
           togoPage('/trends', () => const TrendingExplorerScreen()),
           togoPage('/nearby', () => const NearbyExplorerScreen()),
         ],

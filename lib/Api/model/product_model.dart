@@ -1,5 +1,6 @@
 import 'category_model.dart';
 import 'boutique_model.dart';
+import 'user_model.dart';
 
 class Product {
   final dynamic id;
@@ -21,8 +22,10 @@ class Product {
   final List<dynamic> rawImages;
 
   // Relations
+  // Relations
   Category? categoryObj;
   Boutique? boutiqueObj;
+  User? userObj;
 
   Product({
     required this.id,
@@ -42,6 +45,7 @@ class Product {
     this.isFavorite = false,
     this.categoryObj,
     this.boutiqueObj,
+    this.userObj,
   });
 
   factory Product.fromJson(Map<String, dynamic> json) {
@@ -89,13 +93,14 @@ class Product {
       category: (json['categorie_id'] ?? json['category'] ?? '').toString(),
       condition: json['etat'] ?? json['condition'] ?? 'Neuf',
       description: json['description'] ?? '',
-      sellerId: json['boutique_id'] ?? json['sellerId'] ?? '',
+      sellerId: json['user_id'] ?? json['boutique_id'] ?? json['sellerId'] ?? '',
       boutiqueId: json['boutique_id'],
       stock: int.tryParse((json['stock'] ?? 1).toString()) ?? 1,
       isPriceNegotiable: json['prix_negociable'] == 1 || json['prix_negociable'] == true,
       isFavorite: json['is_favoris'] == true || json['is_favoris'] == 1 || json['isFavorite'] == true,
       categoryObj: json['categorie'] != null ? Category.fromJson(json['categorie']) : null,
       boutiqueObj: json['boutique'] != null ? Boutique.fromJson(json['boutique']) : null,
+      userObj: json['user'] != null ? User.fromJson(json['user']) : null,
     );
   }
 

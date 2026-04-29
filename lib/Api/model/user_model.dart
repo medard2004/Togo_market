@@ -14,6 +14,9 @@ class User {
   /// IDs des catégories d’intérêt synchronisées avec le backend.
   final List<int> profileCategoryIds;
 
+  /// Adresses de l'utilisateur
+  final List<dynamic>? adresses;
+
   User({
     this.id,
     this.nom,
@@ -25,6 +28,7 @@ class User {
     this.providerName,
     this.profileQuartierId,
     this.profileCategoryIds = const [],
+    this.adresses,
   });
 
   /// L'utilisateur s'est inscrit via un réseau social (Google, Facebook, Apple)
@@ -76,6 +80,7 @@ class User {
       providerName: json['provider_name'],
       profileQuartierId: _firstQuartierIdFromAdresses(json['adresses']),
       profileCategoryIds: _categoryIdsFromPayload(json['categories']),
+      adresses: json['adresses'],
     );
   }
 
@@ -89,11 +94,11 @@ class User {
       'role': role,
       'actif': actif,
       'provider_name': providerName,
-      'adresses': profileQuartierId != null
+      'adresses': adresses ?? (profileQuartierId != null
           ? <Map<String, dynamic>>[
               {'quartier_id': profileQuartierId},
             ]
-          : <Map<String, dynamic>>[],
+          : <Map<String, dynamic>>[]),
       'categories':
           profileCategoryIds.map((id) => <String, dynamic>{'id': id}).toList(),
     };

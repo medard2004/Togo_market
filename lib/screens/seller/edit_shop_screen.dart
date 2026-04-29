@@ -353,7 +353,7 @@ class _EditShopScreenState extends State<EditShopScreen> {
                               height: 140,
                               decoration: BoxDecoration(
                                 color: AppTheme.primaryLight,
-                                borderRadius: BorderRadius.circular(16),
+                                borderRadius: BorderRadius.circular(20),
                                 image: _bannerPath != null
                                     ? DecorationImage(
                                         image: FileImage(File(_bannerPath!)),
@@ -394,7 +394,7 @@ class _EditShopScreenState extends State<EditShopScreen> {
                             ),
                           ),
                           Positioned(
-                            bottom: -40,
+                            bottom: -36,
                             child: GestureDetector(
                               onTap: () => _pickImage(false),
                               child: Container(
@@ -404,7 +404,7 @@ class _EditShopScreenState extends State<EditShopScreen> {
                                   shape: BoxShape.circle,
                                 ),
                                 child: CircleAvatar(
-                                  radius: 40,
+                                  radius: 36,
                                   backgroundColor: AppTheme.cardColor,
                                   backgroundImage: (_logoPath != null
                                       ? FileImage(File(_logoPath!))
@@ -429,7 +429,7 @@ class _EditShopScreenState extends State<EditShopScreen> {
                         ],
                       ),
                     ),
-                    const SizedBox(height: 60),
+                    const SizedBox(height: 52),
 
                     // Nom de la boutique
                     const Text('Nom de la boutique *',
@@ -742,93 +742,91 @@ class _EditShopScreenState extends State<EditShopScreen> {
                       ),
                     ),
                     const SizedBox(height: 32),
+                    const SizedBox(height: 32),
+                    Opacity(
+                      opacity: (_isFormValid && !_isLoading) ? 1.0 : 0.5,
+                      child: AppButton(
+                        label: _isLoading ? 'Enregistrement...' : 'Enregistrer les modifications',
+                        icon: _isLoading ? Icons.hourglass_empty : Icons.save_outlined,
+                        onTap: (_isFormValid && !_isLoading)
+                            ? () async {
+                                setState(() {
+                                  _errors.clear();
+                                  _isLoading = true;
+                                });
+
+                                final telephoneFormatted = _formatPhoneNumber(_phoneCtrl.text.trim());
+                                final phone2Raw = _phone2Ctrl.text.trim();
+                                final phone2Formatted = _formatPhoneNumber(phone2Raw);
+
+                                if (phone2Formatted.isNotEmpty && telephoneFormatted == phone2Formatted) {
+                                  setState(() {
+                                    _errors['contacts.0'] = 'Le contact secondaire ne peut pas être identique au numéro principal.';
+                                    _isLoading = false;
+                                  });
+                                  return;
+                                }
+
+                                // On envoie toujours contacts pour ne pas perdre la valeur existante.
+                                // Si le champ est vide → tableau vide → le backend supprime le contact.
+                                // Si rempli → met à jour.
+                                final List<String> contacts =
+                                    phone2Formatted.isNotEmpty ? [phone2Formatted] : [];
+
+                                final payload = {
+                                  'nom': _nameCtrl.text.trim(),
+                                  'telephone': telephoneFormatted,
+                                  'adresse': _ville,
+                                  'details_adresse': _detailsCtrl.text.trim(),
+                                  'description': _descCtrl.text.trim(),
+                                  'contacts': contacts,
+                                  'horaires': {
+                                    'jours': _selectedDays,
+                                    'ouverture': _formatTime(_openingTime),
+                                    'fermeture': _formatTime(_closingTime),
+                                  },
+                                  'categories': _selectedCategoryIds,
+                                  if (_latitude != null) 'latitude': _latitude,
+                                  if (_longitude != null) 'longitude': _longitude,
+                                  if (_bannerPath != null) 'bannerPath': _bannerPath,
+                                  if (_logoPath != null) 'logoPath': _logoPath,
+                                };
+
+                                try {
+                                  final result = await BoutiqueController.to.updateBoutique(payload);
+                                  if (result == true) {
+                                    AppToasts.success(
+                                      context,
+                                      'Succès',
+                                      'Votre boutique a été modifiée avec succès.',
+                                    );
+                                    Get.back();
+                                  } else if (result is Map) {
+                                    setState(() {
+                                      _errors = Map<String, dynamic>.from(result);
+                                    });
+                                    AppToasts.error(
+                                      context,
+                                      'Erreur de validation',
+                                      'Veuillez corriger les erreurs dans le formulaire.',
+                                    );
+                                  } else {
+                                    AppToasts.error(context, 'Erreur', 'Une erreur inattendue est survenue.');
+                                  }
+                                } finally {
+                                  if (mounted) {
+                                    setState(() => _isLoading = false);
+                                  }
+                                }
+                              }
+                            : () {},
+                      ),
+                    ),
+                    const SizedBox(height: 24),
                   ],
                 ),
               ),
-        bottomNavigationBar: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Opacity(
-              opacity: (_isFormValid && !_isLoading) ? 1.0 : 0.5,
-              child: AppButton(
-                label: _isLoading ? 'Enregistrement...' : 'Enregistrer les modifications',
-                icon: _isLoading ? Icons.hourglass_empty : Icons.save_outlined,
-                onTap: (_isFormValid && !_isLoading)
-                    ? () async {
-                        setState(() {
-                          _errors.clear();
-                          _isLoading = true;
-                        });
 
-                        final telephoneFormatted = _formatPhoneNumber(_phoneCtrl.text.trim());
-                        final phone2Raw = _phone2Ctrl.text.trim();
-                        final phone2Formatted = _formatPhoneNumber(phone2Raw);
-
-                        if (phone2Formatted.isNotEmpty && telephoneFormatted == phone2Formatted) {
-                          setState(() {
-                            _errors['contacts.0'] = 'Le contact secondaire ne peut pas être identique au numéro principal.';
-                            _isLoading = false;
-                          });
-                          return;
-                        }
-
-                        // On envoie toujours contacts pour ne pas perdre la valeur existante.
-                        // Si le champ est vide → tableau vide → le backend supprime le contact.
-                        // Si rempli → met à jour.
-                        final List<String> contacts =
-                            phone2Formatted.isNotEmpty ? [phone2Formatted] : [];
-
-                        final payload = {
-                          'nom': _nameCtrl.text.trim(),
-                          'telephone': telephoneFormatted,
-                          'adresse': _ville,
-                          'details_adresse': _detailsCtrl.text.trim(),
-                          'description': _descCtrl.text.trim(),
-                          'contacts': contacts,
-                          'horaires': {
-                            'jours': _selectedDays,
-                            'ouverture': _formatTime(_openingTime),
-                            'fermeture': _formatTime(_closingTime),
-                          },
-                          'categories': _selectedCategoryIds,
-                          if (_latitude != null) 'latitude': _latitude,
-                          if (_longitude != null) 'longitude': _longitude,
-                          if (_bannerPath != null) 'bannerPath': _bannerPath,
-                          if (_logoPath != null) 'logoPath': _logoPath,
-                        };
-
-                        try {
-                          final result = await BoutiqueController.to.updateBoutique(payload);
-                          if (result == true) {
-                            AppToasts.success(
-                              context,
-                              'Succès',
-                              'Votre boutique a été modifiée avec succès.',
-                            );
-                            Get.back();
-                          } else if (result is Map) {
-                            setState(() {
-                              _errors = Map<String, dynamic>.from(result);
-                            });
-                            AppToasts.error(
-                              context,
-                              'Erreur de validation',
-                              'Veuillez corriger les erreurs dans le formulaire.',
-                            );
-                          } else {
-                            AppToasts.error(context, 'Erreur', 'Une erreur inattendue est survenue.');
-                          }
-                        } finally {
-                          if (mounted) {
-                            setState(() => _isLoading = false);
-                          }
-                        }
-                      }
-                    : () {},
-              ),
-            ),
-          ),
-        ),
       ),
     );
   }

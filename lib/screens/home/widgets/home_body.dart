@@ -10,39 +10,6 @@ import '../../../Api/model/category_model.dart';
 import '../../../utils/category_icon_helper.dart';
 import '../../../models/models.dart';
 
-final List<Seller> mockSellers = [
-  Seller(
-    id: '1',
-    name: 'Koffi',
-    shopName: 'Koffi Électronique',
-    avatar: 'https://i.pravatar.cc/150?img=11',
-    rating: 4.8,
-    responseTime: '1h',
-    location: 'Lomé',
-    products: [],
-  ),
-  Seller(
-    id: '2',
-    name: 'Awa',
-    shopName: 'Awa Mode',
-    avatar: 'https://i.pravatar.cc/150?img=5',
-    rating: 4.5,
-    responseTime: '30m',
-    location: 'Lomé',
-    products: [],
-  ),
-  Seller(
-    id: '3',
-    name: 'Kodjo',
-    shopName: 'Kodjo Tech',
-    avatar: 'https://i.pravatar.cc/150?img=8',
-    rating: 4.9,
-    responseTime: '15m',
-    location: 'Lomé',
-    products: [],
-  ),
-];
-
 class HomeBody extends StatelessWidget {
   final AppController ctrl;
   const HomeBody({super.key, required this.ctrl});
@@ -50,7 +17,7 @@ class HomeBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final r = R(context);
-    final hScrollHeight = r.cardImageH + r.s(58);
+    final hScrollHeight = r.cardImageH + r.s(62);
 
     return AnimationLimiter(
       child: Obx(() {
@@ -293,21 +260,26 @@ class HomeBody extends StatelessWidget {
                 SliverToBoxAdapter(
                   child: SizedBox(
                     height: r.s(165),
-                    child: ListView.separated(
-                      scrollDirection: Axis.horizontal,
-                      padding: EdgeInsets.symmetric(horizontal: r.hPad),
-                      itemCount: mockSellers.length,
-                      separatorBuilder: (_, __) => SizedBox(width: r.s(12)),
-                      itemBuilder: (_, i) =>
-                          AnimationConfiguration.staggeredList(
-                        position: i,
-                        duration: const Duration(milliseconds: 260),
-                        child: FadeInAnimation(
-                          curve: Curves.easeOutCubic,
-                          child: ShopCarouselCard(seller: mockSellers[i]),
+                    child: Obx(() {
+                      final boutiques = ctrl.boutiques.take(5).toList();
+                      if (boutiques.isEmpty) return const SizedBox.shrink();
+                      
+                      return ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        padding: EdgeInsets.symmetric(horizontal: r.hPad),
+                        itemCount: boutiques.length,
+                        separatorBuilder: (_, __) => SizedBox(width: r.s(12)),
+                        itemBuilder: (_, i) =>
+                            AnimationConfiguration.staggeredList(
+                          position: i,
+                          duration: const Duration(milliseconds: 260),
+                          child: FadeInAnimation(
+                            curve: Curves.easeOutCubic,
+                            child: ShopCarouselCard(boutique: boutiques[i]),
+                          ),
                         ),
-                      ),
-                    ),
+                      );
+                    }),
                   ),
                 ),
 
@@ -330,24 +302,28 @@ class HomeBody extends StatelessWidget {
                 SliverToBoxAdapter(
                   child: SizedBox(
                     height: r.s(165),
-                    child: ListView.separated(
-                      scrollDirection: Axis.horizontal,
-                      padding: EdgeInsets.symmetric(horizontal: r.hPad),
-                      itemCount: mockSellers.length,
-                      separatorBuilder: (_, __) => SizedBox(width: r.s(12)),
-                      itemBuilder: (_, i) {
-                        final idx =
-                            (mockSellers.length - 1 - i) % mockSellers.length;
-                        return AnimationConfiguration.staggeredList(
-                          position: i,
-                          duration: const Duration(milliseconds: 260),
-                          child: FadeInAnimation(
-                            curve: Curves.easeOutCubic,
-                            child: ShopCarouselCard(seller: mockSellers[idx]),
-                          ),
-                        );
-                      },
-                    ),
+                    child: Obx(() {
+                      // Reverse list or shuffle for variation
+                      final nearbyBoutiques = ctrl.boutiques.toList().reversed.take(5).toList();
+                      if (nearbyBoutiques.isEmpty) return const SizedBox.shrink();
+                      
+                      return ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        padding: EdgeInsets.symmetric(horizontal: r.hPad),
+                        itemCount: nearbyBoutiques.length,
+                        separatorBuilder: (_, __) => SizedBox(width: r.s(12)),
+                        itemBuilder: (_, i) {
+                          return AnimationConfiguration.staggeredList(
+                            position: i,
+                            duration: const Duration(milliseconds: 260),
+                            child: FadeInAnimation(
+                              curve: Curves.easeOutCubic,
+                              child: ShopCarouselCard(boutique: nearbyBoutiques[i]),
+                            ),
+                          );
+                        },
+                      );
+                    }),
                   ),
                 ),
 
@@ -609,7 +585,7 @@ class HomeBody extends StatelessWidget {
     final r = R(context);
     final colW = (r.screenW - r.hPad * 2 - r.s(12)) / 2;
     final imgH = colW * (3 / 4);
-    final infoH = r.s(56);
+    final infoH = r.s(72);
     final totalH = imgH + infoH;
     return colW / totalH;
   }

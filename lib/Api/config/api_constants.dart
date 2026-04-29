@@ -45,7 +45,8 @@ class ApiConstants {
 
   // Profile Endpoints
   static const String userProfileEndpoint = '/user/profile';
-  static const String boutiqueEndpoint = '/boutique';
+  static const String boutiqueEndpoint = '/boutique';       // Routes privées vendeur (POST/PUT)
+  static const String boutiquesEndpoint = '/boutiques';     // Liste publique des boutiques
   static const String boutiqueMeEndpoint = '/boutique/me';
 
   // Example Endpoints

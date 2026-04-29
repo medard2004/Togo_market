@@ -37,6 +37,13 @@ class ShopInformationScreen extends StatelessWidget {
           onPressed: Get.back,
         ),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.edit_outlined, color: AppTheme.primary),
+            onPressed: () => Get.toNamed('/edit-shop'),
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: Obx(() {
         final boutique = BoutiqueController.to.myBoutique.value;
@@ -159,8 +166,10 @@ class ShopInformationScreen extends StatelessWidget {
                                 ),
                               ),
                               const SizedBox(height: 8),
-                              const Text(
-                                'Vendeur vérifié',
+                              Text(
+                                boutique.categories?.isNotEmpty == true
+                                    ? '${boutique.categories!.first['nom']} • Vendeur vérifié'
+                                    : 'Vendeur vérifié',
                                 style: const TextStyle(
                                   fontSize: 13,
                                   color: AppTheme.primary,
@@ -219,12 +228,7 @@ class ShopInformationScreen extends StatelessWidget {
             const SizedBox(height: 12),
             _buildInfoRow(Icons.star, 'Note', '${boutique.noteMoyenne} / 5'),
             const SizedBox(height: 32),
-            AppButton(
-              label: 'Modifier la boutique',
-              icon: Icons.edit_outlined,
-              onTap: () => Get.toNamed('/edit-shop'), // EditShopScreen will use the controller directly
-            ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 32),
           ],
         ),
       );

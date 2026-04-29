@@ -25,13 +25,14 @@ class BoutiqueService extends GetxService {
     }
   }
 
-  /// Retrieve all boutiques
+  /// Retrieve all boutiques (public listing)
   Future<List<Boutique>> getBoutiques() async {
     try {
-      final response = await _apiClient.get(ApiConstants.boutiqueEndpoint);
+      final response = await _apiClient.get(ApiConstants.boutiquesEndpoint);
       if (response.statusCode == 200) {
-        final List data = response.data is List ? response.data : (response.data['data'] ?? []);
-        return data.map((json) => Boutique.fromJson(json)).toList();
+        final data = response.data;
+        final List list = data is List ? data : (data['data'] ?? []);
+        return list.map((json) => Boutique.fromJson(json)).toList();
       }
       return [];
     } catch (e) {

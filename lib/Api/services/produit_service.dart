@@ -36,6 +36,20 @@ class ProduitService extends GetxService {
     return list.map((json) => Product.fromJson(json)).toList();
   }
 
+  /// Get personal products belonging to the authenticated user
+  Future<List<Product>> getMyPersonalProducts() async {
+    final response = await _apiClient.get('/mes-produits');
+    final list = _parseList(response.data);
+    return list.map((json) => Product.fromJson(json)).toList();
+  }
+
+  /// Get personal products belonging to a specific user
+  Future<List<Product>> getUserProducts(String userId) async {
+    final response = await _apiClient.get('/users/$userId/produits');
+    final list = _parseList(response.data);
+    return list.map((json) => Product.fromJson(json)).toList();
+  }
+
   /// Create a new product for the store
   Future<Product> addStoreProduct(dynamic formData) async {
     final response = await _apiClient.post(ApiConstants.productsEndpoint, data: formData);

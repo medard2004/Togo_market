@@ -22,6 +22,7 @@ class ProductFormController extends GetxController {
   final condition = 'Neuf'.obs;
   final isPriceNegotiable = false.obs;
   final selectedCategory = RxnInt(); // Using int for DB ID consistency
+  bool isParticulier = false;
 
   final images = <XFile>[].obs;
   final existingImages = <String>[].obs; 
@@ -41,6 +42,7 @@ class ProductFormController extends GetxController {
   }
 
   void initForAdd() {
+    isParticulier = Get.arguments?['isParticulier'] ?? false;
     titleController.clear();
     descriptionController.clear();
     priceController.clear();
@@ -53,6 +55,7 @@ class ProductFormController extends GetxController {
   }
 
   void initForEdit(Product product) {
+    isParticulier = product.boutiqueId == null;
     titleController.text = product.title;
     descriptionController.text = product.description;
     priceController.text =
@@ -60,7 +63,7 @@ class ProductFormController extends GetxController {
     condition.value = product.condition;
     isPriceNegotiable.value = product.isPriceNegotiable;
     selectedCategory.value = int.tryParse(product.category);
-    if (Get.isRegistered<BoutiqueController>() && Get.isRegistered<AppController>()) {
+    if (!isParticulier && Get.isRegistered<BoutiqueController>() && Get.isRegistered<AppController>()) {
       final b = Get.find<BoutiqueController>().myBoutique.value;
       final ids = parseBoutiqueCategoryIds(b?.categories);
       final flat = Get.find<AppController>().allFlatCategories;
@@ -118,7 +121,15 @@ class ProductFormController extends GetxController {
                   '${file.name} dépasse 5 Mo et a été ignorée.');
             }
           } else {
-            toAdd.add(file);
+            // Sauvegarder l'image dans un répertoire sûr pour éviter 
+            // que image_picker ne supprime le cache lors d'une sélection ultérieure.
+            final tempDir = Directory.systemTemp;
+            final safeName = 'safe_${DateTime.now().millisecondsSinceEpoch}_${file.name}';
+            final safePath = tempDir.path.endsWith('/') 
+                ? '${tempDir.path}$safeName' 
+                : '${tempDir.path}/$safeName';
+            final savedFile = await File(file.path).copy(safePath);
+            toAdd.add(XFile(savedFile.path));
           }
         }
         images.addAll(toAdd);
@@ -160,8 +171,8 @@ class ProductFormController extends GetxController {
       return;
     }
 
-    // Ensure user has a boutique before publishing store product
-    if (Get.isRegistered<BoutiqueController>()) {
+    // Ensure user has a boutique before publishing store product (if not particulier)
+    if (!isParticulier && Get.isRegistered<BoutiqueController>()) {
       final bc = Get.find<BoutiqueController>();
       if (bc.myBoutique.value == null) {
         // Redirect user to create/configure boutique flow
@@ -200,6 +211,7 @@ class ProductFormController extends GetxController {
 
     try {
       final formDataMap = {
+        'publish_as': isParticulier ? 'particulier' : 'boutique',
         'titre': titleController.text.trim(),
         'description': descriptionController.text.trim(),
         'prix': priceController.text.trim(),
@@ -271,7 +283,7 @@ class ProductFormController extends GetxController {
       return;
     }
 
-    if (Get.isRegistered<BoutiqueController>() && Get.isRegistered<AppController>()) {
+    if (!isParticulier && Get.isRegistered<BoutiqueController>() && Get.isRegistered<AppController>()) {
       final boutique = Get.find<BoutiqueController>().myBoutique.value;
       if (boutique != null) {
         final allowedIds = parseBoutiqueCategoryIds(boutique.categories);
@@ -357,7 +369,7 @@ class ProductFormController extends GetxController {
 
   /// Ouvre le sélecteur limité aux catégories de la boutique (règle B : sous-arbres).
   Future<void> openBoutiqueCategoryPicker(BuildContext context) async {
-    if (!Get.isRegistered<AppController>() || !Get.isRegistered<BoutiqueController>()) {
+    if (!Get.isRegistered<AppController>()) {
       AppToasts.error(
         context,
         'Erreur',
@@ -366,6 +378,19 @@ class ProductFormController extends GetxController {
       return;
     }
     final appCtrl = Get.find<AppController>();
+
+    if (isParticulier) {
+      CategoryPickerBottomSheet.show(
+        context,
+        categories: appCtrl.categories,
+        onCategorySelected: (cat) {
+          selectedCategory.value = cat.id;
+        },
+      );
+      return;
+    }
+
+    if (!Get.isRegistered<BoutiqueController>()) return;
     final bc = Get.find<BoutiqueController>();
 
     await bc.silentRefreshMyBoutique();

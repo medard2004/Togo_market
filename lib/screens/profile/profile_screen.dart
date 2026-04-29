@@ -15,7 +15,13 @@ class ProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final authCtrl = Get.find<AuthController>();
-    return Scaffold(
+    return PopScope(
+      canPop: false,
+      onPopInvoked: (didPop) {
+        if (didPop) return;
+        Get.offAllNamed('/home');
+      },
+      child: Scaffold(
       resizeToAvoidBottomInset: true,
       backgroundColor: AppTheme.background,
       appBar: AppBar(
@@ -197,7 +203,7 @@ class ProfileScreen extends StatelessWidget {
                     icon: Icons.inventory_2_outlined,
                     label: 'Mes annonces',
                     badge: '12',
-                    onTap: () => Get.toNamed('/dashboard'),
+                    onTap: () => Get.toNamed('/my-products'),
                     flat: true,
                   ),
                   const Divider(height: 1, color: AppTheme.border),
@@ -251,6 +257,6 @@ class ProfileScreen extends StatelessWidget {
         ),
       ),
       bottomNavigationBar: const BottomNavBar(currentIndex: 4),
-    );
+    ));
   }
 }

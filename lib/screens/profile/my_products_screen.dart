@@ -7,23 +7,24 @@ import '../../controllers/app_controller.dart';
 import '../../Api/config/api_constants.dart';
 import '../../Api/model/product_model.dart';
 import '../../utils/app_utils.dart';
-import 'add_product_screen.dart';
+import '../../controllers/my_products_controller.dart';
+import '../seller/add_product_screen.dart';
 
-class DashboardScreen extends StatefulWidget {
-  const DashboardScreen({super.key});
+class MyProductsScreen extends StatefulWidget {
+  const MyProductsScreen({super.key});
 
   @override
-  State<DashboardScreen> createState() => _DashboardScreenState();
+  State<MyProductsScreen> createState() => _MyProductsScreenState();
 }
 
-class _DashboardScreenState extends State<DashboardScreen> {
+class _MyProductsScreenState extends State<MyProductsScreen> {
   int _tabIndex = 0; // 0: Articles, 1: Commandes, 2: Messages
-  late final DashboardController _ctrl;
+  late final MyProductsController _ctrl;
 
   @override
   void initState() {
     super.initState();
-    _ctrl = Get.find<DashboardController>();
+    _ctrl = Get.find<MyProductsController>();
     // Reload products when entering dashboard (boutique may have just been created)
     WidgetsBinding.instance.addPostFrameCallback((_) => _ctrl.loadMyProducts());
   }
@@ -48,19 +49,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     onTap: () => Get.back(),
                   ),
                   const Text(
-                    'Mon Espace Vendeur',
+                    'Mes Annonces',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w800,
                       color: AppTheme.foreground,
                     ),
                   ),
-                  _buildCircleBtn(
-                    Icons.settings_outlined,
-                    AppTheme.primary,
-                    AppTheme.primaryLight,
-                    onTap: () => Get.toNamed('/shop-settings'),
-                  ),
+                  const SizedBox(width: 44), // To balance the back button
                 ],
               ),
             ),
@@ -184,7 +180,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget _buildAddButton() {
     return GestureDetector(
       onTap: () async {
-        await Get.toNamed('/add-product', arguments: {'isParticulier': false});
+        await Get.toNamed('/add-product', arguments: {'isParticulier': true});
         // Refresh products list after returning from add product
         _ctrl.loadMyProducts();
       },

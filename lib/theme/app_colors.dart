@@ -34,4 +34,14 @@ class AppColors {
   static const Color white = Colors.white;
   static const Color black = Colors.black;
   static const Color transparent = Colors.transparent;
+
+  // ── Gradients ───────────────────────────────────────────────────────────────
+  static const LinearGradient primaryGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [
+      primary,
+      Color(0xFFE84D12), // Un peu plus profond
+    ],
+  );
 }

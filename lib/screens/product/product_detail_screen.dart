@@ -8,6 +8,7 @@ import '../../controllers/app_controller.dart';
 import '../../utils/responsive.dart';
 import '../../utils/app_utils.dart';
 import '../../Api/config/api_constants.dart';
+import '../../models/models.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   const ProductDetailScreen({super.key});
@@ -235,88 +236,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       SizedBox(height: r.s(20)),
 
                       // Carte vendeur
-                      if (boutique != null) ...[
-                        Container(
-                          padding: EdgeInsets.all(r.s(14)),
-                          decoration: BoxDecoration(
-                            color: AppTheme.cardColor,
-                            borderRadius: BorderRadius.circular(r.rad(16)),
-                            border: Border.all(color: AppTheme.border),
-                          ),
-                          child: Column(
-                            children: [
-                              Row(
-                                children: [
-                                  Stack(
-                                    children: [
-                                      CircleAvatar(
-                                        radius: r.s(26),
-                                        backgroundImage: CachedNetworkImageProvider(ApiConstants.resolveImageUrl(boutique.logoUrl)),
-                                        backgroundColor: AppTheme.primaryLight,
-                                      ),
-                                      Positioned(
-                                        bottom: 0, right: 0,
-                                        child: Container(
-                                          width: r.s(12), height: r.s(12),
-                                          decoration: BoxDecoration(
-                                            color: Colors.green, shape: BoxShape.circle,
-                                            border: Border.all(color: Colors.white, width: 2),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  SizedBox(width: r.s(12)),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(boutique.nom,
-                                            style: TextStyle(fontSize: r.fs(15), fontWeight: FontWeight.w700, color: AppTheme.foreground)),
-                                        SizedBox(height: r.s(2)),
-                                        Row(children: [
-                                          Icon(Icons.flash_on, size: r.s(12), color: AppTheme.primary),
-                                          SizedBox(width: r.s(2)),
-                                          const Text('Vendeur Professionnel',
-                                              style: TextStyle(fontSize: 12, color: AppTheme.mutedForeground)),
-                                        ]),
-                                        SizedBox(height: r.s(2)),
-                                        const Text('TOGO MARKET VÉRIFIÉ',
-                                            style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600,
-                                                letterSpacing: 0.5, color: AppTheme.mutedForeground)),
-                                      ],
-                                    ),
-                                  ),
-                                  Row(children: [
-                                    Icon(Icons.star, size: r.s(14), color: Colors.amber),
-                                    SizedBox(width: r.s(2)),
-                                    Text('${boutique.noteMoyenne}',
-                                        style: TextStyle(fontSize: r.fs(13), fontWeight: FontWeight.w700, color: AppTheme.foreground)),
-                                  ]),
-                                ],
-                              ),
-                              SizedBox(height: r.s(12)),
-                              GestureDetector(
-                                onTap: () => Get.toNamed('/seller/${boutique.id}'),
-                                child: Container(
-                                  width: double.infinity,
-                                  padding: EdgeInsets.symmetric(vertical: r.s(11)),
-                                  decoration: BoxDecoration(
-                                    color: AppTheme.cardColor,
-                                    borderRadius: BorderRadius.circular(r.rad(10)),
-                                    border: Border.all(color: AppTheme.border),
-                                  ),
-                                  child: Center(
-                                    child: Text('Voir la boutique',
-                                        style: TextStyle(fontSize: r.fs(14), fontWeight: FontWeight.w600, color: AppTheme.foreground)),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        SizedBox(height: r.s(20)),
-                      ],
+                      if (boutique != null)
+                        _buildShopCard(r, boutique!)
+                      else if (product.userObj != null)
+                        _buildIndividualProfileCard(r, product.userObj!),
+                      SizedBox(height: r.s(20)),
 
                       // Localisation produit (carte simulée)
                       Text('Localisation du produit',
@@ -448,7 +372,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   // Bouton Discuter (plein)
                   Expanded(
                     child: GestureDetector(
-                      onTap: () => Get.toNamed('/chat/c1'),
+                      onTap: () => Get.toNamed('/chat/c1', arguments: product),
                       child: Container(
                         height: r.s(50).clamp(44, 56),
                         decoration: BoxDecoration(
@@ -465,6 +389,197 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   ),
                 ],
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Design Boutique (branch main) ────────────────────────────────────────
+  Widget _buildShopCard(R r, Boutique boutique) {
+    final logoUrl = ApiConstants.resolveImageUrl(boutique.logoUrl);
+    return Container(
+      padding: EdgeInsets.all(r.s(14)),
+      decoration: BoxDecoration(
+        color: AppTheme.cardColor,
+        borderRadius: BorderRadius.circular(r.rad(16)),
+        border: Border.all(color: AppTheme.border),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Stack(
+                children: [
+                  CircleAvatar(
+                    radius: r.s(26),
+                    backgroundColor: AppTheme.primaryLight,
+                    backgroundImage: logoUrl.isNotEmpty
+                        ? CachedNetworkImageProvider(logoUrl)
+                        : null,
+                    child: logoUrl.isEmpty
+                        ? Icon(Icons.storefront, size: r.s(26), color: AppTheme.primary)
+                        : null,
+                  ),
+                  Positioned(
+                    bottom: 0,
+                    right: 0,
+                    child: Container(
+                      width: r.s(12),
+                      height: r.s(12),
+                      decoration: BoxDecoration(
+                        color: Colors.green,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 2),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(width: r.s(12)),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(boutique.nom,
+                        style: TextStyle(
+                            fontSize: r.fs(15),
+                            fontWeight: FontWeight.w700,
+                            color: AppTheme.foreground)),
+                    SizedBox(height: r.s(2)),
+                    Row(children: [
+                      Icon(Icons.flash_on, size: r.s(12), color: AppTheme.primary),
+                      SizedBox(width: r.s(2)),
+                      Text('Vendeur Professionnel',
+                          style: TextStyle(
+                              fontSize: r.fs(12),
+                              color: AppTheme.mutedForeground)),
+                    ]),
+                    SizedBox(height: r.s(2)),
+                    if (boutique.adresse != null)
+                      Text(boutique.adresse!.toUpperCase(),
+                          style: TextStyle(
+                              fontSize: r.fs(10),
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.5,
+                              color: AppTheme.mutedForeground)),
+                  ],
+                ),
+              ),
+              Row(children: [
+                Icon(Icons.star, size: r.s(14), color: Colors.amber),
+                SizedBox(width: r.s(2)),
+                Text('${boutique.noteMoyenne}',
+                    style: TextStyle(
+                        fontSize: r.fs(13),
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.foreground)),
+              ]),
+            ],
+          ),
+          SizedBox(height: r.s(12)),
+          GestureDetector(
+            onTap: () => Get.toNamed('/seller/${boutique.id}', arguments: boutique),
+            child: Container(
+              width: double.infinity,
+              padding: EdgeInsets.symmetric(vertical: r.s(11)),
+              decoration: BoxDecoration(
+                color: AppTheme.cardColor,
+                borderRadius: BorderRadius.circular(r.rad(10)),
+                border: Border.all(color: AppTheme.border),
+              ),
+              child: Center(
+                child: Text('Voir la boutique',
+                    style: TextStyle(
+                        fontSize: r.fs(14),
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.foreground)),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Design Particulier (branch main) ─────────────────────────────────────
+  Widget _buildIndividualProfileCard(R r, User user) {
+    final avatarUrl = ApiConstants.resolveImageUrl(user.avatarUrl ?? '');
+    return Container(
+      padding: EdgeInsets.all(r.s(16)),
+      decoration: BoxDecoration(
+        color: AppTheme.cardColor,
+        borderRadius: BorderRadius.circular(r.rad(20)),
+        border: Border.all(color: AppTheme.border.withOpacity(0.5)),
+        boxShadow: [
+          BoxShadow(
+              color: Colors.black.withOpacity(0.02),
+              blurRadius: 10,
+              offset: const Offset(0, 4)),
+        ],
+      ),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: r.s(28),
+            backgroundColor: AppTheme.secondary.withOpacity(0.15),
+            backgroundImage: avatarUrl.isNotEmpty
+                ? CachedNetworkImageProvider(avatarUrl)
+                : null,
+            child: avatarUrl.isEmpty
+                ? Icon(Icons.person, size: r.s(28), color: AppTheme.secondary)
+                : null,
+          ),
+          SizedBox(width: r.s(14)),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  user.nom ?? 'Utilisateur',
+                  style: TextStyle(
+                    fontSize: r.fs(16),
+                    fontWeight: FontWeight.w800,
+                    color: AppTheme.foreground,
+                  ),
+                ),
+                SizedBox(height: r.s(2)),
+                Text(
+                  'Vendeur Particulier',
+                  style: TextStyle(
+                    fontSize: r.fs(11),
+                    color: AppTheme.mutedForeground,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                SizedBox(height: r.s(4)),
+                Row(
+                  children: [
+                    Icon(Icons.verified_user, size: r.s(12), color: Colors.green),
+                    SizedBox(width: r.s(4)),
+                    Text(
+                      'Vendeur vérifié',
+                      style: TextStyle(
+                        fontSize: r.fs(11),
+                        color: Colors.green,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          GestureDetector(
+            onTap: () => Get.toNamed('/profile/${user.id}'),
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: r.s(12), vertical: r.s(8)),
+              decoration: BoxDecoration(
+                color: AppTheme.primaryLight,
+                borderRadius: BorderRadius.circular(r.rad(10)),
+              ),
+              child: Icon(Icons.chevron_right, color: AppTheme.primary),
             ),
           ),
         ],
