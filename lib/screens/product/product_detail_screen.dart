@@ -343,10 +343,17 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               padding: EdgeInsets.fromLTRB(r.s(16), r.s(12), r.s(16),
                   MediaQuery.of(context).padding.bottom + r.s(12)),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppTheme.cardColor,
                 boxShadow: [
-                  BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 16, offset: const Offset(0, -4)),
+                  BoxShadow(
+                    color: Colors.black.withOpacity(Get.isDarkMode ? 0.3 : 0.08),
+                    blurRadius: 16,
+                    offset: const Offset(0, -4),
+                  ),
                 ],
+                border: Border(
+                  top: BorderSide(color: AppTheme.border.withOpacity(0.5)),
+                ),
               ),
               child: Row(
                 children: [
@@ -355,19 +362,19 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     onTap: () => Get.toNamed('/order', arguments: {'productId': product.id}),
                     child: Container(
                       height: r.s(50).clamp(44, 56),
-                      padding: EdgeInsets.symmetric(horizontal: r.s(20)),
+                      padding: EdgeInsets.symmetric(horizontal: r.s(16)),
                       decoration: BoxDecoration(
-                        color: AppTheme.primaryLight,
+                        color: AppTheme.primaryLight.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(r.rad(30)),
                         border: Border.all(color: AppTheme.primary, width: 1.5),
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.shopping_cart_outlined, size: r.s(16), color: AppTheme.primary),
+                          Icon(Icons.shopping_cart_outlined, size: r.s(18), color: AppTheme.primary),
                           SizedBox(width: r.s(6)),
                           Text('Commander',
-                              style: TextStyle(fontSize: r.fs(14), fontWeight: FontWeight.w700, color: AppTheme.primary)),
+                              style: TextStyle(fontSize: r.fs(13), fontWeight: FontWeight.w800, color: AppTheme.primary)),
                         ],
                       ),
                     ),
@@ -380,13 +387,36 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       child: Container(
                         height: r.s(50).clamp(44, 56),
                         decoration: BoxDecoration(
-                          color: AppTheme.primary,
+                          gradient: LinearGradient(
+                            colors: [AppTheme.primary, AppTheme.primary.withOpacity(0.8)],
+                          ),
                           borderRadius: BorderRadius.circular(r.rad(30)),
-                          boxShadow: AppTheme.shadowPrimary,
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppTheme.primary.withOpacity(0.3),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
                         ),
-                        child: Center(
-                          child: Text('Discuter avec le vendeur',
-                              style: TextStyle(fontSize: r.fs(14), fontWeight: FontWeight.w700, color: Colors.white)),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.chat_bubble_outline_rounded, color: Colors.white, size: r.s(18)),
+                            SizedBox(width: r.s(8)),
+                            Flexible(
+                              child: Text(
+                                'Discuter',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: r.fs(15),
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),

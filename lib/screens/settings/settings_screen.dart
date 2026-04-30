@@ -21,7 +21,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Obx(() {
       // Trigger rebuild on theme change
       _ctrl.isDarkMode.value;
-      
+
       return Scaffold(
         resizeToAvoidBottomInset: true,
         backgroundColor: AppTheme.background,
@@ -74,15 +74,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 onTap: () {},
               ),
               _SettingsTile(
-                icon: Icons.language,
-                label: 'Langue',
-                subtitle: 'Français',
-                onTap: () {},
-              ),
-              _SettingsTile(
-                icon: _ctrl.isDarkMode.value
-                    ? Icons.dark_mode
-                    : Icons.light_mode,
+                icon:
+                    _ctrl.isDarkMode.value ? Icons.dark_mode : Icons.light_mode,
                 label: 'Thème sombre',
                 trailing: Transform.scale(
                   scale: 0.7,
@@ -186,8 +179,8 @@ class _SettingsTile extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(label,
-                      style: TextStyle(
-                          fontSize: 14, fontWeight: FontWeight.w600)),
+                      style:
+                          TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
                   if (subtitle != null) ...[
                     SizedBox(height: 2),
                     Text(subtitle!,
