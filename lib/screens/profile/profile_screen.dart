@@ -98,7 +98,7 @@ class ProfileScreen extends StatelessWidget {
                             SizedBox(height: 14),
                             Container(
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 10),
+                                  horizontal: 10, vertical: 8),
                               decoration: BoxDecoration(
                                 color: AppTheme.primaryLight,
                                 borderRadius: BorderRadius.circular(18),
@@ -107,18 +107,24 @@ class ProfileScreen extends StatelessWidget {
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Icon(Icons.star,
-                                      size: 16, color: AppTheme.primary),
-                                  SizedBox(width: 8),
+                                      size: 14, color: AppTheme.primary),
+                                  SizedBox(width: 6),
                                   Text('4.8',
                                       style: TextStyle(
-                                          fontSize: 13,
+                                          fontSize: 12,
                                           fontWeight: FontWeight.w700,
                                           color: AppTheme.primary)),
-                                  SizedBox(width: 12),
-                                  Text('Membre depuis Jan 2024',
+                                  SizedBox(width: 8),
+                                  Flexible(
+                                    child: Text(
+                                      'Membre depuis Jan 2024',
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 1,
                                       style: TextStyle(
-                                          fontSize: 12,
-                                          color: AppTheme.mutedForeground)),
+                                          fontSize: 11,
+                                          color: AppTheme.mutedForeground),
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),
