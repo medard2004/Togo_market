@@ -18,10 +18,10 @@ class FavoritesScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: AppTheme.cardColor,
         elevation: 0,
-        title: const Text('Mes favoris',
+        title: Text('Mes favoris',
             style: TextStyle(fontWeight: FontWeight.w800)),
         centerTitle: true,
-        leading: const BackButton(color: AppTheme.foreground),
+        leading: BackButton(color: AppTheme.foreground),
       ),
       body: Obx(() {
         final favs = ctrl.favorites;

@@ -36,9 +36,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     if (product == null) {
       return Scaffold(
         body: Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-          const Text('😕', style: TextStyle(fontSize: 40)),
-          const Text('Produit introuvable'),
-          ElevatedButton(onPressed: Get.back, child: const Text('Retour')),
+          Text('😕', style: TextStyle(fontSize: 40)),
+          Text('Produit introuvable'),
+          ElevatedButton(onPressed: Get.back, child: Text('Retour')),
         ])),
       );
     }
@@ -56,7 +56,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               // ── AppBar flottante ────────────────────────────────────────────
               SliverAppBar(
                 pinned: true,
-                backgroundColor: Colors.white,
+                backgroundColor: AppTheme.cardColor,
                 elevation: 0,
                 scrolledUnderElevation: 0.5,
                 leading: Padding(
@@ -299,7 +299,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                               child: RichText(
                                 text: TextSpan(
                                   style: TextStyle(fontSize: r.fs(13), color: AppTheme.primary, height: 1.5),
-                                  children: const [
+                                  children: [
                                     TextSpan(text: 'Conseil de sécurité : ', style: TextStyle(fontWeight: FontWeight.w700)),
                                     TextSpan(text: 'Ne payez jamais d\'avance. Rencontrez le vendeur dans un lieu public pour vérifier le produit.'),
                                   ],
@@ -558,7 +558,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     Container(
                       width: r.s(3),
                       height: r.s(3),
-                      decoration: const BoxDecoration(
+                      decoration: BoxDecoration(
                           color: AppTheme.mutedForeground,
                           shape: BoxShape.circle),
                     ),

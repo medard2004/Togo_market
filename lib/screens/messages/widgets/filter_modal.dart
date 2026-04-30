@@ -45,7 +45,7 @@ class _FilterModalState extends State<FilterModal> {
     return Container(
       margin: EdgeInsets.all(r.s(16)),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.cardColor,
         borderRadius: BorderRadius.circular(r.rad(20)),
         boxShadow: AppTheme.shadowCardLg,
       ),
@@ -96,7 +96,7 @@ class _FilterModalState extends State<FilterModal> {
                 SizedBox(height: r.s(8)),
                 Row(
                   children: [
-                    _buildQuickSortButton('Récent', 'date_desc'),
+                    _buildQuickSortButton('RÃ©cent', 'date_desc'),
                     SizedBox(width: r.s(8)),
                     _buildQuickSortButton('Ancien', 'date_asc'),
                     SizedBox(width: r.s(8)),
@@ -158,7 +158,7 @@ class _FilterModalState extends State<FilterModal> {
                     style: TextStyle(
                       fontSize: r.fs(14),
                       fontWeight: FontWeight.w600,
-                      color: Colors.white,
+                      color: AppTheme.cardColor,
                     ),
                   ),
                 ),

@@ -17,8 +17,8 @@ class PublicProfileScreen extends StatelessWidget {
 
     if (seller == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Profil introuvable')),
-        body: const Center(child: Text('Cet utilisateur n\'existe pas.')),
+        appBar: AppBar(title: Text('Profil introuvable')),
+        body: Center(child: Text('Cet utilisateur n\'existe pas.')),
       );
     }
 
@@ -35,12 +35,12 @@ class PublicProfileScreen extends StatelessWidget {
             backgroundColor: AppTheme.primary,
             elevation: 0,
             leading: IconButton(
-              icon: const Icon(Icons.arrow_back, color: Colors.white),
+              icon: Icon(Icons.arrow_back, color: Colors.white),
               onPressed: Get.back,
             ),
             actions: [
               IconButton(
-                icon: const Icon(Icons.share_outlined, color: Colors.white),
+                icon: Icon(Icons.share_outlined, color: Colors.white),
                 onPressed: () {},
               ),
             ],
@@ -68,7 +68,7 @@ class PublicProfileScreen extends StatelessWidget {
                       SizedBox(height: r.s(60)),
                       Container(
                         padding: EdgeInsets.all(r.s(4)),
-                        decoration: const BoxDecoration(
+                        decoration: BoxDecoration(
                           color: Colors.white,
                           shape: BoxShape.circle,
                         ),
@@ -200,11 +200,11 @@ class PublicProfileScreen extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.chat_bubble_outline, color: Colors.white),
+              Icon(Icons.chat_bubble_outline, color: Colors.white),
               SizedBox(width: r.s(10)),
               Text(
                 'Contacter ${seller.name}',
-                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
               ),
             ],
           ),

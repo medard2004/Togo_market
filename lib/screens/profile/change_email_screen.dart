@@ -51,7 +51,7 @@ class _ChangeEmailScreenState extends State<ChangeEmailScreen> {
       appBar: AppBar(
         backgroundColor: AppTheme.cardColor,
         elevation: 0,
-        title: const Text(
+        title: Text(
           'Modifier l\'email',
           style: TextStyle(
             fontWeight: FontWeight.w800,
@@ -61,7 +61,7 @@ class _ChangeEmailScreenState extends State<ChangeEmailScreen> {
         ),
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppTheme.foreground),
+          icon: Icon(Icons.arrow_back, color: AppTheme.foreground),
           onPressed: Get.back,
         ),
         bottom: PreferredSize(
@@ -74,7 +74,7 @@ class _ChangeEmailScreenState extends State<ChangeEmailScreen> {
         child: ListView(
           padding: const EdgeInsets.all(24),
           children: [
-            const Text(
+            Text(
               'Quelle est votre nouvelle adresse email ?',
               style: TextStyle(
                 fontSize: 16,
@@ -82,15 +82,15 @@ class _ChangeEmailScreenState extends State<ChangeEmailScreen> {
                 color: AppTheme.foreground,
               ),
             ),
-            const SizedBox(height: 8),
-            const Text(
+            SizedBox(height: 8),
+            Text(
               'Un email de confirmation peut vous être envoyé pour valider ce changement.',
               style: TextStyle(
                 fontSize: 13,
                 color: AppTheme.mutedForeground,
               ),
             ),
-            const SizedBox(height: 32),
+            SizedBox(height: 32),
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
@@ -101,7 +101,7 @@ class _ChangeEmailScreenState extends State<ChangeEmailScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Padding(
+                  Padding(
                     padding: EdgeInsets.only(left: 4, bottom: 8),
                     child: Text(
                       'Adresse Email',
@@ -115,7 +115,7 @@ class _ChangeEmailScreenState extends State<ChangeEmailScreen> {
                   TextFormField(
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                       color: AppTheme.foreground,
@@ -131,7 +131,7 @@ class _ChangeEmailScreenState extends State<ChangeEmailScreen> {
                     },
                     decoration: InputDecoration(
                       hintText: 'votre.email@exemple.com',
-                      prefixIcon: const Icon(Icons.email_outlined,
+                      prefixIcon: Icon(Icons.email_outlined,
                           size: 20, color: AppTheme.primary),
                       filled: true,
                       fillColor: AppTheme.muted,
@@ -146,7 +146,7 @@ class _ChangeEmailScreenState extends State<ChangeEmailScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 40),
+            SizedBox(height: 40),
             ElevatedButton(
               onPressed: _saveEmail,
               style: ElevatedButton.styleFrom(
@@ -159,7 +159,7 @@ class _ChangeEmailScreenState extends State<ChangeEmailScreen> {
                 ),
                 padding: const EdgeInsets.symmetric(vertical: 16),
               ),
-              child: const Text(
+              child: Text(
                 'Enregistrer l\'email',
                 style: TextStyle(
                   fontSize: 16,

@@ -3,9 +3,10 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import '../../theme/app_theme.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_radius.dart';
-import '../../theme/app_shadows.dart';
+
 import '../../animations/togo_animation_system.dart';
 import '../../data/mock_data.dart';
 import 'store_config_model.dart';
@@ -76,12 +77,12 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
   @override
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: const SystemUiOverlayStyle(
+      value: SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.dark,
+        statusBarIconBrightness: Get.isDarkMode ? Brightness.light : Brightness.dark,
       ),
       child: Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: AppTheme.background,
         body: SafeArea(
           child: Stack(
             children: [
@@ -125,17 +126,17 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
                 child: Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppTheme.cardColor,
                     shape: BoxShape.circle,
-                    boxShadow: AppShadows.shadowSm,
+                    boxShadow: AppTheme.shadowSm,
                     border:
-                        Border.all(color: AppColors.border.withOpacity(0.5)),
+                        Border.all(color: AppTheme.border.withOpacity(0.5)),
                   ),
-                  child: const Icon(Icons.arrow_back_rounded,
-                      size: 20, color: AppColors.foreground),
+                  child: Icon(Icons.arrow_back_rounded,
+                      size: 20, color: AppTheme.foreground),
                 ),
               ),
-              const Expanded(
+              Expanded(
                 child: Text('Ma Boutique',
                     textAlign: TextAlign.center,
                     style: TextStyle(
@@ -143,10 +144,10 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
                         fontWeight: FontWeight.w900,
                         letterSpacing: -0.5)),
               ),
-              const SizedBox(width: 40), // Balance
+              SizedBox(width: 40), // Balance
             ],
           ),
-          const SizedBox(height: 24),
+          SizedBox(height: 24),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: List.generate(_totalSteps, (i) {
@@ -161,23 +162,23 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
                       height: isActive ? 40 : 32,
                       decoration: BoxDecoration(
                         color: isActive || isCompleted
-                            ? AppColors.primary
-                            : Colors.white,
+                            ? AppTheme.primary
+                            : AppTheme.cardColor,
                         shape: BoxShape.circle,
                         boxShadow: isActive
-                            ? AppShadows.shadowPrimary
-                            : AppShadows.shadowSm,
+                            ? AppTheme.shadowPrimary
+                            : AppTheme.shadowSm,
                         border: Border.all(
                             color: isActive || isCompleted
-                                ? AppColors.primary
-                                : AppColors.border),
+                                ? AppTheme.primary
+                                : AppTheme.border),
                       ),
                       child: Icon(
                         isCompleted ? Icons.check_rounded : _stepIcons[i],
                         size: isActive ? 18 : 14,
                         color: isActive || isCompleted
-                            ? Colors.white
-                            : AppColors.mutedForeground,
+                            ? AppTheme.cardColor
+                            : AppTheme.mutedForeground,
                       ),
                     ),
                     if (i < _totalSteps - 1)
@@ -186,8 +187,8 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
                           height: 2,
                           margin: const EdgeInsets.symmetric(horizontal: 4),
                           color: isCompleted
-                              ? AppColors.primary
-                              : AppColors.border,
+                              ? AppTheme.primary
+                              : AppTheme.border,
                         ),
                       ),
                   ],
@@ -208,16 +209,16 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Commençons par le nom',
+            Text('Commençons par le nom',
                 style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.w900,
-                    color: AppColors.foreground)),
-            const SizedBox(height: 8),
-            const Text('Choisissez un nom qui reflète votre passion.',
+                    color: AppTheme.foreground)),
+            SizedBox(height: 8),
+            Text('Choisissez un nom qui reflète votre passion.',
                 style:
-                    TextStyle(color: AppColors.mutedForeground, fontSize: 16)),
-            const SizedBox(height: 32),
+                    TextStyle(color: AppTheme.mutedForeground, fontSize: 16)),
+            SizedBox(height: 32),
             _buildCharmingField(
               label: 'Nom de la boutique',
               controller: _nameCtrl,
@@ -235,7 +236,7 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
             _buildFieldLabel(
                 'Quelles sont vos catégories ? (Plusieurs possibles)'),
             _buildCategorySelector(),
-            const SizedBox(height: 24),
+            SizedBox(height: 24),
             _buildCharmingField(
               label: 'Votre histoire (Description)',
               controller: _descCtrl,
@@ -258,16 +259,16 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Une image forte',
+            Text('Une image forte',
                 style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.w900,
-                    color: AppColors.foreground)),
-            const SizedBox(height: 8),
-            const Text('Les visuels augmentent de 80% l\'engagement.',
+                    color: AppTheme.foreground)),
+            SizedBox(height: 8),
+            Text('Les visuels augmentent de 80% l\'engagement.',
                 style:
-                    TextStyle(color: AppColors.mutedForeground, fontSize: 16)),
-            const SizedBox(height: 32),
+                    TextStyle(color: AppTheme.mutedForeground, fontSize: 16)),
+            SizedBox(height: 32),
             _buildFieldLabel('Photo de Couverture'),
             _buildCharmingImagePicker(
               height: 180,
@@ -276,7 +277,7 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
               label: 'Éditer la couverture',
               isWide: true,
             ),
-            const SizedBox(height: 32),
+            SizedBox(height: 32),
             _buildFieldLabel('Votre Logo'),
             Center(
               child: TogoPressableScale(
@@ -287,11 +288,11 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
                     Container(
                       padding: const EdgeInsets.all(5),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: AppTheme.cardColor,
                         shape: BoxShape.circle,
-                        boxShadow: AppShadows.shadowLg,
+                        boxShadow: AppTheme.shadowCardLg,
                         border: Border.all(
-                            color: AppColors.primary.withOpacity(0.2),
+                            color: AppTheme.primary.withOpacity(0.2),
                             width: 2),
                       ),
                       child: const CircleAvatar(
@@ -304,10 +305,10 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
                     Container(
                       height: 40,
                       width: 40,
-                      decoration: const BoxDecoration(
-                          color: AppColors.primary, shape: BoxShape.circle),
-                      child: const Icon(Icons.camera_alt_rounded,
-                          color: Colors.white, size: 20),
+                      decoration: BoxDecoration(
+                          color: AppTheme.primary, shape: BoxShape.circle),
+                      child: Icon(Icons.camera_alt_rounded,
+                          color: AppTheme.cardColor, size: 20),
                     ),
                   ],
                 ),
@@ -327,16 +328,16 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Où vous trouver ?',
+            Text('Où vous trouver ?',
                 style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.w900,
-                    color: AppColors.foreground)),
-            const SizedBox(height: 8),
-            const Text('Rassurez vos clients sur votre proximité.',
+                    color: AppTheme.foreground)),
+            SizedBox(height: 8),
+            Text('Rassurez vos clients sur votre proximité.',
                 style:
-                    TextStyle(color: AppColors.mutedForeground, fontSize: 16)),
-            const SizedBox(height: 32),
+                    TextStyle(color: AppTheme.mutedForeground, fontSize: 16)),
+            SizedBox(height: 32),
             _buildCharmingField(
               label: 'Numéro WhatsApp',
               controller: _phoneCtrl,
@@ -347,7 +348,7 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
             ),
             _buildFieldLabel('Choisissez votre Zone'),
             _buildZoneDropdown(),
-            const SizedBox(height: 24),
+            SizedBox(height: 24),
             _buildCharmingField(
               label: 'Adresse ou Repères',
               controller: _addressCtrl,
@@ -355,24 +356,24 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
               icon: Icons.near_me_rounded,
               onChanged: (v) => _data.address = v,
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: 24),
             Container(
               height: 140,
               decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.05),
+                color: AppTheme.primary.withOpacity(0.05),
                 borderRadius: AppRadius.xlBorderRadius,
-                border: Border.all(color: AppColors.primary.withOpacity(0.1)),
+                border: Border.all(color: AppTheme.primary.withOpacity(0.1)),
               ),
-              child: const Center(
+              child: Center(
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.pin_drop_rounded, color: AppColors.primary),
+                    Icon(Icons.pin_drop_rounded, color: AppTheme.primary),
                     SizedBox(width: 12),
                     Text('Vérifier la position GPS',
                         style: TextStyle(
                             fontWeight: FontWeight.bold,
-                            color: AppColors.primary)),
+                            color: AppTheme.primary)),
                   ],
                 ),
               ),
@@ -389,17 +390,17 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
       child: ListView(
         padding: const EdgeInsets.fromLTRB(24, 0, 24, 120),
         children: [
-          const Text('Vos horaires',
+          Text('Vos horaires',
               style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.w900,
-                  color: AppColors.foreground)),
-          const SizedBox(height: 8),
-          const Text('Définissez vos temps forts de vente.',
-              style: TextStyle(color: AppColors.mutedForeground, fontSize: 16)),
-          const SizedBox(height: 24),
+                  color: AppTheme.foreground)),
+          SizedBox(height: 8),
+          Text('Définissez vos temps forts de vente.',
+              style: TextStyle(color: AppTheme.mutedForeground, fontSize: 16)),
+          SizedBox(height: 24),
           ...(_data.openingHours.map((h) => _buildCharmingDayRow(h))),
-          const SizedBox(height: 20),
+          SizedBox(height: 20),
         ],
       ),
     );
@@ -412,18 +413,18 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
       child: TogoFadeInEntry(
         child: Column(
           children: [
-            const Icon(Icons.stars_rounded, size: 80, color: AppColors.primary),
-            const SizedBox(height: 24),
-            const Text('Prêt pour l\'aventure !',
+            Icon(Icons.stars_rounded, size: 80, color: AppTheme.primary),
+            SizedBox(height: 24),
+            Text('Prêt pour l\'aventure !',
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 26, fontWeight: FontWeight.w900)),
-            const SizedBox(height: 8),
-            const Text(
+            SizedBox(height: 8),
+            Text(
                 'Votre boutique va être superbe. Voici un dernier coup d\'œil.',
                 textAlign: TextAlign.center,
                 style:
-                    TextStyle(color: AppColors.mutedForeground, fontSize: 16)),
-            const SizedBox(height: 32),
+                    TextStyle(color: AppTheme.mutedForeground, fontSize: 16)),
+            SizedBox(height: 32),
             _buildModernReviewCard(),
           ],
         ),
@@ -448,9 +449,9 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
         _buildFieldLabel(label),
         Container(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppTheme.cardColor,
             borderRadius: AppRadius.lgBorderRadius,
-            boxShadow: AppShadows.shadowSm,
+            boxShadow: AppTheme.shadowSm,
           ),
           child: TextField(
             controller: controller,
@@ -460,23 +461,23 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
             decoration: InputDecoration(
               hintText: hint,
               prefixIcon: Icon(icon,
-                  color: AppColors.primary.withOpacity(0.6), size: 20),
+                  color: AppTheme.primary.withOpacity(0.6), size: 20),
               filled: true,
               fillColor: Colors.transparent,
               enabledBorder: OutlineInputBorder(
                 borderRadius: AppRadius.lgBorderRadius,
                 borderSide:
-                    BorderSide(color: AppColors.border.withOpacity(0.5)),
+                    BorderSide(color: AppTheme.border.withOpacity(0.5)),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: AppRadius.lgBorderRadius,
                 borderSide:
-                    const BorderSide(color: AppColors.primary, width: 2),
+                    BorderSide(color: AppTheme.primary, width: 2),
               ),
             ),
           ),
         ),
-        const SizedBox(height: 24),
+        SizedBox(height: 24),
       ],
     );
   }
@@ -485,10 +486,10 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10, left: 4),
       child: Text(label,
-          style: const TextStyle(
+          style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w800,
-              color: AppColors.foreground)),
+              color: AppTheme.foreground)),
     );
   }
 
@@ -512,14 +513,14 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
             duration: const Duration(milliseconds: 200),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             decoration: BoxDecoration(
-              color: isSelected ? AppColors.primary : Colors.white,
+              color: isSelected ? AppTheme.primary : AppTheme.cardColor,
               borderRadius: AppRadius.lgBorderRadius,
               boxShadow:
-                  isSelected ? AppShadows.shadowPrimary : AppShadows.shadowSm,
+                  isSelected ? AppTheme.shadowPrimary : AppTheme.shadowSm,
               border: Border.all(
                 color: isSelected
-                    ? AppColors.primary
-                    : AppColors.border.withOpacity(0.5),
+                    ? AppTheme.primary
+                    : AppTheme.border.withOpacity(0.5),
               ),
             ),
             child: Row(
@@ -527,14 +528,14 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
               children: [
                 Icon(c.icon,
                     size: 16,
-                    color: isSelected ? Colors.white : AppColors.primary),
-                const SizedBox(width: 8),
+                    color: isSelected ? AppTheme.cardColor : AppTheme.primary),
+                SizedBox(width: 8),
                 Text(
                   c.label,
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
-                    color: isSelected ? Colors.white : AppColors.foreground,
+                    color: isSelected ? AppTheme.cardColor : AppTheme.foreground,
                   ),
                 ),
               ],
@@ -551,29 +552,30 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
       'Avépozo',
       'Adidogomé',
       'Bè',
-      'Kégué',
+      'Kégue',
       'Nyékonakpoè',
       'Agoè'
     ];
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.cardColor,
         borderRadius: AppRadius.lgBorderRadius,
-        boxShadow: AppShadows.shadowSm,
-        border: Border.all(color: AppColors.border.withOpacity(0.5)),
+        boxShadow: AppTheme.shadowSm,
+        border: Border.all(color: AppTheme.border.withOpacity(0.5)),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: _data.zone,
           isExpanded: true,
-          icon: const Icon(Icons.keyboard_arrow_down_rounded,
-              color: AppColors.primary),
+          dropdownColor: AppTheme.cardColor,
+          icon: Icon(Icons.keyboard_arrow_down_rounded,
+              color: AppTheme.primary),
           items: zones
               .map((z) => DropdownMenuItem(
                     value: z,
                     child: Text(z,
-                        style: const TextStyle(fontWeight: FontWeight.w600)),
+                        style: TextStyle(fontWeight: FontWeight.w600)),
                   ))
               .toList(),
           onChanged: (v) => setState(() => _data.zone = v!),
@@ -593,32 +595,32 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
         width: double.infinity,
         height: height,
         decoration: BoxDecoration(
-          color: AppColors.muted,
+          color: AppTheme.muted,
           borderRadius: AppRadius.xlBorderRadius,
           image: DecorationImage(
             image: CachedNetworkImageProvider(imageUrl),
             fit: BoxFit.cover,
             colorFilter: ColorFilter.mode(
-                Colors.black.withOpacity(0.2), BlendMode.darken),
+                AppTheme.border, BlendMode.darken),
           ),
-          boxShadow: AppShadows.shadowMd,
+          boxShadow: AppTheme.shadowCard,
         ),
         child: Center(
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.4),
+              color: AppTheme.border,
               borderRadius: BorderRadius.circular(20),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.add_a_photo_rounded,
-                    color: Colors.white, size: 16),
-                const SizedBox(width: 8),
+                Icon(Icons.add_a_photo_rounded,
+                    color: AppTheme.cardColor, size: 16),
+                SizedBox(width: 8),
                 Text(label,
-                    style: const TextStyle(
-                        color: Colors.white,
+                    style: TextStyle(
+                        color: AppTheme.cardColor,
                         fontWeight: FontWeight.bold,
                         fontSize: 13)),
               ],
@@ -636,13 +638,13 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
         duration: const Duration(milliseconds: 300),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppTheme.cardColor,
           borderRadius: AppRadius.lgBorderRadius,
-          boxShadow: h.isOpen ? AppShadows.shadowMd : AppShadows.shadowSm,
+          boxShadow: h.isOpen ? AppTheme.shadowCard : AppTheme.shadowSm,
           border: Border.all(
             color: h.isOpen
-                ? AppColors.primary.withOpacity(0.3)
-                : AppColors.border.withOpacity(0.3),
+                ? AppTheme.primary.withOpacity(0.3)
+                : AppTheme.border.withOpacity(0.3),
             width: h.isOpen ? 1.5 : 1,
           ),
         ),
@@ -654,35 +656,35 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
                     color: h.isOpen
-                        ? AppColors.primary.withOpacity(0.1)
-                        : AppColors.muted,
+                        ? AppTheme.primary.withOpacity(0.1)
+                        : AppTheme.muted,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(Icons.calendar_today_rounded,
                       size: 16,
                       color: h.isOpen
-                          ? AppColors.primary
-                          : AppColors.mutedForeground),
+                          ? AppTheme.primary
+                          : AppTheme.mutedForeground),
                 ),
-                const SizedBox(width: 12),
+                SizedBox(width: 12),
                 Expanded(
                     child: Text(h.day,
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontSize: 16, fontWeight: FontWeight.w900))),
                 Transform.scale(
                   scale: 0.7,
                   alignment: Alignment.centerRight,
                   child: CupertinoSwitch(
                     value: h.isOpen,
-                    activeTrackColor: AppColors.primary,
-                    inactiveTrackColor: const Color(0xFFEEEEEE),
+                    activeTrackColor: AppTheme.primary,
+                    inactiveTrackColor: AppTheme.muted,
                     onChanged: (v) => setState(() => h.isOpen = v),
                   ),
                 ),
               ],
             ),
             if (h.isOpen) ...[
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               Row(
                 children: [
                   _buildCharmingTime(
@@ -699,12 +701,12 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
                               h.isHalfDay = false;
                             }
                           })),
-                  const Padding(
+                  Padding(
                     padding: EdgeInsets.symmetric(horizontal: 8),
                     child: Text('→',
                         style: TextStyle(
                             fontWeight: FontWeight.bold,
-                            color: AppColors.mutedForeground)),
+                            color: AppTheme.mutedForeground)),
                   ),
                   _buildCharmingTime(
                       h.closingTime!,
@@ -734,7 +736,7 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
                           horizontal: 8, vertical: 6),
                       decoration: BoxDecoration(
                         color:
-                            h.isHalfDay ? AppColors.primary : AppColors.muted,
+                            h.isHalfDay ? AppTheme.primary : AppTheme.muted,
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: FittedBox(
@@ -744,8 +746,8 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
                                 fontSize: 11,
                                 fontWeight: FontWeight.w800,
                                 color: h.isHalfDay
-                                    ? Colors.white
-                                    : AppColors.mutedForeground)),
+                                    ? AppTheme.cardColor
+                                    : AppTheme.mutedForeground)),
                       ),
                     ),
                   ),
@@ -774,12 +776,12 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           decoration: BoxDecoration(
-            color: AppColors.muted,
+            color: AppTheme.muted,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: enabled
                   ? Colors.transparent
-                  : AppColors.border.withOpacity(0.3),
+                  : AppTheme.border.withOpacity(0.3),
             ),
           ),
           child: Text(
@@ -787,7 +789,7 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
             style: TextStyle(
               fontWeight: FontWeight.w900,
               fontSize: 13,
-              color: enabled ? AppColors.foreground : AppColors.mutedForeground,
+              color: enabled ? AppTheme.foreground : AppTheme.mutedForeground,
             ),
           ),
         ),
@@ -799,16 +801,16 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.cardColor,
         borderRadius: AppRadius.xlBorderRadius,
-        boxShadow: AppShadows.shadowLg,
+        boxShadow: AppTheme.shadowCardLg,
       ),
       clipBehavior: Clip.antiAlias,
       child: Column(
         children: [
           Container(
             height: 100,
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               image: DecorationImage(
                 image: CachedNetworkImageProvider(
                     'https://images.unsplash.com/photo-1556740738-b6a63e27c4df?q=80&w=600'),
@@ -832,7 +834,7 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
                         child: Center(
                           child: CircleAvatar(
                             radius: 40,
-                            backgroundColor: Colors.white,
+                            backgroundColor: AppTheme.cardColor,
                             child: CircleAvatar(
                               radius: 36,
                               backgroundImage: const CachedNetworkImageProvider(
@@ -846,17 +848,17 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
                 ),
                 Text(
                     _nameCtrl.text.isEmpty ? 'Mon Togo Market' : _nameCtrl.text,
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 22, fontWeight: FontWeight.w900)),
-                const SizedBox(height: 4),
+                SizedBox(height: 4),
                 Text(
                     _sloganCtrl.text.isEmpty
                         ? 'Prêt à vendre mes merveilles'
                         : _sloganCtrl.text,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
-                        color: AppColors.mutedForeground, fontSize: 14)),
-                const Divider(height: 40),
+                    style: TextStyle(
+                        color: AppTheme.mutedForeground, fontSize: 14)),
+                Divider(height: 40),
                 _buildReviewRow(
                     Icons.phone_iphone_rounded,
                     _phoneCtrl.text.isEmpty
@@ -889,14 +891,14 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.1),
+                color: AppTheme.primary.withOpacity(0.1),
                 shape: BoxShape.circle),
-            child: Icon(icon, size: 16, color: AppColors.primary),
+            child: Icon(icon, size: 16, color: AppTheme.primary),
           ),
-          const SizedBox(width: 16),
+          SizedBox(width: 16),
           Expanded(
               child: Text(value,
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontWeight: FontWeight.w700, fontSize: 13))),
         ],
       ),
@@ -914,16 +916,16 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
           width: MediaQuery.of(context).size.width * 0.88,
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppTheme.cardColor,
             borderRadius: BorderRadius.circular(35),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.08),
+                color: AppTheme.border,
                 blurRadius: 30,
                 offset: const Offset(0, 10),
               ),
             ],
-            border: Border.all(color: AppColors.border.withOpacity(0.3)),
+            border: Border.all(color: AppTheme.border.withOpacity(0.3)),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -935,14 +937,14 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
                     height: 52,
                     width: 52,
                     decoration: BoxDecoration(
-                      color: AppColors.muted,
+                      color: AppTheme.muted,
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.arrow_back_rounded,
-                        size: 20, color: AppColors.foreground),
+                    child: Icon(Icons.arrow_back_rounded,
+                        size: 20, color: AppTheme.foreground),
                   ),
                 ),
-                const SizedBox(width: 10),
+                SizedBox(width: 10),
               ],
               Expanded(
                 child: TogoPressableScale(
@@ -954,7 +956,7 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
                       borderRadius: BorderRadius.circular(30),
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.primary.withOpacity(0.35),
+                          color: AppTheme.primary.withOpacity(0.35),
                           blurRadius: 15,
                           offset: const Offset(0, 8),
                         ),
@@ -966,18 +968,18 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
                         children: [
                           Text(
                             isLast ? 'C\'est parti !' : 'Continuer',
-                            style: const TextStyle(
-                              color: Colors.white,
+                            style: TextStyle(
+                              color: AppTheme.cardColor,
                               fontSize: 16,
                               fontWeight: FontWeight.w900,
                             ),
                           ),
-                          const SizedBox(width: 8),
+                          SizedBox(width: 8),
                           Icon(
                             isLast
                                 ? Icons.rocket_launch_rounded
                                 : Icons.double_arrow_rounded,
-                            color: Colors.white.withOpacity(0.9),
+                            color: AppTheme.cardColor.withOpacity(0.9),
                             size: 18,
                           ),
                         ],

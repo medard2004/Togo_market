@@ -300,7 +300,7 @@ class _WelcomeStep extends StatelessWidget {
 
             // Séparateur
             Row(children: [
-              const Expanded(child: Divider(color: AppTheme.border)),
+              Expanded(child: Divider(color: AppTheme.border)),
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: r.s(12)),
                 child: Text('OU CONTINUER AVEC',
@@ -310,7 +310,7 @@ class _WelcomeStep extends StatelessWidget {
                         color: AppTheme.mutedForeground,
                         letterSpacing: 0.5)),
               ),
-              const Expanded(child: Divider(color: AppTheme.border)),
+              Expanded(child: Divider(color: AppTheme.border)),
             ]),
             SizedBox(height: r.s(16)),
 
@@ -368,7 +368,7 @@ class _WelcomeStep extends StatelessWidget {
               text: TextSpan(
                 style: TextStyle(
                     fontSize: r.fs(11), color: AppTheme.mutedForeground),
-                children: const [
+                children: [
                   TextSpan(text: 'En continuant, vous acceptez nos '),
                   TextSpan(
                       text: 'Conditions\nd\'utilisation',
@@ -598,7 +598,7 @@ class _PhoneStep extends StatelessWidget {
                           fontSize: r.fs(11),
                           color: AppTheme.mutedForeground,
                         ),
-                        children: const [
+                        children: [
                           TextSpan(text: 'En continuant, vous acceptez nos '),
                           TextSpan(
                             text: 'Conditions d\'utilisation',
@@ -806,7 +806,7 @@ class _OtpStep extends StatelessWidget {
                         fontSize: r.fs(11),
                         color: AppTheme.mutedForeground,
                       ),
-                      children: const [
+                      children: [
                         TextSpan(text: 'En continuant, vous acceptez nos '),
                         TextSpan(
                           text: 'Conditions d\'utilisation',
@@ -1033,7 +1033,7 @@ class _ProfileStep extends StatelessWidget {
                     text: TextSpan(
                       style: TextStyle(
                           fontSize: r.fs(11), color: AppTheme.mutedForeground),
-                      children: const [
+                      children: [
                         TextSpan(text: 'En continuant vous acceptez '),
                         TextSpan(
                             text: 'Conditions d\'utilisation',

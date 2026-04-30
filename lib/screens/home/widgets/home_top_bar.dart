@@ -57,7 +57,7 @@ class HomeTopBar extends StatelessWidget {
                     top: r.s(4), right: r.s(4),
                     child: Container(
                       width: r.s(10), height: r.s(10),
-                      decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
+                      decoration: BoxDecoration(color: Colors.red, shape: BoxShape.circle),
                     ),
                   ),
               ],

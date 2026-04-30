@@ -88,7 +88,7 @@ class _ChatScreenState extends State<ChatScreen> {
         elevation: 0,
         titleSpacing: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, size: 18),
+          icon: Icon(Icons.arrow_back, size: 18),
           onPressed: Get.back,
         ),
         title: Row(
@@ -98,7 +98,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 radius: 18,
                 backgroundImage: CachedNetworkImageProvider(seller.avatar),
               ),
-            const SizedBox(width: 10),
+            SizedBox(width: 10),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -107,13 +107,13 @@ class _ChatScreenState extends State<ChatScreen> {
                     seller != null
                         ? (seller.isShop ? seller.shopName : seller.name)
                         : '',
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 14, fontWeight: FontWeight.w700),
                   ),
                   if (seller != null)
                     Text(
                       'Répond en ${seller.responseTime}',
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontSize: 11, color: AppTheme.mutedForeground),
                     ),
                 ],
@@ -168,7 +168,7 @@ class _ChatScreenState extends State<ChatScreen> {
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 16),
               itemCount: _quickReplies.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              separatorBuilder: (_, __) => SizedBox(width: 8),
               itemBuilder: (_, i) => GestureDetector(
                 onTap: () => _send(_quickReplies[i]),
                 child: Container(
@@ -181,19 +181,19 @@ class _ChatScreenState extends State<ChatScreen> {
                   ),
                   child: Text(
                     _quickReplies[i],
-                    style: const TextStyle(fontSize: 13),
+                    style: TextStyle(fontSize: 13),
                   ),
                 ),
               ),
             ),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           // Input
           Container(
             padding: EdgeInsets.fromLTRB(
                 16, 4, 16, MediaQuery.of(context).padding.bottom + 8),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppTheme.cardColor,
               border: Border(
                   top: BorderSide(color: AppTheme.border.withOpacity(0.3))),
             ),
@@ -240,7 +240,7 @@ class _ChatScreenState extends State<ChatScreen> {
                         ),
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    SizedBox(width: 8),
                     GestureDetector(
                       onTap: _send,
                       child: Container(
@@ -251,7 +251,7 @@ class _ChatScreenState extends State<ChatScreen> {
                           shape: BoxShape.circle,
                           boxShadow: AppTheme.shadowPrimary,
                         ),
-                        child: const Icon(Icons.send,
+                        child: Icon(Icons.send,
                             color: Colors.white, size: 20),
                       ),
                     ),
@@ -290,10 +290,10 @@ class _MessageBubble extends StatelessWidget {
                   ? CachedNetworkImageProvider(sellerAvatar)
                   : null,
               child: sellerAvatar.isEmpty
-                  ? const Icon(Icons.person, size: 16)
+                  ? Icon(Icons.person, size: 16)
                   : null,
             ),
-            const SizedBox(width: 8),
+            SizedBox(width: 8),
           ],
           Container(
             constraints: BoxConstraints(
@@ -332,7 +332,7 @@ class _MessageBubble extends StatelessWidget {
                       ),
                     ),
                   ),
-                const SizedBox(height: 4),
+                SizedBox(height: 4),
                 Text(
                   message.timestamp as String,
                   style: TextStyle(
@@ -368,7 +368,7 @@ class _TypingIndicator extends StatelessWidget {
               backgroundImage:
                   CachedNetworkImageProvider(seller.avatar as String),
             ),
-          const SizedBox(width: 8),
+          SizedBox(width: 8),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             decoration: BoxDecoration(
@@ -378,9 +378,9 @@ class _TypingIndicator extends StatelessWidget {
             child: Row(
               children: [
                 _Dot(delay: 0),
-                const SizedBox(width: 4),
+                SizedBox(width: 4),
                 _Dot(delay: 200),
-                const SizedBox(width: 4),
+                SizedBox(width: 4),
                 _Dot(delay: 400),
               ],
             ),
@@ -431,7 +431,7 @@ class _DotState extends State<_Dot> with SingleTickerProviderStateMixin {
         child: Container(
           width: 6,
           height: 6,
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             color: AppTheme.mutedForeground,
             shape: BoxShape.circle,
           ),
@@ -513,11 +513,11 @@ class _MessageProductPreview extends StatelessWidget {
         padding: EdgeInsets.all(r.s(2)),
         width: double.infinity,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppTheme.cardColor,
           borderRadius: BorderRadius.circular(r.rad(18)),
           boxShadow: [
             BoxShadow(
-                color: Colors.black.withOpacity(0.04),
+                color: AppTheme.border.withOpacity(0.1),
                 blurRadius: 8,
                 offset: const Offset(0, 3)),
           ],

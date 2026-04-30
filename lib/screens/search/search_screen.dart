@@ -57,7 +57,7 @@ class _SearchScreenState extends State<SearchScreen> {
               child: Row(
                 children: [
                   AppBackButton(onTap: () => Get.offAllNamed('/home')),
-                  const SizedBox(width: 12),
+                  SizedBox(width: 12),
                   Expanded(
                     child: Container(
                       decoration: BoxDecoration(
@@ -70,7 +70,7 @@ class _SearchScreenState extends State<SearchScreen> {
                         focusNode: _focus,
                         decoration: InputDecoration(
                           hintText: 'Que cherchez-vous ?',
-                          prefixIcon: const Icon(Icons.search,
+                          prefixIcon: Icon(Icons.search,
                               color: AppTheme.mutedForeground, size: 20),
                           suffixIcon: _query.isNotEmpty
                               ? GestureDetector(
@@ -78,7 +78,7 @@ class _SearchScreenState extends State<SearchScreen> {
                                     _ctrl.clear();
                                     setState(() => _query = '');
                                   },
-                                  child: const Icon(Icons.close,
+                                  child: Icon(Icons.close,
                                       color: AppTheme.mutedForeground,
                                       size: 18),
                                 )
@@ -134,11 +134,11 @@ class _EmptyQueryContent extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Recherches récentes',
             style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -156,11 +156,11 @@ class _EmptyQueryContent extends StatelessWidget {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.history,
+                            Icon(Icons.history,
                                 size: 14, color: AppTheme.mutedForeground),
-                            const SizedBox(width: 6),
+                            SizedBox(width: 6),
                             Text(s,
-                                style: const TextStyle(
+                                style: TextStyle(
                                     fontSize: 13,
                                     fontWeight: FontWeight.w500)),
                           ],
@@ -169,12 +169,12 @@ class _EmptyQueryContent extends StatelessWidget {
                     ))
                 .toList(),
           ),
-          const SizedBox(height: 24),
-          const Text(
+          SizedBox(height: 24),
+          Text(
             'Catégories',
             style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
@@ -200,9 +200,9 @@ class _EmptyQueryContent extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(cat.icon, size: 26, color: AppTheme.primary),
-                      const SizedBox(height: 4),
+                      SizedBox(height: 4),
                       Text(cat.label,
-                          style: const TextStyle(
+                          style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
                               color: AppTheme.foreground)),
@@ -223,7 +223,7 @@ class _EmptyResults extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
+    return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -269,7 +269,7 @@ class _ResultsList extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
           child: Text(
             '$count résultat${count > 1 ? 's' : ''}',
-            style: const TextStyle(
+            style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
                 color: AppTheme.mutedForeground),

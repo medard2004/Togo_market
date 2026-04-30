@@ -48,7 +48,7 @@ class _OpeningHoursScreenState extends State<OpeningHoursScreen> {
               primary: AppTheme.primary,
               onPrimary: Colors.white,
               onSurface: AppTheme.foreground,
-              surface: Colors.white,
+              surface: AppTheme.cardColor,
             ),
             textButtonTheme: TextButtonThemeData(
               style: TextButton.styleFrom(
@@ -88,10 +88,10 @@ class _OpeningHoursScreenState extends State<OpeningHoursScreen> {
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppTheme.primary),
+          icon: Icon(Icons.arrow_back, color: AppTheme.primary),
           onPressed: Get.back,
         ),
-        title: const Text(
+        title: Text(
           'Horaires d\'ouverture',
           style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
         ),
@@ -103,7 +103,7 @@ class _OpeningHoursScreenState extends State<OpeningHoursScreen> {
               foregroundColor:
                   hasOpenDay ? AppTheme.primary : AppTheme.mutedForeground,
             ),
-            child: const Text(
+            child: Text(
               'Sauvegarder',
               style: TextStyle(
                 fontWeight: FontWeight.w700,
@@ -111,7 +111,7 @@ class _OpeningHoursScreenState extends State<OpeningHoursScreen> {
               ),
             ),
           ),
-          const SizedBox(width: 8),
+          SizedBox(width: 8),
         ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
@@ -121,7 +121,7 @@ class _OpeningHoursScreenState extends State<OpeningHoursScreen> {
       body: ListView.separated(
         padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
         itemCount: _days.length + 1,
-        separatorBuilder: (_, __) => const SizedBox(height: 12),
+        separatorBuilder: (_, __) => SizedBox(height: 12),
         itemBuilder: (context, index) {
           if (index == 0) {
             return Padding(
@@ -140,15 +140,15 @@ class _OpeningHoursScreenState extends State<OpeningHoursScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF4F0),
+        color: AppTheme.primaryLight.withOpacity(0.1),
         borderRadius: BorderRadius.circular(24),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.access_time, color: Color(0xFFD4451A), size: 20),
-          const SizedBox(width: 12),
-          const Expanded(
+          Icon(Icons.access_time, color: Color(0xFFD4451A), size: 20),
+          SizedBox(width: 12),
+          Expanded(
             child: Text(
               'Indiquez vos horaires pour que les acheteurs sachent quand vous êtes disponible. Votre boutique apparaîtra comme "fermée" en dehors de ces horaires.',
               style: TextStyle(
@@ -164,16 +164,10 @@ class _OpeningHoursScreenState extends State<OpeningHoursScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.cardColor,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: AppTheme.border.withOpacity(0.4)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.015),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        boxShadow: AppTheme.shadowSm,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -183,7 +177,7 @@ class _OpeningHoursScreenState extends State<OpeningHoursScreen> {
               Expanded(
                 child: Text(
                   schedule.day,
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 15, fontWeight: FontWeight.w700),
                 ),
               ),
@@ -192,14 +186,14 @@ class _OpeningHoursScreenState extends State<OpeningHoursScreen> {
                 child: CupertinoSwitch(
                   value: schedule.open,
                   activeTrackColor: AppTheme.primary,
-                  inactiveTrackColor: const Color(0xFFEEEEEE),
+                  inactiveTrackColor: AppTheme.muted,
                   onChanged: (value) => _toggleOpen(index, value),
                 ),
               ),
             ],
           ),
           if (schedule.open) ...[
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             Row(
               children: [
                 Expanded(
@@ -219,8 +213,8 @@ class _OpeningHoursScreenState extends State<OpeningHoursScreen> {
               ],
             ),
           ] else ...[
-            const SizedBox(height: 4),
-            const Text(
+            SizedBox(height: 4),
+            Text(
               'Fermé ce jour',
               style: TextStyle(
                 fontSize: 13,
@@ -244,14 +238,14 @@ class _OpeningHoursScreenState extends State<OpeningHoursScreen> {
         children: [
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 10,
               fontWeight: FontWeight.w600,
               color: AppTheme.mutedForeground,
               letterSpacing: 0.5,
             ),
           ),
-          const SizedBox(height: 6),
+          SizedBox(height: 6),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
@@ -262,12 +256,12 @@ class _OpeningHoursScreenState extends State<OpeningHoursScreen> {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.access_time_rounded,
+                Icon(Icons.access_time_rounded,
                     size: 14, color: AppTheme.primary),
-                const SizedBox(width: 6),
+                SizedBox(width: 6),
                 Text(
                   value,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
                     color: AppTheme.foreground,

@@ -42,8 +42,8 @@ class _HelpScreenState extends State<HelpScreen> {
       resizeToAvoidBottomInset: true,
       backgroundColor: AppTheme.background,
       appBar: AppBar(
-        title: const Text('Aide & Support'),
-        leading: const BackButton(),
+        title: Text('Aide & Support'),
+        leading: BackButton(),
       ),
       body: Column(
         children: [
@@ -51,7 +51,7 @@ class _HelpScreenState extends State<HelpScreen> {
             child: ListView.separated(
               padding: const EdgeInsets.all(16),
               itemCount: _faqs.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 8),
+              separatorBuilder: (_, __) => SizedBox(height: 8),
               itemBuilder: (_, i) {
                 final faq = _faqs[i];
                 return GestureDetector(
@@ -71,7 +71,7 @@ class _HelpScreenState extends State<HelpScreen> {
                           children: [
                             Expanded(
                               child: Text(faq.$1,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                       fontSize: 14,
                                       fontWeight: FontWeight.w600)),
                             ),
@@ -93,7 +93,7 @@ class _HelpScreenState extends State<HelpScreen> {
                                   padding: const EdgeInsets.only(top: 10),
                                   child: Text(
                                     faq.$2,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 13,
                                       height: 1.5,
                                       color: AppTheme.mutedForeground,

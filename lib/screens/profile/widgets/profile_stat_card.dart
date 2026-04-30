@@ -24,16 +24,16 @@ class ProfileStatCard extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(icon, size: 20, color: AppTheme.primary),
-            const SizedBox(height: 10),
+            SizedBox(height: 10),
             Text(value,
-                style: const TextStyle(
+                style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w800,
                     color: AppTheme.foreground)),
-            const SizedBox(height: 4),
+            SizedBox(height: 4),
             Text(label,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
+                style: TextStyle(
                     fontSize: 12, color: AppTheme.mutedForeground)),
           ],
         ),

@@ -5,41 +5,38 @@ import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 
 import '../../theme/app_theme.dart';
 import '../../widgets/common_widgets.dart';
-import '../../controllers/app_controller.dart';
 import '../../utils/responsive.dart';
+import '../../data/mock_data.dart';
 
-class TrendingExplorerScreen extends StatefulWidget {
-  const TrendingExplorerScreen({super.key});
+class TrendingShopsScreen extends StatefulWidget {
+  const TrendingShopsScreen({super.key});
 
   @override
-  State<TrendingExplorerScreen> createState() => _TrendingExplorerScreenState();
+  State<TrendingShopsScreen> createState() => _TrendingShopsScreenState();
 }
 
-class _TrendingExplorerScreenState extends State<TrendingExplorerScreen> {
+class _TrendingShopsScreenState extends State<TrendingShopsScreen> {
   String _selectedFilter = 'Tout';
-  final List<String> _filters = ['Tout', 'Vêtements', 'Électronique', 'Friperie'];
+  final List<String> _filters = ['Tout', 'Friperie', 'Mode', 'Électronique', 'Services'];
 
   @override
   Widget build(BuildContext context) {
     final r = R(context);
-    final ctrl = Get.find<AppController>();
-    final allProducts = ctrl.products.toList();
+    final trendingSellers = mockSellers.where((s) => s.rating >= 4.5).toList();
 
     return Scaffold(
       backgroundColor: AppTheme.background,
       extendBodyBehindAppBar: true,
       appBar: _ExplorerAppBar(
-        title: '🔥 Tendances',
+        title: '🔥 Boutiques Tendances',
         onBack: () => Get.back(),
       ),
       body: AnimationLimiter(
         child: CustomScrollView(
           physics: const BouncingScrollPhysics(),
           slivers: [
-            // Safe area + AppBar spacing
-            SliverToBoxAdapter(child: SizedBox(height: MediaQuery.of(context).padding.top + kToolbarHeight + 10)),
+            SliverToBoxAdapter(child: SizedBox(height: MediaQuery.of(context).padding.top + r.s(60))),
 
-            // ── Filters & Subtitle ──────────────────────────────────────────
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -47,16 +44,17 @@ class _TrendingExplorerScreenState extends State<TrendingExplorerScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Découvrez ce qui fait fureur à Lomé en ce moment.',
+                      'Les boutiques les plus populaires et les mieux notées de la semaine.',
                       style: TextStyle(
                         fontSize: r.fs(13),
                         color: AppTheme.mutedForeground,
                         fontWeight: FontWeight.w500,
+                        height: 1.5,
                       ),
                     ),
                     SizedBox(height: 20),
                     SizedBox(
-                      height: 38,
+                      height: r.s(38),
                       child: ListView.separated(
                         scrollDirection: Axis.horizontal,
                         itemCount: _filters.length,
@@ -70,15 +68,19 @@ class _TrendingExplorerScreenState extends State<TrendingExplorerScreen> {
                               duration: const Duration(milliseconds: 200),
                               padding: const EdgeInsets.symmetric(horizontal: 18),
                               decoration: BoxDecoration(
-                                color: active ? Colors.orange : AppTheme.cardColor,
+                                color: active ? AppTheme.primary : AppTheme.cardColor,
                                 borderRadius: BorderRadius.circular(20),
-                                boxShadow: active ? AppTheme.shadowPrimary : AppTheme.shadowCard,
+                                border: Border.all(
+                                  color: active ? AppTheme.primary : AppTheme.border,
+                                  width: 1.5,
+                                ),
+                                boxShadow: active ? AppTheme.shadowPrimary : AppTheme.shadowSm,
                               ),
                               child: Center(
                                 child: Text(
                                   f,
                                   style: TextStyle(
-                                    fontSize: 12,
+                                    fontSize: r.fs(12),
                                     fontWeight: FontWeight.w700,
                                     color: active ? Colors.white : AppTheme.mutedForeground,
                                   ),
@@ -89,54 +91,36 @@ class _TrendingExplorerScreenState extends State<TrendingExplorerScreen> {
                         },
                       ),
                     ),
-                    SizedBox(height: 12),
+                    SizedBox(height: r.s(22)),
                   ],
                 ),
               ),
             ),
 
-            // ── Product Grid ────────────────────────────────────────────────
             SliverPadding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 40),
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 40),
               sliver: SliverGrid(
                 gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 2,
-                  mainAxisSpacing: 12,
-                  crossAxisSpacing: 12,
-                  childAspectRatio: _gridAspectRatio(context),
+                  mainAxisSpacing: 16,
+                  crossAxisSpacing: 16,
+                  childAspectRatio: 0.85,
                 ),
                 delegate: SliverChildBuilderDelegate(
                   (context, i) {
-                    final product = allProducts[i % allProducts.length];
+                    final seller = trendingSellers[i % trendingSellers.length];
                     return AnimationConfiguration.staggeredGrid(
                       position: i,
-                      duration: const Duration(milliseconds: 375),
+                      duration: const Duration(milliseconds: 450),
                       columnCount: 2,
                       child: ScaleAnimation(
                         child: FadeInAnimation(
-                          child: Stack(
-                            children: [
-                              ProductCard(product: product),
-                              // Popularity Badge (Subtle)
-                              Positioned(
-                                top: 8,
-                                left: 8,
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                                  decoration: BoxDecoration(
-                                    color: Colors.orange.withOpacity(0.9),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Icon(Icons.bolt_rounded, size: 10, color: Colors.white),
-                                ),
-                              ),
-                            ],
-                          ),
+                          child: ShopCarouselCard(seller: seller),
                         ),
                       ),
                     );
                   },
-                  childCount: 12,
+                  childCount: trendingSellers.length,
                 ),
               ),
             ),
@@ -144,14 +128,6 @@ class _TrendingExplorerScreenState extends State<TrendingExplorerScreen> {
         ),
       ),
     );
-  }
-
-  double _gridAspectRatio(BuildContext context) {
-    final r = R(context);
-    final colW = (MediaQuery.of(context).size.width - 16 * 2 - 12) / 2;
-    final imgH = colW * (3 / 4);
-    final infoH = r.s(56);
-    return colW / (imgH + infoH);
   }
 }
 

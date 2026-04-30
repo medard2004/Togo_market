@@ -1,4 +1,4 @@
-import 'package:cached_network_image/cached_network_image.dart';
+﻿import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -31,14 +31,14 @@ class _EditProductScreenState extends State<EditProductScreen> {
 
   static const _zones = [
     'Tokoin',
-    'Avépozo',
-    'Adidogomé',
-    'Bè',
-    'Kégué',
-    'Nyékonakpoè',
-    'Agbalépédo',
-    'Amadahomé',
-    'Agoè',
+    'AvÃ©pozo',
+    'AdidogomÃ©',
+    'BÃ¨',
+    'KÃ©guÃ©',
+    'NyÃ©konakpoÃ¨',
+    'AgbalÃ©pÃ©do',
+    'AmadahomÃ©',
+    'AgoÃ¨',
     'Legbassito',
   ];
 
@@ -54,7 +54,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
     _descriptionController =
         TextEditingController(text: _product?.description ?? '');
     _locationController =
-        TextEditingController(text: _product?.location ?? 'Tokoin, Lomé');
+        TextEditingController(text: _product?.location ?? 'Tokoin, LomÃ©');
     _category = _product?.category ?? 'electronique';
     _condition = _product?.condition ?? 'Neuf';
 
@@ -87,8 +87,8 @@ class _EditProductScreenState extends State<EditProductScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Text('Produit introuvable', style: TextStyle(fontSize: 16)),
-              const SizedBox(height: 12),
+              Text('Produit introuvable', style: TextStyle(fontSize: 16)),
+              SizedBox(height: 12),
               AppButton(label: 'Retour', onTap: Get.back),
             ],
           ),
@@ -97,19 +97,19 @@ class _EditProductScreenState extends State<EditProductScreen> {
     }
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: const SystemUiOverlayStyle(
+      value: SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.dark,
+        statusBarIconBrightness: Get.isDarkMode ? Brightness.light : Brightness.dark,
         systemNavigationBarColor: AppTheme.background,
-        systemNavigationBarIconBrightness: Brightness.dark,
+        systemNavigationBarIconBrightness: Get.isDarkMode ? Brightness.light : Brightness.dark,
         systemNavigationBarDividerColor: Colors.transparent,
       ),
       child: Scaffold(
         resizeToAvoidBottomInset: true,
         backgroundColor: AppTheme.background,
         appBar: AppBar(
-          title: const Text('Modifier un produit'),
-          leading: const BackButton(),
+          title: Text('Modifier un produit'),
+          leading: BackButton(),
         ),
         body: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
@@ -120,10 +120,10 @@ class _EditProductScreenState extends State<EditProductScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Photos',
+                    Text('Photos',
                         style: TextStyle(
                             fontSize: 15, fontWeight: FontWeight.w700)),
-                    const SizedBox(height: 10),
+                    SizedBox(height: 10),
                     GridView.count(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
@@ -154,7 +154,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
                                   )
                                 : Column(
                                     mainAxisAlignment: MainAxisAlignment.center,
-                                    children: const [
+                                    children: [
                                       Icon(Icons.camera_alt_outlined,
                                           color: AppTheme.primary),
                                       SizedBox(height: 6),
@@ -178,7 +178,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
                                     color: AppTheme.border,
                                     style: BorderStyle.solid),
                               ),
-                              child: const Icon(Icons.add,
+                              child: Icon(Icons.add,
                                   color: AppTheme.mutedForeground),
                             ),
                           ),
@@ -188,16 +188,16 @@ class _EditProductScreenState extends State<EditProductScreen> {
                   ],
                 ),
               ),
-              const SizedBox(height: 20),
+              SizedBox(height: 20),
               TogoSlideUp(
                 delay: const Duration(milliseconds: 200),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Titre',
+                    Text('Titre',
                         style: TextStyle(
                             fontSize: 14, fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 8),
+                    SizedBox(height: 8),
                     TextField(
                       controller: _titleController,
                       decoration: const InputDecoration(
@@ -207,7 +207,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
                   ],
                 ),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               TogoSlideUp(
                 delay: const Duration(milliseconds: 300),
                 child: Row(
@@ -216,10 +216,10 @@ class _EditProductScreenState extends State<EditProductScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('Prix (FCFA)',
+                          Text('Prix (FCFA)',
                               style: TextStyle(
                                   fontSize: 14, fontWeight: FontWeight.w600)),
-                          const SizedBox(height: 8),
+                          SizedBox(height: 8),
                           TextField(
                             controller: _priceController,
                             keyboardType: TextInputType.number,
@@ -228,15 +228,15 @@ class _EditProductScreenState extends State<EditProductScreen> {
                         ],
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    SizedBox(width: 12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('Catégorie',
+                          Text('CatÃ©gorie',
                               style: TextStyle(
                                   fontSize: 14, fontWeight: FontWeight.w600)),
-                          const SizedBox(height: 8),
+                          SizedBox(height: 8),
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 12),
                             decoration: BoxDecoration(
@@ -256,11 +256,11 @@ class _EditProductScreenState extends State<EditProductScreen> {
                                               Icon(c.icon,
                                                   size: 16,
                                                   color: AppTheme.primary),
-                                              const SizedBox(width: 8),
+                                              SizedBox(width: 8),
                                               Expanded(
                                                 child: Text(
                                                   c.label,
-                                                  style: const TextStyle(
+                                                  style: TextStyle(
                                                       fontSize: 12),
                                                   overflow:
                                                       TextOverflow.ellipsis,
@@ -286,37 +286,37 @@ class _EditProductScreenState extends State<EditProductScreen> {
                   ],
                 ),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               TogoSlideUp(
                 delay: const Duration(milliseconds: 400),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Type de prix',
+                    Text('Type de prix',
                         style: TextStyle(
                             fontSize: 14, fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 8),
+                    SizedBox(height: 8),
                     Row(
                       children: [
                         _buildPriceTypeToggle('Fixe', Icons.flash_on_rounded),
-                        const SizedBox(width: 8),
+                        SizedBox(width: 8),
                         _buildPriceTypeToggle(
-                            'Négociable', Icons.handshake_rounded),
+                            'NÃ©gociable', Icons.handshake_rounded),
                       ],
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               TogoSlideUp(
                 delay: const Duration(milliseconds: 500),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('État',
+                    Text('Ã‰tat',
                         style: TextStyle(
                             fontSize: 14, fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 8),
+                    SizedBox(height: 8),
                     Row(
                       children: [
                         for (final option in ['Neuf', 'Occasion'])
@@ -361,45 +361,45 @@ class _EditProductScreenState extends State<EditProductScreen> {
                   ],
                 ),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               TogoSlideUp(
                 delay: const Duration(milliseconds: 600),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Localisation',
+                    Text('Localisation',
                         style: TextStyle(
                             fontSize: 14, fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 8),
+                    SizedBox(height: 8),
                     TextField(
                       controller: _locationController,
                       decoration:
-                          const InputDecoration(hintText: 'Ex: Tokoin, Lomé'),
+                          const InputDecoration(hintText: 'Ex: Tokoin, LomÃ©'),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               TogoSlideUp(
                 delay: const Duration(milliseconds: 700),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Description',
+                    Text('Description',
                         style: TextStyle(
                             fontSize: 14, fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 8),
+                    SizedBox(height: 8),
                     TextField(
                       controller: _descriptionController,
                       maxLines: 4,
                       decoration: const InputDecoration(
-                        hintText: 'Décrivez votre produit en détail...',
+                        hintText: 'DÃ©crivez votre produit en dÃ©tail...',
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               TogoSlideUp(
                 delay: const Duration(milliseconds: 800),
                 child: Column(
@@ -415,10 +415,10 @@ class _EditProductScreenState extends State<EditProductScreen> {
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.location_on_outlined,
+                            Icon(Icons.location_on_outlined,
                                 color: AppTheme.primary),
-                            const SizedBox(width: 10),
-                            const Expanded(
+                            SizedBox(width: 10),
+                            Expanded(
                               child: Text('Zones de vente',
                                   style: TextStyle(
                                       fontSize: 14,
@@ -440,7 +440,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
                       child: _showZones
                           ? Column(
                               children: [
-                                const SizedBox(height: 8),
+                                SizedBox(height: 8),
                                 GestureDetector(
                                   onTap: () {
                                     if (_selectedZones.length ==
@@ -453,14 +453,14 @@ class _EditProductScreenState extends State<EditProductScreen> {
                                   },
                                   child: Text(
                                     _selectedZones.length == _zones.length
-                                        ? 'Tout désélectionner'
-                                        : 'Tout sélectionner',
-                                    style: const TextStyle(
+                                        ? 'Tout dÃ©sÃ©lectionner'
+                                        : 'Tout sÃ©lectionner',
+                                    style: TextStyle(
                                         color: AppTheme.primary,
                                         fontWeight: FontWeight.w600),
                                   ),
                                 ),
-                                const SizedBox(height: 8),
+                                SizedBox(height: 8),
                                 Wrap(
                                   spacing: 8,
                                   runSpacing: 8,
@@ -502,12 +502,12 @@ class _EditProductScreenState extends State<EditProductScreen> {
                                                 children: [
                                                   if (_selectedZones
                                                       .contains(zone))
-                                                    const Icon(Icons.check,
+                                                    Icon(Icons.check,
                                                         size: 12,
                                                         color: Colors.white),
                                                   if (_selectedZones
                                                       .contains(zone))
-                                                    const SizedBox(width: 4),
+                                                    SizedBox(width: 4),
                                                   Text(
                                                     zone,
                                                     style: TextStyle(
@@ -533,7 +533,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
                   ],
                 ),
               ),
-              const SizedBox(height: 90),
+              SizedBox(height: 90),
             ],
           ),
         ),
@@ -547,12 +547,12 @@ class _EditProductScreenState extends State<EditProductScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
+              Text(
                 'En publiant, vous acceptez nos Conditions d\'utilisation',
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 11, color: AppTheme.mutedForeground),
               ),
-              const SizedBox(height: 10),
+              SizedBox(height: 10),
               AppButton(
                 label: 'Enregistrer les modifications',
                 onTap: () {
@@ -590,7 +590,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
                 Icon(icon,
                     size: 16,
                     color: isSelected ? AppTheme.primary : AppTheme.foreground),
-                const SizedBox(width: 6),
+                SizedBox(width: 6),
                 Text(
                   label,
                   style: TextStyle(
@@ -607,3 +607,4 @@ class _EditProductScreenState extends State<EditProductScreen> {
     );
   }
 }
+

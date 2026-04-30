@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:get/get.dart';
 import '../../theme/app_theme.dart';
 import '../../data/mock_data.dart';
 import '../../animations/togo_animation_system.dart';
@@ -37,21 +38,23 @@ class _AddProductScreenState extends State<AddProductScreen> {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.dark,
+        statusBarIconBrightness:
+            Get.isDarkMode ? Brightness.light : Brightness.dark,
         systemNavigationBarColor: AppTheme.background,
-        systemNavigationBarIconBrightness: Brightness.dark,
+        systemNavigationBarIconBrightness:
+            Get.isDarkMode ? Brightness.light : Brightness.dark,
         systemNavigationBarDividerColor: Colors.transparent,
       ),
       child: Scaffold(
         resizeToAvoidBottomInset: true,
         backgroundColor: AppTheme.background,
         appBar: AppBar(
-          title: const Text('Ajouter un produit'),
-          leading: const BackButton(),
+          title: Text('Ajouter un produit'),
+          leading: BackButton(),
           actions: [
             TextButton(
               onPressed: () {},
-              child: const Text('Brouillons',
+              child: Text('Brouillons',
                   style: TextStyle(color: AppTheme.mutedForeground)),
             ),
           ],
@@ -66,10 +69,10 @@ class _AddProductScreenState extends State<AddProductScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Photos',
+                    Text('Photos',
                         style: TextStyle(
                             fontSize: 15, fontWeight: FontWeight.w700)),
-                    const SizedBox(height: 10),
+                    SizedBox(height: 10),
                     GridView.count(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
@@ -90,9 +93,9 @@ class _AddProductScreenState extends State<AddProductScreen> {
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                const Icon(Icons.camera_alt_outlined,
+                                Icon(Icons.camera_alt_outlined,
                                     color: AppTheme.primary),
-                                const Text('1/5',
+                                Text('1/5',
                                     style: TextStyle(
                                         fontSize: 11, color: AppTheme.primary)),
                               ],
@@ -111,7 +114,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                                     color: AppTheme.border,
                                     style: BorderStyle.solid),
                               ),
-                              child: const Icon(Icons.add,
+                              child: Icon(Icons.add,
                                   color: AppTheme.mutedForeground),
                             ),
                           ),
@@ -121,17 +124,17 @@ class _AddProductScreenState extends State<AddProductScreen> {
                   ],
                 ),
               ),
-              const SizedBox(height: 20),
+              SizedBox(height: 20),
               // Title
               TogoSlideUp(
                 delay: const Duration(milliseconds: 200),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Titre',
+                    Text('Titre',
                         style: TextStyle(
                             fontSize: 14, fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 8),
+                    SizedBox(height: 8),
                     const TextField(
                       decoration:
                           InputDecoration(hintText: 'Ex: iPhone 13 128GB '),
@@ -139,7 +142,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                   ],
                 ),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               // Price + Category
               TogoSlideUp(
                 delay: const Duration(milliseconds: 300),
@@ -149,10 +152,10 @@ class _AddProductScreenState extends State<AddProductScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('Prix (FCFA)',
+                          Text('Prix (FCFA)',
                               style: TextStyle(
                                   fontSize: 14, fontWeight: FontWeight.w600)),
-                          const SizedBox(height: 8),
+                          SizedBox(height: 8),
                           const TextField(
                             keyboardType: TextInputType.number,
                             decoration: InputDecoration(hintText: '0'),
@@ -160,15 +163,15 @@ class _AddProductScreenState extends State<AddProductScreen> {
                         ],
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    SizedBox(width: 12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('Catégorie',
+                          Text('Catégorie',
                               style: TextStyle(
                                   fontSize: 14, fontWeight: FontWeight.w600)),
-                          const SizedBox(height: 8),
+                          SizedBox(height: 8),
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 12),
                             decoration: BoxDecoration(
@@ -179,6 +182,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                               child: DropdownButton<String>(
                                 value: _category,
                                 isExpanded: true,
+                                dropdownColor: AppTheme.cardColor,
                                 items: mockCategories
                                     .where((c) => c.id != 'all')
                                     .map((c) => DropdownMenuItem(
@@ -188,12 +192,12 @@ class _AddProductScreenState extends State<AddProductScreen> {
                                               Icon(c.icon,
                                                   size: 16,
                                                   color: AppTheme.primary),
-                                              const SizedBox(width: 8),
+                                              SizedBox(width: 8),
                                               Expanded(
                                                 child: Text(
                                                   c.label,
-                                                  style: const TextStyle(
-                                                      fontSize: 12),
+                                                  style:
+                                                      TextStyle(fontSize: 12),
                                                   overflow:
                                                       TextOverflow.ellipsis,
                                                 ),
@@ -213,21 +217,21 @@ class _AddProductScreenState extends State<AddProductScreen> {
                   ],
                 ),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               // Price type toggle
               TogoSlideUp(
                 delay: const Duration(milliseconds: 400),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Type de prix',
+                    Text('Type de prix',
                         style: TextStyle(
                             fontSize: 14, fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 8),
+                    SizedBox(height: 8),
                     Row(
                       children: [
                         _buildPriceTypeToggle('Fixe', Icons.flash_on_rounded),
-                        const SizedBox(width: 8),
+                        SizedBox(width: 8),
                         _buildPriceTypeToggle(
                             'Négociable', Icons.handshake_rounded),
                       ],
@@ -235,17 +239,17 @@ class _AddProductScreenState extends State<AddProductScreen> {
                   ],
                 ),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               // Condition
               TogoSlideUp(
                 delay: const Duration(milliseconds: 500),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('État',
+                    Text('État',
                         style: TextStyle(
                             fontSize: 14, fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 8),
+                    SizedBox(height: 8),
                     Row(
                       children: [
                         for (final c in ['Neuf', 'Occasion'])
@@ -290,17 +294,17 @@ class _AddProductScreenState extends State<AddProductScreen> {
                   ],
                 ),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               // Description
               TogoSlideUp(
                 delay: const Duration(milliseconds: 600),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Description',
+                    Text('Description',
                         style: TextStyle(
                             fontSize: 14, fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 8),
+                    SizedBox(height: 8),
                     const TextField(
                       maxLines: 4,
                       decoration: InputDecoration(
@@ -310,7 +314,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                   ],
                 ),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               // Zones
               TogoSlideUp(
                 delay: const Duration(milliseconds: 700),
@@ -327,10 +331,10 @@ class _AddProductScreenState extends State<AddProductScreen> {
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.location_on_outlined,
+                            Icon(Icons.location_on_outlined,
                                 color: AppTheme.primary),
-                            const SizedBox(width: 10),
-                            const Expanded(
+                            SizedBox(width: 10),
+                            Expanded(
                               child: Text('Zones de vente',
                                   style: TextStyle(
                                       fontSize: 14,
@@ -352,7 +356,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                       child: _showZones
                           ? Column(
                               children: [
-                                const SizedBox(height: 8),
+                                SizedBox(height: 8),
                                 GestureDetector(
                                   onTap: () {
                                     if (_selectedZones.length ==
@@ -367,12 +371,12 @@ class _AddProductScreenState extends State<AddProductScreen> {
                                     _selectedZones.length == _zones.length
                                         ? 'Tout désélectionner'
                                         : 'Tout sélectionner',
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                         color: AppTheme.primary,
                                         fontWeight: FontWeight.w600),
                                   ),
                                 ),
-                                const SizedBox(height: 8),
+                                SizedBox(height: 8),
                                 Wrap(
                                   spacing: 8,
                                   runSpacing: 8,
@@ -414,12 +418,12 @@ class _AddProductScreenState extends State<AddProductScreen> {
                                                 children: [
                                                   if (_selectedZones
                                                       .contains(z))
-                                                    const Icon(Icons.check,
+                                                    Icon(Icons.check,
                                                         size: 12,
                                                         color: Colors.white),
                                                   if (_selectedZones
                                                       .contains(z))
-                                                    const SizedBox(width: 4),
+                                                    SizedBox(width: 4),
                                                   Text(
                                                     z,
                                                     style: TextStyle(
@@ -445,7 +449,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                   ],
                 ),
               ),
-              const SizedBox(height: 90),
+              SizedBox(height: 90),
             ],
           ),
         ),
@@ -459,12 +463,12 @@ class _AddProductScreenState extends State<AddProductScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
+              Text(
                 'En publiant, vous acceptez nos Conditions d\'utilisation',
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 11, color: AppTheme.mutedForeground),
               ),
-              const SizedBox(height: 10),
+              SizedBox(height: 10),
               AppButton(
                 label: 'Publier l\'annonce',
                 onTap: () {
@@ -502,7 +506,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                 Icon(icon,
                     size: 16,
                     color: isSelected ? AppTheme.primary : AppTheme.foreground),
-                const SizedBox(width: 6),
+                SizedBox(width: 6),
                 Text(
                   label,
                   style: TextStyle(

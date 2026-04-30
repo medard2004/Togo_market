@@ -48,8 +48,8 @@ class _NearbyExplorerScreenState extends State<NearbyExplorerScreen> {
                   children: [
                     Row(
                       children: [
-                        const Icon(Icons.location_on_rounded, color: AppTheme.primary, size: 20),
-                        const SizedBox(width: 8),
+                        Icon(Icons.location_on_rounded, color: AppTheme.primary, size: 20),
+                        SizedBox(width: 8),
                         Text(
                           'Lomé, Tokoin',
                           style: TextStyle(
@@ -58,17 +58,17 @@ class _NearbyExplorerScreenState extends State<NearbyExplorerScreen> {
                             color: AppTheme.foreground,
                           ),
                         ),
-                        const SizedBox(width: 4),
-                        const Icon(Icons.keyboard_arrow_down_rounded, color: AppTheme.mutedForeground, size: 18),
+                        SizedBox(width: 4),
+                        Icon(Icons.keyboard_arrow_down_rounded, color: AppTheme.mutedForeground, size: 18),
                       ],
                     ),
-                    const SizedBox(height: 16),
+                    SizedBox(height: 16),
                     SizedBox(
                       height: 38,
                       child: ListView.separated(
                         scrollDirection: Axis.horizontal,
                         itemCount: _distances.length,
-                        separatorBuilder: (_, __) => const SizedBox(width: 10),
+                        separatorBuilder: (_, __) => SizedBox(width: 10),
                         itemBuilder: (_, i) {
                           final dist = _distances[i];
                           final active = _selectedDistance == dist;
@@ -97,7 +97,7 @@ class _NearbyExplorerScreenState extends State<NearbyExplorerScreen> {
                         },
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    SizedBox(height: 12),
                   ],
                 ),
               ),
@@ -140,11 +140,11 @@ class _NearbyExplorerScreenState extends State<NearbyExplorerScreen> {
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      const Icon(Icons.directions_walk_rounded, size: 10, color: AppTheme.primary),
-                                      const SizedBox(width: 2),
+                                      Icon(Icons.directions_walk_rounded, size: 10, color: AppTheme.primary),
+                                      SizedBox(width: 2),
                                       Text(
                                         '${(i + 1) * 0.3} km',
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           fontSize: 9,
                                           fontWeight: FontWeight.w800,
                                           color: AppTheme.primary,
@@ -169,7 +169,6 @@ class _NearbyExplorerScreenState extends State<NearbyExplorerScreen> {
       ),
     );
   }
-
   double _gridAspectRatio(BuildContext context) {
     final r = R(context);
     final colW = (MediaQuery.of(context).size.width - 16 * 2 - 12) / 2;
@@ -191,7 +190,7 @@ class _ExplorerAppBar extends StatelessWidget implements PreferredSizeWidget {
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
         child: AppBar(
-          backgroundColor: Colors.white.withOpacity(0.85),
+          backgroundColor: AppTheme.cardColor.withOpacity(0.85),
           elevation: 0,
           leadingWidth: 60,
           leading: Center(
@@ -199,7 +198,7 @@ class _ExplorerAppBar extends StatelessWidget implements PreferredSizeWidget {
           ),
           title: Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppTheme.foreground,
               fontWeight: FontWeight.w800,
               fontSize: 16,

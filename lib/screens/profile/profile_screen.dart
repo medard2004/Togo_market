@@ -13,7 +13,7 @@ class ProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ctrl = Get.find<AppController>();
-    return PopScope(
+    return Obx(() => PopScope(
       canPop: false,
       onPopInvoked: (didPop) {
         if (didPop) return;
@@ -25,12 +25,12 @@ class ProfileScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: AppTheme.cardColor,
         elevation: 1,
-        shadowColor: Colors.black.withOpacity(0.08),
+        shadowColor: AppTheme.border.withOpacity(0.1),
         automaticallyImplyLeading: false,
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(bottom: Radius.circular(22)),
         ),
-        title: const Text(
+        title: Text(
           'Profil',
           style: TextStyle(
             fontWeight: FontWeight.w800,
@@ -43,7 +43,7 @@ class ProfileScreen extends StatelessWidget {
             padding: const EdgeInsets.only(right: 8),
             child: IconButton(
               onPressed: () => Get.toNamed('/settings'),
-              icon: const Icon(Icons.settings_outlined,
+              icon: Icon(Icons.settings_outlined,
                   color: AppTheme.foreground),
             ),
           ),
@@ -72,30 +72,30 @@ class ProfileScreen extends StatelessWidget {
                               CachedNetworkImageProvider(ctrl.userAvatar.value),
                         ),
                       ),
-                      const SizedBox(width: 16),
+                      SizedBox(width: 16),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Obx(() => Text(ctrl.userName.value,
-                                style: const TextStyle(
+                                style: TextStyle(
                                     fontSize: 22,
                                     fontWeight: FontWeight.w900,
                                     color: AppTheme.foreground))),
-                            const SizedBox(height: 6),
+                            SizedBox(height: 6),
                             Row(
                               children: [
-                                const Icon(Icons.location_on_outlined,
+                                Icon(Icons.location_on_outlined,
                                     size: 14,
                                     color: AppTheme.mutedForeground),
-                                const SizedBox(width: 4),
+                                SizedBox(width: 4),
                                 Obx(() => Text(ctrl.userLocation.value,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                         fontSize: 13,
                                         color: AppTheme.mutedForeground))),
                               ],
                             ),
-                            const SizedBox(height: 14),
+                            SizedBox(height: 14),
                             Container(
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 12, vertical: 10),
@@ -105,7 +105,7 @@ class ProfileScreen extends StatelessWidget {
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
-                                children: const [
+                                children: [
                                   Icon(Icons.star,
                                       size: 16, color: AppTheme.primary),
                                   SizedBox(width: 8),
@@ -127,26 +127,27 @@ class ProfileScreen extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16),
                   Obx(() => Text(ctrl.userBio.value,
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontSize: 14,
                           color: AppTheme.mutedForeground,
                           height: 1.6),
                       textAlign: TextAlign.center)),
-                  const SizedBox(height: 18),
+                  SizedBox(height: 18),
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
                       onPressed: () => Get.toNamed('/edit-profile'),
-                      icon: const Icon(Icons.edit, size: 18),
-                      label: const Padding(
+                      icon: Icon(Icons.edit, size: 18),
+                      label: Padding(
                         padding: EdgeInsets.symmetric(vertical: 12),
                         child: Text('Modifier le profil',
                             style: TextStyle(fontSize: 15)),
                       ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.primary,
+                        foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(20),
                         ),
@@ -156,34 +157,34 @@ class ProfileScreen extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(height: 18),
+            SizedBox(height: 18),
             Row(
               children: [
-                const Expanded(
+                Expanded(
                   child: ProfileStatCard(
                     icon: Icons.inventory_2_outlined,
                     value: '12',
                     label: 'Annonces',
                   ),
                 ),
-                const SizedBox(width: 10),
-                const Expanded(
+                SizedBox(width: 10),
+                Expanded(
                   child: ProfileStatCard(
                     icon: Icons.shopping_bag_outlined,
                     value: '24',
                     label: 'Ventes',
                   ),
                 ),
-                const SizedBox(width: 10),
-                const Expanded(
+                SizedBox(width: 10),
+                Expanded(
                   child: ProfileStatCard(
                     icon: Icons.star_border,
                     value: '4.8',
                     label: 'Note',
                   ),
                 ),
-                const SizedBox(width: 10),
-                const Expanded(
+                SizedBox(width: 10),
+                Expanded(
                   child: ProfileStatCard(
                     icon: Icons.remove_red_eye_outlined,
                     value: '156',
@@ -192,12 +193,12 @@ class ProfileScreen extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
             Align(
               alignment: Alignment.centerLeft,
               child: Text(
                 'MON COMPTE',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w800,
                   color: AppTheme.mutedForeground,
@@ -205,7 +206,7 @@ class ProfileScreen extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             Container(
               decoration: BoxDecoration(
                 color: AppTheme.cardColor,
@@ -222,29 +223,36 @@ class ProfileScreen extends StatelessWidget {
                     onTap: () => Get.toNamed('/orders'),
                     flat: true,
                   ),
-                  const Divider(height: 1, color: AppTheme.border),
+                  Divider(height: 1, color: AppTheme.border),
                   ProfileMenuItem(
                     icon: Icons.favorite_border,
                     label: 'Mes favoris',
                     onTap: () => Get.toNamed('/favorites'),
                     flat: true,
                   ),
-                  const Divider(height: 1, color: AppTheme.border),
+                  Divider(height: 1, color: AppTheme.border),
                   ProfileMenuItem(
-                    icon: Icons.inventory_2_outlined,
-                    label: 'Mes annonces',
-                    badge: '12',
+                    icon: Icons.storefront_outlined,
+                    label: 'Espace Vendeur Pro',
                     onTap: () => Get.toNamed('/dashboard'),
                     flat: true,
                   ),
-                  const Divider(height: 1, color: AppTheme.border),
+                  Divider(height: 1, color: AppTheme.border),
+                  ProfileMenuItem(
+                    icon: Icons.inventory_2_outlined,
+                    label: 'Mes annonces (Particulier)',
+                    badge: '12',
+                    onTap: () => Get.toNamed('/individual-dashboard'),
+                    flat: true,
+                  ),
+                  Divider(height: 1, color: AppTheme.border),
                   ProfileMenuItem(
                     icon: Icons.settings_outlined,
                     label: 'Paramètres',
                     onTap: () => Get.toNamed('/settings'),
                     flat: true,
                   ),
-                  const Divider(height: 1, color: AppTheme.border),
+                  Divider(height: 1, color: AppTheme.border),
                   ProfileMenuItem(
                     icon: Icons.help_outline,
                     label: 'Aide & Support',
@@ -254,17 +262,17 @@ class ProfileScreen extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             GestureDetector(
               onTap: () => Get.offAllNamed('/auth'),
               child: Container(
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFFF0F2),
+                  color: AppTheme.destructive.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(18),
                 ),
-                child: const Center(
+                child: Center(
                   child: Text(
                     'Se déconnecter',
                     style: TextStyle(
@@ -280,6 +288,7 @@ class ProfileScreen extends StatelessWidget {
         ),
       ),
       bottomNavigationBar: const BottomNavBar(currentIndex: 4),
-    ));
+    )));
   }
 }
+

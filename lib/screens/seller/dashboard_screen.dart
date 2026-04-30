@@ -17,24 +17,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return Obx(() => Scaffold(
       backgroundColor: AppTheme.background,
       body: SafeArea(
         child: Column(
           children: [
-            // ── Header ──────────────────────────────────────────────────────
+            // â”€â”€ Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  _buildCircleBtn(
-                    Icons.arrow_back,
-                    Colors.black,
-                    Colors.white,
+                  _buildCircleBtn(Icons.arrow_back, AppTheme.foreground, AppTheme.cardColor,
                     onTap: () => Get.back(),
                   ),
-                  const Text(
+                  Text(
                     'Mon Espace Vendeur',
                     style: TextStyle(
                       fontSize: 18,
@@ -58,17 +55,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // ── Tab Navigation ────────────────────────────────────────
+                    // â”€â”€ Tab Navigation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                     _buildTabSelector(),
-                    const SizedBox(height: 24),
+                    SizedBox(height: 24),
 
-                    // ── Tab Content ───────────────────────────────────────────
+                    // â”€â”€ Tab Content â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                     Column(
                       key: ValueKey(_tabIndex),
                       children: [
                         if (_tabIndex == 0) ...[
                           _buildAddButton(),
-                          const SizedBox(height: 24),
+                          SizedBox(height: 24),
                           _buildArticlesTab(),
                         ] else if (_tabIndex == 1)
                           _buildOrdersTab()
@@ -83,7 +80,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ],
         ),
       ),
-    );
+    ));
   }
 
   Widget _buildCircleBtn(IconData icon, Color iconColor, Color bg,
@@ -96,12 +93,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
         decoration: BoxDecoration(
           color: bg,
           shape: BoxShape.circle,
-          boxShadow: bg == Colors.white
+          boxShadow: bg != Colors.transparent
               ? [
                   BoxShadow(
                     color: Colors.black.withOpacity(0.08),
-                    blurRadius: 8,
-                    offset: const Offset(0, 3),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
                   )
                 ]
               : null,
@@ -116,11 +113,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
       height: 72,
       padding: const EdgeInsets.all(6),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(32),
+        color: AppTheme.cardColor, borderRadius: BorderRadius.circular(32),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withOpacity(0.08),
             blurRadius: 20,
             offset: const Offset(0, 10),
           )
@@ -188,7 +184,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
-            children: const [
+            children: [
               Icon(Icons.add, color: AppTheme.primary),
               SizedBox(width: 8),
               Text(
@@ -211,7 +207,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         TogoSlideUp(
-          child: const Text(
+          child: Text(
             '3 articles actifs',
             style: TextStyle(
               fontSize: 15,
@@ -220,7 +216,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ),
         ),
-        const SizedBox(height: 12),
+        SizedBox(height: 12),
         TogoSlideUp(
           delay: const Duration(milliseconds: 100),
           child: _buildProductTile(
@@ -235,7 +231,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           delay: const Duration(milliseconds: 200),
           child: _buildProductTile(
             'sd2',
-            'Canapé 3 places cuir',
+            'CanapÃ© 3 places cuir',
             '85 000 F',
             'Occasion',
             'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400&h=400&fit=crop',
@@ -271,11 +267,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
         TogoSlideUp(
           delay: const Duration(milliseconds: 100),
           child: _buildOrderTile(
-            'Canapé 3 places cuir',
+            'CanapÃ© 3 places cuir',
             'Mawuli K.',
             '85 000 F',
             'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=200&h=200&fit=crop',
-            'Acceptée',
+            'AcceptÃ©e',
             isPending: false,
           ),
         ),
@@ -302,7 +298,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             'Ama Koffi',
             'Je peux faire 13 000 FCFA',
             'Hier',
-            'Robe Ankara colorée',
+            'Robe Ankara colorÃ©e',
             'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=200&auto=format&fit=crop',
           ),
         ),
@@ -317,11 +313,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        color: AppTheme.cardColor, borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: AppTheme.border,
             blurRadius: 20,
             offset: const Offset(0, 10),
           )
@@ -336,7 +331,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 child: CachedNetworkImage(
                     imageUrl: img, width: 64, height: 64, fit: BoxFit.cover),
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -347,8 +342,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         Expanded(
                           child: Text(
                             title,
-                            style: const TextStyle(
-                                fontSize: 15, fontWeight: FontWeight.w800),
+                            style: TextStyle(
+                                fontSize: 15, fontWeight: FontWeight.w800, color: AppTheme.foreground),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -375,11 +370,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ],
                     ),
                     Text('Acheteur: $buyer',
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontSize: 13, color: AppTheme.mutedForeground)),
-                    const SizedBox(height: 2),
+                    SizedBox(height: 2),
                     Text(price,
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w800,
                             color: AppTheme.primary)),
@@ -389,7 +384,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ],
           ),
           if (isPending) ...[
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             Row(
               children: [
                 Expanded(
@@ -404,7 +399,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
-                        children: const [
+                        children: [
                           Icon(Icons.check_circle_outline,
                               color: Colors.white, size: 20),
                           SizedBox(width: 8),
@@ -417,7 +412,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
+                SizedBox(width: 12),
                 Expanded(
                   flex: 2,
                   child: TogoPressableScale(
@@ -430,7 +425,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
-                        children: const [
+                        children: [
                           Icon(Icons.cancel_outlined,
                               color: AppTheme.destructive, size: 20),
                           SizedBox(width: 8),
@@ -460,11 +455,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(24),
+          color: AppTheme.cardColor, borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: AppTheme.border,
               blurRadius: 20,
               offset: const Offset(0, 10),
             )
@@ -476,7 +470,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               radius: 28,
               backgroundImage: CachedNetworkImageProvider(avatar),
             ),
-            const SizedBox(width: 14),
+            SizedBox(width: 14),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -485,20 +479,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(name,
-                          style: const TextStyle(
-                              fontSize: 15, fontWeight: FontWeight.w800)),
+                          style: TextStyle(
+                              fontSize: 15, fontWeight: FontWeight.w800, color: AppTheme.foreground)),
                       Text(time,
-                          style: const TextStyle(
+                          style: TextStyle(
                               fontSize: 11, color: AppTheme.mutedForeground)),
                     ],
                   ),
-                  const SizedBox(height: 2),
+                  SizedBox(height: 2),
                   Row(
                     children: [
                       Expanded(
                         child: Text(
                           message,
-                          style: const TextStyle(
+                          style: TextStyle(
                               fontSize: 13, color: AppTheme.mutedForeground),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -507,11 +501,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       if (unreadCount > 0)
                         Container(
                           padding: const EdgeInsets.all(6),
-                          decoration: const BoxDecoration(
+                          decoration: BoxDecoration(
                               color: AppTheme.primary, shape: BoxShape.circle),
                           child: Text(
                             unreadCount.toString(),
-                            style: const TextStyle(
+                            style: TextStyle(
                                 color: Colors.white,
                                 fontSize: 10,
                                 fontWeight: FontWeight.w800),
@@ -519,14 +513,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ),
                     ],
                   ),
-                  const SizedBox(height: 6),
+                  SizedBox(height: 6),
                   Row(
                     children: [
-                      const Icon(Icons.inventory_2_outlined,
+                      Icon(Icons.inventory_2_outlined,
                           size: 14, color: AppTheme.primary),
-                      const SizedBox(width: 4),
+                      SizedBox(width: 4),
                       Text(product,
-                          style: const TextStyle(
+                          style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
                               color: AppTheme.primary)),
@@ -547,11 +541,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        color: AppTheme.cardColor, borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: AppTheme.border,
             blurRadius: 20,
             offset: const Offset(0, 10),
           )
@@ -568,14 +561,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
               fit: BoxFit.cover,
             ),
           ),
-          const SizedBox(width: 12),
+          SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
                     color: AppTheme.foreground,
@@ -583,13 +576,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
                 Text(
                   price,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w800,
                     color: AppTheme.primary,
                   ),
                 ),
-                const SizedBox(height: 6),
+                SizedBox(height: 6),
                 Container(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
@@ -599,7 +592,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                   child: Text(
                     cond,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 11,
                       color: AppTheme.mutedForeground,
                       fontWeight: FontWeight.w600,
@@ -615,7 +608,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 onTap: () => Get.toNamed('/edit-product/$productId'),
                 child: _buildActionBtn(Icons.edit_outlined),
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: 8),
               TogoPressableScale(
                 onTap: () {},
                 child: _buildActionBtn(Icons.delete_outline, isDelete: true),
@@ -631,7 +624,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Container(
       width: 36,
       height: 36,
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: AppTheme.primaryLight,
         shape: BoxShape.circle,
       ),
@@ -640,3 +633,4 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 }
+

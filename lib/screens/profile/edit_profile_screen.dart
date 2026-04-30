@@ -62,7 +62,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       appBar: AppBar(
         backgroundColor: AppTheme.cardColor,
         elevation: 0,
-        title: const Text(
+        title: Text(
           'Modifier le profil',
           style: TextStyle(
             fontWeight: FontWeight.w800,
@@ -72,13 +72,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         ),
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppTheme.foreground),
+          icon: Icon(Icons.arrow_back, color: AppTheme.foreground),
           onPressed: Get.back,
         ),
         actions: [
           TextButton(
             onPressed: _saveProfile,
-            child: const Text(
+            child: Text(
               'Enregistrer',
               style: TextStyle(
                 color: AppTheme.primary,
@@ -87,7 +87,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               ),
             ),
           ),
-          const SizedBox(width: 8),
+          SizedBox(width: 8),
         ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
@@ -136,11 +136,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           },
                           child: Container(
                             padding: const EdgeInsets.all(8),
-                            decoration: const BoxDecoration(
+                            decoration: BoxDecoration(
                               color: AppTheme.primary,
                               shape: BoxShape.circle,
                             ),
-                            child: const Icon(
+                            child: Icon(
                               Icons.camera_alt_rounded,
                               color: Colors.white,
                               size: 20,
@@ -150,8 +150,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
-                  const Text(
+                  SizedBox(height: 12),
+                  Text(
                     'Appuyez pour changer la photo',
                     style: TextStyle(
                       fontSize: 13,
@@ -162,7 +162,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 32),
+            SizedBox(height: 32),
 
             // Form Section
             Container(
@@ -175,7 +175,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Informations personnelles',
                     style: TextStyle(
                       fontSize: 16,
@@ -183,10 +183,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       color: AppTheme.foreground,
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  SizedBox(height: 20),
                   _buildField('Nom complet', _nameController,
                       hintText: 'Koffi Mensah', icon: Icons.person_outline),
-                  const SizedBox(height: 18),
+                  SizedBox(height: 18),
                   Obx(() {
                     final ctrl = Get.find<AppController>();
                     return _buildReadOnlyField(
@@ -196,7 +196,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       onTap: () => Get.to(() => const ChangeEmailScreen()),
                     );
                   }),
-                  const SizedBox(height: 18),
+                  SizedBox(height: 18),
                   Obx(() {
                     final ctrl = Get.find<AppController>();
                     return _buildReadOnlyField(
@@ -206,16 +206,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       onTap: () => Get.to(() => const ChangePhoneScreen()),
                     );
                   }),
-                  const SizedBox(height: 18),
+                  SizedBox(height: 18),
                   _buildField('Localisation', _locationController,
                       hintText: 'Tokoin, Lomé',
                       icon: Icons.location_on_outlined),
-                  const SizedBox(height: 18),
+                  SizedBox(height: 18),
                   _buildBioField(),
                 ],
               ),
             ),
-            const SizedBox(height: 32),
+            SizedBox(height: 32),
 
             // Bottom Save Button
             ElevatedButton(
@@ -230,7 +230,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 ),
                 padding: const EdgeInsets.symmetric(vertical: 16),
               ),
-              child: const Text(
+              child: Text(
                 'Enregistrer les modifications',
                 style: TextStyle(
                   fontSize: 16,
@@ -259,7 +259,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           padding: const EdgeInsets.only(left: 4, bottom: 8),
           child: Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w700,
               color: AppTheme.mutedForeground,
@@ -269,7 +269,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         TextFormField(
           controller: controller,
           keyboardType: keyboardType,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
             color: AppTheme.foreground,
@@ -312,7 +312,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           padding: const EdgeInsets.only(left: 4, bottom: 8),
           child: Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w700,
               color: AppTheme.mutedForeground,
@@ -331,19 +331,19 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               children: [
                 if (icon != null) ...[
                   Icon(icon, size: 20, color: AppTheme.primary),
-                  const SizedBox(width: 12),
+                  SizedBox(width: 12),
                 ],
                 Expanded(
                   child: Text(
                     value,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                       color: AppTheme.foreground,
                     ),
                   ),
                 ),
-                const Icon(Icons.arrow_forward_ios_rounded,
+                Icon(Icons.arrow_forward_ios_rounded,
                     size: 14, color: AppTheme.mutedForeground),
               ],
             ),
@@ -361,7 +361,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Padding(
+            Padding(
               padding: EdgeInsets.only(left: 4, bottom: 8),
               child: Text(
                 'Bio / Description',
@@ -395,7 +395,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           controller: _bioController,
           maxLines: 4,
           maxLength: 150,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
             color: AppTheme.foreground,

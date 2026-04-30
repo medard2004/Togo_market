@@ -38,8 +38,12 @@ import 'screens/notifications/notifications_screen.dart';
 import 'screens/settings/settings_screen.dart';
 import 'screens/favorites/favorites_screen.dart';
 import 'screens/help/help_screen.dart';
+import 'screens/settings/privacy_screen.dart';
 import 'screens/product/trending_explorer_screen.dart';
 import 'screens/product/nearby_explorer_screen.dart';
+import 'screens/explorer/trending_shops_screen.dart';
+import 'screens/explorer/nearby_shops_screen.dart';
+import 'screens/seller/individual_dashboard_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -52,7 +56,7 @@ void main() async {
 
   // Status bar style
   SystemChrome.setSystemUIOverlayStyle(
-    const SystemUiOverlayStyle(
+    SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: Brightness.dark,
     ),
@@ -73,7 +77,9 @@ class TogoMarketApp extends StatelessWidget {
     return GetMaterialApp(
       title: 'Togo Market',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.theme,
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: ThemeMode.system,
       initialRoute: '/splash',
       transitionDuration: const Duration(milliseconds: 300),
       getPages: [
@@ -116,11 +122,15 @@ class TogoMarketApp extends StatelessWidget {
         togoPage('/edit-profile', () => const EditProfileScreen(),
             style: TogoRouteStyle.modalLift),
         togoPage('/settings', () => const SettingsScreen()),
+        togoPage('/privacy', () => const PrivacyScreen()),
         togoPage('/favorites', () => const FavoritesScreen()),
         togoPage('/orders', () => const OrdersScreen()),
         togoPage('/help', () => const HelpScreen()),
         togoPage('/trends', () => const TrendingExplorerScreen()),
         togoPage('/nearby', () => const NearbyExplorerScreen()),
+        togoPage('/trending-shops', () => const TrendingShopsScreen()),
+        togoPage('/nearby-shops', () => const NearbyShopsScreen()),
+        togoPage('/individual-dashboard', () => const IndividualDashboardScreen()),
       ],
     );
   }

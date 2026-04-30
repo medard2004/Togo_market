@@ -25,7 +25,7 @@ class SellerScreen extends StatelessWidget {
       Container(
         padding: EdgeInsets.fromLTRB(r.s(20), r.s(16), r.s(20), r.s(30)),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppTheme.cardColor,
           borderRadius: BorderRadius.vertical(top: Radius.circular(r.rad(40))),
         ),
         child: SingleChildScrollView(
@@ -41,7 +41,7 @@ class SellerScreen extends StatelessWidget {
                       style: TextStyle(
                           fontSize: r.fs(22),
                           fontWeight: FontWeight.w900,
-                          color: Colors.black)),
+                          color: AppTheme.foreground)),
                   TextButton(
                     onPressed: () {
                       selectedCategory.value = 'all';
@@ -90,7 +90,7 @@ class SellerScreen extends StatelessWidget {
                         max: 1000000,
                         divisions: 100,
                         activeColor: AppTheme.primary,
-                        inactiveColor: const Color(0xFFF5F6F8),
+                        inactiveColor: AppTheme.muted,
                         labels: RangeLabels(
                           '${minPrice.value.toInt()} F',
                           '${maxPrice.value.toInt()} F',
@@ -105,10 +105,10 @@ class SellerScreen extends StatelessWidget {
                         children: [
                           Text('0 F',
                               style: TextStyle(
-                                  fontSize: r.fs(12), color: Colors.grey)),
+                                  fontSize: r.fs(12), color: AppTheme.mutedForeground)),
                           Text('1M+ F',
                               style: TextStyle(
-                                  fontSize: r.fs(12), color: Colors.grey)),
+                                  fontSize: r.fs(12), color: AppTheme.mutedForeground)),
                         ],
                       ),
                     ],
@@ -176,7 +176,7 @@ class SellerScreen extends StatelessWidget {
                       style: TextStyle(
                           fontSize: r.fs(16),
                           fontWeight: FontWeight.w800,
-                          color: Colors.white)),
+                          color: AppTheme.foreground)),
                 ),
               ),
             ],
@@ -191,7 +191,7 @@ class SellerScreen extends StatelessWidget {
         style: TextStyle(
             fontSize: r.fs(16),
             fontWeight: FontWeight.w800,
-            color: Colors.black.withOpacity(0.8)));
+            color: AppTheme.foreground));
   }
 
   Widget _buildFilterChip(String label, String value, RxString groupValue, R r,
@@ -204,7 +204,7 @@ class SellerScreen extends StatelessWidget {
           margin: EdgeInsets.only(right: r.s(8)),
           padding: EdgeInsets.symmetric(horizontal: r.s(16), vertical: r.s(10)),
           decoration: BoxDecoration(
-            color: isSelected ? AppTheme.primary : const Color(0xFFF5F6F8),
+            color: isSelected ? AppTheme.primary : AppTheme.muted,
             borderRadius: BorderRadius.circular(r.rad(14)),
             border: Border.all(
               color: isSelected ? AppTheme.primary : Colors.transparent,
@@ -218,7 +218,7 @@ class SellerScreen extends StatelessWidget {
                 Icon(
                   icon,
                   size: r.s(16),
-                  color: isSelected ? Colors.white : Colors.black54,
+                  color: isSelected ? Colors.white : AppTheme.mutedForeground,
                 ),
                 SizedBox(width: r.s(8)),
               ],
@@ -227,7 +227,7 @@ class SellerScreen extends StatelessWidget {
                 style: TextStyle(
                   fontSize: r.fs(13),
                   fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                  color: isSelected ? Colors.white : Colors.black,
+                  color: isSelected ? Colors.white : AppTheme.foreground,
                 ),
               ),
             ],
@@ -270,16 +270,16 @@ class SellerScreen extends StatelessWidget {
                 width: r.s(40),
                 height: r.s(40),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppTheme.cardColor,
                   shape: BoxShape.circle,
-                  border: Border.all(color: Colors.black.withOpacity(0.05)),
+                  border: Border.all(color: AppTheme.border),
                 ),
                 child: Obx(() => Icon(
                     isSearching.value
                         ? Icons.close_rounded
                         : Icons.arrow_back_ios_new_rounded,
                     size: r.s(16),
-                    color: Colors.black)),
+                    color: AppTheme.foreground)),
               ),
             ),
           ),
@@ -290,7 +290,7 @@ class SellerScreen extends StatelessWidget {
               controller: searchController,
               autofocus: true,
               onChanged: (v) => searchQuery.value = v,
-              style: TextStyle(fontSize: r.fs(15), color: Colors.black),
+              style: TextStyle(fontSize: r.fs(15), color: AppTheme.foreground),
               decoration: InputDecoration(
                 hintText: 'Rechercher un produit...',
                 hintStyle: TextStyle(color: Colors.grey, fontSize: r.fs(14)),
@@ -303,26 +303,26 @@ class SellerScreen extends StatelessWidget {
               style: TextStyle(
                   fontSize: r.fs(16),
                   fontWeight: FontWeight.w700,
-                  color: Colors.black));
+                  color: AppTheme.foreground));
         }),
         centerTitle: true,
         actions: [
           Obx(() => isSearching.value
-              ? const SizedBox()
+              ? SizedBox()
               : Row(
                   children: [
                     Container(
                       width: r.s(40),
                       height: r.s(40),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: AppTheme.cardColor,
                         shape: BoxShape.circle,
                         border:
-                            Border.all(color: Colors.black.withOpacity(0.05)),
+                            Border.all(color: AppTheme.border),
                       ),
                       child: IconButton(
                         icon: Icon(Icons.search_rounded,
-                            size: r.s(20), color: Colors.black),
+                            size: r.s(20), color: AppTheme.foreground),
                         onPressed: () => isSearching.value = true,
                       ),
                     ),
@@ -333,14 +333,14 @@ class SellerScreen extends StatelessWidget {
                         width: r.s(40),
                         height: r.s(40),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: AppTheme.cardColor,
                           shape: BoxShape.circle,
                           border:
-                              Border.all(color: Colors.black.withOpacity(0.05)),
+                              Border.all(color: AppTheme.border),
                         ),
                         child: IconButton(
                           icon: Icon(Icons.ios_share,
-                              size: r.s(20), color: Colors.black),
+                              size: r.s(20), color: AppTheme.foreground),
                           onPressed: () {},
                         ),
                       ),
@@ -364,7 +364,7 @@ class SellerScreen extends StatelessWidget {
                     imageUrl: seller.coverUrl,
                     fit: BoxFit.cover,
                     placeholder: (_, __) => Container(
-                      decoration: const BoxDecoration(
+                      decoration: BoxDecoration(
                         gradient: LinearGradient(
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
@@ -385,15 +385,9 @@ class SellerScreen extends StatelessWidget {
                   child: Container(
                     padding: EdgeInsets.all(r.s(20)),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: AppTheme.cardColor,
                       borderRadius: BorderRadius.circular(r.rad(32)),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 20,
-                          offset: const Offset(0, 10),
-                        ),
-                      ],
+                      boxShadow: AppTheme.shadowCardLg,
                     ),
                     child: Column(
                       children: [
@@ -427,12 +421,12 @@ class SellerScreen extends StatelessWidget {
                                       style: TextStyle(
                                           fontSize: r.fs(20),
                                           fontWeight: FontWeight.w800,
-                                          color: Colors.black)),
+                                          color: AppTheme.foreground)),
                                   Text(seller.location.split(',').last.trim(),
                                       style: TextStyle(
                                           fontSize: r.fs(18),
                                           fontWeight: FontWeight.w700,
-                                          color: Colors.black)),
+                                          color: AppTheme.foreground)),
                                   SizedBox(height: r.s(4)),
                                   Row(children: [
                                     Icon(Icons.star,
@@ -548,7 +542,7 @@ class SellerScreen extends StatelessWidget {
                         style: TextStyle(
                             fontSize: r.fs(15),
                             fontWeight: FontWeight.w800,
-                            color: Colors.black));
+                            color: AppTheme.foreground));
                   }),
                   GestureDetector(
                     onTap: () => _showFilterSheet(context, r),
@@ -623,7 +617,7 @@ class SellerScreen extends StatelessWidget {
                               : 'Aucun produit dans cette catégorie',
                           textAlign: TextAlign.center,
                           style:
-                              TextStyle(color: Colors.grey, fontSize: r.fs(12)),
+                              TextStyle(color: AppTheme.mutedForeground, fontSize: r.fs(12)),
                         ),
                       ],
                     ),
@@ -668,16 +662,10 @@ class _StatBox extends StatelessWidget {
       child: Container(
         padding: EdgeInsets.symmetric(vertical: r.s(16)),
         decoration: BoxDecoration(
-          color: const Color(0xFFFDFDFD),
+          color: AppTheme.cardColor,
           borderRadius: BorderRadius.circular(r.rad(20)),
-          border: Border.all(color: Colors.black.withOpacity(0.03)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.02),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          border: Border.all(color: AppTheme.border),
+          boxShadow: AppTheme.shadowCard,
         ),
         child: Column(
           children: [
@@ -691,7 +679,7 @@ class _StatBox extends StatelessWidget {
                 style: TextStyle(
                     fontSize: r.fs(14),
                     fontWeight: isBold ? FontWeight.w900 : FontWeight.w700,
-                    color: Colors.black)),
+                    color: AppTheme.foreground)),
           ],
         ),
       ),

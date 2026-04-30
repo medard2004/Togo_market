@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import 'package:togo_market/theme/app_theme.dart';
 import '../models/models.dart';
 import '../data/mock_data.dart';
 
@@ -16,6 +17,10 @@ class AppController extends GetxController {
           .obs;
   final userEmail = 'koffi.mensah@email.com'.obs;
   final userPhone = '+228 90 00 00 00'.obs;
+  final isProfessional = false.obs; // True if the user has a shop
+
+  // Theme state
+  final isDarkMode = false.obs;
 
   // Products
   final products = <Product>[].obs;
@@ -33,6 +38,17 @@ class AppController extends GetxController {
     super.onInit();
     products.assignAll(mockProducts);
     favorites.assignAll(mockProducts.where((p) => p.isFavorite).toList());
+
+    // Auto theme based on time
+    final hour = DateTime.now().hour;
+    if (hour < 6 || hour > 18) {
+      isDarkMode.value = true;
+      AppTheme.isDarkMode.value = true;
+      // We delay slightly to ensure GetMaterialApp is ready
+      Future.delayed(const Duration(milliseconds: 100), () {
+        Get.changeTheme(AppTheme.darkTheme);
+      });
+    }
   }
 
   void toggleFavorite(String productId) {
@@ -75,6 +91,14 @@ class AppController extends GetxController {
   void login() {
     isLoggedIn.value = true;
   }
+
+  void toggleTheme() {
+    isDarkMode.value = !isDarkMode.value;
+    AppTheme.isDarkMode.value = isDarkMode.value;
+    Get.changeTheme(
+        isDarkMode.value ? AppTheme.darkTheme : AppTheme.lightTheme);
+    update();
+  }
 }
 
 // ── ChatController ────────────────────────────────────────────────────────────
@@ -97,7 +121,8 @@ class ChatController extends GetxController {
   }
 
   Future<void> sendMessage(
-      String conversationId, String content, String sellerId, {String? productId}) async {
+      String conversationId, String content, String sellerId,
+      {String? productId}) async {
     final newMsg = ChatMessage(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       content: content,

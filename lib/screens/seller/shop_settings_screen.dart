@@ -22,9 +22,9 @@ class _ShopSettingsScreenState extends State<ShopSettingsScreen> {
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
-        title: const Text('Paramètres boutique'),
+        title: Text('Paramètres boutique'),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppTheme.primary),
+          icon: Icon(Icons.arrow_back, color: AppTheme.primary),
           onPressed: () => Get.back(),
         ),
         centerTitle: true,
@@ -39,15 +39,9 @@ class _ShopSettingsScreenState extends State<ShopSettingsScreen> {
               child: Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppTheme.cardColor,
                   borderRadius: BorderRadius.circular(30),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 20,
-                      offset: const Offset(0, 10),
-                    )
-                  ],
+                  boxShadow: AppTheme.shadowCard,
                 ),
                 child: Column(
                   children: [
@@ -56,19 +50,19 @@ class _ShopSettingsScreenState extends State<ShopSettingsScreen> {
                         Container(
                           width: 68,
                           height: 68,
-                          decoration: const BoxDecoration(
+                          decoration: BoxDecoration(
                             color: AppTheme.primaryLight,
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(Icons.storefront,
+                          child: Icon(Icons.storefront,
                               color: AppTheme.primary, size: 32),
                         ),
-                        const SizedBox(width: 16),
+                        SizedBox(width: 16),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
+                              Text(
                                 'Kofi Tech Shop',
                                 style: TextStyle(
                                   fontSize: 19,
@@ -76,9 +70,9 @@ class _ShopSettingsScreenState extends State<ShopSettingsScreen> {
                                   color: AppTheme.foreground,
                                 ),
                               ),
-                              const SizedBox(height: 2),
+                              SizedBox(height: 2),
                               Row(
-                                children: const [
+                                children: [
                                   Icon(Icons.location_on_outlined,
                                       size: 14,
                                       color: AppTheme.mutedForeground),
@@ -93,9 +87,9 @@ class _ShopSettingsScreenState extends State<ShopSettingsScreen> {
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 4),
+                              SizedBox(height: 4),
                               Row(
-                                children: const [
+                                children: [
                                   Icon(Icons.star,
                                       size: 14, color: Colors.amber),
                                   Text(' 4.8',
@@ -123,7 +117,7 @@ class _ShopSettingsScreenState extends State<ShopSettingsScreen> {
                         ),
                       ],
                     ),
-                    const Padding(
+                    Padding(
                       padding: EdgeInsets.symmetric(vertical: 24),
                       child: Divider(height: 1, color: AppTheme.border),
                     ),
@@ -139,7 +133,7 @@ class _ShopSettingsScreenState extends State<ShopSettingsScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: 32),
+            SizedBox(height: 32),
 
             // ── MA BOUTIQUE ──────────────────────────────────────────────────
             _buildSectionTitle('MA BOUTIQUE'),
@@ -172,7 +166,7 @@ class _ShopSettingsScreenState extends State<ShopSettingsScreen> {
                 ),
               ]),
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: 24),
 
             // ── NOTIFICATIONS ────────────────────────────────────────────────
             _buildSectionTitle('NOTIFICATIONS'),
@@ -202,7 +196,7 @@ class _ShopSettingsScreenState extends State<ShopSettingsScreen> {
                 ),
               ]),
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: 24),
 
             // ── GESTION ───────────────────────────────────────────────────────
             _buildSectionTitle('GESTION'),
@@ -231,7 +225,7 @@ class _ShopSettingsScreenState extends State<ShopSettingsScreen> {
                 ),
               ]),
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: 24),
 
             // ── AIDE ──────────────────────────────────────────────────────────
             _buildSectionTitle('AIDE'),
@@ -246,7 +240,7 @@ class _ShopSettingsScreenState extends State<ShopSettingsScreen> {
                 ),
               ]),
             ),
-            const SizedBox(height: 32),
+            SizedBox(height: 32),
 
             // ── Deactivate Button ───────────────────────────────────────────
             TogoSlideUp(
@@ -265,10 +259,10 @@ class _ShopSettingsScreenState extends State<ShopSettingsScreen> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.logout,
+                      Icon(Icons.logout,
                           color: AppTheme.destructive, size: 20),
-                      const SizedBox(width: 10),
-                      const Text(
+                      SizedBox(width: 10),
+                      Text(
                         'Désactiver ma boutique',
                         style: TextStyle(
                             color: AppTheme.destructive,
@@ -280,7 +274,7 @@ class _ShopSettingsScreenState extends State<ShopSettingsScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: 48),
+            SizedBox(height: 48),
           ],
         ),
       ),
@@ -291,13 +285,13 @@ class _ShopSettingsScreenState extends State<ShopSettingsScreen> {
     return Column(
       children: [
         Text(val,
-            style: const TextStyle(
+            style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.w900,
                 color: AppTheme.primary)),
-        const SizedBox(height: 4),
+        SizedBox(height: 4),
         Text(lab,
-            style: const TextStyle(
+            style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
                 color: AppTheme.mutedForeground)),
@@ -310,10 +304,10 @@ class _ShopSettingsScreenState extends State<ShopSettingsScreen> {
       padding: const EdgeInsets.only(left: 4, bottom: 12),
       child: Text(
         t,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w800,
-          color: Color(0xFF9E9E9E), // Gris plus neutre comme sur la maquette
+          color: AppTheme.mutedForeground,
           letterSpacing: 0.8,
         ),
       ),
@@ -323,15 +317,9 @@ class _ShopSettingsScreenState extends State<ShopSettingsScreen> {
   Widget _buildSettingsGroup(List<Widget> children) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.cardColor,
         borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 15,
-            offset: const Offset(0, 5),
-          )
-        ],
+        boxShadow: AppTheme.shadowSm,
       ),
       child: Column(
         children: List.generate(children.length, (index) {
@@ -339,7 +327,7 @@ class _ShopSettingsScreenState extends State<ShopSettingsScreen> {
           return Column(
             children: [
               children[index],
-              const Divider(height: 1, color: AppTheme.border, indent: 68),
+              Divider(height: 1, color: AppTheme.border, indent: 68),
             ],
           );
         }),
@@ -365,26 +353,26 @@ class _ShopSettingsScreenState extends State<ShopSettingsScreen> {
             Container(
               width: 40,
               height: 40,
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 color: AppTheme.primaryLight,
                 shape: BoxShape.circle,
               ),
               child: Icon(icon, color: AppTheme.primary, size: 20),
             ),
-            const SizedBox(width: 16),
+            SizedBox(width: 16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(title,
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
                           color: AppTheme.foreground)),
-                  if (subtitle != null) const SizedBox(height: 1),
+                  if (subtitle != null) SizedBox(height: 1),
                   if (subtitle != null)
                     Text(subtitle,
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w400,
                             color: AppTheme.mutedForeground)),
@@ -398,13 +386,13 @@ class _ShopSettingsScreenState extends State<ShopSettingsScreen> {
                 child: CupertinoSwitch(
                   value: switchValue,
                   activeTrackColor: AppTheme.primary,
-                  inactiveTrackColor: const Color(0xFFEEEEEE),
+                  inactiveTrackColor: AppTheme.muted,
                   onChanged: onSwitchChanged,
                 ),
               )
             else
-              const Icon(Icons.chevron_right,
-                  size: 20, color: Color(0xFFC7C7C7)),
+              Icon(Icons.chevron_right,
+                  size: 20, color: AppTheme.mutedForeground),
           ],
         ),
       ),

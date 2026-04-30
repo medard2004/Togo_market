@@ -91,9 +91,9 @@ class _EditShopScreenState extends State<EditShopScreen> {
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
-        title: const Text('Modifier la boutique'),
+        title: Text('Modifier la boutique'),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppTheme.primary),
+          icon: Icon(Icons.arrow_back, color: AppTheme.primary),
           onPressed: Get.back,
         ),
         centerTitle: true,
@@ -123,7 +123,7 @@ class _EditShopScreenState extends State<EditShopScreen> {
                     bottom: -36,
                     child: Container(
                       padding: const EdgeInsets.all(4),
-                      decoration: const BoxDecoration(
+                      decoration: BoxDecoration(
                         color: AppTheme.background,
                         shape: BoxShape.circle,
                       ),
@@ -136,23 +136,23 @@ class _EditShopScreenState extends State<EditShopScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 52),
+            SizedBox(height: 52),
             _buildLabel('Nom de la boutique *'),
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
             TextField(
               controller: _nameController,
               decoration: const InputDecoration(hintText: 'Ex: Kofi Tech Shop'),
               onChanged: (_) => setState(() {}),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             _buildLabel('Slogan'),
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
             TextField(
               controller: _sloganController,
               decoration: const InputDecoration(hintText: 'Votre slogan...'),
             ),
             _buildLabel('Description'),
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
             TextField(
               controller: _descriptionController,
               maxLines: 4,
@@ -160,13 +160,13 @@ class _EditShopScreenState extends State<EditShopScreen> {
                 hintText: 'Décrivez votre boutique...',
               ),
             ),
-            const SizedBox(height: 32),
+            SizedBox(height: 32),
             AppButton(
               label: 'Enregistrer les modifications',
               icon: Icons.save_outlined,
               onTap: _isFormValid ? () => Get.back() : () {},
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: 24),
           ],
         ),
       ),
@@ -176,7 +176,7 @@ class _EditShopScreenState extends State<EditShopScreen> {
   Widget _buildLabel(String label) {
     return Text(
       label,
-      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
     );
   }
 }

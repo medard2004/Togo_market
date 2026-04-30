@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:get/get_core/src/get_main.dart';
-import 'package:get/get_navigation/src/extension_navigation.dart';
+import 'package:get/get.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/bottom_nav.dart';
 import '../../utils/responsive.dart';
@@ -14,21 +13,21 @@ class MessagesScreen extends StatefulWidget {
 }
 
 class _MessagesScreenState extends State<MessagesScreen> {
-  // État des filtres
+  // Ã‰tat des filtres
   bool _hasActiveFilters = false;
   String _selectedSort =
       'date_desc'; // date_desc, date_asc, name_asc, name_desc
   bool _showOnlineOnly = false;
   bool _showUnreadOnly = false;
 
-  // État de sélection multiple
+  // Ã‰tat de sÃ©lection multiple
   bool _isSelectionMode = false;
-  final Set<String> _selectedMessages = {}; // Utilise le nom comme clé unique
+  final Set<String> _selectedMessages = {}; // Utilise le nom comme clÃ© unique
   final _mockConvs = [
     _ConvItem(
         name: 'Koffi Mensah',
         time: '14:20',
-        msg: 'C\'est toujours disponible à Lom...',
+        msg: 'C\'est toujours disponible Ã  Lom...',
         unread: 1,
         img:
             'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&h=80&fit=crop&crop=face',
@@ -46,7 +45,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
     _ConvItem(
         name: 'Amivi Lawson',
         time: 'Hier',
-        msg: 'Merci, je passe la prendre à 17h.',
+        msg: 'Merci, je passe la prendre Ã  17h.',
         unread: 0,
         img:
             'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=80&h=80&fit=crop&crop=face',
@@ -64,7 +63,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
     _ConvItem(
         name: 'Yao Kouame',
         time: '12 Oct.',
-        msg: 'D\'accord, c\'est noté.',
+        msg: 'D\'accord, c\'est notÃ©.',
         unread: 0,
         img:
             'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&h=80&fit=crop&crop=face',
@@ -76,7 +75,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
 
     // Filtre par statut en ligne
     if (_showOnlineOnly) {
-      // Pour la démo, on considère que certains utilisateurs sont en ligne
+      // Pour la dÃ©mo, on considÃ¨re que certains utilisateurs sont en ligne
       final onlineNames = ['Koffi Mensah', 'Essi Gado', 'Amivi Lawson'];
       filtered = filtered.where((c) => onlineNames.contains(c.name)).toList();
     }
@@ -86,11 +85,11 @@ class _MessagesScreenState extends State<MessagesScreen> {
       filtered = filtered.where((c) => c.unread > 0).toList();
     }
 
-    // Tri selon le critère sélectionné
+    // Tri selon le critÃ¨re sÃ©lectionnÃ©
     filtered.sort((a, b) {
       switch (_selectedSort) {
         case 'date_desc':
-          // Tri par date décroissante (plus récent d'abord)
+          // Tri par date dÃ©croissante (plus rÃ©cent d'abord)
           return b.time.compareTo(a.time);
         case 'date_asc':
           // Tri par date croissante (plus ancien d'abord)
@@ -107,7 +106,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
     return filtered;
   }
 
-  // Méthodes pour la gestion de la sélection
+  // MÃ©thodes pour la gestion de la sÃ©lection
   void _toggleSelectionMode() {
     setState(() {
       _isSelectionMode = !_isSelectionMode;
@@ -139,7 +138,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
 
   void _deleteSelectedMessages() {
     setState(() {
-      // Dans une vraie app, on supprimerait de la base de données
+      // Dans une vraie app, on supprimerait de la base de donnÃ©es
       // Ici on simule en filtrant la liste mock
       _mockConvs.removeWhere((msg) => _selectedMessages.contains(msg.name));
       _selectedMessages.clear();
@@ -163,7 +162,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ── Header ──────────────────────────────────────────────────────
+                // â”€â”€ Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 Padding(
                   padding:
                       EdgeInsets.fromLTRB(r.hPad, r.s(10), r.hPad, r.s(14)),
@@ -172,7 +171,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
                       Expanded(
                         child: Text(
                             _isSelectionMode
-                                ? '${_selectedMessages.length} sélectionné(s)'
+                                ? '${_selectedMessages.length} sÃ©lectionnÃ©(s)'
                                 : 'Messages',
                             style: TextStyle(
                                 fontSize: r.fs(15),
@@ -204,13 +203,13 @@ class _MessagesScreenState extends State<MessagesScreen> {
                   ),
                 ),
 
-                // ── Barre de recherche ───────────────────────────────────────────
+                // â”€â”€ Barre de recherche â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 Padding(
                   padding: EdgeInsets.symmetric(horizontal: r.hPad),
                   child: Container(
                     height: r.s(50).clamp(46.0, 56.0),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: AppTheme.cardColor,
                       borderRadius: BorderRadius.circular(r.rad(16)),
                       boxShadow: [
                         BoxShadow(
@@ -231,7 +230,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
                     ),
                     child: Row(
                       children: [
-                        // Container pour l'icône avec fond coloré
+                        // Container pour l'icÃ´ne avec fond colorÃ©
                         Container(
                           width: r.s(48),
                           height: r.s(48),
@@ -297,7 +296,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
                 ),
                 SizedBox(height: r.s(14)),
 
-                // ── Liste conversations ──────────────────────────────────────────
+                // â”€â”€ Liste conversations â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 Expanded(
                   child: _filtered.isEmpty
                       ? Center(
@@ -339,10 +338,10 @@ class _MessagesScreenState extends State<MessagesScreen> {
       padding: EdgeInsets.fromLTRB(r.hPad, r.s(12), r.hPad,
           r.s(12) + MediaQuery.of(context).padding.bottom),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.cardColor,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: AppTheme.border,
             blurRadius: 8,
             offset: const Offset(0, -2),
           ),
@@ -350,7 +349,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
       ),
       child: Row(
         children: [
-          // Bouton Tout sélectionner
+          // Bouton Tout sÃ©lectionner
           Expanded(
             child: GestureDetector(
               onTap: _selectAllMessages,
@@ -362,7 +361,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
                 ),
                 child: Center(
                   child: Text(
-                    allSelected ? 'Tout désélectionner' : 'Tout sélectionner',
+                    allSelected ? 'Tout dÃ©sÃ©lectionner' : 'Tout sÃ©lectionner',
                     style: TextStyle(
                       fontSize: r.fs(14),
                       fontWeight: FontWeight.w600,
@@ -425,7 +424,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
   }
 }
 
-// Modèle de données conversation mock
+// ModÃ¨le de donnÃ©es conversation mock
 class _ConvItem {
   final String name, time, msg, img;
   final int unread;
@@ -438,3 +437,4 @@ class _ConvItem {
       required this.unread,
       required this.productImg});
 }
+

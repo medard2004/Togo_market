@@ -15,7 +15,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return Obx(() => Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
         backgroundColor: AppTheme.background,
@@ -24,26 +24,20 @@ class _OrdersScreenState extends State<OrdersScreen> {
           padding: const EdgeInsets.all(8.0),
           child: Container(
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppTheme.cardColor,
               shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
+              boxShadow: AppTheme.shadowSm,
             ),
             child: IconButton(
-              icon: const Icon(Icons.arrow_back, color: Colors.black, size: 20),
+              icon: Icon(Icons.arrow_back, color: AppTheme.foreground, size: 20),
               onPressed: () => Get.back(),
             ),
           ),
         ),
-        title: const Text(
+        title: Text(
           'Mes commandes',
           style: TextStyle(
-            color: Colors.black,
+            color: AppTheme.foreground,
             fontSize: 20,
             fontWeight: FontWeight.w800,
           ),
@@ -52,7 +46,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
       ),
       body: Column(
         children: [
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           // ── Tabs (Achats / Ventes) ──────────────────────────────────────────
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -60,7 +54,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
               height: 54,
               padding: const EdgeInsets.all(5),
               decoration: BoxDecoration(
-                color: const Color(0xFFF5F2EF),
+                color: AppTheme.muted,
                 borderRadius: BorderRadius.circular(25),
               ),
               child: Row(
@@ -71,8 +65,8 @@ class _OrdersScreenState extends State<OrdersScreen> {
               ),
             ),
           ),
-          const SizedBox(height: 20),
-          Divider(height: 1, thickness: 1, color: Colors.grey.withOpacity(0.1)),
+          SizedBox(height: 20),
+          Divider(height: 1, thickness: 1, color: AppTheme.border),
           // ── Orders List ───────────────────────────────────────────────────
           Expanded(
             child: IndexedStack(
@@ -85,7 +79,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
           ),
         ],
       ),
-    );
+    ));
   }
 
   Widget _buildTabPill(String label, int index) {
@@ -96,16 +90,10 @@ class _OrdersScreenState extends State<OrdersScreen> {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           decoration: BoxDecoration(
-            color: isActive ? Colors.white : Colors.transparent,
+            color: isActive ? AppTheme.cardColor : Colors.transparent,
             borderRadius: BorderRadius.circular(20),
             boxShadow: isActive
-                ? [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ]
+                ? AppTheme.shadowSm
                 : null,
           ),
           child: Center(
@@ -114,7 +102,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: isActive ? FontWeight.w800 : FontWeight.w600,
-                color: isActive ? Colors.black : const Color(0xFF8E8E93),
+                color: isActive ? AppTheme.foreground : AppTheme.mutedForeground,
               ),
             ),
           ),
@@ -246,15 +234,9 @@ class _OrderCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.cardColor,
         borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 15,
-            offset: const Offset(0, 8),
-          ),
-        ],
+        boxShadow: AppTheme.shadowSm,
       ),
       child: Column(
         children: [
@@ -271,7 +253,7 @@ class _OrderCard extends StatelessWidget {
                   fit: BoxFit.cover,
                 ),
               ),
-              const SizedBox(width: 14),
+              SizedBox(width: 14),
               // Info
               Expanded(
                 child: Column(
@@ -284,16 +266,16 @@ class _OrderCard extends StatelessWidget {
                         Expanded(
                           child: Text(
                             title,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w700,
-                              color: Color(0xFF262626),
+                              color: AppTheme.foreground,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        const SizedBox(width: 8),
+                        SizedBox(width: 8),
                         // Status Badge
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
@@ -312,24 +294,24 @@ class _OrderCard extends StatelessWidget {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 4),
+                    SizedBox(height: 4),
                     Text(
                       price,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w800,
                         color: AppTheme.primary,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    SizedBox(height: 4),
                     RichText(
                       text: TextSpan(
-                        style: const TextStyle(fontSize: 12, color: Color(0xFF8E8E93)),
+                        style: TextStyle(fontSize: 12, color: AppTheme.mutedForeground),
                         children: [
                           TextSpan(text: '$partnerLabel '),
                           TextSpan(
                             text: partnerName,
-                            style: const TextStyle(fontWeight: FontWeight.w500),
+                            style: TextStyle(fontWeight: FontWeight.w500),
                           ),
                         ],
                       ),
@@ -339,7 +321,7 @@ class _OrderCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           // Actions
           if (isSale && status == 'En attente')
             Row(
@@ -352,7 +334,7 @@ class _OrderCard extends StatelessWidget {
                     isOutline: true,
                   ),
                 ),
-                const SizedBox(width: 10),
+                SizedBox(width: 10),
                 Expanded(
                   child: _ActionButton(
                     label: 'Accepter',
@@ -360,13 +342,13 @@ class _OrderCard extends StatelessWidget {
                     color: AppTheme.primary,
                   ),
                 ),
-                const SizedBox(width: 10),
+                SizedBox(width: 10),
                 Expanded(
                   child: _ActionButton(
                     label: 'Refuser',
                     onTap: () {},
-                    color: const Color(0xFFF2F2F7),
-                    textColor: Colors.black,
+                    color: AppTheme.muted,
+                    textColor: AppTheme.foreground,
                   ),
                 ),
               ],
@@ -421,7 +403,7 @@ class _ActionButton extends StatelessWidget {
           children: [
             if (icon != null) ...[
               Icon(icon, size: 16, color: isOutline ? AppTheme.primary : Colors.white),
-              const SizedBox(width: 8),
+              SizedBox(width: 8),
             ],
             Text(
               label,

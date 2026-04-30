@@ -46,13 +46,13 @@ class BottomNavBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final r = R(context);
 
-    return Container(
+    return Obx(() => Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.cardColor,
         borderRadius: BorderRadius.vertical(top: Radius.circular(r.rad(30))),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
+            color: AppTheme.border.withOpacity(0.1),
             blurRadius: 30,
             offset: const Offset(0, -5),
           ),
@@ -89,7 +89,7 @@ class BottomNavBar extends StatelessWidget {
                                 height: btnSize + r.s(8),
                                 clipBehavior: Clip.antiAliasWithSaveLayer,
                                 decoration: BoxDecoration(
-                                  color: Colors.white,
+                                  color: AppTheme.cardColor,
                                   shape: BoxShape.circle,
                                   boxShadow: [
                                     BoxShadow(
@@ -124,7 +124,7 @@ class BottomNavBar extends StatelessWidget {
                                 style: TextStyle(
                                   fontSize: r.fs(9),
                                   fontWeight: FontWeight.w900,
-                                  color: Colors.black54,
+                                  color: AppTheme.mutedForeground,
                                   letterSpacing: 0.8,
                                 ),
                               ),
@@ -158,7 +158,7 @@ class BottomNavBar extends StatelessWidget {
                         child: Icon(isActive ? item.icon : item.inactiveIcon,
                             size: r.s(24),
                             color:
-                                isActive ? AppTheme.primary : Colors.black54),
+                                isActive ? AppTheme.primary : AppTheme.mutedForeground),
                       ),
                       SizedBox(height: r.s(4)),
                       Text(
@@ -167,7 +167,7 @@ class BottomNavBar extends StatelessWidget {
                           fontSize: r.fs(9),
                           fontWeight:
                               isActive ? FontWeight.w900 : FontWeight.w700,
-                          color: isActive ? AppTheme.primary : Colors.black54,
+                          color: isActive ? AppTheme.primary : AppTheme.mutedForeground,
                           letterSpacing: 0.5,
                         ),
                       ),
@@ -179,7 +179,7 @@ class BottomNavBar extends StatelessWidget {
           ),
         ),
       ),
-    );
+    ));
   }
 }
 
