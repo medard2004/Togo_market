@@ -50,6 +50,8 @@ dependencies:
   flutter_dotenv: ^5.2.1
   pinput: ^6.0.2
   geolocator: ^14.0.2
+  cloud_firestore: ^6.3.0
+  firebase_messaging: ^16.2.0
 
 dev_dependencies:
   flutter_test:

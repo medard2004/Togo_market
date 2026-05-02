@@ -9,6 +9,8 @@ import '../../utils/responsive.dart';
 import '../../utils/app_utils.dart';
 import '../../Api/config/api_constants.dart';
 import '../../models/models.dart';
+import '../../Api/firebase/services/chat_service.dart';
+import '../../Api/provider/auth_controller.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   const ProductDetailScreen({super.key});
@@ -372,7 +374,44 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   // Bouton Discuter (plein)
                   Expanded(
                     child: GestureDetector(
-                      onTap: () => Get.toNamed('/chat/c1', arguments: product),
+                      onTap: () async {
+                        final auth = Get.isRegistered<AuthController>() ? Get.find<AuthController>() : null;
+                        if (auth == null || !auth.isAuthenticated) {
+                          Get.toNamed('/auth');
+                          return;
+                        }
+                        
+                        final currentUser = auth.currentUser.value!;
+                        final myId = currentUser.id.toString();
+                        final myName = currentUser.nom ?? 'Utilisateur';
+                        final myAvatar = currentUser.avatarUrl ?? '';
+                        
+                        // Déterminer l'ID du vendeur (boutique ou utilisateur)
+                        final sellerId = boutique != null ? boutique.id.toString() : (product.userObj?.id.toString() ?? product.sellerId.toString());
+                        
+                        // Utiliser le nom/logo de la boutique pour l'affichage si c'est un pro
+                        final sellerName = boutique?.nom ?? product.userObj?.nom ?? 'Vendeur';
+                        final sellerAvatar = boutique?.logoUrl ?? product.userObj?.avatarUrl ?? '';
+                        
+
+
+                        try {
+                          final chatId = await ChatService.to.getOrCreateChat(
+                            myId: myId,
+                            myName: myName,
+                            myAvatar: myAvatar,
+                            otherId: sellerId,
+                            otherName: sellerName,
+                            otherAvatar: sellerAvatar,
+                            productId: product.id.toString(),
+                            productTitle: product.title,
+                            productImage: product.image,
+                          );
+                          Get.toNamed('/chat/$chatId', arguments: product);
+                        } catch (e) {
+                          Get.snackbar('Erreur', 'Impossible de démarrer la discussion. $e');
+                        }
+                      },
                       child: Container(
                         height: r.s(50).clamp(44, 56),
                         decoration: BoxDecoration(

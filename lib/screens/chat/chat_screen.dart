@@ -2,10 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../theme/app_theme.dart';
-import '../../controllers/app_controller.dart';
+import '../../Api/firebase/controllers/chat_controller.dart';
+import '../../Api/provider/auth_controller.dart';
 import '../../data/mock_data.dart';
 import '../../models/models.dart';
 import '../../utils/responsive.dart';
+import '../../controllers/app_controller.dart';
+import '../../controllers/boutique_controller.dart';
+import '../../Api/config/api_constants.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -30,11 +34,37 @@ class _ChatScreenState extends State<ChatScreen> {
   late Product? _activeProduct;
   bool _showProductPreview = false;
 
+  String get _currentUserId {
+    final auth = Get.find<AuthController>();
+    return auth.currentUser.value?.id.toString() ?? '';
+  }
+
+  String get _actingUserId {
+    if (Get.parameters['asBoutique'] == 'true') {
+      if (Get.isRegistered<BoutiqueController>()) {
+        final b = Get.find<BoutiqueController>().myBoutique.value;
+        if (b != null) return b.id.toString();
+      }
+    }
+    return _currentUserId;
+  }
+
+  String get _convId => Get.parameters['id'] ?? '';
+
   @override
   void initState() {
     super.initState();
-    final convId = Get.parameters['id'] ?? 'c1';
-    _chatCtrl.loadConversation(convId);
+    final convId = _convId;
+    
+    // Déterminer si l'utilisateur est acheteur (pour backward compat)
+    final parts = convId.split('_');
+    bool isBuyer = true;
+    if (parts.length == 2) {
+      isBuyer = parts[0] == _actingUserId || 
+                int.tryParse(parts[0]).toString() == _actingUserId;
+    }
+
+    _chatCtrl.loadConversation(convId, isBuyer: isBuyer);
 
     _activeProduct =
         (Get.arguments is Product) ? Get.arguments as Product : null;
@@ -48,14 +78,33 @@ class _ChatScreenState extends State<ChatScreen> {
 
   void _send([String? text]) {
     final content = text ?? _msgCtrl.text.trim();
-    if (content.isEmpty) return; // Prevent sending empty messages
+    if (content.isEmpty) return;
 
     _msgCtrl.clear();
-    final convId = Get.parameters['id'] ?? 'c1';
+    final convId = _convId;
+    final myId = _actingUserId;
 
-    // Send message with product context if it's the first one or specifically attached
-    _chatCtrl.sendMessage(convId, content, 's1',
-        productId: _showProductPreview ? _activeProduct?.id : null);
+    // Trouver l'ID du destinataire depuis la session Firestore
+    final session = _chatCtrl.currentChatSession.value;
+    String receiverId = '';
+    if (session != null) {
+      receiverId = session.otherParticipantId(myId);
+    } else {
+      // Fallback: extraire depuis l'ID de conversation
+      final parts = convId.split('_');
+      if (parts.length == 2) {
+        receiverId = parts[0] == myId ? parts[1] : parts[0];
+      }
+    }
+
+    _chatCtrl.sendMessage(
+      convId, 
+      myId, 
+      receiverId, 
+      content,
+      productId: _showProductPreview ? _activeProduct?.id.toString() : null,
+      isBuyerSending: true, // N'est plus utilisé dans le nouveau format
+    );
 
     // Clear product preview after sending
     if (_showProductPreview) {
@@ -75,70 +124,106 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   Widget build(BuildContext context) {
     final r = R(context);
-    final seller = getSellerById('s1');
-    final product = (Get.arguments is Product)
-        ? Get.arguments as Product
-        : getProductById('p1');
+    final myId = _actingUserId;
 
     return Scaffold(
       resizeToAvoidBottomInset: true,
       backgroundColor: AppTheme.background,
-      appBar: AppBar(
-        backgroundColor: AppTheme.cardColor,
-        elevation: 0,
-        titleSpacing: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, size: 18),
-          onPressed: Get.back,
-        ),
-        title: Row(
-          children: [
-            if (seller != null)
-              CircleAvatar(
-                radius: 18,
-                backgroundImage: CachedNetworkImageProvider(seller.avatar),
-              ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    seller != null
-                        ? (seller.isShop ? seller.shopName : seller.name)
-                        : '',
-                    style: const TextStyle(
-                        fontSize: 14, fontWeight: FontWeight.w700),
-                  ),
-                  if (seller != null)
-                    Text(
-                      'Répond en ${seller.responseTime}',
-                      style: const TextStyle(
-                          fontSize: 11, color: AppTheme.mutedForeground),
-                    ),
-                ],
-              ),
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(kToolbarHeight),
+        child: Obx(() {
+          final session = _chatCtrl.currentChatSession.value;
+          
+          // Résoudre le nom et l'avatar de l'interlocuteur
+          String otherName = 'Chargement...';
+          String otherAvatar = '';
+          
+          if (session != null) {
+            otherName = session.otherParticipantName(myId);
+            otherAvatar = session.otherParticipantAvatar(myId);
+          } else if (_activeProduct != null) {
+            // Fallback depuis le produit passé en argument
+            final p = _activeProduct!;
+            if (p.boutiqueObj != null) {
+              otherName = p.boutiqueObj!.nom;
+              otherAvatar = p.boutiqueObj!.logoUrl;
+            } else if (p.userObj != null) {
+              otherName = p.userObj!.nom ?? 'Vendeur';
+              otherAvatar = p.userObj!.avatarUrl ?? '';
+            }
+          }
+          
+          final resolvedAvatar = otherAvatar.isNotEmpty 
+              ? ApiConstants.resolveImageUrl(otherAvatar) 
+              : '';
+          
+          // Image produit pour l'action de l'AppBar
+          final productImage = session?.productImage ?? _activeProduct?.image;
+          final productId = session?.productId ?? _activeProduct?.id.toString();
+
+          return AppBar(
+            backgroundColor: AppTheme.cardColor,
+            elevation: 0,
+            titleSpacing: 0,
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back, size: 18),
+              onPressed: Get.back,
             ),
-          ],
-        ),
-        actions: [
-          if (product != null)
-            GestureDetector(
-              onTap: () => Get.toNamed('/product/${product.id}'),
-              child: Container(
-                width: 40,
-                height: 40,
-                margin: const EdgeInsets.only(right: 12),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(8),
-                  image: DecorationImage(
-                    image: CachedNetworkImageProvider(product.image),
-                    fit: BoxFit.cover,
+            title: Row(
+              children: [
+                if (resolvedAvatar.isNotEmpty)
+                  CircleAvatar(
+                    radius: 18,
+                    backgroundImage: CachedNetworkImageProvider(resolvedAvatar),
+                  )
+                else
+                  CircleAvatar(
+                    radius: 18,
+                    backgroundColor: AppTheme.muted,
+                    child: const Icon(Icons.person, size: 18, color: AppTheme.mutedForeground),
+                  ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        otherName,
+                        style: const TextStyle(
+                            fontSize: 14, fontWeight: FontWeight.w700),
+                      ),
+                      const Text(
+                        'En ligne',
+                        style: TextStyle(
+                            fontSize: 11, color: AppTheme.mutedForeground),
+                      ),
+                    ],
                   ),
                 ),
-              ),
+              ],
             ),
-        ],
+            actions: [
+              if (productImage != null && productImage.isNotEmpty)
+                GestureDetector(
+                  onTap: () {
+                    if (productId != null) Get.toNamed('/product/$productId');
+                  },
+                  child: Container(
+                    width: 40,
+                    height: 40,
+                    margin: const EdgeInsets.only(right: 12),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8),
+                      image: DecorationImage(
+                        image: CachedNetworkImageProvider(ApiConstants.resolveImageUrl(productImage)),
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          );
+        }),
       ),
       body: Column(
         children: [
@@ -148,15 +233,13 @@ class _ChatScreenState extends State<ChatScreen> {
               return ListView.builder(
                 controller: _scrollCtrl,
                 padding: const EdgeInsets.all(16),
-                itemCount: _chatCtrl.currentMessages.length +
-                    (_chatCtrl.isTyping.value ? 1 : 0),
+                itemCount: _chatCtrl.currentMessages.length,
                 itemBuilder: (_, i) {
-                  if (i == _chatCtrl.currentMessages.length) {
-                    return _TypingIndicator(seller: seller);
-                  }
                   final msg = _chatCtrl.currentMessages[i];
+                  final session = _chatCtrl.currentChatSession.value;
+                  final otherAvatar = session?.otherParticipantAvatar(myId) ?? '';
                   return _MessageBubble(
-                      message: msg, sellerAvatar: seller?.avatar ?? '');
+                      message: msg, sellerAvatar: otherAvatar, isMe: msg.senderId == myId);
                 },
               );
             }),
@@ -210,11 +293,12 @@ class _ChatScreenState extends State<ChatScreen> {
                     ),
                   ),
                 Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     GestureDetector(
                       onTap: () {}, // Add attachment logic here later
                       child: Container(
-                        padding: const EdgeInsets.only(right: 12),
+                        padding: const EdgeInsets.only(right: 12, bottom: 12),
                         child: Icon(Icons.add,
                             color: AppTheme.primary, size: r.s(24)),
                       ),
@@ -227,6 +311,14 @@ class _ChatScreenState extends State<ChatScreen> {
                         ),
                         child: TextField(
                           controller: _msgCtrl,
+                          keyboardType: TextInputType.multiline,
+                          textInputAction: TextInputAction.newline,
+                          minLines: 1,
+                          maxLines: 5,
+                          style: const TextStyle(
+                            fontSize: 15,
+                            height: 1.3,
+                          ),
                           decoration: const InputDecoration(
                             hintText: 'Écrivez un message...',
                             border: InputBorder.none,
@@ -269,13 +361,14 @@ class _ChatScreenState extends State<ChatScreen> {
 class _MessageBubble extends StatelessWidget {
   final dynamic message;
   final String sellerAvatar;
+  final bool isMe;
 
-  const _MessageBubble({required this.message, required this.sellerAvatar});
+  const _MessageBubble({required this.message, required this.sellerAvatar, required this.isMe});
 
   @override
   Widget build(BuildContext context) {
     final r = R(context);
-    final isMe = message.isMe as bool;
+    
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
@@ -287,7 +380,7 @@ class _MessageBubble extends StatelessWidget {
             CircleAvatar(
               radius: 16,
               backgroundImage: sellerAvatar.isNotEmpty
-                  ? CachedNetworkImageProvider(sellerAvatar)
+                  ? CachedNetworkImageProvider(ApiConstants.resolveImageUrl(sellerAvatar))
                   : null,
               child: sellerAvatar.isEmpty
                   ? const Icon(Icons.person, size: 16)
@@ -334,7 +427,7 @@ class _MessageBubble extends StatelessWidget {
                   ),
                 const SizedBox(height: 4),
                 Text(
-                  message.timestamp as String,
+                  '${message.timestamp.hour.toString().padLeft(2, '0')}:${message.timestamp.minute.toString().padLeft(2, '0')}',
                   style: TextStyle(
                     fontSize: 10,
                     color: isMe
@@ -366,7 +459,7 @@ class _TypingIndicator extends StatelessWidget {
             CircleAvatar(
               radius: 16,
               backgroundImage:
-                  CachedNetworkImageProvider(seller.avatar as String),
+                  CachedNetworkImageProvider(ApiConstants.resolveImageUrl(seller.avatar as String)),
             ),
           const SizedBox(width: 8),
           Container(
@@ -461,10 +554,16 @@ class _ProductInputPreview extends StatelessWidget {
           ClipRRect(
             borderRadius: BorderRadius.circular(r.rad(10)),
             child: CachedNetworkImage(
-              imageUrl: product.image,
+              imageUrl: ApiConstants.resolveImageUrl(product.image),
               width: r.s(32),
               height: r.s(32),
               fit: BoxFit.cover,
+              errorWidget: (context, url, error) => Container(
+                width: r.s(32),
+                height: r.s(32),
+                color: AppTheme.muted,
+                child: Icon(Icons.image_not_supported, size: r.s(16), color: AppTheme.mutedForeground),
+              ),
             ),
           ),
           SizedBox(width: r.s(10)),
@@ -503,7 +602,9 @@ class _MessageProductPreview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final r = R(context);
-    final product = getProductById(productId);
+    final appCtrl = Get.isRegistered<AppController>() ? Get.find<AppController>() : null;
+    final product = appCtrl?.products.firstWhereOrNull((p) => p.id.toString() == productId) 
+                    ?? getProductById(productId);
     if (product == null) return const SizedBox.shrink();
 
     return GestureDetector(
@@ -527,10 +628,16 @@ class _MessageProductPreview extends StatelessWidget {
             ClipRRect(
               borderRadius: BorderRadius.circular(r.rad(16)),
               child: CachedNetworkImage(
-                imageUrl: product.image,
+                imageUrl: ApiConstants.resolveImageUrl(product.image),
                 height: r.s(110),
                 width: double.infinity,
                 fit: BoxFit.cover,
+                errorWidget: (context, url, error) => Container(
+                  height: r.s(110),
+                  width: double.infinity,
+                  color: AppTheme.muted,
+                  child: Icon(Icons.image_not_supported, size: r.s(30), color: AppTheme.mutedForeground),
+                ),
               ),
             ),
             Padding(

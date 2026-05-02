@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:get/get_core/src/get_main.dart';
-import 'package:get/get_navigation/src/extension_navigation.dart';
+import 'package:get/get.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/bottom_nav.dart';
 import '../../utils/responsive.dart';
-import 'widgets/conversation_tile.dart';
 import 'widgets/filter_modal.dart';
+import 'widgets/conversation_tile.dart';
+import '../../Api/firebase/controllers/chat_controller.dart';
+import '../../Api/provider/auth_controller.dart';
+import '../../Api/config/api_constants.dart';
 
 class MessagesScreen extends StatefulWidget {
   const MessagesScreen({super.key});
@@ -24,55 +26,42 @@ class _MessagesScreenState extends State<MessagesScreen> {
   // État de sélection multiple
   bool _isSelectionMode = false;
   final Set<String> _selectedMessages = {}; // Utilise le nom comme clé unique
-  final _mockConvs = [
-    _ConvItem(
-        name: 'Koffi Mensah',
-        time: '14:20',
-        msg: 'C\'est toujours disponible à Lom...',
-        unread: 1,
-        img:
-            'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&h=80&fit=crop&crop=face',
-        productImg:
-            'https://images.unsplash.com/photo-1508739773434-c26b3d09e071?w=80&h=80&fit=crop'),
-    _ConvItem(
-        name: 'Essi Gado',
-        time: 'Dim.',
-        msg: 'Je peux voir d\'autres photos ?',
-        unread: 1,
-        img:
-            'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=80&h=80&fit=crop&crop=face',
-        productImg:
-            'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=80&h=80&fit=crop'),
-    _ConvItem(
-        name: 'Amivi Lawson',
-        time: 'Hier',
-        msg: 'Merci, je passe la prendre à 17h.',
-        unread: 0,
-        img:
-            'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=80&h=80&fit=crop&crop=face',
-        productImg:
-            'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=80&h=80&fit=crop'),
-    _ConvItem(
-        name: 'Kodjo Aziamble',
-        time: 'Lun.',
-        msg: 'Quel est votre dernier prix svp ?',
-        unread: 0,
-        img:
-            'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=80&h=80&fit=crop&crop=face',
-        productImg:
-            'https://images.unsplash.com/photo-1610945415295-d9bbf067e59c?w=80&h=80&fit=crop'),
-    _ConvItem(
-        name: 'Yao Kouame',
-        time: '12 Oct.',
-        msg: 'D\'accord, c\'est noté.',
-        unread: 0,
-        img:
-            'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&h=80&fit=crop&crop=face',
-        productImg: null),
-  ];
+
+  String get _currentUserId {
+    final auth = Get.isRegistered<AuthController>() ? Get.find<AuthController>() : null;
+    return auth?.currentUser.value?.id.toString() ?? '';
+  }
+  
+  // Modèle converti depuis Firestore
+  List<_ConvItem> get _convItems {
+    if (!Get.isRegistered<ChatController>()) return [];
+    final chats = ChatController.to.userChats.toList();
+    final myId = _currentUserId;
+    
+    return chats.map((chat) {
+      final otherName = chat.otherParticipantName(myId);
+      final otherAvatar = chat.otherParticipantAvatar(myId);
+      final resolvedAvatar = otherAvatar.isNotEmpty 
+          ? ApiConstants.resolveImageUrl(otherAvatar) 
+          : '';
+      final productImg = chat.productImage != null && chat.productImage!.isNotEmpty
+          ? ApiConstants.resolveImageUrl(chat.productImage!)
+          : null;
+      
+      return _ConvItem(
+        id: chat.id,
+        name: otherName,
+        time: '${chat.lastMessageTime.hour.toString().padLeft(2, '0')}:${chat.lastMessageTime.minute.toString().padLeft(2, '0')}',
+        msg: chat.lastMessage,
+        unread: chat.unreadCountFor(myId),
+        img: resolvedAvatar,
+        productImg: productImg,
+      );
+    }).toList();
+  }
 
   List<_ConvItem> get _filtered {
-    List<_ConvItem> filtered = List.from(_mockConvs);
+    List<_ConvItem> filtered = List.from(_convItems);
 
     // Filtre par statut en ligne
     if (_showOnlineOnly) {
@@ -139,9 +128,8 @@ class _MessagesScreenState extends State<MessagesScreen> {
 
   void _deleteSelectedMessages() {
     setState(() {
-      // Dans une vraie app, on supprimerait de la base de données
-      // Ici on simule en filtrant la liste mock
-      _mockConvs.removeWhere((msg) => _selectedMessages.contains(msg.name));
+      // Pour Firebase, on appellerait une méthode de suppression.
+      // ChatService.to.deleteChats(_selectedMessages.toList());
       _selectedMessages.clear();
       _isSelectionMode = false;
     });
@@ -299,27 +287,36 @@ class _MessagesScreenState extends State<MessagesScreen> {
 
                 // ── Liste conversations ──────────────────────────────────────────
                 Expanded(
-                  child: _filtered.isEmpty
-                      ? Center(
+                  child: Obx(() {
+                    if (_filtered.isEmpty) {
+                      return Center(
                           child: Text('Aucun message',
                               style: TextStyle(
                                   color: AppTheme.mutedForeground,
-                                  fontSize: r.fs(14))))
-                      : ListView.separated(
-                          padding:
-                              EdgeInsets.fromLTRB(r.hPad, 0, r.hPad, r.s(24)),
-                          itemCount: _filtered.length,
-                          separatorBuilder: (_, __) => SizedBox(height: r.s(8)),
-                          itemBuilder: (_, i) => ConversationTile(
-                            item: _filtered[i],
-                            r: r,
-                            isSelectionMode: _isSelectionMode,
-                            isSelected:
-                                _selectedMessages.contains(_filtered[i].name),
-                            onSelectionChanged: () =>
-                                _toggleMessageSelection(_filtered[i].name),
-                          ),
+                                  fontSize: r.fs(14))));
+                    }
+                    return ListView.separated(
+                      padding: EdgeInsets.fromLTRB(r.hPad, 0, r.hPad, r.s(24)),
+                      itemCount: _filtered.length,
+                      separatorBuilder: (_, __) => SizedBox(height: r.s(8)),
+                      itemBuilder: (_, i) => GestureDetector(
+                        onTap: () {
+                          if (_isSelectionMode) {
+                            _toggleMessageSelection(_filtered[i].name);
+                          } else {
+                            Get.toNamed('/chat/${_filtered[i].id}');
+                          }
+                        },
+                        child: ConversationTile(
+                          item: _filtered[i],
+                          r: r,
+                          isSelectionMode: _isSelectionMode,
+                          isSelected: _selectedMessages.contains(_filtered[i].name),
+                          onSelectionChanged: () => _toggleMessageSelection(_filtered[i].name),
                         ),
+                      ),
+                    );
+                  }),
                 ),
               ],
             ),
@@ -427,11 +424,12 @@ class _MessagesScreenState extends State<MessagesScreen> {
 
 // Modèle de données conversation mock
 class _ConvItem {
-  final String name, time, msg, img;
+  final String id, name, time, msg, img;
   final int unread;
   final String? productImg;
   const _ConvItem(
-      {required this.name,
+      {required this.id,
+      required this.name,
       required this.time,
       required this.msg,
       required this.img,

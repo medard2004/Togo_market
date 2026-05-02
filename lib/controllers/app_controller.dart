@@ -323,67 +323,6 @@ class AppController extends GetxController {
   }
 }
 
-// ── ChatController ────────────────────────────────────────────────────────────
-class ChatController extends GetxController {
-  final conversations  = <Conversation>[].obs;
-  final currentMessages = <ChatMessage>[].obs;
-  final isTyping       = false.obs;
-
-  @override
-  void onInit() {
-    super.onInit();
-    conversations.assignAll([]);
-  }
-
-  void loadConversation(String conversationId) {
-    final conv = conversations.firstWhereOrNull((c) => c.id == conversationId);
-    if (conv != null) {
-      currentMessages.assignAll(conv.messages);
-    }
-  }
-
-  Future<void> sendMessage(
-      String conversationId, String content, String sellerId, {String? productId}) async {
-    final newMsg = ChatMessage(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      content: content,
-      senderId: 'me',
-      timestamp: _formatTime(),
-      isMe: true,
-      productId: productId,
-    );
-    currentMessages.add(newMsg);
-
-    // Simulate bot reply after 1.2s
-    isTyping.value = true;
-    await Future.delayed(const Duration(milliseconds: 1200));
-    isTyping.value = false;
-
-    final replies = [
-      'Merci pour votre message ! Je vous réponds rapidement. 😊',
-      'Oui, le produit est toujours disponible.',
-      'Je peux vous faire un meilleur prix si vous venez le récupérer.',
-      'Livraison possible dans tout Lomé pour 1 000 F.',
-      'Contactez-moi au +228 90 00 00 00 pour plus d\'infos.',
-    ];
-    final reply = replies[DateTime.now().millisecond % replies.length];
-
-    final botMsg = ChatMessage(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      content: reply,
-      senderId: sellerId,
-      timestamp: _formatTime(),
-      isMe: false,
-    );
-    currentMessages.add(botMsg);
-  }
-
-  String _formatTime() {
-    final now = DateTime.now();
-    return '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
-  }
-}
-
 // ── DashboardController ───────────────────────────────────────────────────────
 class DashboardController extends GetxController {
   final selectedTab = 0.obs;

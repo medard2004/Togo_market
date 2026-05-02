@@ -25,7 +25,7 @@ class ConversationTile extends StatelessWidget {
     final hasUnread = item.unread > 0;
     return GestureDetector(
       onTap:
-          isSelectionMode ? onSelectionChanged : () => Get.toNamed('/chat/c1'),
+          isSelectionMode ? onSelectionChanged : null,
       child: Container(
         padding: EdgeInsets.all(r.s(12)),
         decoration: BoxDecoration(
@@ -52,11 +52,18 @@ class ConversationTile extends StatelessWidget {
             Stack(
               clipBehavior: Clip.none,
               children: [
-                CircleAvatar(
-                  radius: r.s(26),
-                  backgroundImage: CachedNetworkImageProvider(item.img),
-                  backgroundColor: AppTheme.muted,
-                ),
+                if (item.img.isNotEmpty)
+                  CircleAvatar(
+                    radius: r.s(26),
+                    backgroundImage: CachedNetworkImageProvider(item.img),
+                    backgroundColor: AppTheme.muted,
+                  )
+                else
+                  CircleAvatar(
+                    radius: r.s(26),
+                    backgroundColor: AppTheme.muted,
+                    child: Icon(Icons.person, size: r.s(26), color: AppTheme.mutedForeground),
+                  ),
                 if (hasUnread)
                   Positioned(
                     bottom: 0,

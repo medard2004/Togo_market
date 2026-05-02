@@ -8,6 +8,8 @@ import '../../Api/config/api_constants.dart';
 import '../../Api/model/product_model.dart';
 import '../../utils/app_utils.dart';
 import 'add_product_screen.dart';
+import '../../Api/firebase/controllers/chat_controller.dart';
+import '../../controllers/boutique_controller.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -25,7 +27,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
     super.initState();
     _ctrl = Get.find<DashboardController>();
     // Reload products when entering dashboard (boutique may have just been created)
-    WidgetsBinding.instance.addPostFrameCallback((_) => _ctrl.loadMyProducts());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _ctrl.loadMyProducts();
+      final boutique = Get.isRegistered<BoutiqueController>()
+          ? BoutiqueController.to.myBoutique.value
+          : null;
+      if (boutique != null && Get.isRegistered<ChatController>()) {
+        ChatController.to.initShopChats(boutique.id.toString());
+      }
+    });
   }
 
   @override
@@ -305,15 +315,82 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildMessagesTab() {
-    return const Padding(
-      padding: EdgeInsets.only(top: 40),
-      child: Center(
-        child: Text(
-          'Aucun message pour le moment',
-          style: TextStyle(color: AppTheme.mutedForeground),
-        ),
-      ),
-    );
+    if (!Get.isRegistered<ChatController>()) return const SizedBox.shrink();
+
+    return Obx(() {
+      final chats = ChatController.to.shopChats;
+      final boutique = Get.isRegistered<BoutiqueController>()
+          ? BoutiqueController.to.myBoutique.value
+          : null;
+      final shopId = boutique?.id.toString() ?? ChatController.to.currentUserId;
+
+      if (chats.isEmpty) {
+        return const Padding(
+          padding: EdgeInsets.only(top: 40),
+          child: Center(
+            child: Text(
+              'Aucun message pour le moment',
+              style: TextStyle(color: AppTheme.mutedForeground),
+            ),
+          ),
+        );
+      }
+
+      return ListView.separated(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: chats.length,
+        separatorBuilder: (_, __) => const SizedBox(height: 8),
+        itemBuilder: (_, i) {
+          final chat = chats[i];
+          return Container(
+            margin: const EdgeInsets.only(bottom: 8),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.04),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                )
+              ],
+            ),
+            child: ListTile(
+              leading: CircleAvatar(
+                backgroundColor: AppTheme.muted,
+                backgroundImage: chat.otherParticipantAvatar(shopId).isNotEmpty
+                    ? NetworkImage(chat.otherParticipantAvatar(shopId))
+                    : null,
+                child: chat.otherParticipantAvatar(shopId).isEmpty
+                    ? const Icon(Icons.person, color: AppTheme.mutedForeground)
+                    : null,
+              ),
+              title: Text(chat.otherParticipantName(shopId),
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold, fontSize: 14)),
+              subtitle: Text(chat.lastMessage,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 12)),
+              trailing: chat.unreadCountFor(shopId) > 0
+                  ? Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: const BoxDecoration(
+                          color: AppTheme.primary, shape: BoxShape.circle),
+                      child: Text('${chat.unreadCountFor(shopId)}',
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold)),
+                    )
+                  : null,
+              onTap: () => Get.toNamed('/chat/${chat.id}?asBoutique=true'),
+            ),
+          );
+        },
+      );
+    });
   }
 
   Widget _buildProductTile(Product p) {

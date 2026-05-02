@@ -60,6 +60,9 @@ import 'Api/services/user_service.dart';
 import 'Api/provider/auth_controller.dart';
 import 'controllers/boutique_controller.dart';
 import 'controllers/my_products_controller.dart';
+import 'Api/firebase/services/chat_service.dart';
+import 'Api/firebase/controllers/chat_controller.dart';
+import 'Api/firebase/services/fcm_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -104,6 +107,8 @@ void main() async {
 
   // Initialize global controllers
   Get.put(AppController());
+  Get.put(ChatService(), permanent: true);
+  Get.putAsync(() => FCMService().init(), permanent: true);
   Get.put(ChatController());
   Get.put(DashboardController());
   Get.put(MyProductsController());
