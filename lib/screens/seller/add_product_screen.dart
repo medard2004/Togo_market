@@ -29,7 +29,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
   @override
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: const SystemUiOverlayStyle(
+      value: SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
         statusBarIconBrightness: Brightness.dark,
         systemNavigationBarColor: AppTheme.background,
@@ -62,7 +62,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                         ],
                       ),
                       const SizedBox(height: 4),
-                      const Text('Ajoutez au moins 1 photo (5 maximum).', style: TextStyle(fontSize: 12, color: AppTheme.mutedForeground)),
+                      Text('Ajoutez au moins 1 photo (5 maximum).', style: TextStyle(fontSize: 12, color: AppTheme.mutedForeground)),
                       const SizedBox(height: 4),
                       const Text('Formats : JPEG, PNG, WebP • Taille max : 5 Mo par image',
                           style: TextStyle(fontSize: 11, color: AppTheme.primary, fontWeight: FontWeight.w500)),
@@ -82,9 +82,9 @@ class _AddProductScreenState extends State<AddProductScreen> {
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  const Icon(Icons.camera_alt_outlined, size: 32, color: AppTheme.primary),
+                                  Icon(Icons.camera_alt_outlined, size: 32, color: AppTheme.primary),
                                   const SizedBox(height: 8),
-                                  const Text('Appuyez pour ajouter des photos', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.primary)),
+                                  Text('Appuyez pour ajouter des photos', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.primary)),
                                 ],
                               ),
                             ),
@@ -138,7 +138,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                                       borderRadius: BorderRadius.circular(12),
                                       border: Border.all(color: AppTheme.primary, style: BorderStyle.solid),
                                     ),
-                                    child: const Icon(Icons.add, color: AppTheme.primary, size: 28),
+                                    child: Icon(Icons.add, color: AppTheme.primary, size: 28),
                                   ),
                                 ),
                             ],
@@ -226,7 +226,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                                 child: Obx(() {
                                   final selectedId = _controller.selectedCategory.value;
                                   if (selectedId == null) {
-                                    return const Row(
+                                    return Row(
                                       children: [
                                         Expanded(
                                           child: Text('Sélectionner',
@@ -242,7 +242,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                                   final matchingCat = allFlat.firstWhereOrNull((c) => c.id == selectedId);
                                   
                                   if (matchingCat == null) {
-                                    return const Row(
+                                    return Row(
                                       children: [
                                         Expanded(
                                           child: Text('Sélectionner',
@@ -264,11 +264,11 @@ class _AddProductScreenState extends State<AddProductScreen> {
                                       Expanded(
                                         child: Text(
                                           matchingCat.nom,
-                                          style: const TextStyle(fontSize: 12, color: AppTheme.foreground),
+                                          style: TextStyle(fontSize: 12, color: AppTheme.foreground),
                                           overflow: TextOverflow.ellipsis,
                                         ),
                                       ),
-                                      const Icon(Icons.edit, size: 14, color: AppTheme.primary),
+                                      Icon(Icons.edit, size: 14, color: AppTheme.primary),
                                     ],
                                   );
                                 }),
@@ -413,7 +413,7 @@ class FormSubmitBottomBar extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Text('En publiant, vous acceptez nos Conditions d\'utilisation', textAlign: TextAlign.center, style: TextStyle(fontSize: 11, color: AppTheme.mutedForeground)),
+          Text('En publiant, vous acceptez nos Conditions d\'utilisation', textAlign: TextAlign.center, style: TextStyle(fontSize: 11, color: AppTheme.mutedForeground)),
           const SizedBox(height: 10),
           Obx(() => AppButton(
             label: controller.isLoading.value ? 'Chargement...' : label,

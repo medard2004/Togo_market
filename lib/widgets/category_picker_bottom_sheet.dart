@@ -74,9 +74,9 @@ class _CategoryListState extends State<_CategoryList> {
 
     return Container(
       height: MediaQuery.of(context).size.height * 0.65,
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: AppTheme.background,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
         children: [
@@ -96,7 +96,7 @@ class _CategoryListState extends State<_CategoryList> {
               children: [
                 if (currentLevel > 0)
                   IconButton(
-                    icon: const Icon(Icons.arrow_back, color: AppTheme.foreground),
+                    icon: Icon(Icons.arrow_back, color: AppTheme.foreground),
                     onPressed: () {
                       setState(() {
                         _breadcrumbs.removeLast();
@@ -110,7 +110,7 @@ class _CategoryListState extends State<_CategoryList> {
                     parent != null 
                         ? parent.nom 
                         : 'Choisissez une catégorie',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w700,
                       color: AppTheme.foreground,
@@ -149,14 +149,14 @@ class _CategoryListState extends State<_CategoryList> {
                   ),
                   title: Text(
                     cat.nom,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
                       color: AppTheme.foreground,
                     ),
                   ),
                   trailing: hasChildren 
-                      ? const Icon(Icons.arrow_forward_ios, size: 16, color: AppTheme.mutedForeground)
+                      ? Icon(Icons.arrow_forward_ios, size: 16, color: AppTheme.mutedForeground)
                       : null,
                   onTap: () {
                     if (hasChildren) {

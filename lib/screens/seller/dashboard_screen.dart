@@ -57,7 +57,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     Colors.white,
                     onTap: () => Get.back(),
                   ),
-                  const Text(
+                  Text(
                     'Mon Espace Vendeur',
                     style: TextStyle(
                       fontSize: 18,
@@ -252,7 +252,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 Icon(Icons.inventory_2_outlined,
                     size: 64, color: AppTheme.mutedForeground.withOpacity(0.4)),
                 const SizedBox(height: 16),
-                const Text(
+                Text(
                   'Aucun article pour le moment',
                   style: TextStyle(
                     fontSize: 16,
@@ -261,7 +261,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                const Text(
+                Text(
                   'Ajoutez votre premier produit\nen cliquant sur le bouton ci-dessus.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
@@ -281,7 +281,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           TogoSlideUp(
             child: Text(
               '${products.length} article${products.length > 1 ? 's' : ''} actif${products.length > 1 ? 's' : ''}',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 15,
                 color: AppTheme.mutedForeground,
                 fontWeight: FontWeight.w500,
@@ -303,8 +303,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildOrdersTab() {
-    return const Padding(
-      padding: EdgeInsets.only(top: 40),
+    return Padding(
+      padding: const EdgeInsets.only(top: 40),
       child: Center(
         child: Text(
           'Aucune commande pour le moment',
@@ -325,8 +325,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
       final shopId = boutique?.id.toString() ?? ChatController.to.currentUserId;
 
       if (chats.isEmpty) {
-        return const Padding(
-          padding: EdgeInsets.only(top: 40),
+        return Padding(
+          padding: const EdgeInsets.only(top: 40),
           child: Center(
             child: Text(
               'Aucun message pour le moment',
@@ -363,7 +363,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ? NetworkImage(chat.otherParticipantAvatar(shopId))
                     : null,
                 child: chat.otherParticipantAvatar(shopId).isEmpty
-                    ? const Icon(Icons.person, color: AppTheme.mutedForeground)
+                    ? Icon(Icons.person, color: AppTheme.mutedForeground)
                     : null,
               ),
               title: Text(chat.otherParticipantName(shopId),
@@ -431,7 +431,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               children: [
                 Text(
                   p.title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
                     color: AppTheme.foreground,
@@ -457,7 +457,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                   child: Text(
                     p.condition,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 11,
                       color: AppTheme.mutedForeground,
                       fontWeight: FontWeight.w600,
@@ -493,7 +493,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       width: 72,
       height: 72,
       color: AppTheme.muted,
-      child: const Icon(Icons.image_not_supported,
+      child: Icon(Icons.image_not_supported,
           color: AppTheme.mutedForeground, size: 28),
     );
   }
@@ -525,7 +525,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Container(
       width: 36,
       height: 36,
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: AppTheme.primaryLight,
         shape: BoxShape.circle,
       ),

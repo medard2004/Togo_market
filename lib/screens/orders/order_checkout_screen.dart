@@ -31,37 +31,6 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
     final args = Get.arguments as Map<String, dynamic>?;
     final product = getProductById(args?['productId'] ?? 'p1');
 
-    // ── Confirmation ─────────────────────────────────────────────────────────
-    if (_confirmed) {
-      return Scaffold(
-        backgroundColor: AppTheme.background,
-        body: Center(
-          child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-            TweenAnimationBuilder<double>(
-              tween: Tween(begin: 0, end: 1),
-              duration: const Duration(milliseconds: 600),
-              builder: (_, v, __) => Transform.scale(
-                scale: v,
-                child: Icon(Icons.check_circle_rounded,
-                    size: r.s(80), color: Colors.green),
-              ),
-            ),
-            SizedBox(height: r.s(20)),
-            Text('Commande confirmée !',
-                style: TextStyle(
-                    fontSize: r.fs(22),
-                    fontWeight: FontWeight.w800,
-                    color: AppTheme.foreground)),
-            SizedBox(height: r.s(8)),
-            Text('Le vendeur sera notifié immédiatement.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                    fontSize: r.fs(14), color: AppTheme.mutedForeground)),
-          ]),
-        ),
-      );
-    }
-
     // ── Montant formaté façon maquette : "745.000 FCFA" ──────────────────────
     String priceMain = '';
     if (product != null) {
@@ -69,6 +38,170 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
       priceMain = v.replaceAllMapped(
           RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.');
     }
+
+    // ── Confirmation Premium ──────────────────────────────────────────────────
+    if (_confirmed) {
+      return Scaffold(
+        backgroundColor: AppTheme.background,
+        body: SafeArea(
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: r.hPad),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // 1. Illustration / Animation de succès
+                Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    TweenAnimationBuilder<double>(
+                      tween: Tween(begin: 0, end: 1),
+                      duration: const Duration(seconds: 1),
+                      curve: Curves.elasticOut,
+                      builder: (_, v, __) => Container(
+                        width: r.s(160) * v,
+                        height: r.s(160) * v,
+                        decoration: BoxDecoration(
+                          color: AppTheme.primary.withOpacity(0.1),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ),
+                    TweenAnimationBuilder<double>(
+                      tween: Tween(begin: 0, end: 1),
+                      duration: const Duration(milliseconds: 800),
+                      curve: Curves.easeOutBack,
+                      builder: (_, v, __) => Transform.scale(
+                        scale: v,
+                        child: Icon(
+                          Icons.check_circle_rounded,
+                          size: r.s(100),
+                          color: AppTheme.primary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: r.s(32)),
+
+                // 2. Textes principaux
+                Text(
+                  'Félicitations !',
+                  style: TextStyle(
+                    fontSize: r.fs(28),
+                    fontWeight: FontWeight.w900,
+                    color: AppTheme.foreground,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+                SizedBox(height: r.s(10)),
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: r.s(20)),
+                  child: Text(
+                    'Votre commande a été envoyée avec succès au vendeur.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: r.fs(15),
+                      color: AppTheme.mutedForeground,
+                      height: 1.5,
+                    ),
+                  ),
+                ),
+                SizedBox(height: r.s(40)),
+
+                // 3. Petit récapitulatif (Carte style premium)
+                if (product != null)
+                  Container(
+                    padding: EdgeInsets.all(r.s(16)),
+                    decoration: BoxDecoration(
+                      color: AppTheme.cardColor,
+                      borderRadius: BorderRadius.circular(r.rad(24)),
+                      boxShadow: AppTheme.shadowCard,
+                      border: Border.all(color: AppTheme.border.withOpacity(0.5)),
+                    ),
+                    child: Row(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(r.rad(12)),
+                          child: CachedNetworkImage(
+                            imageUrl: product.image,
+                            width: r.s(50),
+                            height: r.s(50),
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                        SizedBox(width: r.s(16)),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                product.title,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: r.fs(14),
+                                  fontWeight: FontWeight.w700,
+                                  color: AppTheme.foreground,
+                                ),
+                              ),
+                              SizedBox(height: r.s(4)),
+                              Text(
+                                '$priceMain FCFA',
+                                style: TextStyle(
+                                  fontSize: r.fs(13),
+                                  fontWeight: FontWeight.w600,
+                                  color: AppTheme.primary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                
+                SizedBox(height: r.s(60)),
+
+                // 4. Actions
+                SizedBox(
+                  width: double.infinity,
+                  height: r.s(56),
+                  child: ElevatedButton(
+                    onPressed: () => Get.offAllNamed('/orders'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primary,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(r.rad(18)),
+                      ),
+                    ),
+                    child: Text(
+                      'Suivre ma commande',
+                      style: TextStyle(fontSize: r.fs(15), fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                ),
+                SizedBox(height: r.s(16)),
+                TextButton(
+                  onPressed: () => Get.offAllNamed('/home'),
+                  child: Text(
+                    'Retour à l\'accueil',
+                    style: TextStyle(
+                      fontSize: r.fs(15),
+                      fontWeight: FontWeight.w700,
+                      color: AppTheme.mutedForeground,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+
 
     return Scaffold(
       backgroundColor: AppTheme.background,
@@ -89,7 +222,7 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
               height: r.s(36),
               margin: EdgeInsets.symmetric(vertical: r.s(8)),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppTheme.cardColor,
                 shape: BoxShape.circle,
                 boxShadow: AppTheme.shadowCard,
               ),
@@ -116,7 +249,7 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
               Container(
                 padding: EdgeInsets.all(r.s(12)),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppTheme.cardColor,
                   borderRadius: BorderRadius.circular(r.rad(16)),
                   border: Border.all(color: AppTheme.border),
                 ),
@@ -257,7 +390,7 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
             // Champ téléphone : +228 | numéro | ✓
             Container(
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppTheme.cardColor,
                 borderRadius: BorderRadius.circular(r.rad(12)),
                 border: Border.all(color: AppTheme.border),
               ),
@@ -314,7 +447,7 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
             // Label champ note — change selon mode
             Text(
               _mode == 'livraison'
-                  ? 'QUARTIER & PRÉCISIONS'
+                  ? 'VOTRE LOCALISATION'
                   : 'NOTE OU PRÉCISIONS',
               style: TextStyle(
                   fontSize: r.fs(10),
@@ -324,30 +457,191 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
             ),
             SizedBox(height: r.s(7)),
 
-            // Champ texte libre
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(r.rad(12)),
-                border: Border.all(color: AppTheme.border),
-              ),
-              child: TextField(
-                controller: _noteCtrl,
-                maxLines: 4,
-                style:
-                    TextStyle(fontSize: r.fs(13), color: AppTheme.foreground),
-                decoration: InputDecoration(
-                  border: InputBorder.none,
-                  contentPadding: EdgeInsets.all(r.s(14)),
-                  isDense: true,
-                  hintText: _mode == 'livraison'
-                      ? 'Ex: Adidogomé, près de l\'église, portail bleu...'
-                      : 'Indiquez l\'heure de votre passage ou toute autre précision utile...',
-                  hintStyle: TextStyle(
-                      fontSize: r.fs(13), color: AppTheme.mutedForeground),
+            if (_mode == 'livraison')
+              // Bouton Partager Localisation
+              GestureDetector(
+                onTap: () {
+                  // Simuler le partage de localisation
+                  Get.snackbar(
+                    'Localisation partagée',
+                    'Votre position actuelle a été envoyée au vendeur.',
+                    snackPosition: SnackPosition.BOTTOM,
+                    backgroundColor: AppTheme.primary,
+                    colorText: Colors.white,
+                    margin: const EdgeInsets.all(16),
+                    borderRadius: 16,
+                  );
+                },
+                child: Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.all(r.s(16)),
+                  decoration: BoxDecoration(
+                    color: AppTheme.cardColor,
+                    borderRadius: BorderRadius.circular(r.rad(16)),
+                    border: Border.all(color: AppTheme.primary.withOpacity(0.3)),
+                    boxShadow: AppTheme.shadowSm,
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: r.s(44),
+                        height: r.s(44),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primary.withOpacity(0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(Icons.my_location,
+                            color: AppTheme.primary, size: r.s(22)),
+                      ),
+                      SizedBox(width: r.s(16)),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Partager ma localisation',
+                              style: TextStyle(
+                                  fontSize: r.fs(14),
+                                  fontWeight: FontWeight.w700,
+                                  color: AppTheme.foreground),
+                            ),
+                            SizedBox(height: r.s(2)),
+                            Text(
+                              'Utilisez le GPS pour plus de précision',
+                              style: TextStyle(
+                                  fontSize: r.fs(12),
+                                  color: AppTheme.mutedForeground),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Icon(Icons.arrow_forward_ios_rounded,
+                          size: r.s(14), color: AppTheme.mutedForeground),
+                    ],
+                  ),
+                ),
+              )
+            else
+              // Champ texte libre (seulement pour le mode retrait ou autres notes)
+              Container(
+                decoration: BoxDecoration(
+                  color: AppTheme.cardColor,
+                  borderRadius: BorderRadius.circular(r.rad(12)),
+                  border: Border.all(color: AppTheme.border),
+                ),
+                child: TextField(
+                  controller: _noteCtrl,
+                  maxLines: 4,
+                  style:
+                      TextStyle(fontSize: r.fs(13), color: AppTheme.foreground),
+                  decoration: InputDecoration(
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.all(r.s(14)),
+                    isDense: true,
+                    hintText: 'Indiquez l\'heure de votre passage ou toute autre précision utile...',
+                    hintStyle: TextStyle(
+                        fontSize: r.fs(13), color: AppTheme.mutedForeground),
+                  ),
                 ),
               ),
-            ),
+
+            if (_mode == 'retrait') ...[
+              SizedBox(height: r.s(22)),
+              Row(children: [
+                Icon(Icons.location_on_outlined,
+                    size: r.s(18), color: AppTheme.primary),
+                SizedBox(width: r.s(7)),
+                Text('Lieu de retrait',
+                    style: TextStyle(
+                        fontSize: r.fs(15),
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.foreground)),
+              ]),
+              SizedBox(height: r.s(12)),
+              Container(
+                width: double.infinity,
+                padding: EdgeInsets.all(r.s(16)),
+                decoration: BoxDecoration(
+                  color: AppTheme.cardColor,
+                  borderRadius: BorderRadius.circular(r.rad(16)),
+                  border: Border.all(color: AppTheme.border),
+                  boxShadow: AppTheme.shadowSm,
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: r.s(44),
+                          height: r.s(44),
+                          decoration: BoxDecoration(
+                            color: AppTheme.secondary.withOpacity(0.1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(Icons.storefront,
+                              color: AppTheme.secondary, size: r.s(22)),
+                        ),
+                        SizedBox(width: r.s(16)),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                product != null
+                                    ? (getSellerById(product.sellerId)?.shopName ??
+                                        'Boutique du vendeur')
+                                    : 'Boutique du vendeur',
+                                style: TextStyle(
+                                    fontSize: r.fs(14),
+                                    fontWeight: FontWeight.w700,
+                                    color: AppTheme.foreground),
+                              ),
+                              SizedBox(height: r.s(2)),
+                              Text(
+                                product != null
+                                    ? (getSellerById(product.sellerId)?.location ??
+                                        'Lomé, Togo')
+                                    : 'Lomé, Togo',
+                                style: TextStyle(
+                                    fontSize: r.fs(12),
+                                    color: AppTheme.mutedForeground),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: r.s(16)),
+                    // Bouton Voir Itinéraire
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          // Simuler l'ouverture de Google Maps
+                          Get.snackbar(
+                            'Itinéraire',
+                            'Ouverture de l\'itinéraire vers la boutique...',
+                            snackPosition: SnackPosition.BOTTOM,
+                            backgroundColor: AppTheme.secondary,
+                            colorText: Colors.white,
+                          );
+                        },
+                        icon: Icon(Icons.directions_outlined, size: r.s(18)),
+                        label: Text('Voir l\'itinéraire sur Maps'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppTheme.secondary,
+                          side: BorderSide(color: AppTheme.secondary),
+                          padding: EdgeInsets.symmetric(vertical: r.s(12)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(r.rad(12)),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
 
             SizedBox(height: r.s(14)),
 
@@ -385,7 +679,7 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
       // ── 5. Footer fixe : ligne séparatrice + total + bouton + note ─────────
       bottomSheet: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppTheme.cardColor,
           border: Border(top: BorderSide(color: AppTheme.border)),
         ),
         padding: EdgeInsets.fromLTRB(
@@ -435,8 +729,6 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
             GestureDetector(
               onTap: () {
                 setState(() => _confirmed = true);
-                Future.delayed(const Duration(seconds: 3),
-                    () => Get.offAllNamed('/home'));
               },
               child: Container(
                 width: double.infinity,
@@ -503,8 +795,8 @@ class _OrderModeOption extends StatelessWidget {
         duration: const Duration(milliseconds: 180),
         padding: EdgeInsets.symmetric(horizontal: r.s(16), vertical: r.s(14)),
         decoration: BoxDecoration(
-          // Fond blanc dans les deux cas — seule la bordure change
-          color: active ? AppTheme.primaryLight : Colors.white,
+          // Fond dynamique selon le thème et l'état
+          color: active ? AppTheme.primaryLight : AppTheme.cardColor,
           borderRadius: BorderRadius.circular(r.rad(14)),
           border: Border.all(
             color: active ? AppTheme.primary : AppTheme.border,
@@ -530,7 +822,7 @@ class _OrderModeOption extends StatelessWidget {
                       child: Container(
                         width: r.s(11),
                         height: r.s(11),
-                        decoration: const BoxDecoration(
+                        decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           color: AppTheme.primary,
                         ),

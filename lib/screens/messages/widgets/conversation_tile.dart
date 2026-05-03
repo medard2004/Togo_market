@@ -29,7 +29,7 @@ class ConversationTile extends StatelessWidget {
       child: Container(
         padding: EdgeInsets.all(r.s(12)),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppTheme.cardColor,
           borderRadius: BorderRadius.circular(r.rad(16)),
           boxShadow: AppTheme.shadowCard,
           border: isSelectionMode && isSelected
@@ -38,7 +38,7 @@ class ConversationTile extends StatelessWidget {
         ),
         child: Row(
           children: [
-            // Checkbox en mode sélection
+            // Checkbox en mode sÃ©lection
             if (isSelectionMode) ...[
               Checkbox(
                 value: isSelected,
@@ -74,7 +74,7 @@ class ConversationTile extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: AppTheme.primary,
                         shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 2),
+                        border: Border.all(color: AppTheme.cardColor, width: 2),
                       ),
                     ),
                   ),

@@ -437,7 +437,7 @@ class _WelcomeStep extends StatelessWidget {
 
             // Séparateur
             Row(children: [
-              const Expanded(child: Divider(color: AppTheme.border)),
+              Expanded(child: Divider(color: AppTheme.border)),
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: r.s(12)),
                 child: Text('OU CONTINUER AVEC',
@@ -447,7 +447,7 @@ class _WelcomeStep extends StatelessWidget {
                         color: AppTheme.mutedForeground,
                         letterSpacing: 0.5)),
               ),
-              const Expanded(child: Divider(color: AppTheme.border)),
+              Expanded(child: Divider(color: AppTheme.border)),
             ]),
             SizedBox(height: r.s(16)),
 
@@ -488,7 +488,7 @@ class _WelcomeStep extends StatelessWidget {
               text: TextSpan(
                 style: TextStyle(
                     fontSize: r.fs(11), color: AppTheme.mutedForeground),
-                children: const [
+                children: [
                   TextSpan(text: 'En continuant, vous acceptez nos '),
                   TextSpan(
                       text: 'Conditions\nd\'utilisation',
@@ -717,7 +717,7 @@ class _PhoneStep extends StatelessWidget {
                           fontSize: r.fs(11),
                           color: AppTheme.mutedForeground,
                         ),
-                        children: const [
+                        children: [
                           TextSpan(text: 'En continuant, vous acceptez nos '),
                           TextSpan(
                             text: 'Conditions d\'utilisation',
@@ -895,7 +895,7 @@ class _PasswordStep extends StatelessWidget {
                     ),
                   ),
                   SizedBox(height: r.s(32)),
-                  ValueListenableBuilder(
+                  ValueListenableBuilder<TextEditingValue>(
                     valueListenable: ctrl,
                     builder: (_, __, ___) {
                       final enabled = ctrl.text.length >= 6;
@@ -946,7 +946,378 @@ class _PasswordStep extends StatelessWidget {
                 ],
               ),
             ),
-          )
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ╔══════════════════════════════════════════════════════╗
+// ║  STEP 4 — PROFILE                                    ║
+// ╚══════════════════════════════════════════════════════╝
+class _ProfileStep extends StatelessWidget {
+  final TextEditingController nameCtrl;
+  final List<String> zones;
+  final String selectedZone;
+  final ValueChanged<String?> onZoneChanged;
+  final VoidCallback onBack, onSkip, onContinue;
+  const _ProfileStep(
+      {super.key,
+      required this.nameCtrl,
+      required this.zones,
+      required this.selectedZone,
+      required this.onZoneChanged,
+      required this.onBack,
+      required this.onSkip,
+      required this.onContinue});
+
+  @override
+  Widget build(BuildContext context) {
+    final r = R(context);
+    return SafeArea(
+      child: Column(
+        children: [
+          _StepAppBar(
+              title: 'Étape 1 sur 2',
+              onBack: onBack,
+              actionLabel: 'Passer',
+              onAction: onSkip),
+          Container(height: 2, color: AppTheme.primary),
+          Expanded(
+            child: SingleChildScrollView(
+              padding: EdgeInsets.symmetric(horizontal: r.s(24)),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  SizedBox(height: r.s(24)),
+                  Text('Créez votre profil',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                          fontSize: r.fs(26),
+                          fontWeight: FontWeight.w800,
+                          color: AppTheme.foreground)),
+                  SizedBox(height: r.s(6)),
+                  Text('Aidez vos voisins à vous reconnaître sur le marché.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                          fontSize: r.fs(13), color: AppTheme.primary)),
+                  SizedBox(height: r.s(28)),
+                  Stack(
+                    alignment: Alignment.bottomRight,
+                    children: [
+                      Container(
+                        width: r.s(110),
+                        height: r.s(110),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: AppTheme.primaryLight,
+                          border: Border.all(
+                              color: AppTheme.primary.withOpacity(0.4),
+                              width: 2),
+                        ),
+                        child: Icon(Icons.person,
+                            size: r.s(52),
+                            color: AppTheme.primary.withOpacity(0.5)),
+                      ),
+                      Container(
+                        width: r.s(32),
+                        height: r.s(32),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primary,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 2),
+                        ),
+                        child: Icon(Icons.camera_alt,
+                            size: r.s(16), color: Colors.white),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: r.s(8)),
+                  Text('Appuyez pour ajouter une photo',
+                      style: TextStyle(
+                          fontSize: r.fs(13),
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.primary)),
+                  SizedBox(height: r.s(28)),
+                  Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text('Nom complet',
+                          style: TextStyle(
+                              fontSize: r.fs(13),
+                              fontWeight: FontWeight.w600,
+                              color: AppTheme.foreground))),
+                  SizedBox(height: r.s(8)),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: AppTheme.cardColor,
+                      borderRadius: BorderRadius.circular(r.rad(12)),
+                      border: Border.all(color: AppTheme.border),
+                    ),
+                    child: TextField(
+                      controller: nameCtrl,
+                      style: TextStyle(fontSize: r.fs(14)),
+                      decoration: InputDecoration(
+                        hintText: 'ex. Koffi Mensah',
+                        hintStyle: TextStyle(
+                            color: AppTheme.mutedForeground,
+                            fontSize: r.fs(14)),
+                        border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                        fillColor: Colors.transparent,
+                        filled: false,
+                        contentPadding: EdgeInsets.symmetric(
+                            horizontal: r.s(16), vertical: r.s(14)),
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: r.s(16)),
+                  Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text('Quartier / Zone',
+                          style: TextStyle(
+                              fontSize: r.fs(13),
+                              fontWeight: FontWeight.w600,
+                              color: AppTheme.foreground))),
+                  SizedBox(height: r.s(8)),
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: r.s(16)),
+                    decoration: BoxDecoration(
+                      color: AppTheme.cardColor,
+                      borderRadius: BorderRadius.circular(r.rad(12)),
+                      border: Border.all(color: AppTheme.border),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        value: selectedZone.isEmpty ? null : selectedZone,
+                        isExpanded: true,
+                        hint: Text('Sélectionnez votre zone',
+                            style: TextStyle(
+                                color: AppTheme.mutedForeground,
+                                fontSize: r.fs(14))),
+                        icon: Icon(Icons.keyboard_arrow_down,
+                            color: AppTheme.mutedForeground, size: r.s(22)),
+                        items: zones
+                            .map((z) => DropdownMenuItem(
+                                value: z,
+                                child: Text(z,
+                                    style: TextStyle(fontSize: r.fs(14)))))
+                            .toList(),
+                        onChanged: onZoneChanged,
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: r.s(32)),
+                  GestureDetector(
+                    onTap: onContinue,
+                    child: Container(
+                      width: double.infinity,
+                      height: r.s(54).clamp(48, 60),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primary,
+                        borderRadius: BorderRadius.circular(r.rad(30)),
+                        boxShadow: AppTheme.shadowPrimary,
+                      ),
+                      child: Center(
+                        child: Text('Continuer →',
+                            style: TextStyle(
+                                fontSize: r.fs(15),
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white)),
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: r.s(16)),
+                  RichText(
+                    textAlign: TextAlign.center,
+                    text: TextSpan(
+                      style: TextStyle(
+                          fontSize: r.fs(11), color: AppTheme.mutedForeground),
+                      children: [
+                        TextSpan(text: 'En continuant vous acceptez '),
+                        TextSpan(
+                            text: 'Conditions d\'utilisation',
+                            style: TextStyle(
+                                color: AppTheme.primary,
+                                decoration: TextDecoration.underline)),
+                        TextSpan(text: ' et\nnotre '),
+                        TextSpan(
+                            text: 'Politique de confidentialité',
+                            style: TextStyle(
+                                color: AppTheme.primary,
+                                decoration: TextDecoration.underline)),
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: r.s(24)),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ╔══════════════════════════════════════════════════════╗
+// ║  STEP 5 — INTERESTS                                  ║
+// ╚══════════════════════════════════════════════════════╝
+class _InterestsStep extends StatelessWidget {
+  final Set<String> selected;
+  final Function(String) onToggle;
+  final VoidCallback onBack, onSkip, onFinish;
+
+  const _InterestsStep(
+      {super.key,
+      required this.selected,
+      required this.onToggle,
+      required this.onBack,
+      required this.onSkip,
+      required this.onFinish});
+
+  static const _interests = [
+    {'id': 'mode', 'label': 'Mode', 'icon': Icons.checkroom},
+    {
+      'id': 'electronique',
+      'label': 'Électronique',
+      'icon': Icons.electrical_services
+    },
+    {'id': 'maison', 'label': 'Maison', 'icon': Icons.home},
+    {'id': 'beaute', 'label': 'Beauté', 'icon': Icons.brush},
+    {'id': 'friperie', 'label': 'Friperie', 'icon': Icons.recycling},
+    {'id': 'alimentation', 'label': 'Alimentation', 'icon': Icons.restaurant},
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final r = R(context);
+    return SafeArea(
+      child: Column(
+        children: [
+          _StepAppBar(
+              title: 'Étape 2 sur 2',
+              onBack: onBack,
+              actionLabel: 'Passer',
+              onAction: onSkip),
+          Container(height: 2, color: AppTheme.primary),
+
+          Expanded(
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: r.s(24)),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(height: r.s(24)),
+                  Text('Qu\'est-ce qui vous\nintéresse ?',
+                      style: TextStyle(
+                          fontSize: r.fs(26),
+                          fontWeight: FontWeight.w800,
+                          color: AppTheme.foreground,
+                          height: 1.2)),
+                  SizedBox(height: r.s(8)),
+                  Text(
+                      'Sélectionnez vos catégories préférées pour personnaliser votre flux.',
+                      style: TextStyle(
+                          fontSize: r.fs(13), color: AppTheme.mutedForeground)),
+                  SizedBox(height: r.s(24)),
+
+                  // Grille 2 colonnes
+                  Expanded(
+                    child: GridView.builder(
+                      physics: const NeverScrollableScrollPhysics(),
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        mainAxisSpacing: r.s(12),
+                        crossAxisSpacing: r.s(12),
+                        childAspectRatio: 1.55,
+                      ),
+                      itemCount: _interests.length,
+                      itemBuilder: (_, i) {
+                        final item = _interests[i];
+                        final id = item['id'] as String;
+                        final label = item['label'] as String;
+                        final icon = item['icon'] as IconData;
+                        final isSel = selected.contains(id);
+                        return GestureDetector(
+                          onTap: () => onToggle(id),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            decoration: BoxDecoration(
+                              color: AppTheme.cardColor,
+                              borderRadius: BorderRadius.circular(r.rad(16)),
+                              border: Border.all(
+                                color:
+                                    isSel ? AppTheme.primary : AppTheme.border,
+                                width: isSel ? 2 : 1,
+                              ),
+                            ),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Container(
+                                  width: r.s(42),
+                                  height: r.s(42),
+                                  decoration: BoxDecoration(
+                                    color: isSel
+                                        ? AppTheme.primary
+                                        : AppTheme.muted,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    icon,
+                                    size: r.s(22),
+                                    color: isSel
+                                        ? Colors.white
+                                        : AppTheme.foreground,
+                                  ),
+                                ),
+                                SizedBox(height: r.s(10)),
+                                Text(
+                                  label,
+                                  style: TextStyle(
+                                    fontSize: r.fs(13),
+                                    fontWeight: FontWeight.w600,
+                                    color: isSel
+                                        ? AppTheme.primary
+                                        : AppTheme.mutedForeground,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Padding(
+            padding:
+                EdgeInsets.fromLTRB(r.s(24), r.s(12), r.s(24), r.s(24)),
+            child: GestureDetector(
+              onTap: onFinish,
+              child: Container(
+                width: double.infinity,
+                height: r.s(54).clamp(48, 60),
+                decoration: BoxDecoration(
+                  color: AppTheme.primary,
+                  borderRadius: BorderRadius.circular(r.rad(30)),
+                  boxShadow: AppTheme.shadowPrimary,
+                ),
+                child: Center(
+                  child: Text('Terminer',
+                      style: TextStyle(
+                          fontSize: r.fs(15),
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white)),
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -957,6 +1328,57 @@ class _PasswordStep extends StatelessWidget {
 // ╔══════════════════════════════════════════════════════╗
 // ║  COMPOSANTS PARTAGÉS (Remplacés pour _WelcomeStep)   ║
 // ╚══════════════════════════════════════════════════════╝
+
+/// AppBar réutilisable pour les étapes internes
+class _StepAppBar extends StatelessWidget {
+  final String title;
+  final VoidCallback onBack;
+  final String? actionLabel;
+  final VoidCallback? onAction;
+  const _StepAppBar(
+      {required this.title,
+      required this.onBack,
+      this.actionLabel,
+      this.onAction});
+
+  @override
+  Widget build(BuildContext context) {
+    final r = R(context);
+    return Container(
+      height: r.s(52),
+      padding: EdgeInsets.symmetric(horizontal: r.s(16)),
+      child: Row(
+        children: [
+          GestureDetector(
+            onTap: onBack,
+            child: Icon(Icons.arrow_back,
+                size: r.s(22), color: AppTheme.foreground),
+          ),
+          Expanded(
+            child: Center(
+              child: Text(title,
+                  style: TextStyle(
+                      fontSize: r.fs(16),
+                      fontWeight: FontWeight.w700,
+                      color: AppTheme.foreground)),
+            ),
+          ),
+          if (actionLabel != null)
+            GestureDetector(
+              onTap: onAction,
+              child: Text(actionLabel!,
+                  style: TextStyle(
+                      fontSize: r.fs(14),
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.primary)),
+            )
+          else
+            SizedBox(width: r.s(40)),
+        ],
+      ),
+    );
+  }
+}
 
 /// Bouton réseau social
 class _SocialButton extends StatelessWidget {

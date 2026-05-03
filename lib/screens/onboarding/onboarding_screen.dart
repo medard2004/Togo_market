@@ -88,7 +88,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         Get.find<AuthController>().markOnboardingComplete();
                         Get.offNamed('/auth');
                       },
-                      child: const Text(
+                      child: Text(
                         'Passer',
                         style: TextStyle(
                           color: AppTheme.mutedForeground,
@@ -143,7 +143,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  SizedBox(height: 24),
                   TogoSlideUp(
                     delay: TogoMotion.cascade1,
                     child: AnimatedSwitcher(
@@ -169,7 +169,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                             children: [
                               TextSpan(
                                 text: '${_slides[_currentSlide].title1}\n',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontFamily: 'Plus Jakarta Sans',
                                   fontSize: 24,
                                   fontWeight: FontWeight.w800,
@@ -186,7 +186,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                 ),
                               TextSpan(
                                 text: _slides[_currentSlide].title2,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontFamily: 'Plus Jakarta Sans',
                                   fontSize: 24,
                                   fontWeight: FontWeight.w800,
@@ -196,11 +196,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                             ],
                           ),
                         ),
-                        const SizedBox(height: 8),
+                        SizedBox(height: 8),
                         Text(
                           _slides[_currentSlide].subtitle,
                           textAlign: TextAlign.center,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 14,
                             color: AppTheme.mutedForeground,
                           ),
@@ -209,7 +209,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  SizedBox(height: 20),
                   TogoSlideUp(
                     delay: TogoMotion.cascade2,
                     child: TogoPressableScale(
@@ -227,23 +227,23 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           children: [
                             Text(
                               _currentSlide < 2 ? 'Continuer' : 'Commencer',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontFamily: 'Plus Jakarta Sans',
                                 fontSize: 16,
                                 fontWeight: FontWeight.w700,
                                 color: Colors.white,
                               ),
                             ),
-                            const SizedBox(width: 5),
+                            SizedBox(width: 5),
                             if (_currentSlide < 2) ...[
-                              const Icon(Icons.arrow_forward,
+                              Icon(Icons.arrow_forward,
                                   size: 16, color: Colors.white),
-                              const SizedBox(width: 8),
+                              SizedBox(width: 8),
                             ],
                             if (_currentSlide == 2) ...[
-                              const Icon(Icons.rocket_launch,
+                              Icon(Icons.rocket_launch,
                                   size: 16, color: Colors.white),
-                              const SizedBox(width: 8),
+                              SizedBox(width: 8),
                             ],
                           ],
                         ),
@@ -298,9 +298,9 @@ class _SlideView extends StatelessWidget {
                   child: Column(
                     children: [
                       _chatBubble('Bonjour ! Le prix est négociable ?', true),
-                      const SizedBox(height: 6),
+                      SizedBox(height: 6),
                       _chatBubble('Oui ! 10% de réduction pour vous 😊', false),
-                      const SizedBox(height: 8),
+                      SizedBox(height: 8),
                       Row(
                         children: [
                           Expanded(
@@ -312,15 +312,15 @@ class _SlideView extends StatelessWidget {
                               ),
                             ),
                           ),
-                          const SizedBox(width: 8),
+                          SizedBox(width: 8),
                           Container(
                             width: 36,
                             height: 36,
-                            decoration: const BoxDecoration(
+                            decoration: BoxDecoration(
                               color: AppTheme.primary,
                               shape: BoxShape.circle,
                             ),
-                            child: const Icon(Icons.send,
+                            child: Icon(Icons.send,
                                 size: 16, color: Colors.white),
                           ),
                         ],
@@ -383,11 +383,11 @@ class _FloatingBadge extends StatelessWidget {
           children: [
             if (badge.icon != null) ...[
               Icon(badge.icon, size: 12, color: AppTheme.foreground),
-              const SizedBox(width: 4),
+              SizedBox(width: 4),
             ],
             Text(
               badge.label,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.w700,
                 color: AppTheme.foreground,
