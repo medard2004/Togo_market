@@ -320,14 +320,37 @@ class AppController extends GetxController {
 
   List<Product> searchProducts(String query) {
     final q = query.toLowerCase();
-    return products
-        .where(
-          (p) =>
-              p.title.toLowerCase().contains(q) ||
-              p.description.toLowerCase().contains(q) ||
-              p.category.toLowerCase().contains(q),
-        )
-        .toList();
+    
+    // Pour gérer la recherche sur le type de prix ("négociable" ou "fixe")
+    final searchNegociable = q.contains('negociable') || q.contains('négociable');
+    final searchFixe = q.contains('fixe') && !searchNegociable;
+
+    return products.where((p) {
+      final titleMatch = p.title.toLowerCase().contains(q);
+      final descMatch = p.description.toLowerCase().contains(q);
+      final locationMatch = p.location.toLowerCase().contains(q);
+      final conditionMatch = p.condition.toLowerCase().contains(q);
+      
+      final catMatch = (p.categoryObj?.nom ?? '').toLowerCase().contains(q);
+      
+      final boutiqueNomMatch = (p.boutiqueObj?.nom ?? '').toLowerCase().contains(q);
+      final boutiqueAdresseMatch = (p.boutiqueObj?.adresse ?? '').toLowerCase().contains(q);
+      final boutiqueDescMatch = (p.boutiqueObj?.description ?? '').toLowerCase().contains(q);
+
+      bool priceTypeMatch = false;
+      if (searchNegociable && p.isPriceNegotiable) priceTypeMatch = true;
+      if (searchFixe && !p.isPriceNegotiable) priceTypeMatch = true;
+
+      return titleMatch ||
+          descMatch ||
+          locationMatch ||
+          conditionMatch ||
+          catMatch ||
+          boutiqueNomMatch ||
+          boutiqueAdresseMatch ||
+          boutiqueDescMatch ||
+          priceTypeMatch;
+    }).toList();
   }
 
   List<Product> getSimilarProducts(String productId, String category) {
