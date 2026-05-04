@@ -418,7 +418,7 @@ class _ShopSettingsScreenState extends State<ShopSettingsScreen> {
           return Column(
             children: [
               children[index],
-              const Divider(height: 1, color: AppTheme.border, indent: 68),
+              Divider(height: 1, color: AppTheme.border, indent: 68),
             ],
           );
         }),
@@ -444,7 +444,7 @@ class _ShopSettingsScreenState extends State<ShopSettingsScreen> {
             Container(
               width: 40,
               height: 40,
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 color: AppTheme.primaryLight,
                 shape: BoxShape.circle,
               ),
@@ -456,14 +456,14 @@ class _ShopSettingsScreenState extends State<ShopSettingsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(title,
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
                           color: AppTheme.foreground)),
                   if (subtitle != null) const SizedBox(height: 1),
                   if (subtitle != null)
                     Text(subtitle,
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w400,
                             color: AppTheme.mutedForeground)),

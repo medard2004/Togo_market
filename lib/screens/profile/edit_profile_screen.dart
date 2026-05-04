@@ -103,7 +103,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       appBar: AppBar(
         backgroundColor: AppTheme.cardColor,
         elevation: 0,
-        title: const Text(
+        title: Text(
           'Modifier le profil',
           style: TextStyle(
             fontWeight: FontWeight.w800,
@@ -113,7 +113,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         ),
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppTheme.foreground),
+          icon: Icon(Icons.arrow_back, color: AppTheme.foreground),
           onPressed: Get.back,
         ),
         actions: [
@@ -201,7 +201,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 );
               }),
             ),
-            const SizedBox(height: 32),
+            SizedBox(height: 32),
 
             // Form Section
             Container(
@@ -214,7 +214,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Informations personnelles',
                     style: TextStyle(
                       fontSize: 16,
@@ -222,10 +222,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       color: AppTheme.foreground,
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  SizedBox(height: 20),
                   _buildField('Nom complet', _nameController,
                       hintText: 'Koffi Mensah', icon: Icons.person_outline),
-                  const SizedBox(height: 18),
+                  SizedBox(height: 18),
                   Obx(() {
                     final authCtrl = Get.find<AuthController>();
                     final user = authCtrl.currentUser.value;
@@ -251,7 +251,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       );
                     }
                   }),
-                  const SizedBox(height: 18),
+                  SizedBox(height: 18),
                   Obx(() {
                     final authCtrl = Get.find<AuthController>();
                     return _buildReadOnlyField(
@@ -264,7 +264,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 32),
+            SizedBox(height: 32),
 
             // Bottom Save Button
             ElevatedButton(
@@ -315,7 +315,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           padding: const EdgeInsets.only(left: 4, bottom: 8),
           child: Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w700,
               color: AppTheme.mutedForeground,
@@ -325,7 +325,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         TextFormField(
           controller: controller,
           keyboardType: keyboardType,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
             color: AppTheme.foreground,
@@ -369,7 +369,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           padding: const EdgeInsets.only(left: 4, bottom: 8),
           child: Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w700,
               color: AppTheme.mutedForeground,
@@ -387,7 +387,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             child: Row(
               children: [
                 if (icon != null) ...[
-                  Icon(icon, size: 20, color: locked ? AppTheme.mutedForeground : AppTheme.primary),
+                  Icon(icon,
+                      size: 20,
+                      color: locked
+                          ? AppTheme.mutedForeground
+                          : AppTheme.primary),
                   const SizedBox(width: 12),
                 ],
                 Expanded(
@@ -401,9 +405,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   ),
                 ),
                 locked
-                    ? const Icon(Icons.lock_outline_rounded,
+                    ? Icon(Icons.lock_outline_rounded,
                         size: 16, color: AppTheme.mutedForeground)
-                    : const Icon(Icons.arrow_forward_ios_rounded,
+                    : Icon(Icons.arrow_forward_ios_rounded,
                         size: 14, color: AppTheme.mutedForeground),
               ],
             ),

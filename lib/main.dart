@@ -2,8 +2,6 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-// import 'package:flutter_secure_storage/flutter_secure_storage.dart'; // utilisé uniquement par la ligne DEBUG commentée
 import 'package:get/get.dart';
 import 'package:toastification/toastification.dart';
 
@@ -46,8 +44,12 @@ import 'screens/notifications/notifications_screen.dart';
 import 'screens/settings/settings_screen.dart';
 import 'screens/favorites/favorites_screen.dart';
 import 'screens/help/help_screen.dart';
+import 'screens/settings/privacy_screen.dart';
 import 'screens/product/trending_explorer_screen.dart';
 import 'screens/product/nearby_explorer_screen.dart';
+import 'screens/explorer/trending_shops_screen.dart';
+import 'screens/explorer/nearby_shops_screen.dart';
+import 'screens/seller/individual_dashboard_screen.dart';
 
 // API
 import 'Api/core/api_client.dart';
@@ -79,7 +81,7 @@ void main() async {
 
   // Status bar style
   SystemChrome.setSystemUIOverlayStyle(
-    const SystemUiOverlayStyle(
+    SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: Brightness.dark,
     ),
@@ -125,7 +127,9 @@ class TogoMarketApp extends StatelessWidget {
       child: GetMaterialApp(
         title: 'Togo Market',
         debugShowCheckedModeBanner: false,
-        theme: AppTheme.theme,
+        theme: AppTheme.lightTheme,
+        darkTheme: AppTheme.darkTheme,
+        themeMode: ThemeMode.system,
         initialRoute: '/splash',
         transitionDuration: const Duration(milliseconds: 300),
         builder: (context, child) {
@@ -188,11 +192,16 @@ class TogoMarketApp extends StatelessWidget {
           togoPage('/my-products', () => const MyProductsScreen()),
           togoPage('/shop-settings', () => const ShopSettingsScreen()),
           togoPage('/settings', () => const SettingsScreen()),
+          togoPage('/privacy', () => const PrivacyScreen()),
           togoPage('/favorites', () => const FavoritesScreen()),
           togoPage('/orders', () => const OrdersScreen()),
           togoPage('/help', () => const HelpScreen()),
           togoPage('/trends', () => const TrendingExplorerScreen()),
           togoPage('/nearby', () => const NearbyExplorerScreen()),
+          togoPage('/trending-shops', () => const TrendingShopsScreen()),
+          togoPage('/nearby-shops', () => const NearbyShopsScreen()),
+          togoPage('/individual-dashboard',
+              () => const IndividualDashboardScreen()),
         ],
       ),
     );

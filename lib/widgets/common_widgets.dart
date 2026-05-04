@@ -95,7 +95,7 @@ class ProductCard extends StatelessWidget {
                             width: r.s(30),
                             height: r.s(30),
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.92),
+                              color: AppTheme.cardColor.withOpacity(0.92),
                               shape: BoxShape.circle,
                             ),
                             child: Icon(
@@ -165,10 +165,10 @@ class ProductCard extends StatelessWidget {
       child: Container(
         padding: EdgeInsets.all(r.s(3)),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppTheme.cardColor,
           borderRadius: BorderRadius.circular(r.rad(20)),
           boxShadow: AppTheme.shadowSm,
-          border: Border.all(color: Colors.white, width: 1.5),
+          border: Border.all(color: AppTheme.cardColor, width: 1.5),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -312,7 +312,7 @@ class ProductCard extends StatelessWidget {
                         ]),
                     child: CircleAvatar(
                       radius: r.s(42),
-                      backgroundColor: Colors.grey[200],
+                      backgroundColor: AppTheme.muted,
                       backgroundImage: logoUrl.isNotEmpty
                           ? CachedNetworkImageProvider(logoUrl)
                           : null,
@@ -354,9 +354,9 @@ class ProductCard extends StatelessWidget {
                   Container(
                     padding: EdgeInsets.symmetric(vertical: r.s(10)),
                     decoration: BoxDecoration(
-                      color: Colors.grey.withOpacity(0.05),
+                      color: AppTheme.muted.withOpacity(0.3),
                       borderRadius: BorderRadius.circular(r.rad(16)),
-                      border: Border.all(color: Colors.grey.withOpacity(0.1)),
+                      border: Border.all(color: AppTheme.border.withOpacity(0.2)),
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -510,7 +510,7 @@ class ProductCard extends StatelessWidget {
     if (imageUrl.isEmpty) {
       return Container(
         color: AppTheme.muted,
-        child: const Center(
+        child: Center(
           child:
               Icon(Icons.image_not_supported, color: AppTheme.mutedForeground),
         ),
@@ -528,7 +528,7 @@ class ProductCard extends StatelessWidget {
       ),
       errorWidget: (_, __, ___) => Container(
         color: AppTheme.muted,
-        child: const Center(
+        child: Center(
           child:
               Icon(Icons.image_not_supported, color: AppTheme.mutedForeground),
         ),
@@ -1127,12 +1127,12 @@ class ShopCarouselCard extends StatelessWidget {
               child: Center(
                 child: Container(
                   padding: EdgeInsets.all(r.s(3)),
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
+                  decoration: BoxDecoration(
+                    color: AppTheme.cardColor,
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                          color: Colors.black12,
+                          color: AppTheme.border.withOpacity(0.1),
                           blurRadius: 8,
                           offset: Offset(0, 4)),
                     ],
@@ -1154,15 +1154,15 @@ class ShopCarouselCard extends StatelessWidget {
                 padding:
                     EdgeInsets.symmetric(horizontal: r.s(8), vertical: r.s(4)),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.9),
+                  color: AppTheme.cardColor.withOpacity(0.9),
                   borderRadius: BorderRadius.circular(r.rad(12)),
                   boxShadow: AppTheme.shadowSm,
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.star_rounded,
+                    Icon(Icons.star_rounded,
                         color: Colors.amber, size: 12),
-                    const SizedBox(width: 2),
+                    SizedBox(width: 2),
                     Text(
                       boutique.noteMoyenne.toString(),
                       style: TextStyle(

@@ -48,7 +48,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
                     Colors.white,
                     onTap: () => Get.back(),
                   ),
-                  const Text(
+                  Text(
                     'Mes Annonces',
                     style: TextStyle(
                       fontSize: 18,
@@ -238,7 +238,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
                 Icon(Icons.inventory_2_outlined,
                     size: 64, color: AppTheme.mutedForeground.withOpacity(0.4)),
                 const SizedBox(height: 16),
-                const Text(
+                Text(
                   'Aucun article pour le moment',
                   style: TextStyle(
                     fontSize: 16,
@@ -247,7 +247,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                const Text(
+                Text(
                   'Ajoutez votre premier produit\nen cliquant sur le bouton ci-dessus.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
@@ -267,7 +267,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
           TogoSlideUp(
             child: Text(
               '${products.length} article${products.length > 1 ? 's' : ''} actif${products.length > 1 ? 's' : ''}',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 15,
                 color: AppTheme.mutedForeground,
                 fontWeight: FontWeight.w500,
@@ -289,8 +289,8 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
   }
 
   Widget _buildOrdersTab() {
-    return const Padding(
-      padding: EdgeInsets.only(top: 40),
+    return Padding(
+      padding: const EdgeInsets.only(top: 40),
       child: Center(
         child: Text(
           'Aucune commande pour le moment',
@@ -301,8 +301,8 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
   }
 
   Widget _buildMessagesTab() {
-    return const Padding(
-      padding: EdgeInsets.only(top: 40),
+    return Padding(
+      padding: const EdgeInsets.only(top: 40),
       child: Center(
         child: Text(
           'Aucun message pour le moment',
@@ -350,7 +350,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
               children: [
                 Text(
                   p.title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
                     color: AppTheme.foreground,
@@ -376,7 +376,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
                   ),
                   child: Text(
                     p.condition,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 11,
                       color: AppTheme.mutedForeground,
                       fontWeight: FontWeight.w600,
@@ -412,7 +412,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
       width: 72,
       height: 72,
       color: AppTheme.muted,
-      child: const Icon(Icons.image_not_supported,
+      child: Icon(Icons.image_not_supported,
           color: AppTheme.mutedForeground, size: 28),
     );
   }
@@ -444,7 +444,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
     return Container(
       width: 36,
       height: 36,
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: AppTheme.primaryLight,
         shape: BoxShape.circle,
       ),

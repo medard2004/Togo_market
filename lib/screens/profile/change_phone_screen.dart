@@ -97,7 +97,7 @@ class _ChangePhoneScreenState extends State<ChangePhoneScreen> {
       appBar: AppBar(
         backgroundColor: AppTheme.cardColor,
         elevation: 0,
-        title: const Text(
+        title: Text(
           'Modifier le numéro',
           style: TextStyle(
             fontWeight: FontWeight.w800,
@@ -107,7 +107,7 @@ class _ChangePhoneScreenState extends State<ChangePhoneScreen> {
         ),
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppTheme.foreground),
+          icon: Icon(Icons.arrow_back, color: AppTheme.foreground),
           onPressed: Get.back,
         ),
         bottom: PreferredSize(
@@ -120,7 +120,7 @@ class _ChangePhoneScreenState extends State<ChangePhoneScreen> {
         child: ListView(
           padding: const EdgeInsets.all(24),
           children: [
-            const Text(
+            Text(
               'Quel est votre nouveau numéro ?',
               style: TextStyle(
                 fontSize: 16,
@@ -128,15 +128,15 @@ class _ChangePhoneScreenState extends State<ChangePhoneScreen> {
                 color: AppTheme.foreground,
               ),
             ),
-            const SizedBox(height: 8),
-            const Text(
+            SizedBox(height: 8),
+            Text(
               'Assurez-vous que ce numéro est actif pour pouvoir recevoir vos notifications de commande.',
               style: TextStyle(
                 fontSize: 13,
                 color: AppTheme.mutedForeground,
               ),
             ),
-            const SizedBox(height: 32),
+            SizedBox(height: 32),
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
@@ -147,7 +147,7 @@ class _ChangePhoneScreenState extends State<ChangePhoneScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Padding(
+                  Padding(
                     padding: EdgeInsets.only(left: 4, bottom: 8),
                     child: Text(
                       'Numéro de Téléphone',
@@ -161,7 +161,7 @@ class _ChangePhoneScreenState extends State<ChangePhoneScreen> {
                   TextFormField(
                     controller: _phoneController,
                     keyboardType: TextInputType.phone,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                       color: AppTheme.foreground,
@@ -175,7 +175,7 @@ class _ChangePhoneScreenState extends State<ChangePhoneScreen> {
                     },
                     decoration: InputDecoration(
                       hintText: '+228 90 00 00 00',
-                      prefixIcon: const Icon(Icons.phone_android_outlined,
+                      prefixIcon: Icon(Icons.phone_android_outlined,
                           size: 20, color: AppTheme.primary),
                       filled: true,
                       fillColor: AppTheme.muted,
@@ -191,7 +191,7 @@ class _ChangePhoneScreenState extends State<ChangePhoneScreen> {
               ),
             ),
             const SizedBox(height: 40),
-              ElevatedButton(
+            ElevatedButton(
               onPressed: _isLoading ? null : _savePhone,
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.primary,
@@ -203,13 +203,14 @@ class _ChangePhoneScreenState extends State<ChangePhoneScreen> {
                 ),
                 padding: const EdgeInsets.symmetric(vertical: 16),
               ),
-              child: _isLoading 
-                ? const SizedBox(
-                    width: 24, 
-                    height: 24, 
-                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
-                  )
-                : const Text(
+              child: _isLoading
+                  ? const SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(
+                          color: Colors.white, strokeWidth: 2),
+                    )
+                  : const Text(
                 'Enregistrer le numéro',
                 style: TextStyle(
                   fontSize: 16,

@@ -39,10 +39,10 @@ class ProfileMenuItem extends StatelessWidget {
                 ),
                 child: Icon(icon, size: 18, color: AppTheme.primary),
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: 12),
               Expanded(
                   child: Text(label,
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontSize: 14, fontWeight: FontWeight.w600))),
               if (badge != null) ...[
                 Container(
@@ -53,15 +53,15 @@ class ProfileMenuItem extends StatelessWidget {
                   ),
                   child: Text(
                     badge!,
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
                         color: AppTheme.primary),
                   ),
                 ),
-                const SizedBox(width: 10),
+                SizedBox(width: 10),
               ],
-              const Icon(Icons.chevron_right,
+              Icon(Icons.chevron_right,
                   color: AppTheme.mutedForeground, size: 20),
             ],
           ),

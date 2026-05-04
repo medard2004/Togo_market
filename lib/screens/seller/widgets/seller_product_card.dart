@@ -22,7 +22,7 @@ class SellerProductCard extends StatelessWidget {
       child: Container(
         padding: EdgeInsets.all(r.s(10)),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppTheme.cardColor,
           borderRadius: BorderRadius.circular(r.rad(25)),
           boxShadow: [
             BoxShadow(
@@ -42,7 +42,7 @@ class SellerProductCard extends StatelessWidget {
                   Container(
                     width: double.infinity,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF5F6F8),
+                      color: AppTheme.muted,
                       borderRadius: BorderRadius.circular(r.rad(22)),
                     ),
                     child: ClipRRect(
@@ -57,7 +57,7 @@ class SellerProductCard extends StatelessWidget {
                         ),
                         errorWidget: (context, url, error) => Container(
                           color: AppTheme.muted,
-                          child: const Icon(Icons.image_not_supported, color: AppTheme.mutedForeground),
+                          child: Icon(Icons.image_not_supported, color: AppTheme.mutedForeground),
                         ),
                       ),
                     ),
@@ -126,8 +126,8 @@ class SellerProductCard extends StatelessWidget {
                         onTap: () => ctrl.toggleFavorite(product.id),
                         child: Container(
                           padding: EdgeInsets.all(r.s(4)),
-                          decoration: const BoxDecoration(
-                            color: Colors.white,
+                          decoration: BoxDecoration(
+                            color: AppTheme.cardColor,
                             shape: BoxShape.circle,
                           ),
                           child: PhosphorIcon(
@@ -135,7 +135,7 @@ class SellerProductCard extends StatelessWidget {
                                 ? PhosphorIcons.heart(PhosphorIconsStyle.fill)
                                 : PhosphorIcons.heart(),
                             size: r.s(14),
-                            color: fav ? AppTheme.primary : Colors.black,
+                            color: fav ? AppTheme.primary : AppTheme.foreground,
                           ),
                         ),
                       );
@@ -157,7 +157,7 @@ class SellerProductCard extends StatelessWidget {
                       style: TextStyle(
                         fontSize: r.fs(12),
                         fontWeight: FontWeight.w900,
-                        color: Colors.black,
+                        color: AppTheme.foreground,
                         letterSpacing: -0.5,
                       ),
                     ),

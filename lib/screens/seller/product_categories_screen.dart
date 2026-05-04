@@ -56,13 +56,13 @@ class _ProductCategoriesScreenState extends State<ProductCategoriesScreen> {
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppTheme.background,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppTheme.primary),
+          icon: Icon(Icons.arrow_back, color: AppTheme.primary),
           onPressed: Get.back,
         ),
-        title: const Text(
+        title: Text(
           'Catégories de produits',
           style: TextStyle(fontWeight: FontWeight.w800, fontSize: 20),
         ),
@@ -74,7 +74,7 @@ class _ProductCategoriesScreenState extends State<ProductCategoriesScreen> {
               foregroundColor:
                   hasSelected ? AppTheme.primary : AppTheme.mutedForeground,
             ),
-            child: const Text(
+            child: Text(
               'Sauvegarder',
               style: TextStyle(
                 fontWeight: FontWeight.w700,
@@ -82,13 +82,13 @@ class _ProductCategoriesScreenState extends State<ProductCategoriesScreen> {
               ),
             ),
           ),
-          const SizedBox(width: 8),
+          SizedBox(width: 8),
         ],
       ),
       body: ListView.separated(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
         itemCount: _categories.length + 1,
-        separatorBuilder: (_, __) => const SizedBox(height: 14),
+        separatorBuilder: (_, __) => SizedBox(height: 14),
         itemBuilder: (context, index) {
           if (index == 0) {
             return _buildHeader();
@@ -117,18 +117,18 @@ class _ProductCategoriesScreenState extends State<ProductCategoriesScreen> {
               Container(
                 width: 44,
                 height: 44,
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   color: AppTheme.primary,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.category_outlined,
+                child: Icon(Icons.category_outlined,
                     color: Colors.white, size: 24),
               ),
-              const SizedBox(width: 14),
+              SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
+                  children: [
                     Text(
                       'Choisissez les catégories correspondant à vos produits.',
                       style: TextStyle(fontSize: 14, height: 1.6),
@@ -147,17 +147,17 @@ class _ProductCategoriesScreenState extends State<ProductCategoriesScreen> {
             ],
           ),
         ),
-        const SizedBox(height: 12),
-        const Text(
+        SizedBox(height: 12),
+        Text(
           'Chaque catégorie affiche le nombre d’articles déjà publiés.',
           style: TextStyle(
               fontSize: 13, color: AppTheme.mutedForeground, height: 1.5),
         ),
         if (_selectedCategories.isNotEmpty) ...[
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           Text(
             'Catégories sélectionnées : ${_selectedCategories.length}',
-            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
           ),
         ],
       ],
@@ -190,7 +190,7 @@ class _ProductCategoriesScreenState extends State<ProductCategoriesScreen> {
               child: Icon(category.icon,
                   color: selected ? Colors.white : AppTheme.primary, size: 24),
             ),
-            const SizedBox(width: 14),
+            SizedBox(width: 14),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -203,10 +203,10 @@ class _ProductCategoriesScreenState extends State<ProductCategoriesScreen> {
                       color: selected ? AppTheme.primary : Colors.black,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  SizedBox(height: 4),
                   Text(
                     '$count articles publiés',
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 13, color: AppTheme.mutedForeground),
                   ),
                 ],

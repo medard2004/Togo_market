@@ -129,6 +129,7 @@ class _ChatScreenState extends State<ChatScreen> {
     return Scaffold(
       resizeToAvoidBottomInset: true,
       backgroundColor: AppTheme.background,
+
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(kToolbarHeight),
         child: Obx(() {
@@ -168,6 +169,7 @@ class _ChatScreenState extends State<ChatScreen> {
             leading: IconButton(
               icon: const Icon(Icons.arrow_back, size: 18),
               onPressed: Get.back,
+
             ),
             title: Row(
               children: [
@@ -180,7 +182,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   CircleAvatar(
                     radius: 18,
                     backgroundColor: AppTheme.muted,
-                    child: const Icon(Icons.person, size: 18, color: AppTheme.mutedForeground),
+                    child: Icon(Icons.person, size: 18, color: AppTheme.mutedForeground),
                   ),
                 const SizedBox(width: 10),
                 Expanded(
@@ -192,7 +194,7 @@ class _ChatScreenState extends State<ChatScreen> {
                         style: const TextStyle(
                             fontSize: 14, fontWeight: FontWeight.w700),
                       ),
-                      const Text(
+                      Text(
                         'En ligne',
                         style: TextStyle(
                             fontSize: 11, color: AppTheme.mutedForeground),
@@ -251,7 +253,7 @@ class _ChatScreenState extends State<ChatScreen> {
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 16),
               itemCount: _quickReplies.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              separatorBuilder: (_, __) => SizedBox(width: 8),
               itemBuilder: (_, i) => GestureDetector(
                 onTap: () => _send(_quickReplies[i]),
                 child: Container(
@@ -264,19 +266,19 @@ class _ChatScreenState extends State<ChatScreen> {
                   ),
                   child: Text(
                     _quickReplies[i],
-                    style: const TextStyle(fontSize: 13),
+                    style: TextStyle(fontSize: 13),
                   ),
                 ),
               ),
             ),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           // Input
           Container(
             padding: EdgeInsets.fromLTRB(
                 16, 4, 16, MediaQuery.of(context).padding.bottom + 8),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppTheme.cardColor,
               border: Border(
                   top: BorderSide(color: AppTheme.border.withOpacity(0.3))),
             ),
@@ -332,7 +334,7 @@ class _ChatScreenState extends State<ChatScreen> {
                         ),
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    SizedBox(width: 8),
                     GestureDetector(
                       onTap: _send,
                       child: Container(
@@ -343,7 +345,7 @@ class _ChatScreenState extends State<ChatScreen> {
                           shape: BoxShape.circle,
                           boxShadow: AppTheme.shadowPrimary,
                         ),
-                        child: const Icon(Icons.send,
+                        child: Icon(Icons.send,
                             color: Colors.white, size: 20),
                       ),
                     ),
@@ -383,10 +385,10 @@ class _MessageBubble extends StatelessWidget {
                   ? CachedNetworkImageProvider(ApiConstants.resolveImageUrl(sellerAvatar))
                   : null,
               child: sellerAvatar.isEmpty
-                  ? const Icon(Icons.person, size: 16)
+                  ? Icon(Icons.person, size: 16)
                   : null,
             ),
-            const SizedBox(width: 8),
+            SizedBox(width: 8),
           ],
           Container(
             constraints: BoxConstraints(
@@ -425,7 +427,7 @@ class _MessageBubble extends StatelessWidget {
                       ),
                     ),
                   ),
-                const SizedBox(height: 4),
+                SizedBox(height: 4),
                 Text(
                   '${message.timestamp.hour.toString().padLeft(2, '0')}:${message.timestamp.minute.toString().padLeft(2, '0')}',
                   style: TextStyle(
@@ -461,7 +463,7 @@ class _TypingIndicator extends StatelessWidget {
               backgroundImage:
                   CachedNetworkImageProvider(ApiConstants.resolveImageUrl(seller.avatar as String)),
             ),
-          const SizedBox(width: 8),
+          SizedBox(width: 8),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             decoration: BoxDecoration(
@@ -471,9 +473,9 @@ class _TypingIndicator extends StatelessWidget {
             child: Row(
               children: [
                 _Dot(delay: 0),
-                const SizedBox(width: 4),
+                SizedBox(width: 4),
                 _Dot(delay: 200),
-                const SizedBox(width: 4),
+                SizedBox(width: 4),
                 _Dot(delay: 400),
               ],
             ),
@@ -524,7 +526,7 @@ class _DotState extends State<_Dot> with SingleTickerProviderStateMixin {
         child: Container(
           width: 6,
           height: 6,
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             color: AppTheme.mutedForeground,
             shape: BoxShape.circle,
           ),
@@ -614,11 +616,11 @@ class _MessageProductPreview extends StatelessWidget {
         padding: EdgeInsets.all(r.s(2)),
         width: double.infinity,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppTheme.cardColor,
           borderRadius: BorderRadius.circular(r.rad(18)),
           boxShadow: [
             BoxShadow(
-                color: Colors.black.withOpacity(0.04),
+                color: AppTheme.border.withOpacity(0.1),
                 blurRadius: 8,
                 offset: const Offset(0, 3)),
           ],

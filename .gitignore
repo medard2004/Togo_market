@@ -43,3 +43,8 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Local analysis dumps
+analysis*.txt
+final_analysis*.txt
+files_with_colors.txt

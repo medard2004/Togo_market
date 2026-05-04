@@ -73,9 +73,9 @@ class _EditProductScreenState extends State<EditProductScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.error_outline, size: 60, color: AppTheme.mutedForeground),
+              Icon(Icons.error_outline, size: 60, color: AppTheme.mutedForeground),
               const SizedBox(height: 16),
-              const Text('Produit introuvable', style: TextStyle(fontSize: 16, color: AppTheme.mutedForeground)),
+              Text('Produit introuvable', style: TextStyle(fontSize: 16, color: AppTheme.mutedForeground)),
               const SizedBox(height: 24),
               AppButton(label: 'Retour', onTap: Get.back),
             ],
@@ -85,7 +85,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
     }
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: const SystemUiOverlayStyle(
+      value: SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
         statusBarIconBrightness: Brightness.dark,
         systemNavigationBarColor: AppTheme.background,
@@ -121,7 +121,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
                         ],
                       ),
                       const SizedBox(height: 4),
-                      const Text('Ajoutez au moins 1 photo (5 maximum).', style: TextStyle(fontSize: 12, color: AppTheme.mutedForeground)),
+                      Text('Ajoutez au moins 1 photo (5 maximum).', style: TextStyle(fontSize: 12, color: AppTheme.mutedForeground)),
                       const SizedBox(height: 12),
                       Obx(() {
                         final totalCurrentImages = _controller.existingImages.length + _controller.images.length;
@@ -137,11 +137,11 @@ class _EditProductScreenState extends State<EditProductScreen> {
                                 borderRadius: BorderRadius.circular(16),
                                 border: Border.all(color: AppTheme.primary, style: BorderStyle.solid),
                               ),
-                              child: const Column(
+                              child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Icon(Icons.camera_alt_outlined, size: 32, color: AppTheme.primary),
-                                  SizedBox(height: 8),
+                                  const SizedBox(height: 8),
                                   Text('Appuyez pour ajouter des photos', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.primary)),
                                 ],
                               ),
@@ -174,7 +174,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
                                         height: 80,
                                         fit: BoxFit.cover,
                                         placeholder: (_, __) => Container(color: AppTheme.muted, width: 80, height: 80),
-                                        errorWidget: (_, __, ___) => Container(color: AppTheme.muted, width: 80, height: 80, child: const Icon(Icons.broken_image, color: AppTheme.mutedForeground)),
+                                        errorWidget: (_, __, ___) => Container(color: AppTheme.muted, width: 80, height: 80, child: Icon(Icons.broken_image, color: AppTheme.mutedForeground)),
                                       ),
                                     ),
                                     Positioned(
@@ -231,7 +231,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
                                       borderRadius: BorderRadius.circular(12),
                                       border: Border.all(color: AppTheme.primary, style: BorderStyle.solid),
                                     ),
-                                    child: const Icon(Icons.add, color: AppTheme.primary, size: 28),
+                                    child: Icon(Icons.add, color: AppTheme.primary, size: 28),
                                   ),
                                 ),
                             ],
@@ -319,7 +319,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
                                 child: Obx(() {
                                   final selectedId = _controller.selectedCategory.value;
                                   if (selectedId == null) {
-                                    return const Row(
+                                    return Row(
                                       children: [
                                         Expanded(
                                           child: Text('Sélectionner', style: TextStyle(fontSize: 12, color: AppTheme.mutedForeground)),
@@ -332,7 +332,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
                                   final allFlat = appCtrl.allFlatCategories;
                                   final matchingCat = allFlat.firstWhereOrNull((c) => c.id == selectedId);
                                   if (matchingCat == null) {
-                                    return const Row(
+                                    return Row(
                                       children: [
                                         Expanded(
                                           child: Text('Sélectionner', style: TextStyle(fontSize: 12, color: AppTheme.mutedForeground)),
@@ -346,9 +346,9 @@ class _EditProductScreenState extends State<EditProductScreen> {
                                       Icon(CategoryIconHelper.getIcon(matchingCat.slug), size: 16, color: AppTheme.primary),
                                       const SizedBox(width: 8),
                                       Expanded(
-                                        child: Text(matchingCat.nom, style: const TextStyle(fontSize: 12, color: AppTheme.foreground), overflow: TextOverflow.ellipsis),
+                                        child: Text(matchingCat.nom, style: TextStyle(fontSize: 12, color: AppTheme.foreground), overflow: TextOverflow.ellipsis),
                                       ),
-                                      const Icon(Icons.edit, size: 14, color: AppTheme.primary),
+                                      Icon(Icons.edit, size: 14, color: AppTheme.primary),
                                     ],
                                   );
                                 }),

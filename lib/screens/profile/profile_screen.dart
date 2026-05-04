@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/bottom_nav.dart';
 import '../../Api/provider/auth_controller.dart';
@@ -27,12 +26,12 @@ class ProfileScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: AppTheme.cardColor,
         elevation: 1,
-        shadowColor: Colors.black.withOpacity(0.08),
+        shadowColor: AppTheme.border.withOpacity(0.1),
         automaticallyImplyLeading: false,
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(bottom: Radius.circular(22)),
         ),
-        title: const Text(
+        title: Text(
           'Profil',
           style: TextStyle(
             fontWeight: FontWeight.w800,
@@ -45,7 +44,7 @@ class ProfileScreen extends StatelessWidget {
             padding: const EdgeInsets.only(right: 8),
             child: IconButton(
               onPressed: () => Get.toNamed('/settings'),
-              icon: const Icon(Icons.settings_outlined,
+              icon: Icon(Icons.settings_outlined,
                   color: AppTheme.foreground),
             ),
           ),
@@ -85,7 +84,7 @@ class ProfileScreen extends StatelessWidget {
                             Obx(() {
                               final user = authCtrl.currentUser.value;
                               return Text(user?.nom ?? 'Utilisateur',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                       fontSize: 22,
                                       fontWeight: FontWeight.w900,
                                       color: AppTheme.foreground));
@@ -94,7 +93,9 @@ class ProfileScreen extends StatelessWidget {
                             Obx(() {
                               final user = authCtrl.currentUser.value;
                               final phone = user?.telephone ?? '';
-                              final displayPhone = phone.startsWith('tmp_') ? 'Aucun numéro' : phone;
+                              final displayPhone = phone.startsWith('tmp_')
+                                  ? 'Aucun numéro'
+                                  : phone;
                               final email = user?.email ?? '';
 
                               return Column(
@@ -103,19 +104,19 @@ class ProfileScreen extends StatelessWidget {
                                   if (email.isNotEmpty)
                                     Text(
                                       email,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                           fontSize: 14,
                                           color: AppTheme.mutedForeground),
                                     ),
                                   if (displayPhone.isNotEmpty)
                                     Text(
                                       displayPhone,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                           fontSize: 14,
                                           color: AppTheme.mutedForeground),
                                     )
-                                  else if (email.isEmpty) // Si les deux sont vides
-                                    const Text(
+                                  else if (email.isEmpty)
+                                    Text(
                                       'Aucun contact',
                                       style: TextStyle(
                                           fontSize: 14,
@@ -131,37 +132,80 @@ class ProfileScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 18),
                   Obx(() {
-                      final user = authCtrl.currentUser.value;
-                      final isIncomplete =
-                          user == null || user.needsOnboardingProfile;
-                      return SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          onPressed: () => Get.toNamed(isIncomplete ? '/profile-setup' : '/edit-profile'),
-                          icon: Icon(isIncomplete ? Icons.person_add : Icons.edit, size: 18),
-                          label: Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            child: Text(isIncomplete ? 'Compléter le profil' : 'Modifier le profil',
-                                style: const TextStyle(fontSize: 15)),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppTheme.primary,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20),
-                            ),
+                    final user = authCtrl.currentUser.value;
+                    final isIncomplete =
+                        user == null || user.needsOnboardingProfile;
+                    return SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () => Get.toNamed(
+                            isIncomplete ? '/profile-setup' : '/edit-profile'),
+                        icon: Icon(
+                            isIncomplete ? Icons.person_add : Icons.edit,
+                            size: 18),
+                        label: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          child: Text(
+                              isIncomplete
+                                  ? 'Compléter le profil'
+                                  : 'Modifier le profil',
+                              style: const TextStyle(fontSize: 15)),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.primary,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
                           ),
                         ),
-                      );
-                    }),
+                      ),
+                    );
+                  }),
                 ],
               ),
             ),
             const SizedBox(height: 18),
+            Row(
+              children: [
+                Expanded(
+                  child: ProfileStatCard(
+                    icon: Icons.inventory_2_outlined,
+                    value: '12',
+                    label: 'Annonces',
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: ProfileStatCard(
+                    icon: Icons.shopping_bag_outlined,
+                    value: '24',
+                    label: 'Ventes',
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: ProfileStatCard(
+                    icon: Icons.star_border,
+                    value: '4.8',
+                    label: 'Note',
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: ProfileStatCard(
+                    icon: Icons.remove_red_eye_outlined,
+                    value: '156',
+                    label: 'Vues',
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
             Align(
               alignment: Alignment.centerLeft,
               child: Text(
                 'MON COMPTE',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w800,
                   color: AppTheme.mutedForeground,
@@ -169,7 +213,7 @@ class ProfileScreen extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             Container(
               decoration: BoxDecoration(
                 color: AppTheme.cardColor,
@@ -186,7 +230,7 @@ class ProfileScreen extends StatelessWidget {
                     onTap: () => Get.toNamed('/orders'),
                     flat: true,
                   ),
-                  const Divider(height: 1, color: AppTheme.border),
+                  Divider(height: 1, color: AppTheme.border),
                   Obx(() {
                     final favCount =
                         Get.find<AppController>().favorites.length;
@@ -198,7 +242,7 @@ class ProfileScreen extends StatelessWidget {
                       flat: true,
                     );
                   }),
-                  const Divider(height: 1, color: AppTheme.border),
+                  Divider(height: 1, color: AppTheme.border),
                   ProfileMenuItem(
                     icon: Icons.inventory_2_outlined,
                     label: 'Mes annonces',
@@ -206,14 +250,29 @@ class ProfileScreen extends StatelessWidget {
                     onTap: () => Get.toNamed('/my-products'),
                     flat: true,
                   ),
-                  const Divider(height: 1, color: AppTheme.border),
+                  Divider(height: 1, color: AppTheme.border),
+                  ProfileMenuItem(
+                    icon: Icons.storefront_outlined,
+                    label: 'Espace Vendeur Pro',
+                    onTap: () => Get.toNamed('/dashboard'),
+                    flat: true,
+                  ),
+                  Divider(height: 1, color: AppTheme.border),
+                  ProfileMenuItem(
+                    icon: Icons.inventory_2_outlined,
+                    label: 'Mes annonces (Particulier)',
+                    badge: '12',
+                    onTap: () => Get.toNamed('/individual-dashboard'),
+                    flat: true,
+                  ),
+                  Divider(height: 1, color: AppTheme.border),
                   ProfileMenuItem(
                     icon: Icons.settings_outlined,
                     label: 'Paramètres',
                     onTap: () => Get.toNamed('/settings'),
                     flat: true,
                   ),
-                  const Divider(height: 1, color: AppTheme.border),
+                  Divider(height: 1, color: AppTheme.border),
                   ProfileMenuItem(
                     icon: Icons.help_outline,
                     label: 'Aide & Support',
@@ -223,7 +282,7 @@ class ProfileScreen extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             GestureDetector(
               onTap: () async {
                 Get.dialog(
@@ -238,10 +297,10 @@ class ProfileScreen extends StatelessWidget {
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFFF0F2),
+                  color: AppTheme.destructive.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(18),
                 ),
-                child: const Center(
+                child: Center(
                   child: Text(
                     'Se déconnecter',
                     style: TextStyle(
@@ -260,3 +319,4 @@ class ProfileScreen extends StatelessWidget {
     ));
   }
 }
+

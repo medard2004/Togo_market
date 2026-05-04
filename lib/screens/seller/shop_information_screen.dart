@@ -140,7 +140,7 @@ class ShopInformationScreen extends StatelessWidget {
                                 : null,
                           ),
                           child: boutique.logoUrl.isEmpty 
-                              ? const Icon(Icons.storefront, color: AppTheme.primary, size: 32)
+                              ? Icon(Icons.storefront, color: AppTheme.primary, size: 32)
                               : null,
                         ),
                         SizedBox(width: r.s(14)),
@@ -150,7 +150,7 @@ class ShopInformationScreen extends StatelessWidget {
                             children: [
                               Text(
                                 boutique.nom,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 20,
                                   fontWeight: FontWeight.w800,
                                   color: AppTheme.foreground,
@@ -159,7 +159,7 @@ class ShopInformationScreen extends StatelessWidget {
                               const SizedBox(height: 6),
                               Text(
                                 locationStr,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 14,
                                   color: AppTheme.mutedForeground,
                                   fontWeight: FontWeight.w500,
@@ -259,7 +259,7 @@ class ShopInformationScreen extends StatelessWidget {
                     )),
                 const SizedBox(height: 4),
                 Text(value,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       color: AppTheme.foreground,
                     )),

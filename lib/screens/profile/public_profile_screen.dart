@@ -14,7 +14,6 @@ class PublicProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final r = R(context);
     final id = Get.parameters['id'] ?? '';
-    
     // Initialiser le contrôleur pour cet ID
     final ctrl = Get.put(PublicProfileController(id), tag: id);
 
@@ -34,8 +33,8 @@ class PublicProfileScreen extends StatelessWidget {
         }
 
         final products = ctrl.products;
-        final avatarUrl = user.avatarUrl != null && user.avatarUrl!.isNotEmpty 
-            ? ApiConstants.resolveImageUrl(user.avatarUrl!) 
+        final avatarUrl = user.avatarUrl != null && user.avatarUrl!.isNotEmpty
+            ? ApiConstants.resolveImageUrl(user.avatarUrl!)
             : '';
 
         return CustomScrollView(
@@ -86,12 +85,15 @@ class PublicProfileScreen extends StatelessWidget {
                           ),
                           child: CircleAvatar(
                             radius: r.s(45),
-                            backgroundColor: AppTheme.secondary.withOpacity(0.2),
-                            backgroundImage: avatarUrl.isNotEmpty 
-                                ? CachedNetworkImageProvider(avatarUrl) 
+                            backgroundColor:
+                                AppTheme.secondary.withOpacity(0.2),
+                            backgroundImage: avatarUrl.isNotEmpty
+                                ? CachedNetworkImageProvider(avatarUrl)
                                 : null,
-                            child: avatarUrl.isEmpty 
-                                ? Icon(Icons.person, size: r.s(45), color: AppTheme.secondary) 
+                            child: avatarUrl.isEmpty
+                                ? Icon(Icons.person,
+                                    size: r.s(45),
+                                    color: AppTheme.secondary)
                                 : null,
                           ),
                         ),
@@ -218,19 +220,31 @@ class PublicProfileScreen extends StatelessWidget {
         if (user == null) return const SizedBox();
 
         return Container(
-          padding: EdgeInsets.fromLTRB(r.s(20), r.s(12), r.s(20), MediaQuery.of(context).padding.bottom + r.s(12)),
+          padding: EdgeInsets.fromLTRB(
+            r.s(20),
+            r.s(12),
+            r.s(20),
+            MediaQuery.of(context).padding.bottom + r.s(12),
+          ),
           decoration: BoxDecoration(
             color: Colors.white,
             boxShadow: [
-              BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, -4)),
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 10,
+                offset: const Offset(0, -4),
+              ),
             ],
           ),
           child: ElevatedButton(
-            onPressed: () => Get.toNamed('/chat/${user.id}', arguments: user),
+            onPressed: () =>
+                Get.toNamed('/chat/${user.id}', arguments: user),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.primary,
               padding: EdgeInsets.symmetric(vertical: r.s(15)),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(r.rad(16))),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(r.rad(16)),
+              ),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -239,7 +253,8 @@ class PublicProfileScreen extends StatelessWidget {
                 SizedBox(width: r.s(10)),
                 Text(
                   'Contacter ${user.nom ?? 'le vendeur'}',
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                      color: Colors.white, fontWeight: FontWeight.bold),
                 ),
               ],
             ),

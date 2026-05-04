@@ -12,7 +12,7 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return Obx(() => Scaffold(
       backgroundColor: AppTheme.background,
       body: SafeArea(
         child: Column(
@@ -67,6 +67,6 @@ class HomeScreen extends StatelessWidget {
         ),
       ),
       bottomNavigationBar: const BottomNavBar(currentIndex: 0),
-    );
+    ));
   }
 }

@@ -152,23 +152,16 @@ class _TrendingExplorerScreenState extends State<TrendingExplorerScreen> {
                 ),
                 slivers: [
                   SliverToBoxAdapter(
-                    child: SizedBox(
-                      height: MediaQuery.of(context).padding.top + kToolbarHeight + 10,
-                    ),
-                  ),
-                  SliverToBoxAdapter(
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            'Découvrez ce qui fait fureur à Lomé en ce moment.',
-                            style: TextStyle(
-                              fontSize: r.fs(13),
-                              color: AppTheme.mutedForeground,
-                              fontWeight: FontWeight.w500,
-                            ),
+                          SizedBox(
+                            height:
+                                MediaQuery.of(context).padding.top +
+                                    kToolbarHeight +
+                                    10,
                           ),
                           const SizedBox(height: 20),
                           SizedBox(
@@ -176,19 +169,26 @@ class _TrendingExplorerScreenState extends State<TrendingExplorerScreen> {
                             child: ListView.separated(
                               scrollDirection: Axis.horizontal,
                               itemCount: _filters.length,
-                              separatorBuilder: (_, __) => const SizedBox(width: 10),
+                              separatorBuilder: (_, __) =>
+                                  const SizedBox(width: 10),
                               itemBuilder: (_, i) {
                                 final f = _filters[i];
                                 final active = _selectedFilter == f;
                                 return GestureDetector(
-                                  onTap: () => setState(() => _selectedFilter = f),
+                                  onTap: () =>
+                                      setState(() => _selectedFilter = f),
                                   child: AnimatedContainer(
                                     duration: const Duration(milliseconds: 200),
-                                    padding: const EdgeInsets.symmetric(horizontal: 18),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 18),
                                     decoration: BoxDecoration(
-                                      color: active ? Colors.orange : AppTheme.cardColor,
+                                      color: active
+                                          ? Colors.orange
+                                          : AppTheme.cardColor,
                                       borderRadius: BorderRadius.circular(20),
-                                      boxShadow: active ? AppTheme.shadowPrimary : AppTheme.shadowCard,
+                                      boxShadow: active
+                                          ? AppTheme.shadowPrimary
+                                          : AppTheme.shadowCard,
                                     ),
                                     child: Center(
                                       child: Text(
@@ -196,7 +196,9 @@ class _TrendingExplorerScreenState extends State<TrendingExplorerScreen> {
                                         style: TextStyle(
                                           fontSize: 12,
                                           fontWeight: FontWeight.w700,
-                                          color: active ? Colors.white : AppTheme.mutedForeground,
+                                          color: active
+                                              ? Colors.white
+                                              : AppTheme.mutedForeground,
                                         ),
                                       ),
                                     ),
@@ -210,40 +212,6 @@ class _TrendingExplorerScreenState extends State<TrendingExplorerScreen> {
                       ),
                     ),
                   ),
-                  if (_error != null && _items.isEmpty)
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.all(24),
-                        child: Column(
-                          children: [
-                            Text(
-                              'Impossible de charger les tendances.',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(color: AppTheme.mutedForeground, fontSize: r.fs(14)),
-                            ),
-                            const SizedBox(height: 12),
-                            TextButton(
-                              onPressed: () => _loadPage(1, reset: true),
-                              child: const Text('Réessayer'),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  if (visible.isEmpty && !_firstLoad && _error == null)
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.all(32),
-                        child: Center(
-                          child: Text(
-                            _selectedFilter == 'Tout'
-                                ? 'Aucun produit pour le moment.'
-                                : 'Aucun produit dans cette catégorie.',
-                            style: TextStyle(color: AppTheme.mutedForeground, fontSize: r.fs(14)),
-                          ),
-                        ),
-                      ),
-                    ),
                   if (visible.isNotEmpty)
                     SliverPadding(
                       padding: const EdgeInsets.fromLTRB(16, 12, 16, 40),
@@ -324,7 +292,7 @@ class _ExplorerAppBar extends StatelessWidget implements PreferredSizeWidget {
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
         child: AppBar(
-          backgroundColor: Colors.white.withValues(alpha: 0.85),
+          backgroundColor: AppTheme.cardColor.withOpacity(0.85),
           elevation: 0,
           leadingWidth: 60,
           leading: Center(
@@ -332,7 +300,7 @@ class _ExplorerAppBar extends StatelessWidget implements PreferredSizeWidget {
           ),
           title: Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppTheme.foreground,
               fontWeight: FontWeight.w800,
               fontSize: 16,

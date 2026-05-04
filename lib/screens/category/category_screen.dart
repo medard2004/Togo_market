@@ -100,7 +100,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                         controller: _searchCtrl,
                         decoration: InputDecoration(
                           hintText: 'Rechercher dans les catégories...',
-                          prefixIcon: const Icon(Icons.search,
+                          prefixIcon: Icon(Icons.search,
                               size: 18, color: AppTheme.mutedForeground),
                           suffixIcon: _searchQuery.isNotEmpty
                               ? GestureDetector(
@@ -108,7 +108,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                                     _searchCtrl.clear();
                                     setState(() => _searchQuery = '');
                                   },
-                                  child: const Icon(Icons.close,
+                                  child: Icon(Icons.close,
                                       size: 16,
                                       color: AppTheme.mutedForeground),
                                 )
@@ -269,8 +269,8 @@ class _CategoryScreenState extends State<CategoryScreen> {
                             ),
                           ),
                         ),
-                        const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 8),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
                           child: Text('—',
                               style: TextStyle(
                                   color: AppTheme.mutedForeground)),
@@ -315,7 +315,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                 children: [
                   Text(
                     '${products.length} résultat${products.length != 1 ? 's' : ''}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
                       color: AppTheme.mutedForeground,
@@ -335,7 +335,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                           Icon(Icons.search_off_rounded,
                               size: 48, color: AppTheme.mutedForeground),
                           const SizedBox(height: 12),
-                          const Text(
+                          Text(
                             'Aucun produit trouvé',
                             style: TextStyle(
                               fontSize: 16,
@@ -344,7 +344,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                             ),
                           ),
                           const SizedBox(height: 6),
-                          const Text(
+                          Text(
                             'Modifiez vos filtres',
                             style: TextStyle(
                               fontSize: 13,

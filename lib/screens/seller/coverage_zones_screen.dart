@@ -80,9 +80,9 @@ class _CoverageZonesScreenState extends State<CoverageZonesScreen> {
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
-        title: const Text('Zones de couverture'),
+        title: Text('Zones de couverture'),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppTheme.primary),
+          icon: Icon(Icons.arrow_back, color: AppTheme.primary),
           onPressed: Get.back,
         ),
         centerTitle: true,
@@ -103,21 +103,21 @@ class _CoverageZonesScreenState extends State<CoverageZonesScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         children: [
           _buildSummaryCard(r, activeCount),
-          const SizedBox(height: 20),
+          SizedBox(height: 20),
           _buildSearchBar(r),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           _buildActionButtons(r),
-          const SizedBox(height: 18),
+          SizedBox(height: 18),
           if (_selectedZones.isNotEmpty) ...[
             _buildSectionTitle('Zones activées'),
-            const SizedBox(height: 10),
+            SizedBox(height: 10),
             _buildSelectedChips(),
-            const SizedBox(height: 18),
+            SizedBox(height: 18),
           ],
           _buildSectionTitle('Zones disponibles'),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           ..._buildZoneListWidgets(),
-          const SizedBox(height: 24),
+          SizedBox(height: 24),
         ],
       ),
     );
@@ -127,29 +127,23 @@ class _CoverageZonesScreenState extends State<CoverageZonesScreen> {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.cardColor,
         borderRadius: BorderRadius.circular(22),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 22,
-            offset: const Offset(0, 10),
-          )
-        ],
+        boxShadow: AppTheme.shadowCard,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Zones de couverture',
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
           ),
-          const SizedBox(height: 8),
-          const Text(
+          SizedBox(height: 8),
+          Text(
             'Choisissez les quartiers que vous pouvez desservir. Les zones actives aident vos clients à savoir si vous livrez chez eux.',
             style: TextStyle(fontSize: 13, color: AppTheme.mutedForeground, height: 1.6),
           ),
-          const SizedBox(height: 18),
+          SizedBox(height: 18),
           Row(
             children: [
               _buildSummaryBadge(Icons.location_on_outlined, '$activeCount activées'),
@@ -175,11 +169,11 @@ class _CoverageZonesScreenState extends State<CoverageZonesScreen> {
         child: Row(
           children: [
             Icon(icon, size: 18, color: AppTheme.primary),
-            const SizedBox(width: 8),
+            SizedBox(width: 8),
             Expanded(
               child: Text(
                 label,
-                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
               ),
             ),
           ],
@@ -192,13 +186,13 @@ class _CoverageZonesScreenState extends State<CoverageZonesScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.cardColor,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: AppTheme.border),
       ),
       child: Row(
         children: [
-          const Icon(Icons.search, color: AppTheme.mutedForeground),
+          Icon(Icons.search, color: AppTheme.mutedForeground),
           SizedBox(width: r.s(10)),
           Expanded(
             child: TextField(
@@ -224,13 +218,13 @@ class _CoverageZonesScreenState extends State<CoverageZonesScreen> {
               onPressed: _selectAll,
               style: OutlinedButton.styleFrom(
                 backgroundColor: AppTheme.cardColor,
-                side: const BorderSide(color: AppTheme.primary, width: 1.5),
+                side: BorderSide(color: AppTheme.primary, width: 1.5),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14),
                 ),
                 padding: const EdgeInsets.symmetric(horizontal: 12),
               ),
-              child: const Text(
+              child: Text(
                 'Tout sélectionner',
                 style: TextStyle(
                   fontSize: 13,
@@ -249,13 +243,13 @@ class _CoverageZonesScreenState extends State<CoverageZonesScreen> {
               onPressed: _clearAll,
               style: OutlinedButton.styleFrom(
                 backgroundColor: AppTheme.cardColor,
-                side: const BorderSide(color: AppTheme.primary, width: 1.5),
+                side: BorderSide(color: AppTheme.primary, width: 1.5),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14),
                 ),
                 padding: const EdgeInsets.symmetric(horizontal: 12),
               ),
-              child: const Text(
+              child: Text(
                 'Tout désélectionner',
                 style: TextStyle(
                   fontSize: 13,
@@ -273,7 +267,7 @@ class _CoverageZonesScreenState extends State<CoverageZonesScreen> {
   Widget _buildSectionTitle(String title) {
     return Text(
       title,
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: 14,
         fontWeight: FontWeight.w700,
         color: AppTheme.foreground,
@@ -297,10 +291,10 @@ class _CoverageZonesScreenState extends State<CoverageZonesScreen> {
             children: [
               Text(
                 zone,
-                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
               ),
-              const SizedBox(width: 8),
-              const Icon(Icons.check_circle, size: 16, color: AppTheme.primary),
+              SizedBox(width: 8),
+              Icon(Icons.check_circle, size: 16, color: AppTheme.primary),
             ],
           ),
         );
@@ -315,11 +309,11 @@ class _CoverageZonesScreenState extends State<CoverageZonesScreen> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 28),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppTheme.cardColor,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(color: AppTheme.border),
           ),
-          child: const Text(
+          child: Text(
             'Aucune zone trouvée.\nEssayez une autre recherche.',
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 14, color: AppTheme.mutedForeground, height: 1.5),
@@ -345,19 +339,13 @@ class _CoverageZonesScreenState extends State<CoverageZonesScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppTheme.cardColor,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: selected ? AppTheme.primary : AppTheme.border,
             width: selected ? 1.8 : 1,
           ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.03),
-              blurRadius: 16,
-              offset: const Offset(0, 8),
-            ),
-          ],
+          boxShadow: AppTheme.shadowSm,
         ),
         child: Row(
           children: [
@@ -374,20 +362,20 @@ class _CoverageZonesScreenState extends State<CoverageZonesScreen> {
                 size: 22,
               ),
             ),
-            const SizedBox(width: 14),
+            SizedBox(width: 14),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     zone,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  const Text(
+                  SizedBox(height: 4),
+                  Text(
                     'Livraison jusqu’à 10 km • 30 min',
                     style: TextStyle(fontSize: 13, color: AppTheme.mutedForeground),
                   ),
@@ -401,7 +389,7 @@ class _CoverageZonesScreenState extends State<CoverageZonesScreen> {
                   color: AppTheme.primary.withOpacity(0.12),
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: const Text(
+                child: Text(
                   'Active',
                   style: TextStyle(
                     fontSize: 12,

@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:get/get.dart';
+import 'package:togo_market/theme/app_theme.dart';
 import '../models/models.dart'; // Re-exports Product, Boutique, Category + ChatMessage/Conversation
 import '../Api/services/produit_service.dart';
 import '../Api/services/boutique_service.dart';
@@ -13,11 +14,18 @@ class AppController extends GetxController {
   // Auth state
   final isLoggedIn = false.obs;
 
-  // Fake Profile Data
+  // Fallback profile data (overridden at runtime by AuthController.currentUser)
   final userName = 'Utilisateur Test'.obs;
   final userLocation = 'Lomé, Togo'.obs;
-  final userBio = 'Ceci est une fausse bio pour éviter les erreurs de compilation.'.obs;
+  final userBio =
+      'Ceci est une fausse bio pour éviter les erreurs de compilation.'.obs;
   final userAvatar = 'https://i.pravatar.cc/150?img=11'.obs;
+  final userEmail = 'koffi.mensah@email.com'.obs;
+  final userPhone = '+228 90 00 00 00'.obs;
+  final isProfessional = false.obs; // True if the user has a shop
+
+  // Theme state
+  final isDarkMode = false.obs;
 
   // Products
   final products        = <Product>[].obs;
@@ -62,6 +70,17 @@ class AppController extends GetxController {
           isLoggedIn.value = true;
           fetchFavorites();
         }
+      });
+    }
+
+    // Auto-switch to dark theme outside daytime hours
+    final hour = DateTime.now().hour;
+    if (hour < 6 || hour > 18) {
+      isDarkMode.value = true;
+      AppTheme.isDarkMode.value = true;
+      // Delay slightly to ensure GetMaterialApp is ready
+      Future.delayed(const Duration(milliseconds: 100), () {
+        Get.changeTheme(AppTheme.darkTheme);
       });
     }
   }
@@ -301,14 +320,37 @@ class AppController extends GetxController {
 
   List<Product> searchProducts(String query) {
     final q = query.toLowerCase();
-    return products
-        .where(
-          (p) =>
-              p.title.toLowerCase().contains(q) ||
-              p.description.toLowerCase().contains(q) ||
-              p.category.toLowerCase().contains(q),
-        )
-        .toList();
+    
+    // Pour gérer la recherche sur le type de prix ("négociable" ou "fixe")
+    final searchNegociable = q.contains('negociable') || q.contains('négociable');
+    final searchFixe = q.contains('fixe') && !searchNegociable;
+
+    return products.where((p) {
+      final titleMatch = p.title.toLowerCase().contains(q);
+      final descMatch = p.description.toLowerCase().contains(q);
+      final locationMatch = p.location.toLowerCase().contains(q);
+      final conditionMatch = p.condition.toLowerCase().contains(q);
+      
+      final catMatch = (p.categoryObj?.nom ?? '').toLowerCase().contains(q);
+      
+      final boutiqueNomMatch = (p.boutiqueObj?.nom ?? '').toLowerCase().contains(q);
+      final boutiqueAdresseMatch = (p.boutiqueObj?.adresse ?? '').toLowerCase().contains(q);
+      final boutiqueDescMatch = (p.boutiqueObj?.description ?? '').toLowerCase().contains(q);
+
+      bool priceTypeMatch = false;
+      if (searchNegociable && p.isPriceNegotiable) priceTypeMatch = true;
+      if (searchFixe && !p.isPriceNegotiable) priceTypeMatch = true;
+
+      return titleMatch ||
+          descMatch ||
+          locationMatch ||
+          conditionMatch ||
+          catMatch ||
+          boutiqueNomMatch ||
+          boutiqueAdresseMatch ||
+          boutiqueDescMatch ||
+          priceTypeMatch;
+    }).toList();
   }
 
   List<Product> getSimilarProducts(String productId, String category) {
@@ -320,6 +362,14 @@ class AppController extends GetxController {
 
   void login() {
     isLoggedIn.value = true;
+  }
+
+  void toggleTheme() {
+    isDarkMode.value = !isDarkMode.value;
+    AppTheme.isDarkMode.value = isDarkMode.value;
+    Get.changeTheme(
+        isDarkMode.value ? AppTheme.darkTheme : AppTheme.lightTheme);
+    update();
   }
 }
 

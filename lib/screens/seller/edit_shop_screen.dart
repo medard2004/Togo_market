@@ -399,7 +399,7 @@ class _EditShopScreenState extends State<EditShopScreen> {
                               onTap: () => _pickImage(false),
                               child: Container(
                                 padding: const EdgeInsets.all(4),
-                                decoration: const BoxDecoration(
+                                decoration: BoxDecoration(
                                   color: AppTheme.background,
                                   shape: BoxShape.circle,
                                 ),
@@ -612,8 +612,8 @@ class _EditShopScreenState extends State<EditShopScreen> {
                             ),
                           ),
                         ),
-                        const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 16),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
                           child: Text('à',
                               style: TextStyle(
                                   fontSize: 14,
@@ -826,7 +826,6 @@ class _EditShopScreenState extends State<EditShopScreen> {
                   ],
                 ),
               ),
-
       ),
     );
   }

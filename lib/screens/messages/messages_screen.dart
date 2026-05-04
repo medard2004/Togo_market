@@ -16,15 +16,16 @@ class MessagesScreen extends StatefulWidget {
 }
 
 class _MessagesScreenState extends State<MessagesScreen> {
-  // État des filtres
+  // Ã‰tat des filtres
   bool _hasActiveFilters = false;
   String _selectedSort =
       'date_desc'; // date_desc, date_asc, name_asc, name_desc
   bool _showOnlineOnly = false;
   bool _showUnreadOnly = false;
 
-  // État de sélection multiple
+  // Ã‰tat de sÃ©lection multiple
   bool _isSelectionMode = false;
+
   final Set<String> _selectedMessages = {}; // Utilise le nom comme clé unique
 
   String get _currentUserId {
@@ -60,12 +61,13 @@ class _MessagesScreenState extends State<MessagesScreen> {
     }).toList();
   }
 
+
   List<_ConvItem> get _filtered {
     List<_ConvItem> filtered = List.from(_convItems);
 
     // Filtre par statut en ligne
     if (_showOnlineOnly) {
-      // Pour la démo, on considère que certains utilisateurs sont en ligne
+      // Pour la dÃ©mo, on considÃ¨re que certains utilisateurs sont en ligne
       final onlineNames = ['Koffi Mensah', 'Essi Gado', 'Amivi Lawson'];
       filtered = filtered.where((c) => onlineNames.contains(c.name)).toList();
     }
@@ -75,11 +77,11 @@ class _MessagesScreenState extends State<MessagesScreen> {
       filtered = filtered.where((c) => c.unread > 0).toList();
     }
 
-    // Tri selon le critère sélectionné
+    // Tri selon le critÃ¨re sÃ©lectionnÃ©
     filtered.sort((a, b) {
       switch (_selectedSort) {
         case 'date_desc':
-          // Tri par date décroissante (plus récent d'abord)
+          // Tri par date dÃ©croissante (plus rÃ©cent d'abord)
           return b.time.compareTo(a.time);
         case 'date_asc':
           // Tri par date croissante (plus ancien d'abord)
@@ -96,7 +98,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
     return filtered;
   }
 
-  // Méthodes pour la gestion de la sélection
+  // MÃ©thodes pour la gestion de la sÃ©lection
   void _toggleSelectionMode() {
     setState(() {
       _isSelectionMode = !_isSelectionMode;
@@ -128,8 +130,10 @@ class _MessagesScreenState extends State<MessagesScreen> {
 
   void _deleteSelectedMessages() {
     setState(() {
+
       // Pour Firebase, on appellerait une méthode de suppression.
       // ChatService.to.deleteChats(_selectedMessages.toList());
+
       _selectedMessages.clear();
       _isSelectionMode = false;
     });
@@ -151,7 +155,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ── Header ──────────────────────────────────────────────────────
+                // â”€â”€ Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 Padding(
                   padding:
                       EdgeInsets.fromLTRB(r.hPad, r.s(10), r.hPad, r.s(14)),
@@ -160,7 +164,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
                       Expanded(
                         child: Text(
                             _isSelectionMode
-                                ? '${_selectedMessages.length} sélectionné(s)'
+                                ? '${_selectedMessages.length} sÃ©lectionnÃ©(s)'
                                 : 'Messages',
                             style: TextStyle(
                                 fontSize: r.fs(15),
@@ -192,13 +196,13 @@ class _MessagesScreenState extends State<MessagesScreen> {
                   ),
                 ),
 
-                // ── Barre de recherche ───────────────────────────────────────────
+                // â”€â”€ Barre de recherche â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 Padding(
                   padding: EdgeInsets.symmetric(horizontal: r.hPad),
                   child: Container(
                     height: r.s(50).clamp(46.0, 56.0),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: AppTheme.cardColor,
                       borderRadius: BorderRadius.circular(r.rad(16)),
                       boxShadow: [
                         BoxShadow(
@@ -219,7 +223,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
                     ),
                     child: Row(
                       children: [
-                        // Container pour l'icône avec fond coloré
+                        // Container pour l'icÃ´ne avec fond colorÃ©
                         Container(
                           width: r.s(48),
                           height: r.s(48),
@@ -285,7 +289,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
                 ),
                 SizedBox(height: r.s(14)),
 
-                // ── Liste conversations ──────────────────────────────────────────
+                // â”€â”€ Liste conversations â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 Expanded(
                   child: Obx(() {
                     if (_filtered.isEmpty) {
@@ -336,10 +340,10 @@ class _MessagesScreenState extends State<MessagesScreen> {
       padding: EdgeInsets.fromLTRB(r.hPad, r.s(12), r.hPad,
           r.s(12) + MediaQuery.of(context).padding.bottom),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.cardColor,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: AppTheme.border,
             blurRadius: 8,
             offset: const Offset(0, -2),
           ),
@@ -347,7 +351,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
       ),
       child: Row(
         children: [
-          // Bouton Tout sélectionner
+          // Bouton Tout sÃ©lectionner
           Expanded(
             child: GestureDetector(
               onTap: _selectAllMessages,
@@ -359,7 +363,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
                 ),
                 child: Center(
                   child: Text(
-                    allSelected ? 'Tout désélectionner' : 'Tout sélectionner',
+                    allSelected ? 'Tout dÃ©sÃ©lectionner' : 'Tout sÃ©lectionner',
                     style: TextStyle(
                       fontSize: r.fs(14),
                       fontWeight: FontWeight.w600,
@@ -422,7 +426,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
   }
 }
 
-// Modèle de données conversation mock
+// ModÃ¨le de donnÃ©es conversation mock
 class _ConvItem {
   final String id, name, time, msg, img;
   final int unread;
@@ -436,3 +440,4 @@ class _ConvItem {
       required this.unread,
       required this.productImg});
 }
+

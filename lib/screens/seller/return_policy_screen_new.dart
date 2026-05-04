@@ -50,11 +50,11 @@ class _ReturnPolicyScreenState extends State<ReturnPolicyScreen>
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'Politique de retour',
           style: TextStyle(fontWeight: FontWeight.w700, letterSpacing: -0.3),
         ),
-        leading: const BackButton(),
+        leading: BackButton(),
         elevation: 0,
         backgroundColor: AppTheme.background,
       ),
@@ -187,14 +187,14 @@ class _ReturnPolicyScreenState extends State<ReturnPolicyScreen>
                 width: 1,
               ),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.shield_outlined,
               color: Colors.white,
               size: 32,
             ),
           ),
-          const SizedBox(height: 16),
-          const Text(
+          SizedBox(height: 16),
+          Text(
             'Politique de retour',
             style: TextStyle(
               fontSize: 24,
@@ -203,8 +203,8 @@ class _ReturnPolicyScreenState extends State<ReturnPolicyScreen>
               letterSpacing: -0.5,
             ),
           ),
-          const SizedBox(height: 8),
-          const Text(
+          SizedBox(height: 8),
+          Text(
             'Permettez à vos clients de retourner leurs achats en toute confiance',
             style: TextStyle(
               fontSize: 14,
@@ -261,7 +261,7 @@ class _ReturnPolicyScreenState extends State<ReturnPolicyScreen>
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Text(
+                        Text(
                           'J\'ai compris',
                           style: TextStyle(
                             color: Colors.white,
@@ -271,8 +271,8 @@ class _ReturnPolicyScreenState extends State<ReturnPolicyScreen>
                           ),
                         ),
                         if (isHovered) ...[
-                          const SizedBox(width: 8),
-                          const Icon(
+                          SizedBox(width: 8),
+                          Icon(
                             Icons.check_circle_outline,
                             color: Colors.white,
                             size: 20,
@@ -327,13 +327,13 @@ class _PolicyCardWidgetState extends State<_PolicyCardWidget> {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 300),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppTheme.cardColor,
           borderRadius: BorderRadius.circular(18),
           boxShadow: [
             BoxShadow(
               color: isHovered
                   ? AppTheme.primary.withOpacity(0.15)
-                  : Colors.black.withOpacity(0.05),
+                  : AppTheme.border,
               blurRadius: isHovered ? 20 : 10,
               offset: isHovered ? const Offset(0, 8) : const Offset(0, 4),
             ),
@@ -393,7 +393,7 @@ class _PolicyCardWidgetState extends State<_PolicyCardWidget> {
                       size: 26,
                     ),
                   ),
-                  const SizedBox(width: 14),
+                  SizedBox(width: 14),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -403,7 +403,7 @@ class _PolicyCardWidgetState extends State<_PolicyCardWidget> {
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w700,
-                            color: Colors.black87,
+                            color: AppTheme.foreground,
                             letterSpacing: -0.3,
                           ),
                         ),
@@ -424,7 +424,7 @@ class _PolicyCardWidgetState extends State<_PolicyCardWidget> {
                     ),
                     child: Text(
                       widget.data.number,
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: Colors.white,
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
@@ -440,10 +440,10 @@ class _PolicyCardWidgetState extends State<_PolicyCardWidget> {
               child: widget.data.content != null
                   ? Text(
                       widget.data.content!,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
                         height: 1.7,
-                        color: Colors.black87,
+                        color: AppTheme.foreground,
                         fontWeight: FontWeight.w400,
                         letterSpacing: 0.2,
                       ),
@@ -485,10 +485,10 @@ class _PolicyCardWidgetState extends State<_PolicyCardWidget> {
                                   Expanded(
                                     child: Text(
                                       entry.value,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 14,
                                         height: 1.6,
-                                        color: Colors.black87,
+                                        color: AppTheme.foreground,
                                         fontWeight: FontWeight.w400,
                                         letterSpacing: 0.2,
                                       ),

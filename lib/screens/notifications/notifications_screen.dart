@@ -11,13 +11,13 @@ class NotificationsScreen extends StatelessWidget {
       resizeToAvoidBottomInset: true,
       backgroundColor: AppTheme.background,
       appBar: AppBar(
-        title: const Text('Notifications'),
-        leading: const BackButton(),
+        title: Text('Notifications'),
+        leading: BackButton(),
       ),
       body: ListView.separated(
         padding: const EdgeInsets.all(16),
         itemCount: mockNotifications.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 8),
+        separatorBuilder: (_, __) => SizedBox(height: 8),
         itemBuilder: (_, i) {
           final notif = mockNotifications[i];
           IconData icon;
@@ -55,33 +55,33 @@ class NotificationsScreen extends StatelessWidget {
                   ),
                   child: Icon(icon, color: iconColor, size: 20),
                 ),
-                const SizedBox(width: 12),
+                SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(notif.title,
-                          style: const TextStyle(
+                          style: TextStyle(
                               fontSize: 13, fontWeight: FontWeight.w600)),
-                      const SizedBox(height: 2),
+                      SizedBox(height: 2),
                       Text(notif.body,
-                          style: const TextStyle(
+                          style: TextStyle(
                               fontSize: 12, color: AppTheme.mutedForeground)),
                     ],
                   ),
                 ),
-                const SizedBox(width: 8),
+                SizedBox(width: 8),
                 Column(
                   children: [
                     Text(notif.time,
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontSize: 10, color: AppTheme.mutedForeground)),
                     if (!notif.isRead)
                       Container(
                         margin: const EdgeInsets.only(top: 6),
                         width: 8,
                         height: 8,
-                        decoration: const BoxDecoration(
+                        decoration: BoxDecoration(
                             color: AppTheme.primary, shape: BoxShape.circle),
                       ),
                   ],

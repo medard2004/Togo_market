@@ -77,7 +77,7 @@ class _SellerHelpCenterScreenState extends State<SellerHelpCenterScreen> {
             Container(
               width: double.infinity,
               padding: const EdgeInsets.fromLTRB(20, 30, 20, 60),
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [AppTheme.primary, Color(0xFFFF8C42)],
                   begin: Alignment.topLeft,
@@ -91,7 +91,7 @@ class _SellerHelpCenterScreenState extends State<SellerHelpCenterScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Comment pouvons-nous\nvous aider ?',
                     style: TextStyle(
                       color: Colors.white,
@@ -100,7 +100,7 @@ class _SellerHelpCenterScreenState extends State<SellerHelpCenterScreen> {
                       height: 1.2,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: 8),
                   Text(
                     'Trouvez des réponses à vos questions ou contactez-nous.',
                     style: TextStyle(
@@ -122,7 +122,7 @@ class _SellerHelpCenterScreenState extends State<SellerHelpCenterScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: Container(
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: AppTheme.cardColor,
                         borderRadius: BorderRadius.circular(16),
                         boxShadow: AppTheme.shadowCardLg,
                       ),
@@ -131,7 +131,7 @@ class _SellerHelpCenterScreenState extends State<SellerHelpCenterScreen> {
                         decoration: InputDecoration(
                           hintText: 'Rechercher une solution...',
                           prefixIcon:
-                              const Icon(Icons.search, color: AppTheme.primary),
+                              Icon(Icons.search, color: AppTheme.primary),
                           border: InputBorder.none,
                           enabledBorder: InputBorder.none,
                           focusedBorder: InputBorder.none,
@@ -144,7 +144,7 @@ class _SellerHelpCenterScreenState extends State<SellerHelpCenterScreen> {
                 ),
 
                 // Categories
-                const Padding(
+                Padding(
                   padding: EdgeInsets.fromLTRB(20, 0, 20, 15),
                   child: Text(
                     'Catégories d\'aide',
@@ -162,7 +162,7 @@ class _SellerHelpCenterScreenState extends State<SellerHelpCenterScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     scrollDirection: Axis.horizontal,
                     itemCount: _categories.length,
-                    separatorBuilder: (_, __) => const SizedBox(width: 12),
+                    separatorBuilder: (_, __) => SizedBox(width: 12),
                     itemBuilder: (_, i) {
                       final cat = _categories[i];
                       return TogoSlideUp(
@@ -177,10 +177,10 @@ class _SellerHelpCenterScreenState extends State<SellerHelpCenterScreen> {
                   ),
                 ),
 
-                const SizedBox(height: 32),
+                SizedBox(height: 32),
 
                 // FAQ Section
-                const Padding(
+                Padding(
                   padding: EdgeInsets.fromLTRB(20, 0, 20, 15),
                   child: Text(
                     'Questions fréquentes',
@@ -198,7 +198,7 @@ class _SellerHelpCenterScreenState extends State<SellerHelpCenterScreen> {
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     itemCount: _faqs.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 12),
+                    separatorBuilder: (_, __) => SizedBox(height: 12),
                     itemBuilder: (_, i) {
                       final faq = _faqs[i];
                       final isExpanded = _expandedFaq == i;
@@ -256,7 +256,7 @@ class _SellerHelpCenterScreenState extends State<SellerHelpCenterScreen> {
                                               16, 0, 16, 16),
                                           child: Text(
                                             faq['a']!,
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                               fontSize: 13,
                                               height: 1.5,
                                               color: AppTheme.mutedForeground,
@@ -274,7 +274,7 @@ class _SellerHelpCenterScreenState extends State<SellerHelpCenterScreen> {
                   ),
                 ),
 
-                const SizedBox(height: 32),
+                SizedBox(height: 32),
 
                 // Support Contact Card
                 Padding(
@@ -291,10 +291,10 @@ class _SellerHelpCenterScreenState extends State<SellerHelpCenterScreen> {
                       ),
                       child: Column(
                         children: [
-                          const Icon(Icons.headset_mic_rounded,
+                          Icon(Icons.headset_mic_rounded,
                               size: 40, color: AppTheme.primary),
-                          const SizedBox(height: 12),
-                          const Text(
+                          SizedBox(height: 12),
+                          Text(
                             'Besoin d\'une assistance directe ?',
                             textAlign: TextAlign.center,
                             style: TextStyle(
@@ -303,8 +303,8 @@ class _SellerHelpCenterScreenState extends State<SellerHelpCenterScreen> {
                               color: AppTheme.foreground,
                             ),
                           ),
-                          const SizedBox(height: 6),
-                          const Text(
+                          SizedBox(height: 6),
+                          Text(
                             'Notre équipe support est disponible\n7j/7 de 8h à 20h.',
                             textAlign: TextAlign.center,
                             style: TextStyle(
@@ -312,16 +312,16 @@ class _SellerHelpCenterScreenState extends State<SellerHelpCenterScreen> {
                               color: AppTheme.mutedForeground,
                             ),
                           ),
-                          const SizedBox(height: 20),
+                          SizedBox(height: 20),
                           AppButton(
                             label: 'Lancer le chat support',
                             icon: Icons.chat_outlined,
                             onTap: () {},
                           ),
-                          const SizedBox(height: 10),
+                          SizedBox(height: 10),
                           TogoPressableScale(
                             onTap: () {},
-                            child: const Text(
+                            child: Text(
                               'Nous appeler directement',
                               style: TextStyle(
                                 fontSize: 13,
@@ -337,7 +337,7 @@ class _SellerHelpCenterScreenState extends State<SellerHelpCenterScreen> {
                   ),
                 ),
 
-                const SizedBox(height: 60),
+                SizedBox(height: 60),
               ],
             ),
           ],
@@ -364,7 +364,7 @@ class _HelpAppBar extends StatelessWidget implements PreferredSizeWidget {
           backgroundColor: bg,
           elevation: 0,
           centerTitle: true,
-          title: const Text(
+          title: Text(
             'Centre d\'aide',
             style: TextStyle(
               fontSize: 18,
@@ -376,11 +376,11 @@ class _HelpAppBar extends StatelessWidget implements PreferredSizeWidget {
           leading: IconButton(
             onPressed: onBack,
             icon:
-                const Icon(Icons.arrow_back, size: 20, color: AppTheme.primary),
+                Icon(Icons.arrow_back, size: 20, color: AppTheme.primary),
           ),
-          actions: const [SizedBox(width: 36)],
-          bottom: const PreferredSize(
-            preferredSize: Size.fromHeight(1),
+          actions: [SizedBox(width: 36)],
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(1),
             child: Divider(height: 1, thickness: 1, color: AppTheme.border),
           ),
         ),
@@ -405,7 +405,7 @@ class _HelpCategoryCard extends StatelessWidget {
     return Container(
       width: 100,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.cardColor,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -426,10 +426,10 @@ class _HelpCategoryCard extends StatelessWidget {
             ),
             child: Icon(icon, color: color, size: 24),
           ),
-          const SizedBox(height: 10),
+          SizedBox(height: 10),
           Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w700,
               color: AppTheme.foreground,

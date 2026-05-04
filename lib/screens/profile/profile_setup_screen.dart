@@ -782,7 +782,7 @@ void _showZonePicker(BuildContext context, List<Quartier> quartiers,
                   hintStyle: TextStyle(
                       color: AppTheme.mutedForeground, fontSize: r.fs(14)),
                   prefixIcon:
-                      const Icon(Icons.search, color: AppTheme.mutedForeground),
+                      Icon(Icons.search, color: AppTheme.mutedForeground),
                   border: InputBorder.none,
                   contentPadding: EdgeInsets.symmetric(vertical: r.s(14)),
                 ),

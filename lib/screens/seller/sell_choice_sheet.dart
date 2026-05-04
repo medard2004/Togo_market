@@ -25,7 +25,7 @@ class SellChoiceSheet extends StatelessWidget {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: AppColors.background,
+        color: AppTheme.cardColor,
         borderRadius: BorderRadius.vertical(top: Radius.circular(r.rad(45))),
       ),
       padding: EdgeInsets.symmetric(horizontal: r.hPad),
@@ -51,7 +51,7 @@ class SellChoiceSheet extends StatelessWidget {
                 style: TextStyle(
                   fontSize: r.fs(26),
                   fontWeight: FontWeight.w900,
-                  color: AppColors.foreground,
+                  color: AppTheme.foreground,
                   letterSpacing: -1.0,
                 ),
               ),
@@ -66,7 +66,7 @@ class SellChoiceSheet extends StatelessWidget {
                 subtitle: 'Simple, direct, sans frais',
                 btnLabel: 'Publier une annonce',
                 icon: Icons.flash_on_rounded,
-                color: AppColors.primary,
+                color: AppTheme.primary,
                 onTap: () {
                   Get.back();
                   Get.toNamed('/add-product', arguments: {'isParticulier': true});
@@ -84,7 +84,7 @@ class SellChoiceSheet extends StatelessWidget {
                 subtitle: 'Visibilité boostée & outils pro',
                 btnLabel: 'Ouvrir ma boutique',
                 icon: Icons.rocket_launch_rounded,
-                color: AppColors.secondary,
+                color: AppTheme.secondary,
                 onTap: () async {
                   Get.back();
                   await Get.find<BoutiqueController>().goToMyBoutique();
@@ -156,7 +156,7 @@ class _CreativeTile extends StatelessWidget {
                         style: TextStyle(
                           fontSize: r.fs(17),
                           fontWeight: FontWeight.w900,
-                          color: AppColors.foreground,
+                          color: AppTheme.foreground,
                         ),
                       ),
                       Text(
@@ -164,7 +164,7 @@ class _CreativeTile extends StatelessWidget {
                         style: TextStyle(
                           fontSize: r.fs(13),
                           fontWeight: FontWeight.w500,
-                          color: AppColors.mutedForeground,
+                          color: AppTheme.mutedForeground,
                         ),
                       ),
                     ],
@@ -177,7 +177,7 @@ class _CreativeTile extends StatelessWidget {
               width: double.infinity,
               padding: EdgeInsets.symmetric(vertical: r.s(12)),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppTheme.cardColor,
                 borderRadius: BorderRadius.circular(r.rad(100)),
                 boxShadow: [
                   BoxShadow(color: color.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 5)),

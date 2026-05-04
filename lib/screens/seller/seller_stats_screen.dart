@@ -1,4 +1,4 @@
-import 'dart:ui';
+﻿import 'dart:ui';
 
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
@@ -50,7 +50,7 @@ class _SellerStatsScreenState extends State<SellerStatsScreen>
         positive: true),
   ];
 
-  final topProducts = const [
+  final topProducts = [
     {'name': 'iPhone 13 Pro', 'views': 85, 'orders': 12},
     {'name': 'Samsung Galaxy S22', 'views': 62, 'orders': 8},
     {'name': 'AirPods Pro', 'views': 48, 'orders': 15},
@@ -105,7 +105,7 @@ class _SellerStatsScreenState extends State<SellerStatsScreen>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
 
             FadeSlideIn(
               animation: _periodAnim,
@@ -115,7 +115,7 @@ class _SellerStatsScreenState extends State<SellerStatsScreen>
               ),
             ),
 
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
 
             FadeSlideIn(
               animation: _kpiAnim,
@@ -150,7 +150,7 @@ class _SellerStatsScreenState extends State<SellerStatsScreen>
               ),
             ),
 
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
 
             FadeSlideIn(
               animation: _barChartAnim,
@@ -160,7 +160,7 @@ class _SellerStatsScreenState extends State<SellerStatsScreen>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'Vues par jour',
                         style: TextStyle(
                           fontSize: 14,
@@ -168,15 +168,15 @@ class _SellerStatsScreenState extends State<SellerStatsScreen>
                           color: AppTheme.foreground,
                         ),
                       ),
-                      const SizedBox(height: 4),
-                      const Text(
-                        'Évolution des visites sur votre boutique',
+                      SizedBox(height: 4),
+                      Text(
+                        'Ã‰volution des visites sur votre boutique',
                         style: TextStyle(
                           fontSize: 12,
                           color: AppTheme.mutedForeground,
                         ),
                       ),
-                      const SizedBox(height: 12),
+                      SizedBox(height: 12),
                       SizedBox(
                         height: 176,
                         child: BarChart(
@@ -191,7 +191,7 @@ class _SellerStatsScreenState extends State<SellerStatsScreen>
               ),
             ),
 
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
 
             FadeSlideIn(
               animation: _lineChartAnim,
@@ -201,7 +201,7 @@ class _SellerStatsScreenState extends State<SellerStatsScreen>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'Ventes mensuelles',
                         style: TextStyle(
                           fontSize: 14,
@@ -209,15 +209,15 @@ class _SellerStatsScreenState extends State<SellerStatsScreen>
                           color: AppTheme.foreground,
                         ),
                       ),
-                      const SizedBox(height: 4),
-                      const Text(
+                      SizedBox(height: 4),
+                      Text(
                         'Nombre de ventes par mois',
                         style: TextStyle(
                           fontSize: 12,
                           color: AppTheme.mutedForeground,
                         ),
                       ),
-                      const SizedBox(height: 12),
+                      SizedBox(height: 12),
                       SizedBox(
                         height: 176,
                         child: LineChart(
@@ -232,7 +232,7 @@ class _SellerStatsScreenState extends State<SellerStatsScreen>
               ),
             ),
 
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
 
             FadeSlideIn(
               animation: _pieChartAnim,
@@ -242,23 +242,23 @@ class _SellerStatsScreenState extends State<SellerStatsScreen>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Répartition par catégorie',
+                      Text(
+                        'RÃ©partition par catÃ©gorie',
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
                           color: AppTheme.foreground,
                         ),
                       ),
-                      const SizedBox(height: 4),
-                      const Text(
-                        'Catégories les plus consultées',
+                      SizedBox(height: 4),
+                      Text(
+                        'CatÃ©gories les plus consultÃ©es',
                         style: TextStyle(
                           fontSize: 12,
                           color: AppTheme.mutedForeground,
                         ),
                       ),
-                      const SizedBox(height: 12),
+                      SizedBox(height: 12),
                       Row(
                         children: [
                           SizedBox(
@@ -295,8 +295,8 @@ class _SellerStatsScreenState extends State<SellerStatsScreen>
                               curve: Curves.easeOut,
                             ),
                           ),
-                          const SizedBox(width: 16),
-                          const Expanded(
+                          SizedBox(width: 16),
+                          Expanded(
                             child: _DonutLegend(),
                           ),
                         ],
@@ -307,7 +307,7 @@ class _SellerStatsScreenState extends State<SellerStatsScreen>
               ),
             ),
 
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
 
             FadeSlideIn(
               animation: _topProductsAnim,
@@ -315,7 +315,7 @@ class _SellerStatsScreenState extends State<SellerStatsScreen>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Produits les plus vus',
                       style: TextStyle(
                         fontSize: 14,
@@ -323,18 +323,18 @@ class _SellerStatsScreenState extends State<SellerStatsScreen>
                         color: AppTheme.foreground,
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    const Text(
+                    SizedBox(height: 4),
+                    Text(
                       'Top 3 produits',
                       style: TextStyle(
                         fontSize: 12,
                         color: AppTheme.mutedForeground,
                       ),
                     ),
-                    const SizedBox(height: 6),
+                    SizedBox(height: 6),
                     for (var i = 0; i < topProducts.length; i++) ...[
                       if (i != 0)
-                        const Divider(
+                        Divider(
                           color: AppTheme.border,
                           height: 1,
                           thickness: 1,
@@ -371,7 +371,7 @@ class _SellerStatsScreenState extends State<SellerStatsScreen>
               ),
             ),
 
-            const SizedBox(height: 32),
+            SizedBox(height: 32),
           ],
         ),
       ),
@@ -386,12 +386,12 @@ class _SellerStatsScreenState extends State<SellerStatsScreen>
       barTouchData: BarTouchData(
         touchTooltipData: BarTouchTooltipData(
           getTooltipColor: (_) => AppTheme.cardColor,
-          tooltipBorder: const BorderSide(color: AppTheme.border),
+          tooltipBorder: BorderSide(color: AppTheme.border),
           tooltipBorderRadius: BorderRadius.circular(12),
           getTooltipItem: (group, groupIndex, rod, rodIndex) {
             return BarTooltipItem(
               '${rod.toY.toInt()} vues',
-              const TextStyle(
+              TextStyle(
                 color: AppTheme.foreground,
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
@@ -412,7 +412,7 @@ class _SellerStatsScreenState extends State<SellerStatsScreen>
                 padding: const EdgeInsets.only(top: 6),
                 child: Text(
                   days[i],
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 11,
                     color: AppTheme.mutedForeground,
                   ),
@@ -429,7 +429,7 @@ class _SellerStatsScreenState extends State<SellerStatsScreen>
             getTitlesWidget: (value, meta) {
               return Text(
                 '${value.toInt()}',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 11,
                   color: AppTheme.mutedForeground,
                 ),
@@ -444,7 +444,7 @@ class _SellerStatsScreenState extends State<SellerStatsScreen>
         show: true,
         drawVerticalLine: false,
         horizontalInterval: 15,
-        getDrawingHorizontalLine: (value) => const FlLine(
+        getDrawingHorizontalLine: (value) => FlLine(
           color: AppTheme.border,
           strokeWidth: 1,
           dashArray: [3, 3],
@@ -478,7 +478,7 @@ class _SellerStatsScreenState extends State<SellerStatsScreen>
         show: true,
         drawVerticalLine: false,
         horizontalInterval: 10,
-        getDrawingHorizontalLine: (value) => const FlLine(
+        getDrawingHorizontalLine: (value) => FlLine(
           color: AppTheme.border,
           strokeWidth: 1,
           dashArray: [3, 3],
@@ -489,14 +489,14 @@ class _SellerStatsScreenState extends State<SellerStatsScreen>
           sideTitles: SideTitles(
             showTitles: true,
             getTitlesWidget: (value, meta) {
-              const months = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun'];
+              const months = ['Jan', 'FÃ©v', 'Mar', 'Avr', 'Mai', 'Jun'];
               final i = value.toInt();
               if (i < 0 || i >= months.length) return const SizedBox.shrink();
               return Padding(
                 padding: const EdgeInsets.only(top: 6),
                 child: Text(
                   months[i],
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 11,
                     color: AppTheme.mutedForeground,
                   ),
@@ -512,7 +512,7 @@ class _SellerStatsScreenState extends State<SellerStatsScreen>
             interval: 10,
             getTitlesWidget: (value, meta) => Text(
               '${value.toInt()}',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 11,
                 color: AppTheme.mutedForeground,
               ),
@@ -525,7 +525,7 @@ class _SellerStatsScreenState extends State<SellerStatsScreen>
       borderData: FlBorderData(show: false),
       lineBarsData: [
         LineChartBarData(
-          spots: const [
+          spots: [
             FlSpot(0, 12),
             FlSpot(1, 18),
             FlSpot(2, 15),
@@ -551,7 +551,7 @@ class _SellerStatsScreenState extends State<SellerStatsScreen>
       lineTouchData: LineTouchData(
         touchTooltipData: LineTouchTooltipData(
           getTooltipColor: (_) => AppTheme.cardColor,
-          tooltipBorder: const BorderSide(color: AppTheme.border),
+          tooltipBorder: BorderSide(color: AppTheme.border),
           tooltipBorderRadius: BorderRadius.circular(12),
         ),
       ),
@@ -576,7 +576,7 @@ class _StatsAppBar extends StatelessWidget implements PreferredSizeWidget {
           backgroundColor: bg,
           elevation: 0,
           centerTitle: true,
-          title: const Text(
+          title: Text(
             'Statistiques',
             style: TextStyle(
               fontSize: 18,
@@ -587,11 +587,11 @@ class _StatsAppBar extends StatelessWidget implements PreferredSizeWidget {
           ),
           leading: IconButton(
             onPressed: onBack,
-            icon: const Icon(Icons.arrow_back, size: 20, color: AppTheme.primary),
+            icon: Icon(Icons.arrow_back, size: 20, color: AppTheme.primary),
           ),
-          actions: const [SizedBox(width: 36)],
-          bottom: const PreferredSize(
-            preferredSize: Size.fromHeight(1),
+          actions: [SizedBox(width: 36)],
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(1),
             child: Divider(height: 1, thickness: 1, color: AppTheme.border),
           ),
         ),
@@ -608,7 +608,7 @@ class _PeriodSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final items = const ['7 jours', '30 jours', '3 mois'];
+    final items = ['7 jours', '30 jours', '3 mois'];
     return Row(
       children: List.generate(items.length, (i) {
         final active = selectedIndex == i;
@@ -625,7 +625,7 @@ class _PeriodSelector extends StatelessWidget {
                 padding:
                     const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
                 decoration: BoxDecoration(
-                  color: active ? AppTheme.primary : const Color(0xFFF1EDE8),
+                  color: active ? AppTheme.primary : AppTheme.muted,
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: active
                       ? [
@@ -635,7 +635,7 @@ class _PeriodSelector extends StatelessWidget {
                             offset: const Offset(0, 2),
                           )
                         ]
-                      : const [],
+                      : [],
                 ),
                 child: Center(
                   child: Text(
@@ -716,7 +716,7 @@ class _KpiCard extends StatelessWidget {
                 width: 32,
                 height: 32,
                 decoration: BoxDecoration(
-                  color: AppTheme.primary.withAlpha(26), // 0.1
+                  color: AppTheme.primary.withOpacity(0.1), // 0.1
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(kpi.icon, size: 14, color: AppTheme.primary),
@@ -724,7 +724,7 @@ class _KpiCard extends StatelessWidget {
               Row(
                 children: [
                   Icon(changeIcon, size: 10, color: changeColor),
-                  const SizedBox(width: 4),
+                  SizedBox(width: 4),
                   Text(
                     kpi.change,
                     style: TextStyle(
@@ -737,19 +737,19 @@ class _KpiCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          SizedBox(height: 10),
           Text(
             kpi.value,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.w700,
               color: AppTheme.foreground,
             ),
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: 4),
           Text(
             kpi.label,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 10,
               fontWeight: FontWeight.w500,
               color: AppTheme.mutedForeground,
@@ -767,7 +767,7 @@ class _DonutLegend extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const items = [
-      ('Électronique', 45, AppTheme.primary),
+      ('Ã‰lectronique', 45, AppTheme.primary),
       ('Mode', 25, AppTheme.secondary),
       ('Maison', 20, Color(0xFFF59E0B)),
       ('Autres', 10, Color(0xFF94A3B8)),
@@ -783,11 +783,11 @@ class _DonutLegend extends StatelessWidget {
                 height: 10,
                 decoration: BoxDecoration(color: it.$3, shape: BoxShape.circle),
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: 8),
               Expanded(
                 child: Text(
                   it.$1,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
                     color: AppTheme.foreground,
                   ),
@@ -795,7 +795,7 @@ class _DonutLegend extends StatelessWidget {
               ),
               Text(
                 '${it.$2}%',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                   color: AppTheme.mutedForeground,
@@ -803,7 +803,7 @@ class _DonutLegend extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          SizedBox(height: 10),
         ]
       ],
     );
@@ -831,13 +831,13 @@ class _TopProductRow extends StatelessWidget {
           width: 32,
           height: 32,
           decoration: BoxDecoration(
-            color: AppTheme.primary.withAlpha(26),
+            color: AppTheme.primary.withOpacity(0.1),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Center(
             child: Text(
               '$rank',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
                 color: AppTheme.primary,
@@ -845,7 +845,7 @@ class _TopProductRow extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(width: 12),
+        SizedBox(width: 12),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -854,32 +854,32 @@ class _TopProductRow extends StatelessWidget {
                 name,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                   color: AppTheme.foreground,
                 ),
               ),
-              const SizedBox(height: 4),
+              SizedBox(height: 4),
               Row(
                 children: [
-                  const Icon(Icons.visibility,
+                  Icon(Icons.visibility,
                       size: 10, color: AppTheme.mutedForeground),
-                  const SizedBox(width: 4),
+                  SizedBox(width: 4),
                   Text(
                     '$views vues',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 10,
                       color: AppTheme.mutedForeground,
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  const Icon(Icons.inventory_2,
+                  SizedBox(width: 12),
+                  Icon(Icons.inventory_2,
                       size: 10, color: AppTheme.mutedForeground),
-                  const SizedBox(width: 4),
+                  SizedBox(width: 4),
                   Text(
                     '$orders ventes',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 10,
                       color: AppTheme.mutedForeground,
                     ),
@@ -959,4 +959,5 @@ class _TapScaleState extends State<_TapScale> {
     );
   }
 }
+
 
