@@ -309,131 +309,166 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget _buildOrderTile(
       String title, String buyer, String price, String img, String status,
       {bool isPending = true}) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppTheme.cardColor, borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.border,
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          )
-        ],
-      ),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: CachedNetworkImage(
-                    imageUrl: img, width: 64, height: 64, fit: BoxFit.cover),
-              ),
-              SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            title,
-                            style: TextStyle(
-                                fontSize: 15, fontWeight: FontWeight.w800, color: AppTheme.foreground),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: isPending
-                                ? AppTheme.primaryLight
-                                : Colors.green.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            status,
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              color:
-                                  isPending ? AppTheme.primary : Colors.green,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    Text('Acheteur: $buyer',
-                        style: TextStyle(
-                            fontSize: 13, color: AppTheme.mutedForeground)),
-                    SizedBox(height: 2),
-                    Text(price,
-                        style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w800,
-                            color: AppTheme.primary)),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          if (isPending) ...[
-            SizedBox(height: 12),
+    final navigateToDetails = () => Get.toNamed('/order-details', arguments: {
+          'title': title,
+          'price': price,
+          'status': status,
+          'image': img,
+          'buyer': buyer,
+          'isSale': true,
+        });
+
+    return GestureDetector(
+      onTap: navigateToDetails,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppTheme.cardColor,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: AppTheme.border,
+              blurRadius: 20,
+              offset: const Offset(0, 10),
+            )
+          ],
+        ),
+        child: Column(
+          children: [
             Row(
               children: [
-                Expanded(
-                  flex: 2,
-                  child: TogoPressableScale(
-                    onTap: () {},
-                    child: Container(
-                      height: 48,
-                      decoration: BoxDecoration(
-                        color: AppTheme.primary,
-                        borderRadius: BorderRadius.circular(24),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.check_circle_outline,
-                              color: Colors.white, size: 20),
-                          SizedBox(width: 8),
-                          Text('Accepter',
-                              style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w700)),
-                        ],
-                      ),
-                    ),
-                  ),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: CachedNetworkImage(
+                      imageUrl: img, width: 64, height: 64, fit: BoxFit.cover),
                 ),
                 SizedBox(width: 12),
                 Expanded(
-                  flex: 2,
-                  child: TogoPressableScale(
-                    onTap: () {},
-                    child: Container(
-                      height: 48,
-                      decoration: BoxDecoration(
-                        color: AppTheme.destructive.withOpacity(0.08),
-                        borderRadius: BorderRadius.circular(24),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Icon(Icons.cancel_outlined,
-                              color: AppTheme.destructive, size: 20),
-                          SizedBox(width: 8),
-                          Text('Refuser',
+                          Expanded(
+                            child: Text(
+                              title,
                               style: TextStyle(
-                                  color: AppTheme.destructive,
-                                  fontWeight: FontWeight.w700)),
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppTheme.foreground),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: isPending
+                                  ? AppTheme.primaryLight
+                                  : Colors.green.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              status,
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: isPending ? AppTheme.primary : Colors.green,
+                              ),
+                            ),
+                          ),
                         ],
+                      ),
+                      Text('Acheteur: $buyer',
+                          style: TextStyle(
+                              fontSize: 13, color: AppTheme.mutedForeground)),
+                      SizedBox(height: 2),
+                      Text(price,
+                          style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                              color: AppTheme.primary)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 12),
+            Row(
+              children: [
+                if (isPending) ...[
+                  Expanded(
+                    flex: 2,
+                    child: TogoPressableScale(
+                      onTap: () {},
+                      child: Container(
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: AppTheme.primary,
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.check_circle_outline,
+                                color: Colors.white, size: 18),
+                            SizedBox(width: 6),
+                            Text('Accepter',
+                                style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w700)),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 10),
+                  Expanded(
+                    flex: 2,
+                    child: TogoPressableScale(
+                      onTap: () {},
+                      child: Container(
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: AppTheme.destructive.withOpacity(0.08),
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.cancel_outlined,
+                                color: AppTheme.destructive, size: 18),
+                            SizedBox(width: 6),
+                            Text('Refuser',
+                                style: TextStyle(
+                                    color: AppTheme.destructive,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w700)),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 10),
+                ],
+                Expanded(
+                  flex: 1,
+                  child: TogoPressableScale(
+                    onTap: navigateToDetails,
+                    child: Container(
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: AppTheme.muted,
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(color: AppTheme.border),
+                      ),
+                      child: Center(
+                        child: Icon(Icons.visibility_outlined,
+                            color: AppTheme.foreground, size: 18),
                       ),
                     ),
                   ),
@@ -441,7 +476,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ],
             ),
           ],
-        ],
+        ),
       ),
     );
   }

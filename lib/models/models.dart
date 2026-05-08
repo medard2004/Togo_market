@@ -124,3 +124,32 @@ class AppNotification {
     this.isRead = false,
   });
 }
+
+// ── Order ────────────────────────────────────────────────────────────────────
+class Order {
+  final String id;
+  final String productId;
+  final String buyerId;
+  final String sellerId;
+  final String status; // 'En attente', 'Confirmé', 'Terminé', 'Annulé'
+  final String date;
+  final String deliveryMode; // 'livraison', 'retrait'
+  final String phone;
+  final String? note;
+  final String? location; // GPS coordinates or address
+  final double totalPrice;
+
+  const Order({
+    required this.id,
+    required this.productId,
+    required this.buyerId,
+    required this.sellerId,
+    required this.status,
+    required this.date,
+    required this.deliveryMode,
+    required this.phone,
+    this.note,
+    this.location,
+    required this.totalPrice,
+  });
+}
