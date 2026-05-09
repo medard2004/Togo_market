@@ -19,6 +19,7 @@ class ChatSession {
   
   final String lastMessage;
   final DateTime lastMessageTime;
+  final String lastMessageSenderId;
   
   /// Map {userId: count} pour les non-lus de chaque participant
   final Map<String, int> unreadCounts;
@@ -33,6 +34,7 @@ class ChatSession {
     this.productImage,
     required this.lastMessage,
     required this.lastMessageTime,
+    this.lastMessageSenderId = '',
     this.unreadCounts = const {},
   });
 
@@ -111,6 +113,7 @@ class ChatSession {
       productImage: json['productImage'],
       lastMessage: json['lastMessage'] ?? '',
       lastMessageTime: (json['lastMessageTime'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      lastMessageSenderId: json['lastMessageSenderId']?.toString() ?? '',
       unreadCounts: unreads,
     );
   }
@@ -125,6 +128,7 @@ class ChatSession {
       'productImage': productImage,
       'lastMessage': lastMessage,
       'lastMessageTime': Timestamp.fromDate(lastMessageTime),
+      'lastMessageSenderId': lastMessageSenderId,
       'unreadCounts': unreadCounts,
     };
   }
@@ -135,16 +139,30 @@ class ChatMessageData {
   final String senderId;
   final String content;
   final DateTime timestamp;
-  final bool isRead;
+  final bool seen;
+  final DateTime? seenAt;
   final String? productId;
+  
+  /// Type de message : 'text', 'image', 'voice'
+  final String type;
+  
+  /// URL du média (image ou vocal) stocké dans Firebase Storage
+  final String? mediaUrl;
+  
+  /// Durée du vocal en secondes
+  final int? mediaDuration;
 
   ChatMessageData({
     required this.id,
     required this.senderId,
     required this.content,
     required this.timestamp,
-    this.isRead = false,
+    this.seen = false,
+    this.seenAt,
     this.productId,
+    this.type = 'text',
+    this.mediaUrl,
+    this.mediaDuration,
   });
 
   factory ChatMessageData.fromJson(Map<String, dynamic> json, String id) {
@@ -153,8 +171,12 @@ class ChatMessageData {
       senderId: json['senderId']?.toString() ?? '',
       content: json['content'] ?? '',
       timestamp: (json['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
-      isRead: json['isRead'] ?? false,
+      seen: json['seen'] ?? json['isRead'] ?? false,
+      seenAt: (json['seenAt'] as Timestamp?)?.toDate(),
       productId: json['productId'],
+      type: json['type'] ?? 'text',
+      mediaUrl: json['mediaUrl'],
+      mediaDuration: json['mediaDuration'],
     );
   }
 
@@ -163,8 +185,12 @@ class ChatMessageData {
       'senderId': senderId,
       'content': content,
       'timestamp': Timestamp.fromDate(timestamp),
-      'isRead': isRead,
+      'seen': seen,
+      if (seenAt != null) 'seenAt': Timestamp.fromDate(seenAt!),
       'productId': productId,
+      'type': type,
+      if (mediaUrl != null) 'mediaUrl': mediaUrl,
+      if (mediaDuration != null) 'mediaDuration': mediaDuration,
     };
   }
 }

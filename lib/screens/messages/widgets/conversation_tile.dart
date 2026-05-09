@@ -64,20 +64,6 @@ class ConversationTile extends StatelessWidget {
                     backgroundColor: AppTheme.muted,
                     child: Icon(Icons.person, size: r.s(26), color: AppTheme.mutedForeground),
                   ),
-                if (hasUnread)
-                  Positioned(
-                    bottom: 0,
-                    right: 0,
-                    child: Container(
-                      width: r.s(12),
-                      height: r.s(12),
-                      decoration: BoxDecoration(
-                        color: AppTheme.primary,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: AppTheme.cardColor, width: 2),
-                      ),
-                    ),
-                  ),
               ],
             ),
             SizedBox(width: r.s(12)),
@@ -102,69 +88,76 @@ class ConversationTile extends StatelessWidget {
                           ),
                         ),
                       ),
-                      SizedBox(width: r.s(8)),
-                      Text(
-                        item.time,
-                        style: TextStyle(
-                          fontSize: r.fs(11),
-                          color:
-                              hasUnread ? AppTheme.primary : AppTheme.mutedForeground,
-                          fontWeight: hasUnread ? FontWeight.w600 : FontWeight.w400,
+                    ],
+                  ),
+                  SizedBox(height: r.s(3)),
+                  Row(
+                    children: [
+                      if (item.isSentByMe) ...[
+                        Icon(
+                          item.isSeenByOther ? Icons.done_all : Icons.check,
+                          size: 16,
+                          color: item.isSeenByOther ? Colors.blueAccent : AppTheme.mutedForeground,
+                        ),
+                        SizedBox(width: 4),
+                      ],
+                      Expanded(
+                        child: Text(
+                          item.msg,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: r.fs(13),
+                            color:
+                                hasUnread ? AppTheme.foreground : AppTheme.mutedForeground,
+                            fontWeight: hasUnread ? FontWeight.w500 : FontWeight.w400,
+                          ),
                         ),
                       ),
                     ],
                   ),
-                  SizedBox(height: r.s(3)),
-                  Text(
-                    item.msg,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: r.fs(13),
-                      color:
-                          hasUnread ? AppTheme.foreground : AppTheme.mutedForeground,
-                      fontWeight: hasUnread ? FontWeight.w500 : FontWeight.w400,
-                    ),
-                  ),
                 ],
               ),
             ),
-
-            // Miniature produit
-            if (item.productImg != null) ...[
-              SizedBox(width: r.s(10)),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(r.rad(10)),
-                child: CachedNetworkImage(
-                  imageUrl: item.productImg!,
-                  width: r.s(46),
-                  height: r.s(46),
-                  fit: BoxFit.cover,
-                  errorWidget: (_, __, ___) => Container(
-                    width: r.s(46),
-                    height: r.s(46),
-                    decoration: BoxDecoration(
-                      color: AppTheme.muted,
-                      borderRadius: BorderRadius.circular(r.rad(10)),
-                    ),
-                    child: Icon(Icons.image_not_supported,
-                        size: r.s(18), color: AppTheme.mutedForeground),
+            SizedBox(width: r.s(8)),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  item.time,
+                  style: TextStyle(
+                    fontSize: r.fs(11),
+                    color:
+                        hasUnread ? AppTheme.primary : AppTheme.mutedForeground,
+                    fontWeight: hasUnread ? FontWeight.w600 : FontWeight.w400,
                   ),
                 ),
-              ),
-            ] else ...[
-              SizedBox(width: r.s(10)),
-              Container(
-                width: r.s(46),
-                height: r.s(46),
-                decoration: BoxDecoration(
-                  color: AppTheme.muted,
-                  borderRadius: BorderRadius.circular(r.rad(10)),
-                ),
-                child: Icon(Icons.image_not_supported_outlined,
-                    size: r.s(20), color: AppTheme.mutedForeground),
-              ),
-            ],
+                if (hasUnread) ...[
+                  SizedBox(height: r.s(6)),
+                  Container(
+                    padding: EdgeInsets.all(r.s(4)),
+                    constraints: BoxConstraints(
+                      minWidth: r.s(20),
+                      minHeight: r.s(20),
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Center(
+                      child: Text(
+                        item.unread > 99 ? '99+' : '${item.unread}',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: r.fs(10),
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
           ],
         ),
       ),
