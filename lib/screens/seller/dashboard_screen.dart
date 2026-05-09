@@ -303,12 +303,202 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildOrdersTab() {
-    return Padding(
-      padding: const EdgeInsets.only(top: 40),
-      child: Center(
-        child: Text(
-          'Aucune commande pour le moment',
-          style: TextStyle(color: AppTheme.mutedForeground),
+    return Column(
+      children: [
+        TogoSlideUp(
+          child: _buildOrderTile(
+            'iPhone 13 Pro Max 256Go',
+            'Kafui A.',
+            '350 000 F',
+            'https://images.unsplash.com/photo-1632661674596-df8be070a5c5?w=200&h=200&fit=crop',
+            'En attente',
+            isPending: true,
+          ),
+        ),
+        TogoSlideUp(
+          delay: const Duration(milliseconds: 100),
+          child: _buildOrderTile(
+            'Canapé 3 places cuir',
+            'Mawuli K.',
+            '85 000 F',
+            'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=200&h=200&fit=crop',
+            'Acceptée',
+            isPending: false,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildOrderTile(
+      String title, String buyer, String price, String img, String status,
+      {bool isPending = true}) {
+    final navigateToDetails = () => Get.toNamed('/order-details', arguments: {
+          'title': title,
+          'price': price,
+          'status': status,
+          'image': img,
+          'buyer': buyer,
+          'isSale': true,
+        });
+
+    return GestureDetector(
+      onTap: navigateToDetails,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppTheme.cardColor,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: AppTheme.border,
+              blurRadius: 20,
+              offset: const Offset(0, 10),
+            )
+          ],
+        ),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: CachedNetworkImage(
+                      imageUrl: img, width: 64, height: 64, fit: BoxFit.cover),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              title,
+                              style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppTheme.foreground),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: isPending
+                                  ? AppTheme.primaryLight
+                                  : Colors.green.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              status,
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: isPending ? AppTheme.primary : Colors.green,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      Text('Acheteur: $buyer',
+                          style: TextStyle(
+                              fontSize: 13, color: AppTheme.mutedForeground)),
+                      const SizedBox(height: 2),
+                      Text(price,
+                          style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                              color: AppTheme.primary)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                if (isPending) ...[
+                  Expanded(
+                    flex: 2,
+                    child: TogoPressableScale(
+                      onTap: () {},
+                      child: Container(
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: AppTheme.primary,
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.check_circle_outline,
+                                color: Colors.white, size: 18),
+                            const SizedBox(width: 6),
+                            const Text('Accepter',
+                                style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w700)),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    flex: 2,
+                    child: TogoPressableScale(
+                      onTap: () {},
+                      child: Container(
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: AppTheme.destructive.withOpacity(0.08),
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.cancel_outlined,
+                                color: AppTheme.destructive, size: 18),
+                            const SizedBox(width: 6),
+                            Text('Refuser',
+                                style: TextStyle(
+                                    color: AppTheme.destructive,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w700)),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                ],
+                Expanded(
+                  flex: 1,
+                  child: TogoPressableScale(
+                    onTap: navigateToDetails,
+                    child: Container(
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: AppTheme.muted,
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(color: AppTheme.border),
+                      ),
+                      child: Center(
+                        child: Icon(Icons.visibility_outlined,
+                            color: AppTheme.foreground, size: 18),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
         ),
       ),
     );

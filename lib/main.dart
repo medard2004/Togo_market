@@ -21,6 +21,7 @@ import 'screens/chat/chat_screen.dart';
 import 'screens/messages/messages_screen.dart';
 import 'screens/orders/order_checkout_screen.dart';
 import 'screens/orders/orders_screen.dart';
+import 'screens/orders/order_details_screen.dart';
 import 'screens/seller/seller_screen.dart';
 import 'screens/seller/dashboard_screen.dart';
 import 'screens/seller/shop_settings_screen.dart';
@@ -195,6 +196,7 @@ class TogoMarketApp extends StatelessWidget {
           togoPage('/privacy', () => const PrivacyScreen()),
           togoPage('/favorites', () => const FavoritesScreen()),
           togoPage('/orders', () => const OrdersScreen()),
+          togoPage('/order-details', () => const OrderDetailsScreen()),
           togoPage('/help', () => const HelpScreen()),
           togoPage('/trends', () => const TrendingExplorerScreen()),
           togoPage('/nearby', () => const NearbyExplorerScreen()),
@@ -203,7 +205,6 @@ class TogoMarketApp extends StatelessWidget {
           togoPage('/individual-dashboard',
               () => const IndividualDashboardScreen()),
         ],
-      ),
     );
   }
 }

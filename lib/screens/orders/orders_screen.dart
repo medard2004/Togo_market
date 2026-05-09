@@ -230,138 +230,167 @@ class _OrderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppTheme.cardColor,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: AppTheme.shadowSm,
-      ),
-      child: Column(
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Product Image
-              ClipRRect(
-                borderRadius: BorderRadius.circular(18),
-                child: CachedNetworkImage(
-                  imageUrl: image,
-                  width: 70,
-                  height: 70,
-                  fit: BoxFit.cover,
+    final navigateToDetails = () => Get.toNamed('/order-details', arguments: {
+          'title': title,
+          'price': price,
+          'status': status,
+          'image': image,
+          'vendor': isSale ? null : partnerName,
+          'buyer': isSale ? partnerName : null,
+          'isSale': isSale,
+        });
+
+    return GestureDetector(
+      onTap: navigateToDetails,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppTheme.cardColor,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: AppTheme.shadowSm,
+        ),
+        child: Column(
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Product Image
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(18),
+                  child: CachedNetworkImage(
+                    imageUrl: image,
+                    width: 70,
+                    height: 70,
+                    fit: BoxFit.cover,
+                  ),
                 ),
-              ),
-              SizedBox(width: 14),
-              // Info
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            title,
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                              color: AppTheme.foreground,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        SizedBox(width: 8),
-                        // Status Badge
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                          decoration: BoxDecoration(
-                            color: statusColor,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Text(
-                            status,
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              color: textColor,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 4),
-                    Text(
-                      price,
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w800,
-                        color: AppTheme.primary,
-                      ),
-                    ),
-                    SizedBox(height: 4),
-                    RichText(
-                      text: TextSpan(
-                        style: TextStyle(fontSize: 12, color: AppTheme.mutedForeground),
+                SizedBox(width: 14),
+                // Info
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          TextSpan(text: '$partnerLabel '),
-                          TextSpan(
-                            text: partnerName,
-                            style: TextStyle(fontWeight: FontWeight.w500),
+                          Expanded(
+                            child: Text(
+                              title,
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                color: AppTheme.foreground,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          SizedBox(width: 8),
+                          // Status Badge
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 5),
+                            decoration: BoxDecoration(
+                              color: statusColor,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Text(
+                              status,
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: textColor,
+                              ),
+                            ),
                           ),
                         ],
                       ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 16),
-          // Actions
-          if (isSale && status == 'En attente')
-            Row(
-              children: [
-                Expanded(
-                  child: _ActionButton(
-                    label: 'Chat',
-                    icon: Icons.chat_bubble_outline,
-                    onTap: () {},
-                    isOutline: true,
-                  ),
-                ),
-                SizedBox(width: 10),
-                Expanded(
-                  child: _ActionButton(
-                    label: 'Accepter',
-                    onTap: () {},
-                    color: AppTheme.primary,
-                  ),
-                ),
-                SizedBox(width: 10),
-                Expanded(
-                  child: _ActionButton(
-                    label: 'Refuser',
-                    onTap: () {},
-                    color: AppTheme.muted,
-                    textColor: AppTheme.foreground,
+                      SizedBox(height: 4),
+                      Text(
+                        price,
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                          color: AppTheme.primary,
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      RichText(
+                        text: TextSpan(
+                          style: TextStyle(
+                              fontSize: 12, color: AppTheme.mutedForeground),
+                          children: [
+                            TextSpan(text: '$partnerLabel '),
+                            TextSpan(
+                              text: partnerName,
+                              style: TextStyle(fontWeight: FontWeight.w500),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
-            )
-          else
-            _ActionButton(
-              label: 'Chat',
-              icon: Icons.chat_bubble_outline,
-              onTap: () {},
-              isOutline: true,
-              width: double.infinity,
             ),
-        ],
+            SizedBox(height: 16),
+            // Actions
+            if (isSale && status == 'En attente')
+              Row(
+                children: [
+                  Expanded(
+                    child: _ActionButton(
+                      label: 'Détails',
+                      onTap: navigateToDetails,
+                      isOutline: true,
+                    ),
+                  ),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: _ActionButton(
+                      label: 'Accepter',
+                      onTap: () {},
+                      color: AppTheme.primary,
+                    ),
+                  ),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: _ActionButton(
+                      label: 'Refuser',
+                      onTap: () {},
+                      color: AppTheme.muted,
+                      textColor: AppTheme.foreground,
+                    ),
+                  ),
+                ],
+              )
+            else
+              Row(
+                children: [
+                  Expanded(
+                    child: _ActionButton(
+                      label: 'Détails',
+                      icon: Icons.visibility_outlined,
+                      onTap: navigateToDetails,
+                      isOutline: true,
+                    ),
+                  ),
+                  SizedBox(width: 10),
+                  Expanded(
+                    child: _ActionButton(
+                      label: 'Chat',
+                      icon: Icons.chat_bubble_outline,
+                      onTap: () {},
+                      color: AppTheme.primary.withOpacity(0.1),
+                      textColor: AppTheme.primary,
+                    ),
+                  ),
+                ],
+              ),
+          ],
+        ),
       ),
     );
   }
