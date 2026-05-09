@@ -369,10 +369,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
               title: Text(chat.otherParticipantName(shopId),
                   style: const TextStyle(
                       fontWeight: FontWeight.bold, fontSize: 14)),
-              subtitle: Text(chat.lastMessage,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 12)),
+              subtitle: Row(
+                children: [
+                  if (chat.lastMessageSenderId == shopId) ...[
+                    Icon(
+                      chat.unreadCounts[chat.otherParticipantId(shopId)] == 0 ? Icons.done_all : Icons.check,
+                      size: 14,
+                      color: chat.unreadCounts[chat.otherParticipantId(shopId)] == 0 ? Colors.blueAccent : AppTheme.mutedForeground,
+                    ),
+                    const SizedBox(width: 4),
+                  ],
+                  Expanded(
+                    child: Text(chat.lastMessage,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 12)),
+                  ),
+                ],
+              ),
               trailing: chat.unreadCountFor(shopId) > 0
                   ? Container(
                       padding: const EdgeInsets.all(6),

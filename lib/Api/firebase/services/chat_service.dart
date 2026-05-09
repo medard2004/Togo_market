@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:get/get.dart';
 import '../models/chat_model.dart';
@@ -7,6 +9,7 @@ class ChatService extends GetxService {
   static ChatService get to => Get.find();
   
   final FirebaseFirestore _db = FirebaseFirestore.instance;
+  final FirebaseStorage _storage = FirebaseStorage.instance;
 
   /// Génère un ID unique et déterministe pour la conversation entre deux utilisateurs.
   /// On trie les IDs pour garantir un seul ID par paire.
@@ -81,6 +84,7 @@ class ChatService extends GetxService {
       .map((snapshot) {
         final list = snapshot.docs
           .map((doc) => ChatSession.fromJson(doc.data(), doc.id))
+          .where((chat) => chat.lastMessage.trim().isNotEmpty)
           .toList();
         // Tri local pour éviter d'exiger un index composite sur Firestore
         list.sort((a, b) => b.lastMessageTime.compareTo(a.lastMessageTime));
@@ -101,7 +105,7 @@ class ChatService extends GetxService {
   /// Écoute les messages d'une conversation spécifique
   Stream<List<ChatMessageData>> getMessagesStream(String chatId) {
     return _db.collection('chats').doc(chatId).collection('messages')
-      .orderBy('timestamp', descending: false)
+      .orderBy('timestamp', descending: true)
       .snapshots()
       .map((snapshot) => snapshot.docs.map((doc) => ChatMessageData.fromJson(doc.data(), doc.id)).toList());
   }
@@ -119,8 +123,17 @@ class ChatService extends GetxService {
     return null;
   }
 
+  /// Upload un fichier média vers Firebase Storage
+  Future<String> uploadMedia(String chatId, File file, String type) async {
+    final ext = type == 'image' ? 'jpg' : 'm4a';
+    final fileName = '${DateTime.now().millisecondsSinceEpoch}.$ext';
+    final ref = _storage.ref().child('chats/$chatId/$type/$fileName');
+    final uploadTask = await ref.putFile(file);
+    return await uploadTask.ref.getDownloadURL();
+  }
+
   /// Envoie un message dans une conversation
-  Future<void> sendMessage(String chatId, String senderId, String receiverId, String content, {String? productId, required bool isBuyerSending}) async {
+  Future<void> sendMessage(String chatId, String senderId, String receiverId, String content, {String? productId, required bool isBuyerSending, String type = 'text', String? mediaUrl, int? mediaDuration}) async {
     final msgRef = _db.collection('chats').doc(chatId).collection('messages').doc();
     final now = DateTime.now();
 
@@ -130,20 +143,49 @@ class ChatService extends GetxService {
       content: content,
       timestamp: now,
       productId: productId,
+      type: type,
+      mediaUrl: mediaUrl,
+      mediaDuration: mediaDuration,
     );
+
+    // Texte de résumé pour la liste des conversations
+    String lastMessageText;
+    switch (type) {
+      case 'image':
+        lastMessageText = '📷 Photo';
+        break;
+      case 'voice':
+        lastMessageText = '🎤 Vocal';
+        break;
+      default:
+        lastMessageText = content;
+    }
 
     await _db.runTransaction((transaction) async {
       final chatRef = _db.collection('chats').doc(chatId);
+      final chatDoc = await transaction.get(chatRef);
       
       // Ajouter le message
       transaction.set(msgRef, msg.toJson());
       
-      // Mettre à jour le chat (dernier message, date, compteur non-lu du destinataire)
-      transaction.update(chatRef, {
-        'lastMessage': content,
-        'lastMessageTime': Timestamp.fromDate(now),
-        'unreadCounts.$receiverId': FieldValue.increment(1),
-      });
+      if (chatDoc.exists) {
+        // Mettre à jour le chat
+        transaction.update(chatRef, {
+          'lastMessage': lastMessageText,
+          'lastMessageTime': Timestamp.fromDate(now),
+          'lastMessageSenderId': senderId,
+          'unreadCounts.$receiverId': FieldValue.increment(1),
+        });
+      } else {
+        // Créer le chat s'il n'existe pas (fallback de sécurité)
+        transaction.set(chatRef, {
+          'participants': [senderId, receiverId],
+          'lastMessage': lastMessageText,
+          'lastMessageTime': Timestamp.fromDate(now),
+          'lastMessageSenderId': senderId,
+          'unreadCounts': {receiverId: 1, senderId: 0},
+        }, SetOptions(merge: true));
+      }
     });
   }
 
@@ -160,6 +202,29 @@ class ChatService extends GetxService {
   /// Marque comme lu pour un userId spécifique (nouveau format)
   Future<void> markAsReadForUser(String chatId, String userId) async {
     final chatRef = _db.collection('chats').doc(chatId);
-    await chatRef.update({'unreadCounts.$userId': 0});
+    try {
+      final batch = _db.batch();
+      
+      // 1. Remettre le compteur global à 0
+      batch.update(chatRef, {'unreadCounts.$userId': 0});
+      
+      // 2. Mettre à jour les messages non lus (dont l'expéditeur n'est pas userId)
+      final unreadMsgs = await chatRef.collection('messages')
+          .where('seen', isEqualTo: false)
+          .get();
+          
+      for (var doc in unreadMsgs.docs) {
+        if (doc.data()['senderId'] != userId) {
+          batch.update(doc.reference, {
+            'seen': true,
+            'seenAt': FieldValue.serverTimestamp(),
+          });
+        }
+      }
+      
+      await batch.commit();
+    } catch (e) {
+      debugPrint('ChatService: Impossible de marquer comme lu ($e)');
+    }
   }
 }

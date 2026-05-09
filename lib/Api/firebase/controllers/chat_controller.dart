@@ -73,7 +73,7 @@ class ChatController extends GetxController {
   }
 
   /// Charge une conversation (s'abonne aux messages + charge metadata)
-  void loadConversation(String chatId, {required bool isBuyer}) {
+  void loadConversation(String chatId, {required bool isBuyer, String? actingUserId}) {
     currentMessages.bindStream(
       ChatService.to.getMessagesStream(chatId).handleError((error) {
         debugPrint('ChatController: Erreur chargement messages: $error');
@@ -84,8 +84,8 @@ class ChatController extends GetxController {
     // Charger les metadata de la conversation
     _loadChatSession(chatId);
 
-    // Marquer comme lu pour l'utilisateur actuel
-    final userId = currentUserId;
+    // Marquer comme lu pour l'utilisateur actuel (ou la boutique)
+    final userId = actingUserId ?? currentUserId;
     if (userId.isNotEmpty) {
       ChatService.to.markAsReadForUser(chatId, userId);
     }
@@ -103,7 +103,7 @@ class ChatController extends GetxController {
   /// Envoie un message
   Future<void> sendMessage(
       String chatId, String senderId, String receiverId, String content,
-      {String? productId, required bool isBuyerSending}) async {
+      {String? productId, required bool isBuyerSending, String type = 'text', String? mediaUrl, int? mediaDuration}) async {
     try {
       await ChatService.to.sendMessage(
         chatId,
@@ -112,6 +112,9 @@ class ChatController extends GetxController {
         content,
         productId: productId,
         isBuyerSending: isBuyerSending,
+        type: type,
+        mediaUrl: mediaUrl,
+        mediaDuration: mediaDuration,
       );
     } catch (e) {
       debugPrint('ChatController: Erreur envoi message: $e');

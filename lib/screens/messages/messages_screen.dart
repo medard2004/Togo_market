@@ -49,14 +49,21 @@ class _MessagesScreenState extends State<MessagesScreen> {
           ? ApiConstants.resolveImageUrl(chat.productImage!)
           : null;
       
+      final otherId = chat.otherParticipantId(myId);
+      final isSentByMe = chat.lastMessageSenderId == myId;
+      final isSeenByOther = chat.unreadCounts[otherId] == 0;
+
       return _ConvItem(
         id: chat.id,
         name: otherName,
         time: '${chat.lastMessageTime.hour.toString().padLeft(2, '0')}:${chat.lastMessageTime.minute.toString().padLeft(2, '0')}',
+        rawTime: chat.lastMessageTime,
         msg: chat.lastMessage,
         unread: chat.unreadCountFor(myId),
         img: resolvedAvatar,
         productImg: productImg,
+        isSentByMe: isSentByMe,
+        isSeenByOther: isSeenByOther,
       );
     }).toList();
   }
@@ -82,10 +89,10 @@ class _MessagesScreenState extends State<MessagesScreen> {
       switch (_selectedSort) {
         case 'date_desc':
           // Tri par date dÃ©croissante (plus rÃ©cent d'abord)
-          return b.time.compareTo(a.time);
+          return b.rawTime.compareTo(a.rawTime);
         case 'date_asc':
           // Tri par date croissante (plus ancien d'abord)
-          return a.time.compareTo(b.time);
+          return a.rawTime.compareTo(b.rawTime);
         case 'name_asc':
           return a.name.compareTo(b.name);
         case 'name_desc':
@@ -429,15 +436,23 @@ class _MessagesScreenState extends State<MessagesScreen> {
 // ModÃ¨le de donnÃ©es conversation mock
 class _ConvItem {
   final String id, name, time, msg, img;
+  final DateTime rawTime;
   final int unread;
   final String? productImg;
-  const _ConvItem(
-      {required this.id,
-      required this.name,
-      required this.time,
-      required this.msg,
-      required this.img,
-      required this.unread,
-      required this.productImg});
+  final bool isSentByMe;
+  final bool isSeenByOther;
+
+  const _ConvItem({
+    required this.id,
+    required this.name,
+    required this.time,
+    required this.rawTime,
+    required this.msg,
+    required this.img,
+    required this.unread,
+    required this.productImg,
+    this.isSentByMe = false,
+    this.isSeenByOther = false,
+  });
 }
 
