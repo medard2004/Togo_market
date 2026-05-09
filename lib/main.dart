@@ -205,6 +205,7 @@ class TogoMarketApp extends StatelessWidget {
           togoPage('/individual-dashboard',
               () => const IndividualDashboardScreen()),
         ],
+      ),
     );
   }
 }
