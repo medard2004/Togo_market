@@ -157,6 +157,9 @@ class ChatService extends GetxService {
       case 'voice':
         lastMessageText = '🎤 Vocal';
         break;
+      case 'order':
+        lastMessageText = '📦 Récapitulatif de commande';
+        break;
       default:
         lastMessageText = content;
     }

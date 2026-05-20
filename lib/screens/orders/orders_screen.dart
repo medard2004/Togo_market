@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../theme/app_theme.dart';
+import '../../controllers/order_controller.dart';
+import '../../models/order_model.dart';
+import '../../Api/config/api_constants.dart';
 
 class OrdersScreen extends StatefulWidget {
   const OrdersScreen({super.key});
@@ -14,12 +17,23 @@ class _OrdersScreenState extends State<OrdersScreen> {
   int _activeTab = 0; // 0 = Achats, 1 = Ventes
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (Get.isRegistered<OrderController>()) {
+        OrderController.to.fetchOrders();
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Obx(() => Scaffold(
+    return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
         backgroundColor: AppTheme.background,
         elevation: 0,
+        scrolledUnderElevation: 0,
         leading: Padding(
           padding: const EdgeInsets.all(8.0),
           child: Container(
@@ -46,7 +60,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
       ),
       body: Column(
         children: [
-          SizedBox(height: 12),
+          const SizedBox(height: 12),
           // ── Tabs (Achats / Ventes) ──────────────────────────────────────────
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -65,21 +79,43 @@ class _OrdersScreenState extends State<OrdersScreen> {
               ),
             ),
           ),
-          SizedBox(height: 20),
+          const SizedBox(height: 20),
           Divider(height: 1, thickness: 1, color: AppTheme.border),
           // ── Orders List ───────────────────────────────────────────────────
           Expanded(
-            child: IndexedStack(
-              index: _activeTab,
-              children: [
-                _buildPurchasesList(),
-                _buildSalesList(),
-              ],
-            ),
+            child: Get.isRegistered<OrderController>()
+                ? Obx(() {
+                    final ctrl = OrderController.to;
+                    if (ctrl.isLoading.value) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    if (ctrl.hasError.value) {
+                      return Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Text('Erreur de chargement'),
+                            ElevatedButton(
+                              onPressed: () => ctrl.fetchOrders(),
+                              child: const Text('Réessayer'),
+                            )
+                          ],
+                        ),
+                      );
+                    }
+                    return IndexedStack(
+                      index: _activeTab,
+                      children: [
+                        _buildList(ctrl.buyerOrders, isSale: false),
+                        _buildList(ctrl.sellerOrders, isSale: true),
+                      ],
+                    );
+                  })
+                : const Center(child: Text('Module commandes non disponible')),
           ),
         ],
       ),
-    ));
+    );
   }
 
   Widget _buildTabPill(String label, int index) {
@@ -92,9 +128,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
           decoration: BoxDecoration(
             color: isActive ? AppTheme.cardColor : Colors.transparent,
             borderRadius: BorderRadius.circular(20),
-            boxShadow: isActive
-                ? AppTheme.shadowSm
-                : null,
+            boxShadow: isActive ? AppTheme.shadowSm : null,
           ),
           child: Center(
             child: Text(
@@ -111,96 +145,70 @@ class _OrdersScreenState extends State<OrdersScreen> {
     );
   }
 
-  Widget _buildPurchasesList() {
-    final purchases = [
-      {
-        'title': 'iPhone 13 Pro Max 256Go',
-        'price': '350 000 F',
-        'vendor': 'Koffi Mensah',
-        'image': 'https://images.unsplash.com/photo-1632661674596-df8be070a5c5?w=200',
-        'status': 'Confirmé',
-        'statusColor': const Color(0xFFE8F5E9),
-        'textColor': const Color(0xFF2E7D32),
-      },
-      {
-        'title': 'Sneakers Nike Air Force',
-        'price': '28 000 F',
-        'vendor': 'Ama Koffi',
-        'image': 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=200',
-        'status': 'En attente',
-        'statusColor': const Color(0xFFFFF7E6),
-        'textColor': const Color(0xFFB45309),
-      },
-      {
-        'title': 'Kit beauté complet',
-        'price': '22 000 F',
-        'vendor': 'Yao Attiogbé',
-        'image': 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=200',
-        'status': 'Terminé',
-        'statusColor': const Color(0xFFF2F2F7),
-        'textColor': const Color(0xFF8E8E93),
-      },
-    ];
+  Widget _buildList(List<OrderModel> orders, {required bool isSale}) {
+    if (orders.isEmpty) {
+      return Center(
+        child: Text(
+          isSale ? 'Aucune vente' : 'Aucun achat',
+          style: TextStyle(color: AppTheme.mutedForeground),
+        ),
+      );
+    }
+    return RefreshIndicator(
+      onRefresh: () => OrderController.to.fetchOrders(),
+      color: AppTheme.primary,
+      child: ListView.builder(
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 30),
+        itemCount: orders.length,
+        itemBuilder: (context, i) {
+          final order = orders[i];
 
-    return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 30),
-      itemCount: purchases.length,
-      itemBuilder: (context, i) {
-        final order = purchases[i];
-        return _OrderCard(
-          title: order['title'] as String,
-          price: order['price'] as String,
-          partnerLabel: 'Vendeur:',
-          partnerName: order['vendor'] as String,
-          image: order['image'] as String,
-          status: order['status'] as String,
-          statusColor: order['statusColor'] as Color,
-          textColor: order['textColor'] as Color,
-          isSale: false,
-        );
-      },
-    );
-  }
+          // Determine status color as per main branch design
+          Color statusColor;
+          Color textColor;
+          switch (order.status) {
+            case 'Acceptée':
+            case 'Confirmé':
+              statusColor = const Color(0xFFE8F5E9);
+              textColor = const Color(0xFF2E7D32);
+              break;
+            case 'Refusée':
+              statusColor = const Color(0xFFFFEBEE);
+              textColor = const Color(0xFFC62828);
+              break;
+            case 'Terminée':
+            case 'Terminé':
+              statusColor = const Color(0xFFF2F2F7);
+              textColor = const Color(0xFF8E8E93);
+              break;
+            case 'En attente':
+            default:
+              statusColor = const Color(0xFFFFF7E6);
+              textColor = const Color(0xFFB45309);
+              break;
+          }
 
-  Widget _buildSalesList() {
-    final sales = [
-      {
-        'title': 'Canapé 3 places cuir',
-        'price': '85 000 F',
-        'buyer': 'Mawuli K.',
-        'image': 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=200',
-        'status': 'En attente',
-        'statusColor': const Color(0xFFFFF7E6),
-        'textColor': const Color(0xFFB45309),
-      },
-      {
-        'title': 'Laptop HP EliteBook',
-        'price': '220 000 F',
-        'buyer': 'Kafui A.',
-        'image': 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=200',
-        'status': 'Confirmé',
-        'statusColor': const Color(0xFFE8F5E9),
-        'textColor': const Color(0xFF2E7D32),
-      },
-    ];
+          final String? rawImage = order.product?.image;
+          final imageUrl = (rawImage != null && rawImage.isNotEmpty)
+              ? ApiConstants.resolveImageUrl(rawImage)
+              : '';
 
-    return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 30),
-      itemCount: sales.length,
-      itemBuilder: (context, i) {
-        final order = sales[i];
-        return _OrderCard(
-          title: order['title'] as String,
-          price: order['price'] as String,
-          partnerLabel: 'Acheteur:',
-          partnerName: order['buyer'] as String,
-          image: order['image'] as String,
-          status: order['status'] as String,
-          statusColor: order['statusColor'] as Color,
-          textColor: order['textColor'] as Color,
-          isSale: true,
-        );
-      },
+          return _OrderCard(
+            title: order.product?.titre ?? 'Produit #${order.productId}',
+            price: '${order.formattedPrice} F',
+            partnerLabel: isSale ? 'Acheteur:' : 'Vendeur:',
+            partnerName: isSale
+                ? (order.user?.nom ?? 'Acheteur')
+                : (order.seller?.nom ?? 'Vendeur'),
+            image: imageUrl,
+            status: order.status,
+            statusColor: statusColor,
+            textColor: textColor,
+            isSale: isSale,
+            order: order,
+          );
+        },
+      ),
     );
   }
 }
@@ -215,6 +223,7 @@ class _OrderCard extends StatelessWidget {
   final Color statusColor;
   final Color textColor;
   final bool isSale;
+  final OrderModel order;
 
   const _OrderCard({
     required this.title,
@@ -226,11 +235,13 @@ class _OrderCard extends StatelessWidget {
     required this.statusColor,
     required this.textColor,
     required this.isSale,
+    required this.order,
   });
 
   @override
   Widget build(BuildContext context) {
     final navigateToDetails = () => Get.toNamed('/order-details', arguments: {
+          'orderId': order.id.toString(),
           'title': title,
           'price': price,
           'status': status,
@@ -238,6 +249,12 @@ class _OrderCard extends StatelessWidget {
           'vendor': isSale ? null : partnerName,
           'buyer': isSale ? partnerName : null,
           'isSale': isSale,
+          'deliveryMethod': order.deliveryMethod,
+          'deliveryAddress': order.deliveryAddress,
+          'paymentMethod': order.paymentMethod,
+          'phone': order.phone,
+          'notes': order.notes,
+          'date': order.formattedDate,
         });
 
     return GestureDetector(
@@ -258,14 +275,17 @@ class _OrderCard extends StatelessWidget {
                 // Product Image
                 ClipRRect(
                   borderRadius: BorderRadius.circular(18),
-                  child: CachedNetworkImage(
-                    imageUrl: image,
-                    width: 70,
-                    height: 70,
-                    fit: BoxFit.cover,
-                  ),
+                  child: image.isNotEmpty
+                      ? CachedNetworkImage(
+                          imageUrl: image,
+                          width: 70,
+                          height: 70,
+                          fit: BoxFit.cover,
+                          errorWidget: (_, __, ___) => _imageFallback(),
+                        )
+                      : _imageFallback(),
                 ),
-                SizedBox(width: 14),
+                const SizedBox(width: 14),
                 // Info
                 Expanded(
                   child: Column(
@@ -287,7 +307,7 @@ class _OrderCard extends StatelessWidget {
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                          SizedBox(width: 8),
+                          const SizedBox(width: 8),
                           // Status Badge
                           Container(
                             padding: const EdgeInsets.symmetric(
@@ -307,7 +327,7 @@ class _OrderCard extends StatelessWidget {
                           ),
                         ],
                       ),
-                      SizedBox(height: 4),
+                      const SizedBox(height: 4),
                       Text(
                         price,
                         style: TextStyle(
@@ -316,7 +336,7 @@ class _OrderCard extends StatelessWidget {
                           color: AppTheme.primary,
                         ),
                       ),
-                      SizedBox(height: 4),
+                      const SizedBox(height: 4),
                       RichText(
                         text: TextSpan(
                           style: TextStyle(
@@ -325,7 +345,7 @@ class _OrderCard extends StatelessWidget {
                             TextSpan(text: '$partnerLabel '),
                             TextSpan(
                               text: partnerName,
-                              style: TextStyle(fontWeight: FontWeight.w500),
+                              style: const TextStyle(fontWeight: FontWeight.w500),
                             ),
                           ],
                         ),
@@ -335,7 +355,7 @@ class _OrderCard extends StatelessWidget {
                 ),
               ],
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             // Actions
             if (isSale && status == 'En attente')
               Row(
@@ -347,19 +367,19 @@ class _OrderCard extends StatelessWidget {
                       isOutline: true,
                     ),
                   ),
-                  SizedBox(width: 8),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: _ActionButton(
                       label: 'Accepter',
-                      onTap: () {},
+                      onTap: () => OrderController.to.acceptOrder(context, order),
                       color: AppTheme.primary,
                     ),
                   ),
-                  SizedBox(width: 8),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: _ActionButton(
                       label: 'Refuser',
-                      onTap: () {},
+                      onTap: () => OrderController.to.refuseOrder(context, order),
                       color: AppTheme.muted,
                       textColor: AppTheme.foreground,
                     ),
@@ -377,21 +397,49 @@ class _OrderCard extends StatelessWidget {
                       isOutline: true,
                     ),
                   ),
-                  SizedBox(width: 10),
-                  Expanded(
-                    child: _ActionButton(
-                      label: 'Chat',
-                      icon: Icons.chat_bubble_outline,
-                      onTap: () {},
-                      color: AppTheme.primary.withOpacity(0.1),
-                      textColor: AppTheme.primary,
+                  const SizedBox(width: 10),
+                  if (isSale && status == 'Acceptée') ...[
+                    Expanded(
+                      child: _ActionButton(
+                        label: 'Terminer',
+                        icon: Icons.check_circle_outline,
+                        onTap: () => OrderController.to.completeOrder(context, order),
+                        color: Colors.green.withOpacity(0.12),
+                        textColor: Colors.green.shade700,
+                      ),
                     ),
-                  ),
+                  ] else ...[
+                    Expanded(
+                      child: _ActionButton(
+                        label: 'Chat',
+                        icon: Icons.chat_bubble_outline,
+                        onTap: () {
+                          // Logique pour ouvrir le chat avec le vendeur ou l'acheteur
+                          // En s'appuyant sur OrderController / ChatController
+                        },
+                        color: AppTheme.primary.withOpacity(0.1),
+                        textColor: AppTheme.primary,
+                      ),
+                    ),
+                  ],
                 ],
               ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _imageFallback() {
+    return Container(
+      width: 70,
+      height: 70,
+      decoration: BoxDecoration(
+        color: AppTheme.muted,
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Icon(Icons.image_not_supported_outlined,
+          color: AppTheme.mutedForeground, size: 28),
     );
   }
 }
@@ -431,8 +479,9 @@ class _ActionButton extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             if (icon != null) ...[
-              Icon(icon, size: 16, color: isOutline ? AppTheme.primary : Colors.white),
-              SizedBox(width: 8),
+              Icon(icon,
+                  size: 16, color: isOutline ? AppTheme.primary : (textColor ?? Colors.white)),
+              const SizedBox(width: 8),
             ],
             Text(
               label,

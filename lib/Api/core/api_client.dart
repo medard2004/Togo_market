@@ -77,7 +77,18 @@ class ApiClient {
     }
   }
 
+  /// General PATCH request
+  Future<Response> patch(String endpoint, {dynamic data}) async {
+    try {
+      final response = await _dio.patch(endpoint, data: data);
+      return response;
+    } on DioException catch (e) {
+      throw _handleException(e);
+    }
+  }
+
   // --- ERROR HANDLING --- //
+
 
   Exception _handleException(DioException e) {
     if (e.response != null) {

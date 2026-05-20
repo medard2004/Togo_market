@@ -2,9 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../theme/app_theme.dart';
-import '../../models/models.dart';
-import '../../data/mock_data.dart';
 import '../../utils/responsive.dart';
+import '../../Api/config/api_constants.dart';
 
 class OrderDetailsScreen extends StatelessWidget {
   const OrderDetailsScreen({super.key});
@@ -18,7 +17,10 @@ class OrderDetailsScreen extends StatelessWidget {
     final String title = orderData['title'] ?? 'Commande';
     final String price = orderData['price'] ?? '0 F';
     final String status = orderData['status'] ?? 'En attente';
-    final String image = orderData['image'] ?? '';
+    final String rawImage = orderData['image'] ?? '';
+    final String image = rawImage.isNotEmpty
+        ? ApiConstants.resolveImageUrl(rawImage)
+        : '';
     final String partnerName =
         orderData['vendor'] ?? orderData['buyer'] ?? 'Inconnu';
     final bool isSale = orderData['isSale'] ?? false;
@@ -211,12 +213,16 @@ class OrderDetailsScreen extends StatelessWidget {
                 children: [
                   ClipRRect(
                     borderRadius: BorderRadius.circular(r.rad(15)),
-                    child: CachedNetworkImage(
-                      imageUrl: image,
-                      width: r.s(80),
-                      height: r.s(80),
-                      fit: BoxFit.cover,
-                    ),
+                    child: image.isNotEmpty
+                        ? CachedNetworkImage(
+                            imageUrl: image,
+                            width: r.s(80),
+                            height: r.s(80),
+                            fit: BoxFit.cover,
+                            placeholder: (_, __) => _ImagePlaceholder(size: r.s(80)),
+                            errorWidget: (_, __, ___) => _ImagePlaceholder(size: r.s(80)),
+                          )
+                        : _ImagePlaceholder(size: r.s(80)),
                   ),
                   SizedBox(width: r.s(16)),
                   Expanded(
@@ -283,7 +289,7 @@ class OrderDetailsScreen extends StatelessWidget {
                     radius: r.s(24),
                     backgroundColor: AppTheme.primary.withOpacity(0.1),
                     child: Text(
-                      partnerName[0].toUpperCase(),
+                      partnerName.isNotEmpty ? partnerName[0].toUpperCase() : '?',
                       style: TextStyle(
                         color: AppTheme.primary,
                         fontWeight: FontWeight.w800,
@@ -505,6 +511,26 @@ class OrderDetailsScreen extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+// ── Image Placeholder ───────────────────────────────────────────────────────
+class _ImagePlaceholder extends StatelessWidget {
+  final double size;
+  const _ImagePlaceholder({required this.size});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: AppTheme.muted,
+        borderRadius: BorderRadius.circular(15),
+      ),
+      child: Icon(Icons.image_not_supported_outlined,
+          color: AppTheme.mutedForeground, size: size * 0.4),
     );
   }
 }

@@ -15,6 +15,8 @@ import '../../Api/provider/auth_controller.dart';
 import '../../Api/model/location_model.dart';
 import '../../controllers/boutique_controller.dart';
 import '../../utils/app_toasts.dart';
+import '../../utils/location_service.dart';
+import '../../utils/togo_cities.dart';
 import 'store_config_model.dart';
 
 class StoreConfigurationScreen extends StatefulWidget {
@@ -734,9 +736,8 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
   }
 
   Widget _buildVilleDropdown() {
-    return Obx(() {
-      final villes = _authCtrl.locations;
-      final villeNames = villes.map((v) => v.nom).toList();
+    return Builder(builder: (context) {
+      final villeNames = togoCities;
       // Ensure current value is valid
       if (villeNames.isNotEmpty && !villeNames.contains(_data.ville)) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -910,8 +911,31 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
         _gpsStatus = 'Position détectée ✅';
         _gpsLoading = false;
       });
+      // Reverse geocoding
+      _performReverseGeocoding(position.latitude, position.longitude);
     } catch (e) {
       setState(() { _gpsStatus = 'Erreur GPS: ${e.toString().substring(0, 50)}'; _gpsLoading = false; });
+    }
+  }
+
+  Future<void> _performReverseGeocoding(double lat, double lon) async {
+    final address = await LocationService.reverseGeocode(lat, lon);
+    if (address != null && mounted) {
+      setState(() {
+        if (address['ville'] != null && address['ville']!.isNotEmpty) {
+          final mappedCity = togoCities.firstWhere((v) => 
+            v.toLowerCase().contains(address['ville']!.toLowerCase()) || 
+            address['ville']!.toLowerCase().contains(v.toLowerCase()), 
+            orElse: () => '');
+          if (mappedCity.isNotEmpty) {
+            _data.ville = mappedCity;
+          }
+        }
+        if (address['quartier'] != null && address['quartier']!.isNotEmpty) {
+          _data.address = address['quartier']!;
+          _addressCtrl.text = address['quartier']!;
+        }
+      });
     }
   }
 
