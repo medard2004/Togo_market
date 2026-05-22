@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import '../theme/app_theme.dart';
 import '../utils/responsive.dart';
 import '../screens/seller/sell_choice_sheet.dart';
+import '../Api/provider/auth_controller.dart';
 
 class BottomNavBar extends StatelessWidget {
   final int currentIndex;
@@ -73,7 +74,14 @@ class BottomNavBar extends StatelessWidget {
                 final btnSize = r.s(54).clamp(50.0, 62.0);
                 return Expanded(
                   child: GestureDetector(
-                    onTap: () => SellChoiceSheet.show(),
+                    onTap: () {
+                      final auth = Get.find<AuthController>();
+                      if (!auth.isAuthenticated) {
+                        Get.toNamed('/auth', arguments: {'redirect': 'vendre'});
+                        return;
+                      }
+                      SellChoiceSheet.show();
+                    },
                     child: Stack(
                       clipBehavior: Clip.none,
                       alignment: Alignment.center,
@@ -141,7 +149,16 @@ class BottomNavBar extends StatelessWidget {
               return Expanded(
                 child: GestureDetector(
                   onTap: () {
-                    if (!isActive) Get.offNamed(item.route);
+                    if (!isActive) {
+                      final auth = Get.find<AuthController>();
+                      if (item.route == '/messages' || item.route == '/profile') {
+                        if (!auth.isAuthenticated) {
+                          Get.toNamed('/auth', arguments: {'redirect': item.route});
+                          return;
+                        }
+                      }
+                      Get.offNamed(item.route);
+                    }
                   },
                   behavior: HitTestBehavior.opaque,
                   child: Column(

@@ -21,6 +21,7 @@ import 'screens/chat/chat_screen.dart';
 import 'screens/messages/messages_screen.dart';
 import 'screens/orders/order_checkout_screen.dart';
 import 'screens/orders/orders_screen.dart';
+import 'screens/orders/order_details_screen.dart';
 import 'screens/seller/seller_screen.dart';
 import 'screens/seller/dashboard_screen.dart';
 import 'screens/seller/shop_settings_screen.dart';
@@ -39,7 +40,7 @@ import 'screens/profile/profile_screen.dart';
 import 'screens/profile/profile_setup_screen.dart';
 import 'screens/profile/public_profile_screen.dart';
 import 'screens/profile/edit_profile_screen.dart';
-import 'screens/profile/my_products_screen.dart';
+
 import 'screens/notifications/notifications_screen.dart';
 import 'screens/settings/settings_screen.dart';
 import 'screens/favorites/favorites_screen.dart';
@@ -62,6 +63,8 @@ import 'Api/services/user_service.dart';
 import 'Api/provider/auth_controller.dart';
 import 'controllers/boutique_controller.dart';
 import 'controllers/my_products_controller.dart';
+import 'controllers/order_controller.dart';
+
 import 'Api/firebase/services/chat_service.dart';
 import 'Api/firebase/controllers/chat_controller.dart';
 import 'Api/firebase/services/fcm_service.dart';
@@ -114,6 +117,7 @@ void main() async {
   Get.put(ChatController());
   Get.put(DashboardController());
   Get.put(MyProductsController());
+  Get.put(OrderController());
 
   runApp(const TogoMarketApp());
 }
@@ -189,12 +193,13 @@ class TogoMarketApp extends StatelessWidget {
           togoPage('/profile/:id', () => const PublicProfileScreen()),
           togoPage('/edit-profile', () => const EditProfileScreen(),
               style: TogoRouteStyle.modalLift),
-          togoPage('/my-products', () => const MyProductsScreen()),
+
           togoPage('/shop-settings', () => const ShopSettingsScreen()),
           togoPage('/settings', () => const SettingsScreen()),
           togoPage('/privacy', () => const PrivacyScreen()),
           togoPage('/favorites', () => const FavoritesScreen()),
           togoPage('/orders', () => const OrdersScreen()),
+          togoPage('/order-details', () => const OrderDetailsScreen()),
           togoPage('/help', () => const HelpScreen()),
           togoPage('/trends', () => const TrendingExplorerScreen()),
           togoPage('/nearby', () => const NearbyExplorerScreen()),

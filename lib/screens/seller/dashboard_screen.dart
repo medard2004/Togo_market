@@ -4,10 +4,11 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../../theme/app_theme.dart';
 import '../../animations/togo_animation_system.dart';
 import '../../controllers/app_controller.dart';
+import '../../controllers/order_controller.dart';
+import '../../models/order_model.dart';
 import '../../Api/config/api_constants.dart';
 import '../../Api/model/product_model.dart';
 import '../../utils/app_utils.dart';
-import 'add_product_screen.dart';
 import '../../Api/firebase/controllers/chat_controller.dart';
 import '../../controllers/boutique_controller.dart';
 
@@ -26,9 +27,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
   void initState() {
     super.initState();
     _ctrl = Get.find<DashboardController>();
-    // Reload products when entering dashboard (boutique may have just been created)
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _ctrl.loadMyProducts();
+      // Charger les commandes vendeur
+      if (Get.isRegistered<OrderController>()) {
+        OrderController.to.fetchOrders();
+      }
       final boutique = Get.isRegistered<BoutiqueController>()
           ? BoutiqueController.to.myBoutique.value
           : null;
@@ -303,14 +307,338 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildOrdersTab() {
-    return Padding(
-      padding: const EdgeInsets.only(top: 40),
-      child: Center(
-        child: Text(
-          'Aucune commande pour le moment',
-          style: TextStyle(color: AppTheme.mutedForeground),
+    if (!Get.isRegistered<OrderController>()) {
+      return const Center(child: Text('Module commandes non disponible'));
+    }
+    return Obx(() {
+      final ctrl = OrderController.to;
+
+      if (ctrl.isLoading.value) {
+        return const Padding(
+          padding: EdgeInsets.only(top: 40),
+          child: Center(child: CircularProgressIndicator()),
+        );
+      }
+
+      if (ctrl.hasError.value) {
+        return Padding(
+          padding: const EdgeInsets.only(top: 40),
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.wifi_off_rounded,
+                    size: 48, color: AppTheme.mutedForeground.withOpacity(0.4)),
+                const SizedBox(height: 12),
+                Text('Impossible de charger les commandes',
+                    style: TextStyle(color: AppTheme.mutedForeground)),
+                const SizedBox(height: 12),
+                ElevatedButton(
+                  onPressed: ctrl.fetchOrders,
+                  style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primary,
+                      foregroundColor: Colors.white),
+                  child: const Text('Réessayer'),
+                ),
+              ],
+            ),
+          ),
+        );
+      }
+
+      final orders = ctrl.sellerOrders.where((o) => o.product?.boutiqueId != null).toList();
+
+      if (orders.isEmpty) {
+        return Padding(
+          padding: const EdgeInsets.only(top: 48),
+          child: Center(
+            child: Column(
+              children: [
+                Icon(Icons.inventory_2_outlined,
+                    size: 64, color: AppTheme.mutedForeground.withOpacity(0.4)),
+                const SizedBox(height: 16),
+                Text(
+                  'Aucune commande pour le moment',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.mutedForeground,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Vos commandes reçues s\'afficheront ici.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 13, color: AppTheme.mutedForeground),
+                ),
+              ],
+            ),
+          ),
+        );
+      }
+
+      return Column(
+        children: orders.asMap().entries.map((entry) {
+          final i = entry.key;
+          final order = entry.value;
+          return TogoSlideUp(
+            delay: Duration(milliseconds: i * 80),
+            child: _buildOrderTile(context, order),
+          );
+        }).toList(),
+      );
+    });
+  }
+
+  Widget _buildOrderTile(BuildContext context, OrderModel order) {
+    final isPending = order.status == 'En attente';
+    final product   = order.product;
+    final buyerName = order.user?.nom ?? 'Acheteur';
+
+    final rawImage  = product?.image ?? '';
+    final imageUrl  = rawImage.isNotEmpty ? ApiConstants.resolveImageUrl(rawImage) : '';
+
+    final formattedPrice = '${order.formattedPrice} FCFA';
+
+    // Couleur badge statut
+    Color badgeBg; Color badgeFg;
+    switch (order.status) {
+      case 'Acceptée':  badgeBg = const Color(0xFFE8F5E9); badgeFg = const Color(0xFF2E7D32); break;
+      case 'Refusée':   badgeBg = const Color(0xFFFFEBEE); badgeFg = const Color(0xFFC62828); break;
+      case 'Terminée':  badgeBg = const Color(0xFFF2F2F7); badgeFg = const Color(0xFF8E8E93); break;
+      default:          badgeBg = const Color(0xFFFFF7E6); badgeFg = const Color(0xFFB45309);
+    }
+
+    return GestureDetector(
+      onTap: () => Get.toNamed('/order-details', arguments: {
+        'orderId': order.id.toString(),
+        'title': product?.titre ?? 'Commande #${order.id}',
+        'price': formattedPrice,
+        'status': order.status,
+        'image': rawImage,
+        'buyer': buyerName,
+        'isSale': true,
+        'deliveryMethod': order.deliveryMethod,
+        'deliveryAddress': order.deliveryAddress,
+        'paymentMethod': order.paymentMethod,
+        'phone': order.phone,
+        'notes': order.notes,
+        'date': order.formattedDate,
+        'order': order,
+      }),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppTheme.cardColor,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: AppTheme.border,
+              blurRadius: 20,
+              offset: const Offset(0, 10),
+            )
+          ],
+        ),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: imageUrl.isNotEmpty
+                    ? CachedNetworkImage(
+                        imageUrl: imageUrl,
+                        width: 64, height: 64, fit: BoxFit.cover,
+                        errorWidget: (_, __, ___) => _dashboardImageFallback(),
+                      )
+                    : _dashboardImageFallback(),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              product?.titre ?? 'Commande #${order.id}',
+                              style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppTheme.foreground),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: badgeBg,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              order.status,
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: badgeFg,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      Text('Acheteur : $buyerName',
+                          style: TextStyle(
+                              fontSize: 13, color: AppTheme.mutedForeground)),
+                      const SizedBox(height: 2),
+                      Text(formattedPrice,
+                          style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                              color: AppTheme.primary)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                if (isPending) ...[
+                  Expanded(
+                    flex: 2,
+                    child: TogoPressableScale(
+                      onTap: () => OrderController.to.acceptOrder(context, order),
+                      child: Container(
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: AppTheme.primary,
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                        child: const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.check_circle_outline,
+                                color: Colors.white, size: 18),
+                            SizedBox(width: 6),
+                            Text('Accepter',
+                                style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w700)),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    flex: 2,
+                    child: TogoPressableScale(
+                      onTap: () => OrderController.to.refuseOrder(context, order),
+                      child: Container(
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: AppTheme.destructive.withOpacity(0.08),
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.cancel_outlined,
+                                color: AppTheme.destructive, size: 18),
+                            const SizedBox(width: 6),
+                            Text('Refuser',
+                                style: TextStyle(
+                                    color: AppTheme.destructive,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w700)),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                ],
+                if (order.status == 'Acceptée') ...[
+                  Expanded(
+                    flex: 2,
+                    child: TogoPressableScale(
+                      onTap: () => OrderController.to.completeOrder(context, order),
+                      child: Container(
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: Colors.green.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.done_all, color: Colors.green.shade700, size: 18),
+                            const SizedBox(width: 6),
+                            Text('Terminer',
+                                style: TextStyle(
+                                    color: Colors.green.shade700,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w700)),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                ],
+                Expanded(
+                  flex: 1,
+                  child: TogoPressableScale(
+                    onTap: () => Get.toNamed('/order-details', arguments: {
+                      'orderId': order.id.toString(),
+                      'title': product?.titre ?? 'Commande #${order.id}',
+                      'price': formattedPrice,
+                      'status': order.status,
+                      'image': rawImage,
+                      'buyer': buyerName,
+                      'isSale': true,
+                      'deliveryMethod': order.deliveryMethod,
+                      'deliveryAddress': order.deliveryAddress,
+                      'paymentMethod': order.paymentMethod,
+                      'phone': order.phone,
+                      'notes': order.notes,
+                      'date': order.formattedDate,
+                      'order': order,
+                    }),
+                    child: Container(
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: AppTheme.muted,
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(color: AppTheme.border),
+                      ),
+                      child: Center(
+                        child: Icon(Icons.visibility_outlined,
+                            color: AppTheme.foreground, size: 18),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
+    );
+  }
+
+  Widget _dashboardImageFallback() {
+    return Container(
+      width: 64, height: 64,
+      color: AppTheme.muted,
+      child: Icon(Icons.image_not_supported_outlined,
+          color: AppTheme.mutedForeground, size: 24),
     );
   }
 

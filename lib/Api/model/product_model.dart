@@ -15,9 +15,10 @@ class Product {
   final dynamic sellerId; 
   final dynamic boutiqueId;
   final int stock;
+  final String stockType;
   final bool isPriceNegotiable;
   bool isFavorite;
-
+  
   // Raw API objects (useful for IDs when editing)
   final List<dynamic> rawImages;
 
@@ -41,6 +42,7 @@ class Product {
     required this.sellerId,
     this.boutiqueId,
     this.stock = 1,
+    this.stockType = 'unique',
     this.isPriceNegotiable = false,
     this.isFavorite = false,
     this.categoryObj,
@@ -96,6 +98,7 @@ class Product {
       sellerId: json['user_id'] ?? json['boutique_id'] ?? json['sellerId'] ?? '',
       boutiqueId: json['boutique_id'],
       stock: int.tryParse((json['stock'] ?? 1).toString()) ?? 1,
+      stockType: json['stock_type'] ?? 'unique',
       isPriceNegotiable: json['prix_negociable'] == 1 || json['prix_negociable'] == true,
       isFavorite: json['is_favoris'] == true || json['is_favoris'] == 1 || json['isFavorite'] == true,
       categoryObj: json['categorie'] != null ? Category.fromJson(json['categorie']) : null,
@@ -115,6 +118,7 @@ class Product {
       'description': description,
       'boutique_id': boutiqueId ?? sellerId,
       'stock': stock,
+      'stock_type': stockType,
       'prix_negociable': isPriceNegotiable,
     };
   }

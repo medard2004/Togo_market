@@ -34,6 +34,7 @@ class HomeBody extends StatelessWidget {
           onRefresh: () async {
             await ctrl.fetchProduits();
             await ctrl.fetchCategories();
+            await ctrl.fetchBoutiques();
             await ctrl.fetchTrendingProducts();
           },
           color: AppTheme.primary,

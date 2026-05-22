@@ -17,6 +17,10 @@ import firebase_messaging
 <<<<<<< HEAD
 =======
 import firebase_storage
+<<<<<<< HEAD
+>>>>>>> merge-design-backend
+=======
+import flutter_image_compress_macos
 >>>>>>> merge-design-backend
 import flutter_secure_storage_darwin
 import geolocator_apple
@@ -40,6 +44,10 @@ func RegisterGeneratedPlugins(registry: FlutterPluginRegistry) {
 <<<<<<< HEAD
 =======
   FLTFirebaseStoragePlugin.register(with: registry.registrar(forPlugin: "FLTFirebaseStoragePlugin"))
+<<<<<<< HEAD
+>>>>>>> merge-design-backend
+=======
+  FlutterImageCompressMacosPlugin.register(with: registry.registrar(forPlugin: "FlutterImageCompressMacosPlugin"))
 >>>>>>> merge-design-backend
   FlutterSecureStorageDarwinPlugin.register(with: registry.registrar(forPlugin: "FlutterSecureStorageDarwinPlugin"))
   GeolocatorPlugin.register(with: registry.registrar(forPlugin: "GeolocatorPlugin"))

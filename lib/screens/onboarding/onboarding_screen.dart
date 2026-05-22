@@ -63,7 +63,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           duration: const Duration(milliseconds: 350), curve: Curves.easeOut);
     } else {
       Get.find<AuthController>().markOnboardingComplete();
-      Get.offNamed('/auth');
+      Get.offNamed('/home');
     }
   }
 
@@ -86,7 +86,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     child: TextButton(
                       onPressed: () {
                         Get.find<AuthController>().markOnboardingComplete();
-                        Get.offNamed('/auth');
+                        Get.offNamed('/home');
                       },
                       child: Text(
                         'Passer',
@@ -100,7 +100,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   TextButton(
                     onPressed: () {
                       Get.find<AuthController>().markOnboardingComplete();
-                      Get.offNamed('/auth');
+                      Get.offNamed('/home');
                     },
                     child: const Text(
                       'Se connecter',

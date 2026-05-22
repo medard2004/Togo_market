@@ -13,6 +13,9 @@ import 'boutique_controller.dart';
 class AppController extends GetxController {
   // Auth state
   final isLoggedIn = false.obs;
+  
+  // Guest mode prompt banner
+  final showAuthPrompt = true.obs;
 
   // Fallback profile data (overridden at runtime by AuthController.currentUser)
   final userName = 'Utilisateur Test'.obs;
@@ -39,8 +42,8 @@ class AppController extends GetxController {
   final selectedZone = RxnString(); // ville / quartier sélectionné (nullable)
 
   // Notifications badge
-  final unreadNotifications = 2.obs;
-  final unreadMessages      = 2.obs;
+  final unreadNotifications = 0.obs;
+  final unreadMessages      = 0.obs;
 
   // Selected category on Home
   final selectedCategory = 'all'.obs;

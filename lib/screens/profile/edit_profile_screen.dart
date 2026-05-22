@@ -9,6 +9,7 @@ import '../../theme/app_theme.dart';
 import '../../../widgets/user_avatar.dart';
 import 'change_email_screen.dart';
 import 'change_phone_screen.dart';
+import '../../../utils/image_optimization_service.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -19,10 +20,12 @@ class EditProfileScreen extends StatefulWidget {
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
   late final TextEditingController _nameController;
+  late final TextEditingController _detailsController;
   final _formKey = GlobalKey<FormState>();
   bool _isSaving = false;
   File? _selectedImage;
   final ImagePicker _picker = ImagePicker();
+  String _ville = '';
 
   @override
   void initState() {
@@ -30,11 +33,27 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final authCtrl = Get.find<AuthController>();
     final user = authCtrl.currentUser.value;
     _nameController = TextEditingController(text: user?.nom ?? '');
+
+    // Pré-remplir la ville et les détails depuis l'adresse existante
+    final adresses = user?.adresses;
+    String detailsText = '';
+    String villeText = '';
+    if (adresses != null && adresses.isNotEmpty) {
+      final firstAdresse = adresses.first;
+      if (firstAdresse is Map) {
+        detailsText = firstAdresse['details']?.toString() ?? '';
+        villeText = firstAdresse['ville']?.toString() ?? '';
+      }
+    }
+    final villeNames = authCtrl.locations.map((v) => v.nom).toList();
+    _ville = villeNames.contains(villeText) ? villeText : '';
+    _detailsController = TextEditingController(text: detailsText);
   }
 
   @override
   void dispose() {
     _nameController.dispose();
+    _detailsController.dispose();
     super.dispose();
   }
 
@@ -46,8 +65,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         imageQuality: 80,
       );
       if (image != null) {
+        final optimizedFile = await ImageOptimizationService.optimizeImage(File(image.path));
         setState(() {
-          _selectedImage = File(image.path);
+          _selectedImage = optimizedFile;
         });
       }
     } catch (e) {
@@ -64,15 +84,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   Future<void> _saveProfile() async {
     if (!_formKey.currentState!.validate()) return;
-    
+
     setState(() => _isSaving = true);
     try {
       final authCtrl = Get.find<AuthController>();
       await authCtrl.updateProfile(
         nom: _nameController.text.trim(),
+        details: _detailsController.text.trim(),
         photoPath: _selectedImage?.path,
       );
-      
+
       Get.back();
       toastification.show(
         context: context,
@@ -95,6 +116,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       if (mounted) setState(() => _isSaving = false);
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -201,9 +223,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 );
               }),
             ),
-            SizedBox(height: 32),
+            const SizedBox(height: 32),
 
-            // Form Section
+            // ── Informations personnelles ─────────────────────────────────
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
@@ -222,10 +244,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       color: AppTheme.foreground,
                     ),
                   ),
-                  SizedBox(height: 20),
+                  const SizedBox(height: 20),
                   _buildField('Nom complet', _nameController,
                       hintText: 'Koffi Mensah', icon: Icons.person_outline),
-                  SizedBox(height: 18),
+                  const SizedBox(height: 18),
                   Obx(() {
                     final authCtrl = Get.find<AuthController>();
                     final user = authCtrl.currentUser.value;
@@ -233,7 +255,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     final emailText = user?.email ?? 'Non défini';
 
                     if (isSocial) {
-                      // Inscription via Google/Social : email non modifiable
                       return _buildReadOnlyField(
                         'Email (lié à ${user?.providerName ?? "réseau social"})',
                         emailText,
@@ -241,8 +262,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         locked: true,
                       );
                     } else {
-                      // Inscription par téléphone : peut ajouter/modifier l'email
-                      final hasEmail = user?.email != null && user!.email!.isNotEmpty;
+                      final hasEmail =
+                          user?.email != null && user!.email!.isNotEmpty;
                       return _buildReadOnlyField(
                         'Email',
                         hasEmail ? emailText : 'Ajouter un email',
@@ -251,7 +272,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       );
                     }
                   }),
-                  SizedBox(height: 18),
+                  const SizedBox(height: 18),
                   Obx(() {
                     final authCtrl = Get.find<AuthController>();
                     return _buildReadOnlyField(
@@ -264,9 +285,88 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 ],
               ),
             ),
-            SizedBox(height: 32),
+            const SizedBox(height: 20),
 
-            // Bottom Save Button
+            // ── Localisation ──────────────────────────────────────────────
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: AppTheme.cardColor,
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: AppTheme.shadowCard,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Localisation',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                      color: AppTheme.foreground,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Dropdown Ville
+                  const Text(
+                    'Ville',
+                    style: TextStyle(
+                        fontSize: 14, fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 8),
+                  Obx(() {
+                    final authCtrl = Get.find<AuthController>();
+                    final villeNames = authCtrl.locations.map((v) => v.nom).toList();
+                    if (villeNames.isNotEmpty &&
+                        !villeNames.contains(_ville) &&
+                        _ville.isEmpty) {
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (mounted) setState(() => _ville = villeNames.first);
+                      });
+                    }
+                    return Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: AppTheme.border),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          value: villeNames.contains(_ville) ? _ville : null,
+                          isExpanded: true,
+                          hint: const Text('Sélectionner une ville'),
+                          items: villeNames
+                              .map((v) =>
+                                  DropdownMenuItem(value: v, child: Text(v)))
+                              .toList(),
+                          onChanged: (v) => setState(() => _ville = v!),
+                        ),
+                      ),
+                    );
+                  }),
+                  const SizedBox(height: 16),
+
+                  // TextField Adresse / Quartier
+                  const Text(
+                    'Adresse / Quartier',
+                    style: TextStyle(
+                        fontSize: 14, fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: _detailsController,
+                    decoration: const InputDecoration(
+                      hintText:
+                          'Ex: Quartier Tokoin, près de la pharmacie...',
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 32),
+
+            // ── Bouton Enregistrer ────────────────────────────────────────
             ElevatedButton(
               onPressed: _isSaving ? null : _saveProfile,
               style: ElevatedButton.styleFrom(
@@ -301,6 +401,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     );
   }
 
+  // ── Champ de saisie (requis) ──────────────────────────────────────────────
   Widget _buildField(
     String label,
     TextEditingController controller, {
@@ -355,6 +456,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     );
   }
 
+  // ── Champ en lecture seule (avec action optionnelle) ──────────────────────
   Widget _buildReadOnlyField(
     String label,
     String value, {
@@ -381,7 +483,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: BoxDecoration(
-              color: locked ? AppTheme.muted.withOpacity(0.6) : AppTheme.muted,
+              color: locked ? AppTheme.muted.withValues(alpha: 0.6) : AppTheme.muted,
               borderRadius: BorderRadius.circular(16),
             ),
             child: Row(
@@ -400,7 +502,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: locked ? AppTheme.mutedForeground : AppTheme.foreground,
+                      color: locked
+                          ? AppTheme.mutedForeground
+                          : AppTheme.foreground,
                     ),
                   ),
                 ),
@@ -416,6 +520,4 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       ],
     );
   }
-
-
 }

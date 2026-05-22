@@ -11,6 +11,7 @@ import '../../utils/responsive.dart';
 import '../../utils/category_icon_helper.dart';
 import '../../utils/app_toasts.dart';
 import '../../widgets/app_loader.dart';
+import '../../utils/image_optimization_service.dart';
 
 class ProfileSetupScreen extends StatefulWidget {
   const ProfileSetupScreen({super.key});
@@ -81,7 +82,8 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                 maxHeight: 800,
               );
               if (image != null) {
-                setState(() => _selectedProfilePhotoPath = image.path);
+                final optimizedFile = await ImageOptimizationService.optimizeImage(File(image.path));
+                setState(() => _selectedProfilePhotoPath = optimizedFile.path);
               }
             },
             onQuartierChanged: (v) => setState(() => _selectedQuartierId = v),

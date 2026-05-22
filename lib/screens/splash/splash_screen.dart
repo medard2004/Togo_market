@@ -35,10 +35,8 @@ class _SplashScreenState extends State<SplashScreen> {
         
         if (authController.isFirstTime.value) {
           Get.offNamed('/onboarding');
-        } else if (authController.isAuthenticated || authController.hasToken.value) {
-          Get.offNamed('/home');
         } else {
-          Get.offNamed('/auth');
+          Get.offNamed('/home');
         }
       }
     });

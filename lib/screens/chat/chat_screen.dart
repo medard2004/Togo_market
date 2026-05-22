@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -15,6 +16,7 @@ import '../../utils/responsive.dart';
 import '../../controllers/app_controller.dart';
 import '../../controllers/boutique_controller.dart';
 import '../../Api/config/api_constants.dart';
+import '../../utils/image_optimization_service.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -188,7 +190,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
     setState(() => _isUploading = true);
     try {
-      final file = File(picked.path);
+      final file = await ImageOptimizationService.optimizeImage(File(picked.path));
       final convId = _convId;
       final myId = _actingUserId;
       final session = _chatCtrl.currentChatSession.value;
@@ -568,7 +570,36 @@ class _MessageBubble extends StatelessWidget {
   Widget build(BuildContext context) {
     final r = R(context);
     final msgType = message.type ?? 'text';
-    
+
+    // ── Type 'order' : même structure que les bulles normales ──────────
+    if (msgType == 'order') {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: Row(
+          mainAxisAlignment: isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            if (!isMe) ...[
+              CircleAvatar(
+                radius: 16,
+                backgroundImage: sellerAvatar.isNotEmpty
+                    ? CachedNetworkImageProvider(ApiConstants.resolveImageUrl(sellerAvatar))
+                    : null,
+                child: sellerAvatar.isEmpty ? const Icon(Icons.person, size: 16) : null,
+              ),
+              const SizedBox(width: 8),
+            ],
+            _OrderRecapBubble(
+              content: message.content as String,
+              isMe: isMe,
+              timestamp: message.timestamp,
+              seen: message.seen ?? false,
+            ),
+          ],
+        ),
+      );
+    }
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
@@ -731,6 +762,311 @@ class _MessageBubble extends StatelessWidget {
   }
 }
 
+// ── Card récapitulatif commande dans le chat ───────────────────────────────────
+class _OrderRecapBubble extends StatelessWidget {
+  final String content;
+  final bool isMe;
+  final DateTime timestamp;
+  final bool seen;
+
+  const _OrderRecapBubble({
+    required this.content,
+    required this.isMe,
+    required this.timestamp,
+    this.seen = false,
+  });
+
+  Map<String, String> _parseOrder() {
+    try {
+      final decoded = jsonDecode(content) as Map<String, dynamic>;
+      return decoded.map((k, v) => MapEntry(k, v.toString()));
+    } catch (_) {
+      return {};
+    }
+  }
+
+  Widget _row(IconData icon, String label, String value, {Color? valueColor, bool bold = false, Color? iconColor, Color? textColor}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 5),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 15, color: iconColor ?? Colors.white70),
+          const SizedBox(width: 8),
+          Expanded(
+            flex: 2,
+            child: Text(label, style: TextStyle(fontSize: 12, color: textColor ?? Colors.white70)),
+          ),
+          Expanded(
+            flex: 3,
+            child: Text(
+              value,
+              textAlign: TextAlign.end,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: bold ? FontWeight.w700 : FontWeight.w500,
+                color: valueColor ?? Colors.white,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _divider({Color? color}) => Divider(height: 1, thickness: 0.4, color: color ?? Colors.white.withOpacity(0.2));
+
+  @override
+  Widget build(BuildContext context) {
+    final data = _parseOrder();
+    if (data.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: AppTheme.cardColor,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppTheme.border),
+        ),
+        child: Text(content, style: TextStyle(fontSize: 13, color: AppTheme.foreground)),
+      );
+    }
+
+    final orderId = data['order_id'] ?? '-';
+    final date = data['date'] ?? '';
+    final productTitle = data['product_title'] ?? '';
+    final productImage = data['product_image'] ?? '';
+    final quantity = data['quantity'] ?? '1';
+    final total = data['total'] ?? '';
+    final mode = data['mode'] ?? '';
+    final address = data['address'] ?? '';
+    final payment = data['payment'] ?? '';
+    final phone = data['phone'] ?? '';
+    final note = data['note'] ?? '';
+    final status = data['status'] ?? 'En attente';
+
+    final timeStr = '${timestamp.hour.toString().padLeft(2, '0')}:${timestamp.minute.toString().padLeft(2, '0')}';
+
+    // Couleurs adaptées selon l'expéditeur
+    final bgGradient = isMe
+        ? LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [AppTheme.primary, AppTheme.primary.withOpacity(0.75)],
+          )
+        : null;
+    final bgColor = isMe ? null : AppTheme.cardColor;
+    final textPrimaryColor = isMe ? Colors.white : AppTheme.foreground;
+    final textSecondaryColor = isMe ? Colors.white70 : AppTheme.mutedForeground;
+    final dividerColor = isMe ? Colors.white.withOpacity(0.2) : AppTheme.border.withOpacity(0.5);
+    final iconColor = isMe ? Colors.white70 : AppTheme.mutedForeground;
+    final totalColor = isMe ? Colors.yellow.shade200 : AppTheme.primary;
+    final timestampColor = isMe ? Colors.white54 : AppTheme.mutedForeground;
+    final shadowColor = isMe ? AppTheme.primary.withOpacity(0.3) : Colors.black.withOpacity(0.06);
+    final imageOverlayColor = isMe ? AppTheme.primary.withOpacity(0.9) : Colors.black.withOpacity(0.55);
+
+    return GestureDetector(
+      onTap: () {
+        Get.toNamed('/order-details', arguments: {
+          'orderId': '#$orderId',
+          'title': productTitle,
+          'price': total,
+          'status': status,
+          'image': productImage.isNotEmpty ? ApiConstants.resolveImageUrl(productImage) : '',
+          'date': date,
+          'isSale': !isMe,
+        });
+      },
+      child: Container(
+        width: MediaQuery.of(context).size.width * 0.78,
+        decoration: BoxDecoration(
+          gradient: bgGradient,
+          color: bgColor,
+          borderRadius: BorderRadius.only(
+            topLeft: const Radius.circular(18),
+            topRight: const Radius.circular(18),
+            bottomLeft: isMe ? const Radius.circular(18) : const Radius.circular(4),
+            bottomRight: isMe ? const Radius.circular(4) : const Radius.circular(18),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: shadowColor,
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+          border: isMe ? null : Border.all(color: AppTheme.border.withOpacity(0.4)),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── Header image + titre ────────────────────────────────────────
+            if (productImage.isNotEmpty)
+              SizedBox(
+                height: 180,
+                width: double.infinity,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    CachedNetworkImage(
+                      imageUrl: ApiConstants.resolveImageUrl(productImage),
+                      fit: BoxFit.cover,
+                      placeholder: (_, __) => Container(color: isMe ? Colors.white12 : AppTheme.muted),
+                      errorWidget: (_, __, ___) => Container(
+                        color: isMe ? Colors.white12 : AppTheme.muted,
+                        child: Icon(Icons.image_not_supported, color: iconColor, size: 36),
+                      ),
+                    ),
+                    // Gradient par-dessus l'image
+                    Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [Colors.transparent, imageOverlayColor],
+                        ),
+                      ),
+                    ),
+                    // Badge statut
+                    Positioned(
+                      top: 10,
+                      right: 10,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.orange.shade700,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.hourglass_top_outlined, size: 11, color: Colors.white),
+                            const SizedBox(width: 4),
+                            Text(status, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Colors.white)),
+                          ],
+                        ),
+                      ),
+                    ),
+                    // Titre commande en bas de l'image
+                    Positioned(
+                      bottom: 10,
+                      left: 12,
+                      right: 12,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Commande #$orderId',
+                            style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w800),
+                          ),
+                          Text(
+                            productTitle,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(color: Colors.white70, fontSize: 11),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            else
+              Padding(
+                padding: const EdgeInsets.fromLTRB(14, 14, 14, 8),
+                child: Row(
+                  children: [
+                    Icon(Icons.receipt_long_outlined, color: textPrimaryColor, size: 18),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Commande #$orderId',
+                        style: TextStyle(color: textPrimaryColor, fontSize: 14, fontWeight: FontWeight.w800),
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.shade700,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(status, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Colors.white)),
+                    ),
+                  ],
+                ),
+              ),
+
+            // ── Lignes de détails ───────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 12, 14, 6),
+              child: Column(
+                children: [
+                  if (date.isNotEmpty) ...[
+                    _row(Icons.calendar_today_outlined, 'Date', date, iconColor: iconColor, textColor: textSecondaryColor, valueColor: textPrimaryColor),
+                    _divider(color: dividerColor),
+                  ],
+                  _row(Icons.numbers_outlined, 'Quantité', quantity, iconColor: iconColor, textColor: textSecondaryColor, valueColor: textPrimaryColor),
+                  _divider(color: dividerColor),
+                  _row(Icons.payments_outlined, 'Total', total,
+                      iconColor: iconColor, textColor: textSecondaryColor, valueColor: totalColor, bold: true),
+                  _divider(color: dividerColor),
+                  _row(Icons.local_shipping_outlined, 'Livraison', mode, iconColor: iconColor, textColor: textSecondaryColor, valueColor: textPrimaryColor),
+                  if (address.isNotEmpty) ...[
+                    _divider(color: dividerColor),
+                    _row(Icons.location_on_outlined, 'Adresse', address, iconColor: iconColor, textColor: textSecondaryColor, valueColor: textPrimaryColor),
+                  ],
+                  _divider(color: dividerColor),
+                  _row(Icons.credit_card_outlined, 'Paiement', payment, iconColor: iconColor, textColor: textSecondaryColor, valueColor: textPrimaryColor),
+                  _divider(color: dividerColor),
+                  _row(Icons.phone_outlined, 'Téléphone', phone, iconColor: iconColor, textColor: textSecondaryColor, valueColor: textPrimaryColor),
+                  if (note.isNotEmpty) ...[
+                    _divider(color: dividerColor),
+                    _row(Icons.notes_outlined, 'Note', note, iconColor: iconColor, textColor: textSecondaryColor, valueColor: textPrimaryColor),
+                  ],
+                ],
+              ),
+            ),
+
+            // ── Indicateur "appuyer pour voir" ──────────────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 0, 14, 6),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.touch_app_outlined, size: 12, color: textSecondaryColor),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Appuyez pour voir les détails',
+                    style: TextStyle(fontSize: 10, color: textSecondaryColor, fontStyle: FontStyle.italic),
+                  ),
+                ],
+              ),
+            ),
+
+            // ── Timestamp + coche ───────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 2, 14, 10),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Text(timeStr, style: TextStyle(fontSize: 10, color: timestampColor)),
+                  if (isMe) ...[
+                    const SizedBox(width: 4),
+                    Icon(
+                      seen ? Icons.done_all : Icons.check,
+                      size: 13,
+                      color: seen ? Colors.blueAccent : timestampColor,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
 class _AttachOption extends StatelessWidget {
   final IconData icon;
   final String label;

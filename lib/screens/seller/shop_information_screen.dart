@@ -79,15 +79,9 @@ class ShopInformationScreen extends StatelessWidget {
           children: [
             Container(
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppTheme.cardColor,
                 borderRadius: BorderRadius.circular(24),
-                boxShadow: [
-                  const BoxShadow(
-                    color: Color(0x0D000000),
-                    blurRadius: 20,
-                    offset: Offset(0, 10),
-                  ),
-                ],
+                boxShadow: AppTheme.shadowCard,
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -240,7 +234,7 @@ class ShopInformationScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.cardColor,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: AppTheme.border),
       ),

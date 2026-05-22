@@ -5,6 +5,8 @@ import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 
 import '../../theme/app_theme.dart';
 import '../../widgets/common_widgets.dart';
@@ -14,7 +16,9 @@ import '../../controllers/boutique_controller.dart';
 import '../../Api/core/api_client.dart';
 import '../../Api/config/api_constants.dart';
 import '../../Api/provider/auth_controller.dart';
+import '../../utils/location_service.dart';
 import '../../utils/app_toasts.dart';
+import '../../utils/image_optimization_service.dart';
 
 class EditShopScreen extends StatefulWidget {
   const EditShopScreen({super.key});
@@ -50,6 +54,7 @@ class _EditShopScreenState extends State<EditShopScreen> {
   double? _longitude;
   List<AppCategory> _dbCategories = [];
   final ImagePicker _picker = ImagePicker();
+  final MapController _mapController = MapController();
 
   late Boutique _boutique;
   late final AuthController _authCtrl;
@@ -174,20 +179,13 @@ class _EditShopScreenState extends State<EditShopScreen> {
     try {
       final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
       if (pickedFile != null && mounted) {
-        // Check size (5 Mo = 5242880 bytes)
-        final fileSize = await File(pickedFile.path).length();
-        if (fileSize > 5242880) {
-          if (mounted) {
-            AppToasts.error(context, 'Image trop volumineuse',
-                'L\'image dépasse 5 Mo. Veuillez choisir une image plus légère.');
-          }
-          return;
-        }
+        final optimizedFile = await ImageOptimizationService.optimizeImage(File(pickedFile.path));
+        
         setState(() {
           if (isBanner) {
-            _bannerPath = pickedFile.path;
+            _bannerPath = optimizedFile.path;
           } else {
-            _logoPath = pickedFile.path;
+            _logoPath = optimizedFile.path;
           }
         });
       }
@@ -249,6 +247,28 @@ class _EditShopScreenState extends State<EditShopScreen> {
     return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
   }
 
+  Future<void> _performReverseGeocoding(double lat, double lon) async {
+    final address = await LocationService.reverseGeocode(lat, lon);
+    if (address != null && mounted) {
+      setState(() {
+        if (address['ville'] != null && address['ville']!.isNotEmpty) {
+          // Find if the returned city matches one of our available cities
+          final villeNames = _authCtrl.locations.map((v) => v.nom).toList();
+          final mappedCity = villeNames.firstWhere((v) => 
+            v.toLowerCase().contains(address['ville']!.toLowerCase()) || 
+            address['ville']!.toLowerCase().contains(v.toLowerCase()), 
+            orElse: () => '');
+          if (mappedCity.isNotEmpty) {
+            _ville = mappedCity;
+          }
+        }
+        if (address['quartier'] != null && address['quartier']!.isNotEmpty) {
+          _detailsCtrl.text = address['quartier']!;
+        }
+      });
+    }
+  }
+
   Future<void> _requestGpsPosition() async {
     setState(() { _gpsLoading = true; });
     try {
@@ -279,7 +299,11 @@ class _EditShopScreenState extends State<EditShopScreen> {
         _longitude = position.longitude;
         _gpsLoading = false;
       });
+      _mapController.move(LatLng(position.latitude, position.longitude), 15.0);
       if (mounted) AppToasts.success(context, 'GPS', 'Position détectée avec succès');
+      
+      // Lancer le reverse geocoding en arrière-plan
+      _performReverseGeocoding(position.latitude, position.longitude);
     } catch (e) {
       if (mounted) AppToasts.error(context, 'Erreur GPS', e.toString().substring(0, 50));
       setState(() { _gpsLoading = false; });
@@ -651,8 +675,7 @@ class _EditShopScreenState extends State<EditShopScreen> {
                         style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
                     const SizedBox(height: 8),
                     Obx(() {
-                      final villes = _authCtrl.locations;
-                      final villeNames = villes.map((v) => v.nom).toList();
+                      final villeNames = _authCtrl.locations.map((v) => v.nom).toList();
                       if (villeNames.isNotEmpty && !villeNames.contains(_ville) && _ville.isEmpty) {
                         WidgetsBinding.instance.addPostFrameCallback((_) {
                           if (mounted) setState(() => _ville = villeNames.first);
@@ -690,56 +713,92 @@ class _EditShopScreenState extends State<EditShopScreen> {
                     ),
                     const SizedBox(height: 24),
                     
-                    // Bouton GPS
-                    GestureDetector(
-                      onTap: _gpsLoading ? null : _requestGpsPosition,
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 300),
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: _latitude != null
-                              ? AppTheme.primary.withOpacity(0.08)
-                              : AppTheme.primary.withOpacity(0.05),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: _latitude != null
-                                ? AppTheme.primary.withOpacity(0.4)
-                                : AppTheme.primary.withOpacity(0.1),
-                          ),
-                        ),
-                        child: Center(
-                          child: _gpsLoading
-                              ? const Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    SizedBox(width: 20, height: 20,
-                                        child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.primary)),
-                                    SizedBox(width: 12),
-                                    Text('Recherche de la position...', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w600)),
-                                  ],
-                                )
-                              : Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        Icon(_latitude != null ? Icons.check_circle : Icons.pin_drop_rounded,
-                                            color: AppTheme.primary),
-                                        const SizedBox(width: 12),
-                                        Text(_latitude != null ? 'Position détectée ✅' : 'Mettre à jour la position GPS',
-                                            style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primary)),
-                                      ],
+                    // Carte pour sélectionner la localisation
+                    const Text('Localisation de la boutique',
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 8),
+                    Container(
+                      height: 250,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: AppTheme.border),
+                      ),
+                      clipBehavior: Clip.hardEdge,
+                      child: Stack(
+                        children: [
+                          FlutterMap(
+                            mapController: _mapController,
+                            options: MapOptions(
+                              initialCenter: _latitude != null && _longitude != null
+                                  ? LatLng(_latitude!, _longitude!)
+                                  : const LatLng(6.137, 1.212), // Lomé by default
+                              initialZoom: 13.0,
+                              minZoom: 6.0,
+                              maxZoom: 18.0,
+                              cameraConstraint: CameraConstraint.contain(
+                                bounds: LatLngBounds(
+                                  const LatLng(5.9, -0.4), // Sud-Ouest
+                                  const LatLng(11.3, 1.9), // Nord-Est
+                                ),
+                              ),
+                              interactionOptions: const InteractionOptions(
+                                flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
+                              ),
+                              onTap: (tapPosition, point) {
+                                setState(() {
+                                  _latitude = point.latitude;
+                                  _longitude = point.longitude;
+                                });
+                                _performReverseGeocoding(point.latitude, point.longitude);
+                              },
+                            ),
+                            children: [
+                              TileLayer(
+                                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                                userAgentPackageName: 'com.togomarket.app',
+                              ),
+                              if (_latitude != null && _longitude != null)
+                                MarkerLayer(
+                                  markers: [
+                                    Marker(
+                                      point: LatLng(_latitude!, _longitude!),
+                                      width: 40,
+                                      height: 40,
+                                      child: const Icon(
+                                        Icons.location_on,
+                                        color: Colors.red,
+                                        size: 40,
+                                      ),
                                     ),
-                                    if (_latitude != null) ...[
-                                      const SizedBox(height: 6),
-                                      Text('${_latitude!.toStringAsFixed(4)}, ${_longitude!.toStringAsFixed(4)}',
-                                          style: TextStyle(fontSize: 12, color: AppTheme.mutedForeground)),
-                                    ],
                                   ],
                                 ),
-                        ),
+                            ],
+                          ),
+                          Positioned(
+                            bottom: 16,
+                            right: 16,
+                            child: FloatingActionButton.small(
+                              onPressed: _gpsLoading ? null : _requestGpsPosition,
+                              backgroundColor: AppTheme.primary,
+                              child: _gpsLoading
+                                  ? const SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(
+                                        color: Colors.white,
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : const Icon(Icons.my_location, color: Colors.white),
+                            ),
+                          ),
+                        ],
                       ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Appuyez sur la carte pour définir la position de votre boutique ou utilisez le bouton pour utiliser votre position actuelle.',
+                      style: TextStyle(fontSize: 12, color: AppTheme.mutedForeground),
                     ),
                     const SizedBox(height: 32),
                     const SizedBox(height: 32),
