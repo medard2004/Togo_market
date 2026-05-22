@@ -169,6 +169,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                           height: 1.25,
                         ),
                       ),
+                      SizedBox(height: r.s(8)),
+
+                      // Badge de Stock Premium
+                      _buildStockBadge(r, product),
                       SizedBox(height: r.s(16)),
 
                       // Localisation
@@ -338,22 +342,61 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 children: [
                   // Bouton Commander (outline)
                   GestureDetector(
-                    onTap: () => Get.toNamed('/order', arguments: {'productId': product.id}),
+                    onTap: (product.stockType == 'stock' && product.stock <= 0) || (product.stockType == 'unique' && product.stock <= 0)
+                        ? () {
+                            AppToasts.error(context, 'Indisponible', 'Cet article n’est plus disponible.');
+                          }
+                        : () {
+                            final auth = Get.find<AuthController>();
+                            if (!auth.isAuthenticated) {
+                              Get.toNamed('/auth', arguments: {
+                                'redirect': '/order',
+                                'arguments': {'productId': product.id},
+                              });
+                              return;
+                            }
+                            Get.toNamed('/order', arguments: {'productId': product.id});
+                          },
                     child: Container(
                       height: r.s(50).clamp(44, 56),
                       padding: EdgeInsets.symmetric(horizontal: r.s(16)),
                       decoration: BoxDecoration(
-                        color: AppTheme.primaryLight.withOpacity(0.1),
+                        color: (product.stockType == 'stock' && product.stock <= 0) || (product.stockType == 'unique' && product.stock <= 0)
+                            ? Colors.grey.withOpacity(0.1)
+                            : AppTheme.primaryLight.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(r.rad(30)),
-                        border: Border.all(color: AppTheme.primary, width: 1.5),
+                        border: Border.all(
+                          color: (product.stockType == 'stock' && product.stock <= 0) || (product.stockType == 'unique' && product.stock <= 0)
+                              ? Colors.grey
+                              : AppTheme.primary,
+                          width: 1.5,
+                        ),
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.shopping_cart_outlined, size: r.s(18), color: AppTheme.primary),
+                          Icon(
+                            (product.stockType == 'stock' && product.stock <= 0) || (product.stockType == 'unique' && product.stock <= 0)
+                                ? Icons.remove_shopping_cart_outlined
+                                : Icons.shopping_cart_outlined,
+                            size: r.s(18),
+                            color: (product.stockType == 'stock' && product.stock <= 0) || (product.stockType == 'unique' && product.stock <= 0)
+                                ? Colors.grey
+                                : AppTheme.primary,
+                          ),
                           SizedBox(width: r.s(6)),
-                          Text('Commander',
-                              style: TextStyle(fontSize: r.fs(13), fontWeight: FontWeight.w800, color: AppTheme.primary)),
+                          Text(
+                            (product.stockType == 'stock' && product.stock <= 0) || (product.stockType == 'unique' && product.stock <= 0)
+                                ? 'Épuisé'
+                                : 'Commander',
+                            style: TextStyle(
+                              fontSize: r.fs(13),
+                              fontWeight: FontWeight.w800,
+                              color: (product.stockType == 'stock' && product.stock <= 0) || (product.stockType == 'unique' && product.stock <= 0)
+                                  ? Colors.grey
+                                  : AppTheme.primary,
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -365,7 +408,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       onTap: () async {
                         final auth = Get.isRegistered<AuthController>() ? Get.find<AuthController>() : null;
                         if (auth == null || !auth.isAuthenticated) {
-                          Get.toNamed('/auth');
+                          Get.toNamed('/auth', arguments: {
+                            'redirect': 'discuss_product',
+                            'arguments': product,
+                          });
                           return;
                         }
                         
@@ -781,6 +827,94 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildStockBadge(R r, Product product) {
+    final bool isOutOfStock = product.stockType == 'stock' && product.stock <= 0;
+    final bool isUniqueAndSold = product.stockType == 'unique' && product.stock <= 0;
+
+    if (isOutOfStock || isUniqueAndSold) {
+      return Container(
+        padding: EdgeInsets.symmetric(horizontal: r.s(10), vertical: r.s(6)),
+        decoration: BoxDecoration(
+          color: Colors.red.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(r.rad(8)),
+          border: Border.all(color: Colors.red.withOpacity(0.3)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.error_outline, size: r.s(14), color: Colors.red),
+            SizedBox(width: r.s(4)),
+            Text(
+              isUniqueAndSold ? 'Vendu / Indisponible' : 'Rupture de stock',
+              style: TextStyle(
+                fontSize: r.fs(12),
+                fontWeight: FontWeight.w700,
+                color: Colors.red,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (product.stockType == 'unique') {
+      return Container(
+        padding: EdgeInsets.symmetric(horizontal: r.s(10), vertical: r.s(6)),
+        decoration: BoxDecoration(
+          color: AppTheme.primary.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(r.rad(8)),
+          border: Border.all(color: AppTheme.primary.withOpacity(0.3)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.star_border_rounded, size: r.s(14), color: AppTheme.primary),
+            SizedBox(width: r.s(4)),
+            Text(
+              'Pièce unique',
+              style: TextStyle(
+                fontSize: r.fs(12),
+                fontWeight: FontWeight.w700,
+                color: AppTheme.primary,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final bool isLowStock = product.stock <= 3;
+    final Color badgeColor = isLowStock ? Colors.orange : Colors.green;
+    final IconData icon = isLowStock ? Icons.warning_amber_rounded : Icons.check_circle_outline_rounded;
+    final String label = isLowStock
+        ? 'Plus que ${product.stock} exemplaires restants !'
+        : '${product.stock} en stock (disponible)';
+
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: r.s(10), vertical: r.s(6)),
+      decoration: BoxDecoration(
+        color: badgeColor.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(r.rad(8)),
+        border: Border.all(color: badgeColor.withOpacity(0.3)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: r.s(14), color: badgeColor),
+          SizedBox(width: r.s(4)),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: r.fs(12),
+              fontWeight: FontWeight.w700,
+              color: badgeColor,
+            ),
+          ),
+        ],
       ),
     );
   }

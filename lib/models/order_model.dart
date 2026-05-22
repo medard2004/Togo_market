@@ -97,8 +97,24 @@ class OrderProduct {
   final int id;
   final String titre;
   final String? image;
+  final int? boutiqueId;
+  final String? boutiqueNom;
+  final double? boutiqueLat;
+  final double? boutiqueLon;
+  final String? boutiqueAdresse;
+  final String? boutiqueDetailsAdresse;
 
-  OrderProduct({required this.id, required this.titre, this.image});
+  OrderProduct({
+    required this.id,
+    required this.titre,
+    this.image,
+    this.boutiqueId,
+    this.boutiqueNom,
+    this.boutiqueLat,
+    this.boutiqueLon,
+    this.boutiqueAdresse,
+    this.boutiqueDetailsAdresse,
+  });
 
   factory OrderProduct.fromJson(Map<String, dynamic> json) {
     // L'image vient via images[0].chemin_image (colonne réelle dans images_produit)
@@ -106,10 +122,40 @@ class OrderProduct {
     if (json['images'] != null && (json['images'] as List).isNotEmpty) {
       img = json['images'][0]['chemin_image']?.toString();
     }
+
+    int? bId = json['boutique_id'] != null
+        ? int.tryParse(json['boutique_id'].toString())
+        : null;
+    String? bNom;
+    double? bLat;
+    double? bLon;
+    String? bAdresse;
+    String? bDetails;
+    if (json['boutique'] != null) {
+      bNom = json['boutique']['nom']?.toString();
+      if (bId == null && json['boutique']['id'] != null) {
+        bId = int.tryParse(json['boutique']['id'].toString());
+      }
+      if (json['boutique']['latitude'] != null) {
+        bLat = double.tryParse(json['boutique']['latitude'].toString());
+      }
+      if (json['boutique']['longitude'] != null) {
+        bLon = double.tryParse(json['boutique']['longitude'].toString());
+      }
+      bAdresse = json['boutique']['adresse']?.toString();
+      bDetails = json['boutique']['details_adresse']?.toString();
+    }
+
     return OrderProduct(
       id: json['id'] ?? 0,
       titre: json['titre'] ?? json['title'] ?? '',
       image: img,
+      boutiqueId: bId,
+      boutiqueNom: bNom,
+      boutiqueLat: bLat,
+      boutiqueLon: bLon,
+      boutiqueAdresse: bAdresse,
+      boutiqueDetailsAdresse: bDetails,
     );
   }
 }
@@ -119,8 +165,15 @@ class OrderUser {
   final String nom;
   final String? avatar;
   final String? email;
+  final String? telephone;
 
-  OrderUser({required this.id, required this.nom, this.avatar, this.email});
+  OrderUser({
+    required this.id,
+    required this.nom,
+    this.avatar,
+    this.email,
+    this.telephone,
+  });
 
   factory OrderUser.fromJson(Map<String, dynamic> json) {
     return OrderUser(
@@ -128,6 +181,7 @@ class OrderUser {
       nom: json['nom'] ?? json['name'] ?? 'Utilisateur',
       avatar: json['avatar_url'] ?? json['avatar'],
       email: json['email'],
+      telephone: json['telephone'] ?? json['phone'],
     );
   }
 }

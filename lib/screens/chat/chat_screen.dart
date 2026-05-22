@@ -16,6 +16,7 @@ import '../../utils/responsive.dart';
 import '../../controllers/app_controller.dart';
 import '../../controllers/boutique_controller.dart';
 import '../../Api/config/api_constants.dart';
+import '../../utils/image_optimization_service.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -189,7 +190,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
     setState(() => _isUploading = true);
     try {
-      final file = File(picked.path);
+      final file = await ImageOptimizationService.optimizeImage(File(picked.path));
       final convId = _convId;
       final myId = _actingUserId;
       final session = _chatCtrl.currentChatSession.value;

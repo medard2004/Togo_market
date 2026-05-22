@@ -8,6 +8,7 @@ import '../Api/services/order_service.dart';
 import '../Api/core/api_client.dart';
 import '../Api/provider/auth_controller.dart';
 import '../utils/app_toasts.dart';
+import 'app_controller.dart';
 
 class OrderController extends GetxController {
   static OrderController get to => Get.find();
@@ -98,6 +99,9 @@ class OrderController extends GetxController {
     try {
       await _service.updateOrderStatus(order.id, newStatus);
       AppToasts.success(context, 'Commande mise à jour', 'Statut : $newStatus');
+      if (Get.isRegistered<AppController>()) {
+        Get.find<AppController>().fetchProduits();
+      }
     } catch (e) {
       // Rollback
       order.status = previousStatus;

@@ -50,7 +50,13 @@ class HomeTopBar extends StatelessWidget {
             ),
           ),
           GestureDetector(
-            onTap: () => Get.toNamed('/notifications'),
+            onTap: () {
+              if (Get.find<AuthController>().currentUser.value == null) {
+                Get.toNamed('/auth', arguments: {'redirect': '/notifications'});
+              } else {
+                Get.toNamed('/notifications');
+              }
+            },
             child: Stack(
               clipBehavior: Clip.none,
               children: [
@@ -72,7 +78,13 @@ class HomeTopBar extends StatelessWidget {
           ),
           SizedBox(width: r.s(10)),
           GestureDetector(
-            onTap: () => Get.toNamed('/profile'),
+            onTap: () {
+              if (Get.find<AuthController>().currentUser.value == null) {
+                Get.toNamed('/auth', arguments: {'redirect': '/profile'});
+              } else {
+                Get.toNamed('/profile');
+              }
+            },
             child: Obx(() {
               final authCtrl = Get.find<AuthController>();
               final user = authCtrl.currentUser.value;

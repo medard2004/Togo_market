@@ -140,9 +140,14 @@ class _EditProductScreenState extends State<EditProductScreen> {
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Icon(Icons.camera_alt_outlined, size: 32, color: AppTheme.primary),
+                                  _controller.isPickingImage.value 
+                                      ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2))
+                                      : Icon(Icons.camera_alt_outlined, size: 32, color: AppTheme.primary),
                                   const SizedBox(height: 8),
-                                  Text('Appuyez pour ajouter des photos', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.primary)),
+                                  Text(
+                                    _controller.isPickingImage.value ? 'Optimisation de l\'image...' : 'Appuyez pour ajouter des photos', 
+                                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.primary)
+                                  ),
                                 ],
                               ),
                             ),
@@ -231,7 +236,9 @@ class _EditProductScreenState extends State<EditProductScreen> {
                                       borderRadius: BorderRadius.circular(12),
                                       border: Border.all(color: AppTheme.primary, style: BorderStyle.solid),
                                     ),
-                                    child: Icon(Icons.add, color: AppTheme.primary, size: 28),
+                                    child: _controller.isPickingImage.value 
+                                        ? const Padding(padding: EdgeInsets.all(28), child: CircularProgressIndicator(strokeWidth: 2))
+                                        : Icon(Icons.add, color: AppTheme.primary, size: 28),
                                   ),
                                 ),
                             ],
@@ -416,6 +423,108 @@ class _EditProductScreenState extends State<EditProductScreen> {
                             ),
                         ],
                       ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Gestion des Stocks
+                TogoSlideUp(
+                  delay: const Duration(milliseconds: 550),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Gestion du stock', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Obx(() => TogoPressableScale(
+                              onTap: () => _controller.stockType.value = 'unique',
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 200),
+                                margin: const EdgeInsets.only(right: 6),
+                                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                                decoration: BoxDecoration(
+                                  color: _controller.stockType.value == 'unique' ? AppTheme.primaryLight : AppTheme.cardColor,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: _controller.stockType.value == 'unique' ? AppTheme.primary : AppTheme.border,
+                                    width: _controller.stockType.value == 'unique' ? 2 : 1,
+                                  ),
+                                ),
+                                child: Center(
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(Icons.looks_one_outlined, size: 16, color: _controller.stockType.value == 'unique' ? AppTheme.primary : AppTheme.foreground),
+                                      const SizedBox(width: 6),
+                                      Text('Produit unique', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _controller.stockType.value == 'unique' ? AppTheme.primary : AppTheme.foreground)),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            )),
+                          ),
+                          Expanded(
+                            child: Obx(() => TogoPressableScale(
+                              onTap: () => _controller.stockType.value = 'stock',
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 200),
+                                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                                decoration: BoxDecoration(
+                                  color: _controller.stockType.value == 'stock' ? AppTheme.primaryLight : AppTheme.cardColor,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: _controller.stockType.value == 'stock' ? AppTheme.primary : AppTheme.border,
+                                    width: _controller.stockType.value == 'stock' ? 2 : 1,
+                                  ),
+                                ),
+                                child: Center(
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(Icons.inventory_2_outlined, size: 16, color: _controller.stockType.value == 'stock' ? AppTheme.primary : AppTheme.foreground),
+                                      const SizedBox(width: 6),
+                                      Text('En stock', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _controller.stockType.value == 'stock' ? AppTheme.primary : AppTheme.foreground)),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            )),
+                          ),
+                        ],
+                      ),
+                      
+                      // Champ quantité conditionnel
+                      Obx(() {
+                        if (_controller.stockType.value != 'stock') return const SizedBox.shrink();
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 16),
+                            const Text('Quantité disponible', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                            const SizedBox(height: 8),
+                            TextFormField(
+                              controller: _controller.stockQuantityController,
+                              keyboardType: TextInputType.number,
+                              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                              validator: (v) {
+                                if (_controller.stockType.value == 'stock') {
+                                  if (v == null || v.trim().isEmpty) return 'La quantité est requise';
+                                  final q = int.tryParse(v);
+                                  if (q == null || q < 1) return 'La quantité doit être supérieure ou égale à 1';
+                                }
+                                return null;
+                              },
+                              decoration: const InputDecoration(
+                                hintText: 'Ex: 10',
+                                prefixIcon: Icon(Icons.production_quantity_limits),
+                              ),
+                            ),
+                          ],
+                        );
+                      }),
                     ],
                   ),
                 ),

@@ -6,84 +6,57 @@ import '../../theme/app_theme.dart';
 import '../../animations/togo_animation_system.dart';
 import '../../widgets/common_widgets.dart';
 import '../../utils/responsive.dart';
+import '../../controllers/my_products_controller.dart';
+import '../../Api/model/product_model.dart';
+import '../../utils/app_utils.dart';
+import '../../Api/config/api_constants.dart';
 
 class IndividualDashboardScreen extends StatefulWidget {
   const IndividualDashboardScreen({super.key});
 
   @override
-  State<IndividualDashboardScreen> createState() => _IndividualDashboardScreenState();
+  State<IndividualDashboardScreen> createState() =>
+      _IndividualDashboardScreenState();
 }
 
 class _IndividualDashboardScreenState extends State<IndividualDashboardScreen> {
-  // Mock products list for local state management
-  final List<Map<String, dynamic>> _myProducts = [
-    {
-      'id': '1',
-      'title': 'iPhone 13 Pro Max',
-      'price': '350 000 F',
-      'image': 'https://images.unsplash.com/photo-1632661674596-df8be070a5c5?w=400&h=400&fit=crop',
-      'isActive': true,
-    },
-    {
-      'id': '2',
-      'title': 'Veste en Jean',
-      'price': '15 000 F',
-      'image': 'https://images.unsplash.com/photo-1576995853123-5a10305d93c0?w=400&h=400&fit=crop',
-      'isActive': true,
-    },
-    {
-      'id': '3',
-      'title': 'Nike Air Max 270',
-      'price': '45 000 F',
-      'image': 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&h=400&fit=crop',
-      'isActive': false,
-    },
-  ];
+  late final MyProductsController _ctrl;
 
-  void _deleteProduct(int index) {
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = Get.find<MyProductsController>();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _ctrl.loadMyProducts());
+  }
+
+  void _deleteProduct(Product p) {
     Get.dialog(
       AlertDialog(
         backgroundColor: AppTheme.cardColor,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: Text('Supprimer l\'annonce ?', 
-          style: TextStyle(color: AppTheme.foreground, fontWeight: FontWeight.w800)),
-        content: Text('Cette action est irréversible. Voulez-vous vraiment supprimer cet article ?',
-          style: TextStyle(color: AppTheme.mutedForeground)),
+        title: Text('Supprimer l\'annonce ?',
+            style: TextStyle(
+                color: AppTheme.foreground, fontWeight: FontWeight.w800)),
+        content: Text(
+            'Cette action est irréversible. Voulez-vous vraiment supprimer "${p.title}" ?',
+            style: TextStyle(color: AppTheme.mutedForeground)),
         actions: [
           TextButton(
             onPressed: () => Get.back(),
-            child: Text('Annuler', style: TextStyle(color: AppTheme.mutedForeground)),
+            child: Text('Annuler',
+                style: TextStyle(color: AppTheme.mutedForeground)),
           ),
           TextButton(
             onPressed: () {
-              setState(() => _myProducts.removeAt(index));
               Get.back();
-              Get.snackbar(
-                'Supprimé', 
-                'L\'annonce a été supprimée avec succès',
-                backgroundColor: AppTheme.destructive.withOpacity(0.1),
-                colorText: AppTheme.destructive,
-                snackPosition: SnackPosition.BOTTOM,
-              );
+              _ctrl.deleteProduct(p.id.toString());
             },
-            child: Text('Supprimer', style: TextStyle(color: AppTheme.destructive, fontWeight: FontWeight.w700)),
+            child: Text('Supprimer',
+                style: TextStyle(
+                    color: AppTheme.destructive, fontWeight: FontWeight.w700)),
           ),
         ],
       ),
-    );
-  }
-
-  void _toggleProductStatus(int index) {
-    setState(() {
-      _myProducts[index]['isActive'] = !_myProducts[index]['isActive'];
-    });
-    final status = _myProducts[index]['isActive'] ? 'activée' : 'désactivée';
-    Get.snackbar(
-      'Statut mis à jour',
-      'Votre annonce est désormais $status.',
-      backgroundColor: AppTheme.primary.withOpacity(0.1),
-      colorText: AppTheme.primary,
-      snackPosition: SnackPosition.BOTTOM,
     );
   }
 
@@ -93,141 +66,201 @@ class _IndividualDashboardScreenState extends State<IndividualDashboardScreen> {
     return Scaffold(
       backgroundColor: AppTheme.background,
       body: SafeArea(
-        child: CustomScrollView(
-          physics: const BouncingScrollPhysics(),
-          slivers: [
-            // ── Premium Header ────────────────────────────────────────────────
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-                child: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        AppBackButton(onTap: () => Get.back()),
-                        Text(
-                          'Espace Particulier',
-                          style: TextStyle(
-                            fontSize: r.fs(18),
-                            fontWeight: FontWeight.w800,
-                            color: AppTheme.foreground,
+        child: Obx(() {
+          final products = _ctrl.myProducts;
+          final totalViews = '156'; // Mocked
+          final totalSales = '24'; // Mocked
+
+          return CustomScrollView(
+            physics: const BouncingScrollPhysics(),
+            slivers: [
+              // ── Premium Header ────────────────────────────────────────────────
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          AppBackButton(onTap: () => Get.back()),
+                          Text(
+                            'Espace Particulier',
+                            style: TextStyle(
+                              fontSize: r.fs(18),
+                              fontWeight: FontWeight.w800,
+                              color: AppTheme.foreground,
+                            ),
                           ),
-                        ),
-                        _buildCircleBtn(Icons.settings_outlined, AppTheme.primary, AppTheme.primary.withOpacity(0.1),
-                          onTap: () => Get.toNamed('/settings'),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 24),
-                    _buildIntroCard(),
-                  ],
-                ),
-              ),
-            ),
-
-            // ── Quick Stats ───────────────────────────────────────────────────
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: r.hPad),
-                child: Row(
-                  children: [
-                    Expanded(child: _buildStatMiniCard(r, _myProducts.length.toString(), 'Annonces', Icons.inventory_2_outlined, Colors.blue)),
-                    SizedBox(width: r.s(12)),
-                    Expanded(child: _buildStatMiniCard(r, '450', 'Vues', Icons.remove_red_eye_outlined, Colors.orange)),
-                    SizedBox(width: r.s(12)),
-                    Expanded(child: _buildStatMiniCard(r, '8', 'Ventes', Icons.shopping_bag_outlined, Colors.green)),
-                  ],
-                ),
-              ),
-            ),
-
-            // ── Action Button ─────────────────────────────────────────────────
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
-                child: TogoPressableScale(
-                  onTap: () => Get.toNamed('/add-product'),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 18),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [AppTheme.primary, AppTheme.primary.withOpacity(0.8)],
+                          _buildCircleBtn(
+                            Icons.settings_outlined,
+                            AppTheme.primary,
+                            AppTheme.primary.withOpacity(0.1),
+                            onTap: () => Get.toNamed('/settings'),
+                          ),
+                        ],
                       ),
-                      borderRadius: BorderRadius.circular(24),
-                      boxShadow: AppTheme.shadowPrimary,
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.add_circle_outline, color: Colors.white),
-                        SizedBox(width: r.s(12)),
-                        Text(
-                          'Vendre un nouvel article',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: r.fs(16),
-                            fontWeight: FontWeight.w800,
-                          ),
+                      const SizedBox(height: 24),
+                      _buildIntroCard(),
+                    ],
+                  ),
+                ),
+              ),
+
+              // ── Quick Stats ───────────────────────────────────────────────────
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: r.hPad),
+                  child: Row(
+                    children: [
+                      Expanded(
+                          child: _buildStatMiniCard(
+                              r,
+                              products.length.toString(),
+                              'Annonces',
+                              Icons.inventory_2_outlined,
+                              Colors.blue)),
+                      SizedBox(width: r.s(12)),
+                      Expanded(
+                          child: _buildStatMiniCard(r, totalViews, 'Vues',
+                              Icons.remove_red_eye_outlined, Colors.orange)),
+                      SizedBox(width: r.s(12)),
+                      Expanded(
+                          child: _buildStatMiniCard(r, totalSales, 'Ventes',
+                              Icons.shopping_bag_outlined, Colors.green)),
+                    ],
+                  ),
+                ),
+              ),
+
+              // ── Action Button ─────────────────────────────────────────────────
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
+                  child: TogoPressableScale(
+                    onTap: () async {
+                      await Get.toNamed('/add-product',
+                          arguments: {'isParticulier': true});
+                      _ctrl.loadMyProducts();
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 18),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            AppTheme.primary,
+                            AppTheme.primary.withOpacity(0.8)
+                          ],
                         ),
-                      ],
+                        borderRadius: BorderRadius.circular(24),
+                        boxShadow: AppTheme.shadowPrimary,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.add_circle_outline,
+                              color: Colors.white),
+                          SizedBox(width: r.s(12)),
+                          Text(
+                            'Vendre un nouvel article',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: r.fs(16),
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
 
-            // ── My Listings Title ─────────────────────────────────────────────
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Mes annonces actives',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
-                        color: AppTheme.foreground,
+              // ── My Listings Title ─────────────────────────────────────────────
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Mes annonces actives',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          color: AppTheme.foreground,
+                        ),
                       ),
-                    ),
-                    Text(
-                      '${_myProducts.length} articles',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: AppTheme.mutedForeground,
+                      Text(
+                        '${products.length} articles',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.mutedForeground,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
-            ),
 
-            // ── Listings List ─────────────────────────────────────────────────
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 40),
-              sliver: SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, i) {
-                    return TogoSlideUp(
-                      key: ValueKey(_myProducts[i]['id']),
-                      delay: Duration(milliseconds: i * 50),
-                      child: _buildIndividualProductItem(i),
-                    );
-                  },
-                  childCount: _myProducts.length,
+              // ── Listings List ─────────────────────────────────────────────────
+              if (_ctrl.isLoading.value)
+                const SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.only(top: 40),
+                    child: Center(child: CircularProgressIndicator()),
+                  ),
+                )
+              else if (products.isEmpty)
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 48),
+                    child: Center(
+                      child: Column(
+                        children: [
+                          Icon(Icons.inventory_2_outlined,
+                              size: 64,
+                              color: AppTheme.mutedForeground.withOpacity(0.4)),
+                          const SizedBox(height: 16),
+                          Text(
+                            'Aucun article pour le moment',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: AppTheme.mutedForeground,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                )
+              else
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 40),
+                  sliver: SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (context, i) {
+                        return TogoSlideUp(
+                          key: ValueKey(products[i].id),
+                          delay: Duration(milliseconds: i * 50),
+                          child: _buildIndividualProductItem(products[i]),
+                        );
+                      },
+                      childCount: products.length,
+                    ),
+                  ),
                 ),
-              ),
-            ),
-          ],
-        ),
+            ],
+          );
+        }),
       ),
     );
   }
 
-  Widget _buildCircleBtn(IconData icon, Color iconColor, Color bg, {VoidCallback? onTap}) {
+  Widget _buildCircleBtn(IconData icon, Color iconColor, Color bg,
+      {VoidCallback? onTap}) {
     return TogoPressableScale(
       onTap: onTap,
       child: Container(
@@ -246,7 +279,8 @@ class _IndividualDashboardScreenState extends State<IndividualDashboardScreen> {
         color: AppTheme.cardColor,
         borderRadius: BorderRadius.circular(30),
         boxShadow: AppTheme.shadowCard,
-        border: Border.all(color: AppTheme.primary.withOpacity(0.1), width: 1.5),
+        border:
+            Border.all(color: AppTheme.primary.withOpacity(0.1), width: 1.5),
       ),
       child: Row(
         children: [
@@ -256,7 +290,8 @@ class _IndividualDashboardScreenState extends State<IndividualDashboardScreen> {
               color: AppTheme.primary.withOpacity(0.1),
               shape: BoxShape.circle,
             ),
-            child: Icon(Icons.person_outline, color: AppTheme.primary, size: 30),
+            child:
+                Icon(Icons.person_outline, color: AppTheme.primary, size: 30),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -288,7 +323,8 @@ class _IndividualDashboardScreenState extends State<IndividualDashboardScreen> {
     );
   }
 
-  Widget _buildStatMiniCard(R r, String value, String label, IconData icon, Color color) {
+  Widget _buildStatMiniCard(
+      R r, String value, String label, IconData icon, Color color) {
     return Container(
       padding: EdgeInsets.symmetric(vertical: r.s(16), horizontal: r.s(12)),
       decoration: BoxDecoration(
@@ -321,9 +357,9 @@ class _IndividualDashboardScreenState extends State<IndividualDashboardScreen> {
     );
   }
 
-  Widget _buildIndividualProductItem(int index) {
-    final product = _myProducts[index];
-    final bool isActive = product['isActive'] ?? true;
+  Widget _buildIndividualProductItem(Product product) {
+    final bool isActive = true;
+    final imageUrl = ApiConstants.resolveImageUrl(product.image);
 
     return Opacity(
       opacity: isActive ? 1.0 : 0.6,
@@ -334,18 +370,24 @@ class _IndividualDashboardScreenState extends State<IndividualDashboardScreen> {
           color: AppTheme.cardColor,
           borderRadius: BorderRadius.circular(24),
           boxShadow: AppTheme.shadowSm,
-          border: !isActive ? Border.all(color: AppTheme.muted.withOpacity(0.5)) : null,
+          border: !isActive
+              ? Border.all(color: AppTheme.muted.withOpacity(0.5))
+              : null,
         ),
         child: Row(
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(18),
-              child: CachedNetworkImage(
-                imageUrl: product['image'],
-                width: 80,
-                height: 80,
-                fit: BoxFit.cover,
-              ),
+              child: imageUrl.isNotEmpty
+                  ? CachedNetworkImage(
+                      imageUrl: imageUrl,
+                      width: 80,
+                      height: 80,
+                      fit: BoxFit.cover,
+                      errorWidget: (_, __, ___) => _imagePlaceholder(),
+                      placeholder: (_, __) => _imagePlaceholder(),
+                    )
+                  : _imagePlaceholder(),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -353,16 +395,18 @@ class _IndividualDashboardScreenState extends State<IndividualDashboardScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    product['title'],
+                    product.title,
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w800,
                       color: AppTheme.foreground,
                     ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    product['price'],
+                    formatPrice(product.price),
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w900,
@@ -372,11 +416,15 @@ class _IndividualDashboardScreenState extends State<IndividualDashboardScreen> {
                   const SizedBox(height: 8),
                   Row(
                     children: [
-                      _buildTinyAction(Icons.edit_outlined, 'Modifier', 
-                        onTap: () => Get.toNamed('/edit-product/${product['id']}')),
+                      _buildTinyAction(Icons.edit_outlined, 'Modifier',
+                          onTap: () async {
+                        await Get.toNamed('/edit-product/${product.id}');
+                        _ctrl.loadMyProducts();
+                      }),
                       const SizedBox(width: 12),
-                      _buildTinyAction(Icons.delete_outline, 'Supprimer', 
-                        isDestructive: true, onTap: () => _deleteProduct(index)),
+                      _buildTinyAction(Icons.delete_outline, 'Supprimer',
+                          isDestructive: true,
+                          onTap: () => _deleteProduct(product)),
                     ],
                   ),
                 ],
@@ -391,7 +439,15 @@ class _IndividualDashboardScreenState extends State<IndividualDashboardScreen> {
                     value: isActive,
                     activeTrackColor: AppTheme.primary,
                     inactiveTrackColor: AppTheme.muted,
-                    onChanged: (val) => _toggleProductStatus(index),
+                    onChanged: (val) {
+                      Get.snackbar(
+                        'Info',
+                        'La modification du statut n\'est pas encore disponible.',
+                        backgroundColor: AppTheme.primary.withOpacity(0.1),
+                        colorText: AppTheme.primary,
+                        snackPosition: SnackPosition.BOTTOM,
+                      );
+                    },
                   ),
                 ),
                 Text(
@@ -410,20 +466,37 @@ class _IndividualDashboardScreenState extends State<IndividualDashboardScreen> {
     );
   }
 
-  Widget _buildTinyAction(IconData icon, String label, {bool isDestructive = false, VoidCallback? onTap}) {
+  Widget _imagePlaceholder() {
+    return Container(
+      width: 80,
+      height: 80,
+      color: AppTheme.muted,
+      child: Icon(Icons.image_not_supported,
+          color: AppTheme.mutedForeground, size: 28),
+    );
+  }
+
+  Widget _buildTinyAction(IconData icon, String label,
+      {bool isDestructive = false, VoidCallback? onTap}) {
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: Row(
         children: [
-          Icon(icon, size: 14, color: isDestructive ? AppTheme.destructive : AppTheme.mutedForeground),
+          Icon(icon,
+              size: 14,
+              color: isDestructive
+                  ? AppTheme.destructive
+                  : AppTheme.mutedForeground),
           const SizedBox(width: 4),
           Text(
             label,
             style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w600,
-              color: isDestructive ? AppTheme.destructive : AppTheme.mutedForeground,
+              color: isDestructive
+                  ? AppTheme.destructive
+                  : AppTheme.mutedForeground,
             ),
           ),
         ],

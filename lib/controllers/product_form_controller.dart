@@ -11,6 +11,7 @@ import '../Api/core/api_client.dart';
 import '../utils/boutique_category_filter.dart';
 import '../widgets/category_picker_bottom_sheet.dart';
 import 'boutique_controller.dart';
+import '../utils/image_optimization_service.dart';
 
 class ProductFormController extends GetxController {
   final formKey = GlobalKey<FormState>();
@@ -23,6 +24,9 @@ class ProductFormController extends GetxController {
   final isPriceNegotiable = false.obs;
   final selectedCategory = RxnInt(); // Using int for DB ID consistency
   bool isParticulier = false;
+
+  final stockType = 'unique'.obs;
+  final stockQuantityController = TextEditingController();
 
   final images = <XFile>[].obs;
   final existingImages = <String>[].obs; 
@@ -38,6 +42,7 @@ class ProductFormController extends GetxController {
     titleController.dispose();
     descriptionController.dispose();
     priceController.dispose();
+    stockQuantityController.dispose();
     super.onClose();
   }
 
@@ -49,6 +54,8 @@ class ProductFormController extends GetxController {
     condition.value = 'Neuf';
     isPriceNegotiable.value = false;
     selectedCategory.value = null; // Reset to null so user must select 
+    stockType.value = 'unique';
+    stockQuantityController.clear();
     images.clear();
     existingImages.clear();
     existingImageIds.clear();
@@ -63,6 +70,8 @@ class ProductFormController extends GetxController {
     condition.value = product.condition;
     isPriceNegotiable.value = product.isPriceNegotiable;
     selectedCategory.value = int.tryParse(product.category);
+    stockType.value = product.stockType;
+    stockQuantityController.text = product.stockType == 'stock' ? product.stock.toString() : '';
     if (!isParticulier && Get.isRegistered<BoutiqueController>() && Get.isRegistered<AppController>()) {
       final b = Get.find<BoutiqueController>().myBoutique.value;
       final ids = parseBoutiqueCategoryIds(b?.categories);
@@ -113,24 +122,19 @@ class ProductFormController extends GetxController {
         }
         final toAdd = <XFile>[];
         for (var file in picked.take(availableSlots)) {
-          final fileSize = await File(file.path).length();
-          if (fileSize > 5242880) {
-            // 5 Mo = 5242880 bytes
-            if (Get.context != null) {
-              AppToasts.warning(Get.context!, 'Image trop volumineuse',
-                  '${file.name} dépasse 5 Mo et a été ignorée.');
-            }
-          } else {
-            // Sauvegarder l'image dans un répertoire sûr pour éviter 
-            // que image_picker ne supprime le cache lors d'une sélection ultérieure.
-            final tempDir = Directory.systemTemp;
-            final safeName = 'safe_${DateTime.now().millisecondsSinceEpoch}_${file.name}';
-            final safePath = tempDir.path.endsWith('/') 
-                ? '${tempDir.path}$safeName' 
-                : '${tempDir.path}/$safeName';
-            final savedFile = await File(file.path).copy(safePath);
-            toAdd.add(XFile(savedFile.path));
-          }
+          // Optimization in background (replaces the 5MB rejection logic)
+          final optimizedFile = await ImageOptimizationService.optimizeImage(File(file.path));
+          
+          // Sauvegarder l'image dans un répertoire sûr pour éviter 
+          // que image_picker ne supprime le cache.
+          final tempDir = Directory.systemTemp;
+          // Forcer l'extension jpg car l'optimiseur sort du jpeg
+          final safeName = 'safe_${DateTime.now().millisecondsSinceEpoch}.jpg';
+          final safePath = tempDir.path.endsWith('/') 
+              ? '${tempDir.path}$safeName' 
+              : '${tempDir.path}/$safeName';
+          final savedFile = await optimizedFile.copy(safePath);
+          toAdd.add(XFile(savedFile.path));
         }
         images.addAll(toAdd);
       }
@@ -210,7 +214,7 @@ class ProductFormController extends GetxController {
     isLoading.value = true;
 
     try {
-      final formDataMap = {
+      final formDataMap = <String, dynamic>{
         'publish_as': isParticulier ? 'particulier' : 'boutique',
         'titre': titleController.text.trim(),
         'description': descriptionController.text.trim(),
@@ -218,7 +222,12 @@ class ProductFormController extends GetxController {
         'prix_negociable': isPriceNegotiable.value ? 1 : 0,
         'etat': condition.value,
         'categorie_id': selectedCategory.value,
+        'stock_type': stockType.value,
       };
+
+      if (stockType.value == 'stock') {
+        formDataMap['stock'] = int.tryParse(stockQuantityController.text.trim()) ?? 0;
+      }
 
       final data = dio.FormData.fromMap(formDataMap);
 
@@ -317,7 +326,7 @@ class ProductFormController extends GetxController {
     try {
       // In Laravel PUT with multipart/form-data doesn't always work nicely,
       // it's best to use POST and add _method=PUT.
-      final formDataMap = {
+      final formDataMap = <String, dynamic>{
         '_method': 'PUT',
         'titre': titleController.text.trim(),
         'description': descriptionController.text.trim(),
@@ -325,7 +334,12 @@ class ProductFormController extends GetxController {
         'prix_negociable': isPriceNegotiable.value ? 1 : 0,
         'etat': condition.value,
         'categorie_id': selectedCategory.value,
+        'stock_type': stockType.value,
       };
+
+      if (stockType.value == 'stock') {
+        formDataMap['stock'] = int.tryParse(stockQuantityController.text.trim()) ?? 0;
+      }
 
       final data = dio.FormData.fromMap(formDataMap);
 

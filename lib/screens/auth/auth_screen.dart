@@ -7,6 +7,9 @@ import '../../Api/provider/auth_controller.dart';
 import '../../Api/model/location_model.dart';
 import '../../Api/model/category_model.dart';
 import '../../utils/responsive.dart';
+import '../../models/models.dart';
+import '../../Api/firebase/services/chat_service.dart';
+import '../seller/sell_choice_sheet.dart';
 import '../../utils/app_toasts.dart';
 import '../../widgets/app_loader.dart';
 import 'forgot_password_screen.dart';
@@ -48,6 +51,73 @@ class _AuthScreenState extends State<AuthScreen> {
       if (local.isNotEmpty) return local;
     }
     return 'Utilisateur';
+  }
+
+  void _handlePostLoginRedirect(BuildContext context) async {
+    final args = Get.arguments;
+    if (args is Map && args.containsKey('redirect')) {
+      final String targetRoute = args['redirect'] as String;
+      final dynamic targetArgs = args['arguments'];
+      
+      if (targetRoute == 'vendre') {
+        Get.offAllNamed('/home');
+        Future.delayed(const Duration(milliseconds: 300), () {
+          SellChoiceSheet.show();
+        });
+      } else if (targetRoute == 'discuss_product') {
+        final product = targetArgs;
+        if (product == null || product is! Product) {
+          Get.offAllNamed('/home');
+          return;
+        }
+        
+        Get.dialog(
+          const Center(child: CircularProgressIndicator()),
+          barrierDismissible: false,
+        );
+        
+        try {
+          final currentUser = _authController.currentUser.value!;
+          final myId = currentUser.id.toString();
+          final myName = currentUser.nom ?? 'Utilisateur';
+          final myAvatar = currentUser.avatarUrl ?? '';
+          
+          final boutique = product.boutiqueObj;
+          final sellerId = boutique != null ? boutique.id.toString() : (product.userObj?.id.toString() ?? product.sellerId.toString());
+          final sellerName = boutique?.nom ?? product.userObj?.nom ?? 'Vendeur';
+          final sellerAvatar = boutique?.logoUrl ?? product.userObj?.avatarUrl ?? '';
+          
+          final chatId = await ChatService.to.getOrCreateChat(
+            myId: myId,
+            myName: myName,
+            myAvatar: myAvatar,
+            otherId: sellerId,
+            otherName: sellerName,
+            otherAvatar: sellerAvatar,
+            productId: product.id.toString(),
+            productTitle: product.title,
+            productImage: product.image,
+          );
+          
+          if (Get.isDialogOpen == true) {
+            Get.back();
+          }
+          
+          Get.offAllNamed('/home');
+          Get.toNamed('/chat/$chatId', arguments: product);
+        } catch (e) {
+          if (Get.isDialogOpen == true) {
+            Get.back();
+          }
+          AppToasts.error(context, 'Erreur Chat', 'Impossible de démarrer la discussion.');
+          Get.offAllNamed('/home');
+        }
+      } else {
+        Get.offAllNamed(targetRoute, arguments: targetArgs);
+      }
+    } else {
+      Get.offAllNamed('/home');
+    }
   }
 
   @override
@@ -98,7 +168,7 @@ class _AuthScreenState extends State<AuthScreen> {
                 } else {
                   _authController.markOnboardingComplete();
                   AppToasts.success(context, "Succès", "Connexion réussie !");
-                  Get.offAllNamed('/home');
+                  _handlePostLoginRedirect(context);
                 }
               }
             } catch (e) {
@@ -253,7 +323,7 @@ class _AuthScreenState extends State<AuthScreen> {
                 );
                 _authController.markOnboardingComplete();
                 AppToasts.success(context, "Succès", "Connexion réussie ! Bienvenue sur Togo Market.");
-                Get.offAllNamed('/home');
+                _handlePostLoginRedirect(context);
               } catch (loginError) {
                 // La connexion a échoué. Tentative d'inscription.
                 try {

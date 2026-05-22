@@ -9,6 +9,7 @@ import '../../theme/app_theme.dart';
 import '../../../widgets/user_avatar.dart';
 import 'change_email_screen.dart';
 import 'change_phone_screen.dart';
+import '../../../utils/image_optimization_service.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -64,8 +65,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         imageQuality: 80,
       );
       if (image != null) {
+        final optimizedFile = await ImageOptimizationService.optimizeImage(File(image.path));
         setState(() {
-          _selectedImage = File(image.path);
+          _selectedImage = optimizedFile;
         });
       }
     } catch (e) {

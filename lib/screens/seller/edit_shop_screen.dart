@@ -18,6 +18,7 @@ import '../../Api/config/api_constants.dart';
 import '../../Api/provider/auth_controller.dart';
 import '../../utils/location_service.dart';
 import '../../utils/app_toasts.dart';
+import '../../utils/image_optimization_service.dart';
 
 class EditShopScreen extends StatefulWidget {
   const EditShopScreen({super.key});
@@ -178,20 +179,13 @@ class _EditShopScreenState extends State<EditShopScreen> {
     try {
       final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
       if (pickedFile != null && mounted) {
-        // Check size (5 Mo = 5242880 bytes)
-        final fileSize = await File(pickedFile.path).length();
-        if (fileSize > 5242880) {
-          if (mounted) {
-            AppToasts.error(context, 'Image trop volumineuse',
-                'L\'image dépasse 5 Mo. Veuillez choisir une image plus légère.');
-          }
-          return;
-        }
+        final optimizedFile = await ImageOptimizationService.optimizeImage(File(pickedFile.path));
+        
         setState(() {
           if (isBanner) {
-            _bannerPath = pickedFile.path;
+            _bannerPath = optimizedFile.path;
           } else {
-            _logoPath = pickedFile.path;
+            _logoPath = optimizedFile.path;
           }
         });
       }

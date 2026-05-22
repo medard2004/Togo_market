@@ -5,6 +5,9 @@ import '../../theme/app_theme.dart';
 import '../../controllers/order_controller.dart';
 import '../../models/order_model.dart';
 import '../../Api/config/api_constants.dart';
+import '../../Api/firebase/services/chat_service.dart';
+import '../../Api/provider/auth_controller.dart';
+import '../../utils/app_toasts.dart';
 
 class OrdersScreen extends StatefulWidget {
   const OrdersScreen({super.key});
@@ -28,92 +31,112 @@ class _OrdersScreenState extends State<OrdersScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppTheme.background,
-      appBar: AppBar(
+    return PopScope(
+      canPop: Navigator.canPop(context),
+      onPopInvoked: (didPop) {
+        if (!didPop) {
+          Get.offAllNamed('/home');
+        }
+      },
+      child: Scaffold(
         backgroundColor: AppTheme.background,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        leading: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Container(
-            decoration: BoxDecoration(
-              color: AppTheme.cardColor,
-              shape: BoxShape.circle,
-              boxShadow: AppTheme.shadowSm,
-            ),
-            child: IconButton(
-              icon: Icon(Icons.arrow_back, color: AppTheme.foreground, size: 20),
-              onPressed: () => Get.back(),
-            ),
-          ),
-        ),
-        title: Text(
-          'Mes commandes',
-          style: TextStyle(
-            color: AppTheme.foreground,
-            fontSize: 20,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-        centerTitle: false,
-      ),
-      body: Column(
-        children: [
-          const SizedBox(height: 12),
-          // ── Tabs (Achats / Ventes) ──────────────────────────────────────────
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
+        appBar: AppBar(
+          backgroundColor: AppTheme.background,
+          elevation: 0,
+          scrolledUnderElevation: 0,
+          leading: Padding(
+            padding: const EdgeInsets.all(8.0),
             child: Container(
-              height: 54,
-              padding: const EdgeInsets.all(5),
               decoration: BoxDecoration(
-                color: AppTheme.muted,
-                borderRadius: BorderRadius.circular(25),
+                color: AppTheme.cardColor,
+                shape: BoxShape.circle,
+                boxShadow: AppTheme.shadowSm,
               ),
-              child: Row(
-                children: [
-                  _buildTabPill('Achats', 0),
-                  _buildTabPill('Ventes', 1),
-                ],
+              child: IconButton(
+                icon: Icon(Icons.arrow_back,
+                    color: AppTheme.foreground, size: 20),
+                onPressed: () {
+                  if (Navigator.canPop(context)) {
+                    Get.back();
+                  } else {
+                    Get.offAllNamed('/home');
+                  }
+                },
               ),
             ),
           ),
-          const SizedBox(height: 20),
-          Divider(height: 1, thickness: 1, color: AppTheme.border),
-          // ── Orders List ───────────────────────────────────────────────────
-          Expanded(
-            child: Get.isRegistered<OrderController>()
-                ? Obx(() {
-                    final ctrl = OrderController.to;
-                    if (ctrl.isLoading.value) {
-                      return const Center(child: CircularProgressIndicator());
-                    }
-                    if (ctrl.hasError.value) {
-                      return Center(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Text('Erreur de chargement'),
-                            ElevatedButton(
-                              onPressed: () => ctrl.fetchOrders(),
-                              child: const Text('Réessayer'),
-                            )
-                          ],
-                        ),
-                      );
-                    }
-                    return IndexedStack(
-                      index: _activeTab,
-                      children: [
-                        _buildList(ctrl.buyerOrders, isSale: false),
-                        _buildList(ctrl.sellerOrders, isSale: true),
-                      ],
-                    );
-                  })
-                : const Center(child: Text('Module commandes non disponible')),
+          title: Text(
+            'Mes commandes',
+            style: TextStyle(
+              color: AppTheme.foreground,
+              fontSize: 20,
+              fontWeight: FontWeight.w800,
+            ),
           ),
-        ],
+          centerTitle: false,
+        ),
+        body: Column(
+          children: [
+            const SizedBox(height: 12),
+            // ── Tabs (Achats / Ventes) ──────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Container(
+                height: 54,
+                padding: const EdgeInsets.all(5),
+                decoration: BoxDecoration(
+                  color: AppTheme.muted,
+                  borderRadius: BorderRadius.circular(25),
+                ),
+                child: Row(
+                  children: [
+                    _buildTabPill('Achats', 0),
+                    _buildTabPill('Ventes', 1),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Divider(height: 1, thickness: 1, color: AppTheme.border),
+            // ── Orders List ───────────────────────────────────────────────────
+            Expanded(
+              child: Get.isRegistered<OrderController>()
+                  ? Obx(() {
+                      final ctrl = OrderController.to;
+                      if (ctrl.isLoading.value) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+                      if (ctrl.hasError.value) {
+                        return Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Text('Erreur de chargement'),
+                              ElevatedButton(
+                                onPressed: () => ctrl.fetchOrders(),
+                                child: const Text('Réessayer'),
+                              )
+                            ],
+                          ),
+                        );
+                      }
+                      return IndexedStack(
+                        index: _activeTab,
+                        children: [
+                          _buildList(ctrl.buyerOrders, isSale: false),
+                          _buildList(
+                              ctrl.sellerOrders
+                                  .where((o) => o.product?.boutiqueId == null)
+                                  .toList(),
+                              isSale: true),
+                        ],
+                      );
+                    })
+                  : const Center(
+                      child: Text('Module commandes non disponible')),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -136,7 +159,8 @@ class _OrdersScreenState extends State<OrdersScreen> {
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: isActive ? FontWeight.w800 : FontWeight.w600,
-                color: isActive ? AppTheme.foreground : AppTheme.mutedForeground,
+                color:
+                    isActive ? AppTheme.foreground : AppTheme.mutedForeground,
               ),
             ),
           ),
@@ -196,10 +220,16 @@ class _OrdersScreenState extends State<OrdersScreen> {
           return _OrderCard(
             title: order.product?.titre ?? 'Produit #${order.productId}',
             price: '${order.formattedPrice} F',
-            partnerLabel: isSale ? 'Acheteur:' : 'Vendeur:',
+            partnerLabel: isSale
+                ? 'Acheteur:'
+                : (order.product?.boutiqueNom != null
+                    ? 'Boutique:'
+                    : 'Vendeur:'),
             partnerName: isSale
                 ? (order.user?.nom ?? 'Acheteur')
-                : (order.seller?.nom ?? 'Vendeur'),
+                : (order.product?.boutiqueNom ??
+                    order.seller?.nom ??
+                    'Vendeur'),
             image: imageUrl,
             status: order.status,
             statusColor: statusColor,
@@ -255,6 +285,7 @@ class _OrderCard extends StatelessWidget {
           'phone': order.phone,
           'notes': order.notes,
           'date': order.formattedDate,
+          'order': order,
         });
 
     return GestureDetector(
@@ -345,7 +376,8 @@ class _OrderCard extends StatelessWidget {
                             TextSpan(text: '$partnerLabel '),
                             TextSpan(
                               text: partnerName,
-                              style: const TextStyle(fontWeight: FontWeight.w500),
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.w500),
                             ),
                           ],
                         ),
@@ -371,7 +403,8 @@ class _OrderCard extends StatelessWidget {
                   Expanded(
                     child: _ActionButton(
                       label: 'Accepter',
-                      onTap: () => OrderController.to.acceptOrder(context, order),
+                      onTap: () =>
+                          OrderController.to.acceptOrder(context, order),
                       color: AppTheme.primary,
                     ),
                   ),
@@ -379,7 +412,8 @@ class _OrderCard extends StatelessWidget {
                   Expanded(
                     child: _ActionButton(
                       label: 'Refuser',
-                      onTap: () => OrderController.to.refuseOrder(context, order),
+                      onTap: () =>
+                          OrderController.to.refuseOrder(context, order),
                       color: AppTheme.muted,
                       textColor: AppTheme.foreground,
                     ),
@@ -403,7 +437,8 @@ class _OrderCard extends StatelessWidget {
                       child: _ActionButton(
                         label: 'Terminer',
                         icon: Icons.check_circle_outline,
-                        onTap: () => OrderController.to.completeOrder(context, order),
+                        onTap: () =>
+                            OrderController.to.completeOrder(context, order),
                         color: Colors.green.withOpacity(0.12),
                         textColor: Colors.green.shade700,
                       ),
@@ -413,9 +448,53 @@ class _OrderCard extends StatelessWidget {
                       child: _ActionButton(
                         label: 'Chat',
                         icon: Icons.chat_bubble_outline,
-                        onTap: () {
-                          // Logique pour ouvrir le chat avec le vendeur ou l'acheteur
-                          // En s'appuyant sur OrderController / ChatController
+                        onTap: () async {
+                          final auth = Get.find<AuthController>();
+                          final myUser = auth.currentUser.value;
+                          if (myUser == null) {
+                            AppToasts.error(
+                                context, 'Erreur', 'Vous devez être connecté.');
+                            return;
+                          }
+
+                          var myId = myUser.id.toString();
+                          final myName = myUser.nom ?? 'Moi';
+                          final myAvatar = myUser.avatarUrl ?? '';
+                          final boutiqueId = order.product?.boutiqueId;
+
+                          String otherId;
+                          if (isSale) {
+                            // Vendeur → acheteur (myId = boutiqueId si produit boutique)
+                            otherId = order.userId.toString();
+                            if (boutiqueId != null)
+                              myId = boutiqueId.toString();
+                          } else {
+                            // Acheteur → boutique ou vendeur particulier
+                            otherId = boutiqueId != null
+                                ? boutiqueId.toString()
+                                : order.sellerId.toString();
+                          }
+
+                          if (otherId.isEmpty) return;
+
+                          try {
+                            final chatId = await ChatService.to.getOrCreateChat(
+                              myId: myId,
+                              myName: myName,
+                              myAvatar: myAvatar,
+                              otherId: otherId,
+                              otherName: partnerName,
+                              otherAvatar: '',
+                              productId: order.productId.toString(),
+                              productTitle: title,
+                              productImage: order.product?.image ?? '',
+                            );
+                            Get.toNamed(
+                                '/chat/$chatId${isSale ? "?asBoutique=true" : ""}');
+                          } catch (e) {
+                            AppToasts.error(context, 'Erreur',
+                                'Impossible d\'ouvrir le chat.');
+                          }
                         },
                         color: AppTheme.primary.withOpacity(0.1),
                         textColor: AppTheme.primary,
@@ -480,7 +559,10 @@ class _ActionButton extends StatelessWidget {
           children: [
             if (icon != null) ...[
               Icon(icon,
-                  size: 16, color: isOutline ? AppTheme.primary : (textColor ?? Colors.white)),
+                  size: 16,
+                  color: isOutline
+                      ? AppTheme.primary
+                      : (textColor ?? Colors.white)),
               const SizedBox(width: 8),
             ],
             Text(
@@ -488,7 +570,8 @@ class _ActionButton extends StatelessWidget {
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
-                color: isOutline ? AppTheme.primary : (textColor ?? Colors.white),
+                color:
+                    isOutline ? AppTheme.primary : (textColor ?? Colors.white),
               ),
             ),
           ],

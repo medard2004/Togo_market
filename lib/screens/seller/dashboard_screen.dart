@@ -346,7 +346,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         );
       }
 
-      final orders = ctrl.sellerOrders;
+      final orders = ctrl.sellerOrders.where((o) => o.product?.boutiqueId != null).toList();
 
       if (orders.isEmpty) {
         return Padding(
@@ -424,6 +424,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         'phone': order.phone,
         'notes': order.notes,
         'date': order.formattedDate,
+        'order': order,
       }),
       child: Container(
         margin: const EdgeInsets.only(bottom: 16),
@@ -608,6 +609,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       'phone': order.phone,
                       'notes': order.notes,
                       'date': order.formattedDate,
+                      'order': order,
                     }),
                     child: Container(
                       height: 44,

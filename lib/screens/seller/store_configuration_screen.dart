@@ -17,6 +17,7 @@ import '../../controllers/boutique_controller.dart';
 import '../../utils/app_toasts.dart';
 import '../../utils/location_service.dart';
 import '../../utils/togo_cities.dart';
+import '../../utils/image_optimization_service.dart';
 import 'store_config_model.dart';
 
 class StoreConfigurationScreen extends StatefulWidget {
@@ -781,20 +782,13 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
     try {
       final picked = await _picker.pickImage(source: ImageSource.gallery);
       if (picked != null && mounted) {
-        // Check size (5 Mo = 5242880 bytes)
-        final fileSize = await File(picked.path).length();
-        if (fileSize > 5242880) {
-          if (mounted) {
-            AppToasts.error(context, 'Image trop volumineuse',
-                'L\'image dépasse 5 Mo. Veuillez choisir une image plus légère.');
-          }
-          return;
-        }
+        final optimizedFile = await ImageOptimizationService.optimizeImage(File(picked.path));
+
         setState(() {
           if (isBanner) {
-            _data.bannerPath = picked.path;
+            _data.bannerPath = optimizedFile.path;
           } else {
-            _data.logoPath = picked.path;
+            _data.logoPath = optimizedFile.path;
           }
         });
       }
