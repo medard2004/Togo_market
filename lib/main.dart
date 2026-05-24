@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get/get.dart';
 import 'package:toastification/toastification.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'theme/app_theme.dart';
 import 'navigation/app_transitions.dart';
@@ -70,11 +71,17 @@ import 'controllers/notification_controller.dart';
 import 'Api/firebase/services/chat_service.dart';
 import 'Api/firebase/controllers/chat_controller.dart';
 import 'Api/firebase/services/fcm_service.dart';
+import 'Api/firebase/services/firebase_auth_bridge_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: '.env');
   await Firebase.initializeApp();
+  
+  await Supabase.initialize(
+    url: dotenv.env['SUPABASE_URL']!,
+    anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
+  );
 
   // await FlutterSecureStorage().deleteAll(); // DEBUG ONLY — à ne pas décommenter en production
 
@@ -109,6 +116,7 @@ void main() async {
   Get.put(userService, permanent: true);
   Get.put(FavoriService(apiClient), permanent: true);
 
+  Get.put(FirebaseAuthBridgeService(apiClient), permanent: true);
   Get.put(AuthController(authService), permanent: true);
   Get.put(BoutiqueController(boutiqueService), permanent: true);
 

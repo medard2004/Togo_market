@@ -1,16 +1,18 @@
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:get/get.dart';
+import 'dart:math';
 import '../models/chat_model.dart';
 import '../../core/api_client.dart';
+import 'firebase_auth_bridge_service.dart';
 
 class ChatService extends GetxService {
   static ChatService get to => Get.find();
   
   final FirebaseFirestore _db = FirebaseFirestore.instance;
-  final FirebaseStorage _storage = FirebaseStorage.instance;
 
   /// Génère un ID unique et déterministe pour la conversation entre deux utilisateurs.
   /// On trie les IDs pour garantir un seul ID par paire.
@@ -124,9 +126,41 @@ class ChatService extends GetxService {
     return null;
   }
 
+  static void _validateChatId(String chatId) {
+    if (chatId.isEmpty) {
+      throw Exception('ID de conversation manquant.');
+    }
+    if (!chatId.contains('_')) {
+      throw Exception(
+        'ID de conversation invalide (attendu: id1_id2). Rechargez la conversation.',
+      );
+    }
+  }
+
   /// Upload un fichier média vers Firebase Storage
-  Future<String> uploadMedia(String chatId, File file, String type) async {
+  Future<String> uploadMedia(
+    String chatId,
+    File file,
+    String type, {
+    bool asBoutique = false,
+  }) async {
     try {
+      _validateChatId(chatId);
+
+      if (Get.isRegistered<FirebaseAuthBridgeService>()) {
+        await FirebaseAuthBridgeService.to.ensureSignedInForChat(
+          chatId,
+          asBoutique: asBoutique,
+        );
+        debugPrint(
+          'ChatService.uploadMedia: Firebase uid=${FirebaseAuth.instance.currentUser?.uid}',
+        );
+      } else {
+        throw Exception(
+          'FirebaseAuthBridgeService non initialisé — impossible d\'uploader.',
+        );
+      }
+
       // Nettoyer le chemin d'accès au fichier pour s'assurer qu'il n'y a pas de préfixe "file://" ou "file:"
       String filePath = file.path;
       if (filePath.startsWith('file://')) {
@@ -154,28 +188,30 @@ class ChatService extends GetxService {
       
       final ext = type == 'image' ? 'jpg' : 'm4a';
       final contentType = type == 'image' ? 'image/jpeg' : 'audio/mp4';
-      final fileName = '${DateTime.now().millisecondsSinceEpoch}.$ext';
+      final rand = Random().nextInt(100000);
+      final fileName = '${DateTime.now().millisecondsSinceEpoch}_$rand.$ext';
       final storagePath = 'chats/$chatId/$type/$fileName';
       
-      debugPrint('ChatService.uploadMedia: Uploading to Firebase Storage path -> $storagePath');
-      final ref = _storage.ref().child(storagePath);
+      debugPrint('ChatService.uploadMedia: Uploading to Supabase Storage path -> $storagePath');
       
-      final metadata = SettableMetadata(contentType: contentType);
-      
-      // Utilisation de putData au lieu de putFile pour contourner les problèmes de permissions
-      // de fichiers sur certains appareils qui causent un échec silencieux de putFile,
-      // ce qui entraîne ensuite une erreur "object-not-found" lors de getDownloadURL.
+      final supabase = Supabase.instance.client;
       final bytes = await cleanFile.readAsBytes();
-      final snapshot = await ref.putData(bytes, metadata);
       
-      if (snapshot.state != TaskState.success) {
-        throw Exception("L'upload a échoué avec l'état: ${snapshot.state}");
-      }
+      await supabase.storage.from('chat_media').uploadBinary(
+        storagePath,
+        bytes,
+        fileOptions: FileOptions(contentType: contentType),
+      );
       
-      final downloadUrl = await snapshot.ref.getDownloadURL();
+      final downloadUrl = supabase.storage.from('chat_media').getPublicUrl(storagePath);
       
       debugPrint('ChatService.uploadMedia: Upload réussi → $downloadUrl');
       return downloadUrl;
+    } on StorageException catch (e) {
+      debugPrint(
+        '❌ ChatService.uploadMedia Supabase StorageException: status=${e.statusCode}, message=${e.message}',
+      );
+      rethrow;
     } catch (e) {
       debugPrint('❌ ChatService.uploadMedia ERREUR: $e');
       rethrow;

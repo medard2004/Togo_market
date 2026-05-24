@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:path_provider/path_provider.dart';
+import 'dart:math';
 
 class ImageOptimizationService {
   /// Taille cible maximale de l'image (par défaut 1 Mo pour rester très léger).
@@ -53,7 +54,8 @@ class ImageOptimizationService {
 
   static Future<File?> _compress(File source, Directory tempDir, int quality) async {
     // Générer un chemin unique pour le résultat (forçons le jpeg)
-    final targetPath = '${tempDir.absolute.path}/opt_${DateTime.now().millisecondsSinceEpoch}_$quality.jpg';
+    final rand = Random().nextInt(100000);
+    final targetPath = '${tempDir.absolute.path}/opt_${DateTime.now().millisecondsSinceEpoch}_${rand}_$quality.jpg';
     
     final result = await FlutterImageCompress.compressAndGetFile(
       source.absolute.path,

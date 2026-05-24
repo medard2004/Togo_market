@@ -1,0 +1,16 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    function isChatParticipant(chatId) {
+      return request.auth != null
+        && (
+          chatId.matches('^' + request.auth.uid + '_.*')
+          || chatId.matches('.*_' + request.auth.uid + '$')
+        );
+    }
+
+    match /chats/{chatId}/{type}/{fileName} {
+      allow read, write: if isChatParticipant(chatId);
+    }
+  }
+}

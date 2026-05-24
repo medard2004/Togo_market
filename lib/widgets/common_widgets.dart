@@ -12,6 +12,8 @@ export '../theme/widgets/togo_back_button.dart';
 export '../theme/widgets/section_title.dart';
 import '../utils/category_icon_helper.dart';
 import '../Api/config/api_constants.dart';
+import '../Api/firebase/services/chat_service.dart';
+import '../Api/provider/auth_controller.dart';
 
 // ── ProductCard ───────────────────────────────────────────────────────────────
 class ProductCard extends StatelessWidget {
@@ -406,9 +408,32 @@ class ProductCard extends StatelessWidget {
                           color: Colors.transparent,
                           child: InkWell(
                             borderRadius: BorderRadius.circular(r.rad(18)),
-                            onTap: () {
+                            onTap: () async {
                               Get.back();
-                              Get.toNamed('/chat/${boutique.id}');
+                              final auth = Get.find<AuthController>();
+                              final me = auth.currentUser.value;
+                              if (me == null) {
+                                Get.toNamed('/auth');
+                                return;
+                              }
+                              try {
+                                final chatId =
+                                    await ChatService.to.getOrCreateChat(
+                                  myId: me.id.toString(),
+                                  myName: me.nom ?? 'Utilisateur',
+                                  myAvatar: me.avatarUrl ?? '',
+                                  otherId: boutique.id.toString(),
+                                  otherName: boutique.nom,
+                                  otherAvatar: boutique.logoUrl ?? '',
+                                );
+                                Get.toNamed('/chat/$chatId');
+                              } catch (_) {
+                                Get.snackbar(
+                                  'Erreur',
+                                  'Impossible d\'ouvrir la conversation.',
+                                  snackPosition: SnackPosition.TOP,
+                                );
+                              }
                             },
                             child: Center(
                               child: Icon(Icons.forum_rounded,

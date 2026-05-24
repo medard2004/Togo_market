@@ -1,8 +1,39 @@
 import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:get/get.dart';
+import 'dart:io';
+import 'dart:async';
 import '../models/chat_model.dart';
 import '../services/chat_service.dart';
 import '../../provider/auth_controller.dart';
+import '../../../utils/image_optimization_service.dart';
+
+class PendingMessage {
+  final String id;
+  final String senderId;
+  final String content;
+  final DateTime timestamp;
+  final String type; // 'image', 'voice', 'location'
+  final String? localFilePath;
+  final String? mediaUrl;
+  final int? mediaDuration;
+  final String? productId;
+  final RxDouble progress = 0.0.obs;
+  final RxString status = 'sending'.obs; // 'sending', 'error', 'success'
+  final File? originalFile;
+
+  PendingMessage({
+    required this.id,
+    required this.senderId,
+    required this.content,
+    required this.timestamp,
+    required this.type,
+    this.localFilePath,
+    this.mediaUrl,
+    this.mediaDuration,
+    this.productId,
+    this.originalFile,
+  });
+}
 
 class ChatController extends GetxController {
   static ChatController get to => Get.find();
@@ -15,6 +46,9 @@ class ChatController extends GetxController {
 
   /// Messages de la conversation active
   final currentMessages = <ChatMessageData>[].obs;
+
+  /// Messages locaux en cours d'upload
+  final pendingMessages = <PendingMessage>[].obs;
 
   /// Metadata de la conversation active (pour afficher noms etc.)
   final Rx<ChatSession?> currentChatSession = Rx<ChatSession?>(null);
@@ -74,6 +108,8 @@ class ChatController extends GetxController {
 
   /// Charge une conversation (s'abonne aux messages + charge metadata)
   void loadConversation(String chatId, {required bool isBuyer, String? actingUserId}) {
+    // Clear pending messages when switching conversations to avoid displaying old ones
+    pendingMessages.clear();
     currentMessages.bindStream(
       ChatService.to.getMessagesStream(chatId).handleError((error) {
         debugPrint('ChatController: Erreur chargement messages: $error');
@@ -120,5 +156,173 @@ class ChatController extends GetxController {
       debugPrint('ChatController: Erreur envoi message: $e');
       Get.snackbar('Erreur', 'Impossible d\'envoyer le message.');
     }
+  }
+
+  void _startProgressSimulation(PendingMessage pm) {
+    Timer.periodic(const Duration(milliseconds: 150), (timer) {
+      if (pm.status.value != 'sending') {
+        timer.cancel();
+        return;
+      }
+      if (pm.progress.value < 0.90) {
+        pm.progress.value += 0.05;
+      } else {
+        timer.cancel();
+      }
+    });
+  }
+
+  /// Upload une image en arrière-plan avec optimistic UI
+  Future<void> uploadAndSendImage(
+    String chatId,
+    String senderId,
+    String receiverId,
+    File file,
+    String caption,
+    bool isBuyerSending,
+    bool asBoutique,
+    {String? productId,
+    PendingMessage? existing}
+  ) async {
+    PendingMessage pm;
+    if (existing != null) {
+      pm = existing;
+      pm.status.value = 'sending';
+      pm.progress.value = 0.0;
+    } else {
+      pm = PendingMessage(
+        id: 'temp_${DateTime.now().microsecondsSinceEpoch}_${file.path.hashCode}',
+        senderId: senderId,
+        content: caption,
+        timestamp: DateTime.now(),
+        type: 'image',
+        localFilePath: file.path,
+        originalFile: file,
+        productId: productId,
+      );
+      pendingMessages.add(pm);
+    }
+
+    _startProgressSimulation(pm);
+
+    try {
+      // 1. Optimiser l'image
+      final optimizedFile = await ImageOptimizationService.optimizeImage(file);
+      
+      // 2. Uploader vers Supabase
+      final downloadUrl = await ChatService.to.uploadMedia(
+        chatId,
+        optimizedFile,
+        'image',
+        asBoutique: asBoutique,
+      );
+
+      // 3. Envoyer dans Firestore
+      await ChatService.to.sendMessage(
+        chatId,
+        senderId,
+        receiverId,
+        caption,
+        isBuyerSending: isBuyerSending,
+        type: 'image',
+        mediaUrl: downloadUrl,
+        productId: productId,
+      );
+
+      pm.progress.value = 1.0;
+      pm.status.value = 'success';
+      
+      // Supprimer le pending après une courte transition
+      Future.delayed(const Duration(milliseconds: 300), () {
+        pendingMessages.remove(pm);
+      });
+    } catch (e) {
+      debugPrint('❌ Erreur upload image background: $e');
+      pm.status.value = 'error';
+    }
+  }
+
+  /// Upload une note vocale en arrière-plan avec optimistic UI
+  Future<void> uploadAndSendVoiceNote(
+    String chatId,
+    String senderId,
+    String receiverId,
+    File file,
+    int duration,
+    bool isBuyerSending,
+    bool asBoutique,
+    {PendingMessage? existing}
+  ) async {
+    PendingMessage pm;
+    if (existing != null) {
+      pm = existing;
+      pm.status.value = 'sending';
+      pm.progress.value = 0.0;
+    } else {
+      pm = PendingMessage(
+        id: 'temp_${DateTime.now().microsecondsSinceEpoch}_${file.path.hashCode}',
+        senderId: senderId,
+        content: '🎤 Vocal',
+        timestamp: DateTime.now(),
+        type: 'voice',
+        localFilePath: file.path,
+        originalFile: file,
+        mediaDuration: duration,
+      );
+      pendingMessages.add(pm);
+    }
+
+    _startProgressSimulation(pm);
+
+    try {
+      final downloadUrl = await ChatService.to.uploadMedia(
+        chatId,
+        file,
+        'voice',
+        asBoutique: asBoutique,
+      );
+
+      await ChatService.to.sendMessage(
+        chatId,
+        senderId,
+        receiverId,
+        '',
+        isBuyerSending: isBuyerSending,
+        type: 'voice',
+        mediaUrl: downloadUrl,
+        mediaDuration: duration,
+      );
+
+      pm.progress.value = 1.0;
+      pm.status.value = 'success';
+      
+      Future.delayed(const Duration(milliseconds: 300), () {
+        pendingMessages.remove(pm);
+      });
+    } catch (e) {
+      debugPrint('❌ Erreur upload vocal background: $e');
+      pm.status.value = 'error';
+    }
+  }
+
+  /// Envoie un message de localisation
+  Future<void> sendLocationMessage(
+    String chatId,
+    String senderId,
+    String receiverId,
+    double latitude,
+    double longitude,
+    String address,
+    bool isBuyerSending,
+  ) async {
+    await sendMessage(
+      chatId,
+      senderId,
+      receiverId,
+      address,
+      isBuyerSending: isBuyerSending,
+      type: 'location',
+      mediaUrl: '$latitude,$longitude',
+    );
   }
 }

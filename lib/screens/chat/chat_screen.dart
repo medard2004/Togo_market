@@ -8,9 +8,15 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:record/record.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'location_picker_screen.dart';
+import '../../utils/chat_media_cache_manager.dart';
 import '../../theme/app_theme.dart';
 import '../../Api/firebase/controllers/chat_controller.dart';
 import '../../Api/firebase/services/chat_service.dart';
+import '../../Api/firebase/services/firebase_auth_bridge_service.dart';
 import '../../Api/provider/auth_controller.dart';
 import '../../data/mock_data.dart';
 import '../../models/models.dart';
@@ -84,10 +90,35 @@ class _ChatScreenState extends State<ChatScreen> {
 
   String get _convId => Get.parameters['id'] ?? '';
 
+  bool get _isActingAsBoutique => Get.parameters['asBoutique'] == 'true';
+
+  bool _isValidConvId(String convId) =>
+      convId.isNotEmpty && convId.contains('_');
+
+  void _showInvalidConversationError() {
+    Get.snackbar(
+      'Conversation invalide',
+      'Impossible d\'envoyer le média. Rouvrez la discussion depuis le produit ou les messages.',
+      snackPosition: SnackPosition.TOP,
+      backgroundColor: Colors.red.withOpacity(0.9),
+      colorText: Colors.white,
+      duration: const Duration(seconds: 4),
+    );
+  }
+
   @override
   void initState() {
     super.initState();
+    ChatMediaCacheManager.init();
     final convId = _convId;
+
+    if (_isValidConvId(convId) &&
+        Get.isRegistered<FirebaseAuthBridgeService>()) {
+      FirebaseAuthBridgeService.to.ensureSignedInForChat(
+        convId,
+        asBoutique: _isActingAsBoutique,
+      );
+    }
     
     // Déterminer si l'utilisateur est acheteur (pour backward compat)
     final parts = convId.split('_');
@@ -213,6 +244,41 @@ class _ChatScreenState extends State<ChatScreen> {
                 onTap: () {
                   Navigator.pop(context);
                   _startRecording();
+                },
+              ),
+              _AttachOption(
+                icon: Icons.location_on_rounded,
+                label: 'Position',
+                color: Colors.green,
+                onTap: () async {
+                  Navigator.pop(context);
+                  final res = await Get.to(() => const LocationPickerScreen());
+                  if (res != null && res is Map) {
+                    final lat = res['latitude'] as double;
+                    final lon = res['longitude'] as double;
+                    final address = res['address'] as String;
+                    
+                    final convId = _convId;
+                    if (!_isValidConvId(convId)) {
+                      _showInvalidConversationError();
+                      return;
+                    }
+                    final myId = _actingUserId;
+                    final session = _chatCtrl.currentChatSession.value;
+                    final receiverId = session?.otherParticipantId(myId) ?? '';
+                    if (receiverId.isEmpty) return;
+
+                    await _chatCtrl.sendLocationMessage(
+                      convId,
+                      myId,
+                      receiverId,
+                      lat,
+                      lon,
+                      address,
+                      _isBuyer,
+                    );
+                    _messageSentInThisSession = true;
+                  }
                 },
               ),
             ],
@@ -384,83 +450,31 @@ class _ChatScreenState extends State<ChatScreen> {
     }
 
     final convId = _convId;
+    if (!_isValidConvId(convId)) {
+      _showInvalidConversationError();
+      return;
+    }
     final myId = _actingUserId;
     final session = _chatCtrl.currentChatSession.value;
     final receiverId = session?.otherParticipantId(myId) ?? '';
     if (receiverId.isEmpty) return;
 
-    // Afficher un snackbar non-bloquant pour informer l'utilisateur
-    Get.snackbar(
-      'Envoi en cours',
-      'Vos ${imageFiles.length} image(s) sont envoyées en arrière-plan...',
-      snackPosition: SnackPosition.TOP,
-      backgroundColor: Colors.black87,
-      colorText: Colors.white,
-      margin: const EdgeInsets.all(10),
-      borderRadius: 8,
-      duration: const Duration(seconds: 3),
-      icon: const SizedBox(
-        width: 24, height: 24,
-        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-      ),
-    );
+    _messageSentInThisSession = true;
 
-    // Lancer l'upload en arrière-plan sans bloquer l'interface
-    Future.microtask(() async {
-      int successCount = 0;
-      for (int i = 0; i < imageFiles.length; i++) {
-        try {
-          final file = await ImageOptimizationService.optimizeImage(imageFiles[i]);
-          final url = await ChatService.to.uploadMedia(convId, file, 'image');
-
-          final messageCaption = (i == 0) ? caption : '';
-          await _chatCtrl.sendMessage(
-            convId, myId, receiverId, messageCaption,
-            productId: wasProductPreview && i == 0 ? productPreviewId : null,
-            isBuyerSending: _isBuyer,
-            type: 'image',
-            mediaUrl: url,
-          );
-          successCount++;
-        } catch (e) {
-          debugPrint('❌ Error sending image $i: $e');
-        }
-      }
-
-      if (mounted) {
-        _messageSentInThisSession = true;
-      }
-
-      if (successCount == imageFiles.length) {
-        Get.snackbar(
-          'Succès',
-          'Toutes les images ont été envoyées.',
-          snackPosition: SnackPosition.TOP,
-          backgroundColor: Colors.green.shade600,
-          colorText: Colors.white,
-          duration: const Duration(seconds: 2),
-          icon: const Icon(Icons.check_circle, color: Colors.white),
-        );
-      } else if (successCount > 0) {
-        Get.snackbar(
-          'Envoi partiel',
-          '$successCount/${imageFiles.length} images ont été envoyées.',
-          snackPosition: SnackPosition.TOP,
-          backgroundColor: Colors.orange.shade600,
-          colorText: Colors.white,
-          duration: const Duration(seconds: 3),
-        );
-      } else {
-        Get.snackbar(
-          'Erreur',
-          'Impossible d\'envoyer les images.',
-          snackPosition: SnackPosition.TOP,
-          backgroundColor: Colors.red.withOpacity(0.9),
-          colorText: Colors.white,
-          duration: const Duration(seconds: 3),
-        );
-      }
-    });
+    // Lancer chaque image en upload concurrentiel via le controller (Optimistic UI)
+    for (int i = 0; i < imageFiles.length; i++) {
+      final messageCaption = (i == 0) ? caption : '';
+      _chatCtrl.uploadAndSendImage(
+        convId,
+        myId,
+        receiverId,
+        imageFiles[i],
+        messageCaption,
+        _isBuyer,
+        _isActingAsBoutique,
+        productId: wasProductPreview && i == 0 ? productPreviewId : null,
+      );
+    }
   }
 
   Future<void> _pickImage(ImageSource source) async {
@@ -672,6 +686,10 @@ class _ChatScreenState extends State<ChatScreen> {
       }
 
       final convId = _convId;
+      if (!_isValidConvId(convId)) {
+        _showInvalidConversationError();
+        return;
+      }
       final myId = _actingUserId;
       final session = _chatCtrl.currentChatSession.value;
       final receiverId = session?.otherParticipantId(myId) ?? '';
@@ -684,7 +702,12 @@ class _ChatScreenState extends State<ChatScreen> {
           : (_recordDuration > 0 ? _recordDuration : 1);
 
       debugPrint('Uploading voice note of duration: $durationSec s, file: ${file.path}');
-      final url = await ChatService.to.uploadMedia(convId, file, 'voice');
+      final url = await ChatService.to.uploadMedia(
+        convId,
+        file,
+        'voice',
+        asBoutique: _isActingAsBoutique,
+      );
       debugPrint('Voice note uploaded successfully: $url');
 
       await _chatCtrl.sendMessage(
@@ -697,9 +720,12 @@ class _ChatScreenState extends State<ChatScreen> {
       _messageSentInThisSession = true;
     } catch (e) {
       debugPrint('❌ Error sending voice note: $e');
+      final msg = e.toString().contains('Firebase')
+          ? 'Connexion Firebase ou Storage refusée. Vérifiez la console Firebase (Storage + règles déployées).'
+          : 'Impossible d\'envoyer le message vocal : $e';
       Get.snackbar(
         'Erreur d\'envoi',
-        'Impossible d\'envoyer le message vocal : $e',
+        msg,
         backgroundColor: Colors.red.withOpacity(0.9),
         colorText: Colors.white,
         duration: const Duration(seconds: 5),
@@ -714,6 +740,9 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   void dispose() {
+    if (_isActingAsBoutique && Get.isRegistered<FirebaseAuthBridgeService>()) {
+      FirebaseAuthBridgeService.to.signInWithBackendToken(asBoutique: false);
+    }
     _msgCtrl.dispose();
     _scrollCtrl.dispose();
     _recorder.dispose();
@@ -848,15 +877,46 @@ class _ChatScreenState extends State<ChatScreen> {
           // Messages
           Expanded(
             child: Obx(() {
+              final realMessages = _chatCtrl.currentMessages;
+              final pending = _chatCtrl.pendingMessages;
+              final totalCount = realMessages.length + pending.length;
+
               return ListView.builder(
                 controller: _scrollCtrl,
                 reverse: true,
                 padding: const EdgeInsets.all(16),
-                itemCount: _chatCtrl.currentMessages.length,
+                itemCount: totalCount,
                 itemBuilder: (_, i) {
-                  final msg = _chatCtrl.currentMessages[i];
                   final session = _chatCtrl.currentChatSession.value;
                   final otherAvatar = session?.otherParticipantAvatar(myId) ?? '';
+
+                  // Pending messages appear first (index 0..pending.length-1) since list is reversed
+                  if (i < pending.length) {
+                    final pm = pending[pending.length - 1 - i];
+                    return _PendingMessageBubble(
+                      pending: pm,
+                      onRetry: () {
+                        final convId = _convId;
+                        final receiverId = session?.otherParticipantId(myId) ?? '';
+                        if (pm.type == 'image' && pm.originalFile != null) {
+                          _chatCtrl.uploadAndSendImage(
+                            convId, myId, receiverId, pm.originalFile!,
+                            pm.content, _isBuyer, _isActingAsBoutique,
+                            existing: pm,
+                          );
+                        } else if (pm.type == 'voice' && pm.originalFile != null) {
+                          _chatCtrl.uploadAndSendVoiceNote(
+                            convId, myId, receiverId, pm.originalFile!,
+                            pm.mediaDuration ?? 1, _isBuyer, _isActingAsBoutique,
+                            existing: pm,
+                          );
+                        }
+                      },
+                    );
+                  }
+
+                  final realIdx = i - pending.length;
+                  final msg = realMessages[realIdx];
                   return _MessageBubble(
                       message: msg, sellerAvatar: otherAvatar, isMe: msg.senderId == myId);
                 },
@@ -1227,7 +1287,7 @@ class _MessageBubble extends StatelessWidget {
             constraints: BoxConstraints(
               maxWidth: MediaQuery.of(context).size.width * 0.65,
             ),
-            padding: msgType == 'image'
+            padding: (msgType == 'image' || msgType == 'location')
                 ? const EdgeInsets.all(4)
                 : const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
@@ -1249,37 +1309,54 @@ class _MessageBubble extends StatelessWidget {
                 if (message.productId != null)
                   _MessageProductPreview(
                       productId: message.productId!, isMe: isMe),
-                // Image
+
+                // ── Location ──
+                if (msgType == 'location' && message.mediaUrl != null)
+                  _LocationCardInBubble(
+                    coordsString: message.mediaUrl!,
+                    address: message.content as String,
+                    isMe: isMe,
+                  ),
+
+                // ── Image ──
                 if (msgType == 'image' && message.mediaUrl != null)
-                  GestureDetector(
-                    onTap: () => _showFullImage(context, message.mediaUrl!),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: CachedNetworkImage(
-                        imageUrl: message.mediaUrl!,
-                        width: MediaQuery.of(context).size.width * 0.6,
-                        fit: BoxFit.cover,
-                        placeholder: (_, __) => Container(
-                          height: 150,
-                          color: AppTheme.muted,
-                          child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-                        ),
-                        errorWidget: (_, __, ___) => Container(
-                          height: 100,
-                          color: AppTheme.muted,
-                          child: Icon(Icons.broken_image, color: AppTheme.mutedForeground),
+                  _DownloadableMediaWidget(
+                    url: message.mediaUrl!,
+                    isMe: isMe,
+                    child: GestureDetector(
+                      onTap: () => _showFullImage(context, message.mediaUrl!),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: CachedNetworkImage(
+                          imageUrl: message.mediaUrl!,
+                          width: MediaQuery.of(context).size.width * 0.6,
+                          fit: BoxFit.cover,
+                          placeholder: (_, __) => Container(
+                            height: 150,
+                            color: AppTheme.muted,
+                            child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                          ),
+                          errorWidget: (_, __, ___) => Container(
+                            height: 100,
+                            color: AppTheme.muted,
+                            child: Icon(Icons.broken_image, color: AppTheme.mutedForeground),
+                          ),
                         ),
                       ),
                     ),
                   ),
-                // Voice
+                // ── Voice ──
                 if (msgType == 'voice' && message.mediaUrl != null)
-                  _VoicePlayerWidget(
+                  _DownloadableMediaWidget(
                     url: message.mediaUrl!,
-                    duration: message.mediaDuration ?? 0,
                     isMe: isMe,
+                    child: _VoicePlayerWidget(
+                      url: message.mediaUrl!,
+                      duration: message.mediaDuration ?? 0,
+                      isMe: isMe,
+                    ),
                   ),
-                // Text / Caption
+                // ── Text / Caption ──
                 if ((msgType == 'text' || msgType == 'image') && (message.content as String).isNotEmpty)
                   Padding(
                     padding: EdgeInsets.only(
@@ -1295,7 +1372,9 @@ class _MessageBubble extends StatelessWidget {
                   ),
                 SizedBox(height: 4),
                 Padding(
-                  padding: msgType == 'image' ? const EdgeInsets.symmetric(horizontal: 10, vertical: 2) : EdgeInsets.zero,
+                  padding: (msgType == 'image' || msgType == 'location')
+                      ? const EdgeInsets.symmetric(horizontal: 10, vertical: 2)
+                      : EdgeInsets.zero,
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -1361,6 +1440,359 @@ class _MessageBubble extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+// ── Location Card inside a chat bubble ──────────────────────────────────────────
+class _LocationCardInBubble extends StatelessWidget {
+  final String coordsString;
+  final String address;
+  final bool isMe;
+
+  const _LocationCardInBubble({
+    required this.coordsString,
+    required this.address,
+    required this.isMe,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final parts = coordsString.split(',');
+    if (parts.length != 2) {
+      return Text('📍 $address',
+          style: TextStyle(color: isMe ? Colors.white : AppTheme.foreground));
+    }
+    final lat = double.tryParse(parts[0].trim()) ?? 0;
+    final lon = double.tryParse(parts[1].trim()) ?? 0;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Mini map
+        ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: SizedBox(
+            height: 140,
+            width: MediaQuery.of(context).size.width * 0.6,
+            child: IgnorePointer(
+              child: FlutterMap(
+                options: MapOptions(
+                  initialCenter: LatLng(lat, lon),
+                  initialZoom: 15.0,
+                  interactionOptions: const InteractionOptions(flags: 0),
+                ),
+                children: [
+                  TileLayer(
+                    urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                    userAgentPackageName: 'com.togo.market',
+                  ),
+                  MarkerLayer(
+                    markers: [
+                      Marker(
+                        point: LatLng(lat, lon),
+                        width: 30,
+                        height: 30,
+                        child: const Icon(Icons.location_on, color: Colors.red, size: 30),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        // Adresse
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          child: Row(
+            children: [
+              Icon(Icons.pin_drop, size: 14, color: isMe ? Colors.white70 : AppTheme.mutedForeground),
+              const SizedBox(width: 4),
+              Expanded(
+                child: Text(
+                  address.isNotEmpty ? address : 'Position partagée',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: isMe ? Colors.white : AppTheme.foreground,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 6),
+        // Bouton "Voir sur la carte"
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          child: GestureDetector(
+            onTap: () {
+              final url = Uri.parse('https://www.google.com/maps/search/?api=1&query=$lat,$lon');
+              launchUrl(url, mode: LaunchMode.externalApplication);
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: isMe ? Colors.white.withOpacity(0.2) : AppTheme.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.open_in_new, size: 13,
+                      color: isMe ? Colors.white : AppTheme.primary),
+                  const SizedBox(width: 4),
+                  Text('Voir sur la carte',
+                      style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: isMe ? Colors.white : AppTheme.primary)),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ── Manual Download Overlay ────────────────────────────────────────────────────
+class _DownloadableMediaWidget extends StatefulWidget {
+  final String url;
+  final bool isMe;
+  final Widget child;
+
+  const _DownloadableMediaWidget({
+    required this.url,
+    required this.isMe,
+    required this.child,
+  });
+
+  @override
+  State<_DownloadableMediaWidget> createState() => _DownloadableMediaWidgetState();
+}
+
+class _DownloadableMediaWidgetState extends State<_DownloadableMediaWidget> {
+  bool _isDownloaded = true;
+
+  @override
+  void initState() {
+    super.initState();
+    // For sent messages (isMe), always show content directly
+    if (!widget.isMe) {
+      _isDownloaded = ChatMediaCacheManager.isDownloaded(widget.url);
+    }
+  }
+
+  void _download() async {
+    await ChatMediaCacheManager.markAsDownloaded(widget.url);
+    if (mounted) {
+      setState(() => _isDownloaded = true);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.isMe || _isDownloaded) {
+      return widget.child;
+    }
+
+    // Placeholder with download button
+    return GestureDetector(
+      onTap: _download,
+      child: Container(
+        width: MediaQuery.of(context).size.width * 0.6,
+        height: 140,
+        decoration: BoxDecoration(
+          color: AppTheme.muted.withOpacity(0.7),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppTheme.primary.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.download_rounded, color: AppTheme.primary, size: 28),
+            ),
+            const SizedBox(height: 10),
+            Text('Appuyer pour télécharger',
+                style: TextStyle(fontSize: 12, color: AppTheme.mutedForeground, fontWeight: FontWeight.w500)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Pending Message Bubble (Optimistic UI) ──────────────────────────────────────
+class _PendingMessageBubble extends StatelessWidget {
+  final PendingMessage pending;
+  final VoidCallback onRetry;
+
+  const _PendingMessageBubble({required this.pending, required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Container(
+            constraints: BoxConstraints(
+              maxWidth: MediaQuery.of(context).size.width * 0.65,
+            ),
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: AppTheme.primary,
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(16),
+                topRight: Radius.circular(16),
+                bottomLeft: Radius.circular(16),
+                bottomRight: Radius.circular(4),
+              ),
+            ),
+            child: Obx(() {
+              final status = pending.status.value;
+              final progress = pending.progress.value;
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  // Image preview
+                  if (pending.type == 'image' && pending.localFilePath != null)
+                    Stack(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Image.file(
+                            File(pending.localFilePath!),
+                            width: MediaQuery.of(context).size.width * 0.6,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => Container(
+                              height: 100,
+                              color: AppTheme.muted,
+                              child: Icon(Icons.broken_image, color: AppTheme.mutedForeground),
+                            ),
+                          ),
+                        ),
+                        // Upload overlay
+                        Positioned.fill(
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Container(
+                              color: status == 'error'
+                                  ? Colors.red.withOpacity(0.5)
+                                  : Colors.black.withOpacity(0.35),
+                              child: Center(
+                                child: status == 'error'
+                                    ? GestureDetector(
+                                        onTap: onRetry,
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                          decoration: BoxDecoration(
+                                            color: Colors.white,
+                                            borderRadius: BorderRadius.circular(20),
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(Icons.refresh, color: Colors.red, size: 18),
+                                              const SizedBox(width: 6),
+                                              Text('Réessayer',
+                                                  style: TextStyle(
+                                                      color: Colors.red, fontWeight: FontWeight.w600, fontSize: 12)),
+                                            ],
+                                          ),
+                                        ),
+                                      )
+                                    : SizedBox(
+                                        width: 44,
+                                        height: 44,
+                                        child: CircularProgressIndicator(
+                                          value: progress > 0 ? progress : null,
+                                          color: Colors.white,
+                                          strokeWidth: 3,
+                                        ),
+                                      ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  // Voice pending
+                  if (pending.type == 'voice')
+                    Padding(
+                      padding: const EdgeInsets.all(8),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.mic, color: Colors.white, size: 20),
+                          const SizedBox(width: 8),
+                          Text('🎤 Vocal',
+                              style: TextStyle(color: Colors.white, fontSize: 13)),
+                          const SizedBox(width: 8),
+                          if (status == 'sending')
+                            SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                  color: Colors.white, strokeWidth: 2, value: progress > 0 ? progress : null),
+                            ),
+                          if (status == 'error')
+                            GestureDetector(
+                              onTap: onRetry,
+                              child: Icon(Icons.refresh, color: Colors.white70, size: 20),
+                            ),
+                        ],
+                      ),
+                    ),
+                  // Caption
+                  if (pending.content.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 6, left: 8, right: 8),
+                      child: Text(pending.content,
+                          style: const TextStyle(fontSize: 14, color: Colors.white)),
+                    ),
+                  // Time + status
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          '${pending.timestamp.hour.toString().padLeft(2, '0')}:${pending.timestamp.minute.toString().padLeft(2, '0')}',
+                          style: TextStyle(fontSize: 10, color: Colors.white.withOpacity(0.7)),
+                        ),
+                        const SizedBox(width: 4),
+                        if (status == 'sending')
+                          SizedBox(
+                            width: 12,
+                            height: 12,
+                            child: CircularProgressIndicator(
+                                color: Colors.white.withOpacity(0.7), strokeWidth: 1.5),
+                          ),
+                        if (status == 'error')
+                          Icon(Icons.error_outline, color: Colors.red.shade200, size: 14),
+                      ],
+                    ),
+                  ),
+                ],
+              );
+            }),
+          ),
+        ],
       ),
     );
   }

@@ -7,6 +7,7 @@ import '../services/auth_service.dart';
 import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../core/api_client.dart';
+import '../firebase/services/firebase_auth_bridge_service.dart';
 
 class AuthController extends GetxController {
   final AuthService _authService;
@@ -63,6 +64,7 @@ class AuthController extends GetxController {
         final user = await _authService.getCurrentUser();
         currentUser.value = user;
         await storage.write(key: 'user_data', value: jsonEncode(user.toJson()));
+        await _syncFirebaseAuth();
       } catch (e) {
         debugPrint('Failed to load user on startup: $e');
       } finally {
@@ -148,11 +150,22 @@ class AuthController extends GetxController {
     }
   }
 
+  Future<void> _syncFirebaseAuth({bool asBoutique = false}) async {
+    if (!Get.isRegistered<FirebaseAuthBridgeService>()) return;
+    try {
+      await Get.find<FirebaseAuthBridgeService>()
+          .signInWithBackendToken(asBoutique: asBoutique);
+    } catch (e) {
+      debugPrint('Firebase auth sync failed: $e');
+    }
+  }
+
   Future<void> login(String telephone, String password) async {
     try {
       isLoading.value = true;
       final user = await _authService.login(telephone, password);
       currentUser.value = user;
+      await _syncFirebaseAuth();
     } catch (e) {
       rethrow;
     } finally {
@@ -165,6 +178,7 @@ class AuthController extends GetxController {
       isLoading.value = true;
       final user = await _authService.register(telephone, password);
       currentUser.value = user;
+      await _syncFirebaseAuth();
     } catch (e) {
       rethrow;
     } finally {
@@ -178,6 +192,7 @@ class AuthController extends GetxController {
       final user = await _authService.signInWithGoogle();
       if (user != null) {
         currentUser.value = user;
+        await _syncFirebaseAuth();
       }
     } catch (e) {
       rethrow;
@@ -237,6 +252,9 @@ class AuthController extends GetxController {
       await apiClient.delete('/user/fcm-token');
     } catch (e) {
       debugPrint('Error deleting FCM token on logout: $e');
+    }
+    if (Get.isRegistered<FirebaseAuthBridgeService>()) {
+      await Get.find<FirebaseAuthBridgeService>().signOut();
     }
     await _authService.logout();
     currentUser.value = null;

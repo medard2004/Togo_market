@@ -40,6 +40,7 @@ class ApiConstants {
   static const String registerEndpoint = '/auth/register';
   static const String loginEndpoint = '/auth/login';
   static const String socialAuthEndpoint = '/auth/social';
+  static const String firebaseTokenEndpoint = '/auth/firebase-token';
   static const String forgotPasswordEndpoint = '/auth/forgot-password';
   static const String resetPasswordEndpoint = '/auth/reset-password';
 

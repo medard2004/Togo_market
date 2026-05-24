@@ -6,6 +6,8 @@ import '../../utils/responsive.dart';
 import '../../Api/config/api_constants.dart';
 import '../../controllers/public_profile_controller.dart';
 import '../../widgets/common_widgets.dart';
+import '../../Api/firebase/services/chat_service.dart';
+import '../../Api/provider/auth_controller.dart';
 
 class PublicProfileScreen extends StatelessWidget {
   const PublicProfileScreen({super.key});
@@ -237,8 +239,32 @@ class PublicProfileScreen extends StatelessWidget {
             ],
           ),
           child: ElevatedButton(
-            onPressed: () =>
-                Get.toNamed('/chat/${user.id}', arguments: user),
+            onPressed: () async {
+              final auth = Get.find<AuthController>();
+              final me = auth.currentUser.value;
+              if (me == null) {
+                Get.toNamed('/auth');
+                return;
+              }
+              final myId = me.id.toString();
+              try {
+                final chatId = await ChatService.to.getOrCreateChat(
+                  myId: myId,
+                  myName: me.nom ?? 'Utilisateur',
+                  myAvatar: me.avatarUrl ?? '',
+                  otherId: user.id.toString(),
+                  otherName: user.nom ?? 'Vendeur',
+                  otherAvatar: user.avatarUrl ?? '',
+                );
+                Get.toNamed('/chat/$chatId', arguments: user);
+              } catch (_) {
+                Get.snackbar(
+                  'Erreur',
+                  'Impossible d\'ouvrir la conversation.',
+                  snackPosition: SnackPosition.TOP,
+                );
+              }
+            },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.primary,
               padding: EdgeInsets.symmetric(vertical: r.s(15)),
