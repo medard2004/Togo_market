@@ -7,6 +7,8 @@ import '../../controllers/app_controller.dart';
 import '../../utils/category_icon_helper.dart';
 import '../../utils/responsive.dart';
 
+import '../../controllers/search_history_controller.dart';
+
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
 
@@ -19,8 +21,6 @@ class _SearchScreenState extends State<SearchScreen> {
   final _focus = FocusNode();
   String _query = '';
 
-  final _recentSearches = ['iPhone 13', 'Robe Ankara', 'Canapé', 'Samsung'];
-
   @override
   void initState() {
     super.initState();
@@ -32,6 +32,12 @@ class _SearchScreenState extends State<SearchScreen> {
     _ctrl.dispose();
     _focus.dispose();
     super.dispose();
+  }
+
+  void _submitSearch(String term) {
+    if (term.trim().isNotEmpty) {
+      SearchHistoryController.to.addSearch(term);
+    }
   }
 
   @override
@@ -92,6 +98,9 @@ class _SearchScreenState extends State<SearchScreen> {
                           filled: false,
                         ),
                         onChanged: (v) => setState(() => _query = v),
+                        onSubmitted: (v) {
+                          _submitSearch(v);
+                        },
                       ),
                     ),
                   ),
@@ -102,10 +111,10 @@ class _SearchScreenState extends State<SearchScreen> {
             Expanded(
               child: _query.isEmpty
                   ? _EmptyQueryContent(
-                      recentSearches: _recentSearches,
                       onSearch: (s) {
                         _ctrl.text = s;
                         setState(() => _query = s);
+                        _submitSearch(s);
                       },
                     )
                   : results.isEmpty
@@ -121,11 +130,9 @@ class _SearchScreenState extends State<SearchScreen> {
 }
 
 class _EmptyQueryContent extends StatelessWidget {
-  final List<String> recentSearches;
   final Function(String) onSearch;
 
-  const _EmptyQueryContent(
-      {required this.recentSearches, required this.onSearch});
+  const _EmptyQueryContent({required this.onSearch});
 
   @override
   Widget build(BuildContext context) {
@@ -134,42 +141,70 @@ class _EmptyQueryContent extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Recherches récentes',
-            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
-          ),
-          SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: recentSearches
-                .map((s) => GestureDetector(
-                      onTap: () => onSearch(s),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 14, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: AppTheme.cardColor,
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: AppTheme.border),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.history,
-                                size: 14, color: AppTheme.mutedForeground),
-                            SizedBox(width: 6),
-                            Text(s,
-                                style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w500)),
-                          ],
-                        ),
+          Obx(() {
+            final recentSearches = SearchHistoryController.to.searches;
+            if (recentSearches.isEmpty) return const SizedBox.shrink();
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Recherches récentes',
+                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                    ),
+                    GestureDetector(
+                      onTap: () {
+                        SearchHistoryController.to.clearSearches();
+                      },
+                      child: Text(
+                        'Tout effacer',
+                        style: TextStyle(fontSize: 13, color: AppTheme.primary, fontWeight: FontWeight.w600),
                       ),
-                    ))
-                .toList(),
-          ),
-          SizedBox(height: 24),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: recentSearches
+                      .map((sq) => GestureDetector(
+                            onTap: () => onSearch(sq.query),
+                            child: Container(
+                              padding: const EdgeInsets.only(left: 14, right: 8, top: 8, bottom: 8),
+                              decoration: BoxDecoration(
+                                color: AppTheme.cardColor,
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(color: AppTheme.border),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.history,
+                                      size: 14, color: AppTheme.mutedForeground),
+                                  SizedBox(width: 6),
+                                  Text(sq.query,
+                                      style: TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w500)),
+                                  SizedBox(width: 4),
+                                  GestureDetector(
+                                    onTap: () => SearchHistoryController.to.removeSearch(sq),
+                                    child: Icon(Icons.close, size: 16, color: AppTheme.mutedForeground),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ))
+                      .toList(),
+                ),
+                SizedBox(height: 24),
+              ],
+            );
+          }),
           Text(
             'Catégories',
             style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),

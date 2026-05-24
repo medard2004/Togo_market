@@ -3,10 +3,7 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
-<<<<<<< HEAD
-=======
   audioplayers_windows
->>>>>>> merge-design-backend
   cloud_firestore
   file_selector_windows
   firebase_auth

@@ -92,6 +92,7 @@ class AppNotification {
   final String body;
   final String time;
   bool isRead;
+  final Map<String, dynamic>? customData;
 
   AppNotification({
     required this.id,
@@ -100,6 +101,7 @@ class AppNotification {
     required this.body,
     required this.time,
     this.isRead = false,
+    this.customData,
   });
 }
 

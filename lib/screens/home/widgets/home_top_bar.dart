@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import '../../../theme/app_theme.dart';
 import '../../../controllers/app_controller.dart';
 import '../../../Api/provider/auth_controller.dart';
 import '../../../utils/responsive.dart';
 import '../../../widgets/user_avatar.dart';
+import '../../../controllers/notification_controller.dart';
 
 class HomeTopBar extends StatelessWidget {
   final AppController ctrl;
@@ -65,14 +65,19 @@ class HomeTopBar extends StatelessWidget {
                   decoration: BoxDecoration(color: AppTheme.cardColor, shape: BoxShape.circle, boxShadow: AppTheme.shadowCard),
                   child: Icon(Icons.notifications_outlined, size: r.s(22), color: AppTheme.foreground),
                 ),
-                if (ctrl.unreadNotifications.value > 0)
-                  Positioned(
-                    top: r.s(4), right: r.s(4),
-                    child: Container(
-                      width: r.s(10), height: r.s(10),
-                      decoration: BoxDecoration(color: Colors.red, shape: BoxShape.circle),
-                    ),
-                  ),
+                Obx(() {
+                  final unread = Get.find<NotificationController>().unreadCount.value;
+                  if (unread > 0) {
+                    return Positioned(
+                      top: r.s(4), right: r.s(4),
+                      child: Container(
+                        width: r.s(10), height: r.s(10),
+                        decoration: BoxDecoration(color: Colors.red, shape: BoxShape.circle),
+                      ),
+                    );
+                  }
+                  return const SizedBox.shrink();
+                }),
               ],
             ),
           ),

@@ -597,7 +597,7 @@ class SellerScreen extends StatelessWidget {
                     child: Column(
                       children: [
                         Icon(Icons.search_off_rounded,
-                            size: r.s(48), color: Colors.grey.withOpacity(0.5)),
+                            size: r.s(48), color: Colors.grey.withValues(alpha: 0.5)),
                         SizedBox(height: r.s(12)),
                         Text(
                           searchQuery.value.isNotEmpty

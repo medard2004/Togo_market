@@ -64,6 +64,8 @@ import 'Api/provider/auth_controller.dart';
 import 'controllers/boutique_controller.dart';
 import 'controllers/my_products_controller.dart';
 import 'controllers/order_controller.dart';
+import 'controllers/search_history_controller.dart';
+import 'controllers/notification_controller.dart';
 
 import 'Api/firebase/services/chat_service.dart';
 import 'Api/firebase/controllers/chat_controller.dart';
@@ -118,6 +120,8 @@ void main() async {
   Get.put(DashboardController());
   Get.put(MyProductsController());
   Get.put(OrderController());
+  Get.put(SearchHistoryController(), permanent: true);
+  Get.put(NotificationController(), permanent: true);
 
   runApp(const TogoMarketApp());
 }

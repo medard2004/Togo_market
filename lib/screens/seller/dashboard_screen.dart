@@ -42,72 +42,94 @@ class _DashboardScreenState extends State<DashboardScreen> {
     });
   }
 
+  /// Gère le retour arrière :
+  /// - Si on n'est pas sur l'onglet Articles (0), revenir sur Articles
+  /// - Sinon, quitter l'écran
+  void _handleBack() {
+    if (_tabIndex != 0) {
+      setState(() => _tabIndex = 0);
+    } else {
+      Get.back();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppTheme.background,
-      body: SafeArea(
-        child: Column(
-          children: [
-            // ── Header ──────────────────────────────────────────────────────
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  _buildCircleBtn(
-                    Icons.arrow_back,
-                    Colors.black,
-                    Colors.white,
-                    onTap: () => Get.back(),
-                  ),
-                  Text(
-                    'Mon Espace Vendeur',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                      color: AppTheme.foreground,
-                    ),
-                  ),
-                  _buildCircleBtn(
-                    Icons.settings_outlined,
-                    AppTheme.primary,
-                    AppTheme.primaryLight,
-                    onTap: () => Get.toNamed('/shop-settings'),
-                  ),
-                ],
-              ),
-            ),
-
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+    return PopScope(
+      // Empêche la fermeture automatique quand on est sur un autre onglet
+      canPop: _tabIndex == 0,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) {
+          // On est sur Commandes ou Messages → revenir sur Articles
+          setState(() => _tabIndex = 0);
+        }
+      },
+      child: Scaffold(
+        backgroundColor: AppTheme.background,
+        body: SafeArea(
+          child: Column(
+            children: [
+              // ── Header ────────────────────────────────────────────────────
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    // ── Tab Navigation ────────────────────────────────────────
-                    _buildTabSelector(),
-                    const SizedBox(height: 24),
-
-                    // ── Tab Content ───────────────────────────────────────────
-                    Column(
-                      key: ValueKey(_tabIndex),
-                      children: [
-                        if (_tabIndex == 0) ...[
-                          _buildAddButton(),
-                          const SizedBox(height: 24),
-                          _buildArticlesTab(),
-                        ] else if (_tabIndex == 1)
-                          _buildOrdersTab()
-                        else
-                          _buildMessagesTab(),
-                      ],
+                    _buildCircleBtn(
+                      Icons.arrow_back,
+                      Colors.black,
+                      Colors.white,
+                      // Bouton retour UI : même logique que le bouton Android
+                      onTap: _handleBack,
+                    ),
+                    Text(
+                      'Mon Espace Vendeur',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: AppTheme.foreground,
+                      ),
+                    ),
+                    _buildCircleBtn(
+                      Icons.settings_outlined,
+                      AppTheme.primary,
+                      AppTheme.primaryLight,
+                      onTap: () => Get.toNamed('/shop-settings'),
                     ),
                   ],
                 ),
               ),
-            ),
-          ],
+
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // ── Tab Navigation ──────────────────────────────────────
+                      _buildTabSelector(),
+                      const SizedBox(height: 24),
+
+                      // ── Tab Content ─────────────────────────────────────────
+                      Column(
+                        key: ValueKey(_tabIndex),
+                        children: [
+                          if (_tabIndex == 0) ...[
+                            _buildAddButton(),
+                            const SizedBox(height: 24),
+                            _buildArticlesTab(),
+                          ] else if (_tabIndex == 1)
+                            _buildOrdersTab()
+                          else
+                            _buildMessagesTab(),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -247,6 +269,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
       }
 
       final products = _ctrl.myProducts;
+      final activeProducts = products.where((p) => p.stock > 0).toList();
+      final soldOutProducts = products.where((p) => p.stock <= 0).toList();
+
       if (products.isEmpty) {
         return Padding(
           padding: const EdgeInsets.only(top: 48),
@@ -284,7 +309,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         children: [
           TogoSlideUp(
             child: Text(
-              '${products.length} article${products.length > 1 ? 's' : ''} actif${products.length > 1 ? 's' : ''}',
+              '${activeProducts.length} article${activeProducts.length > 1 ? 's' : ''} actif${activeProducts.length > 1 ? 's' : ''}',
               style: TextStyle(
                 fontSize: 15,
                 color: AppTheme.mutedForeground,
@@ -293,7 +318,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ),
           const SizedBox(height: 12),
-          ...products.asMap().entries.map((entry) {
+          ...activeProducts.asMap().entries.map((entry) {
             final i = entry.key;
             final p = entry.value;
             return TogoSlideUp(
@@ -301,6 +326,51 @@ class _DashboardScreenState extends State<DashboardScreen> {
               child: _buildProductTile(p),
             );
           }),
+          
+          if (soldOutProducts.isNotEmpty) ...[
+            const SizedBox(height: 24),
+            TogoSlideUp(
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF5F5F5),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.inventory_2_outlined,
+                            size: 14, color: Color(0xFF9E8E87)),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Épuisés (${soldOutProducts.length})',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF9E8E87),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            ...soldOutProducts.asMap().entries.map((entry) {
+              final i = entry.key;
+              final p = entry.value;
+              return TogoSlideUp(
+                delay: Duration(milliseconds: i * 80),
+                child: Opacity(
+                  opacity: 0.6,
+                  child: _buildProductTile(p, isSoldOut: true),
+                ),
+              );
+            }),
+          ],
         ],
       );
     });
@@ -735,7 +805,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     });
   }
 
-  Widget _buildProductTile(Product p) {
+  Widget _buildProductTile(Product p, {bool isSoldOut = false}) {
     final imageUrl = ApiConstants.resolveImageUrl(p.image);
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -753,18 +823,43 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
       child: Row(
         children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(20),
-            child: imageUrl.isNotEmpty
-                ? CachedNetworkImage(
-                    imageUrl: imageUrl,
-                    width: 72,
-                    height: 72,
-                    fit: BoxFit.cover,
-                    errorWidget: (_, __, ___) => _imagePlaceholder(),
-                    placeholder: (_, __) => _imagePlaceholder(),
-                  )
-                : _imagePlaceholder(),
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(20),
+                child: imageUrl.isNotEmpty
+                    ? CachedNetworkImage(
+                        imageUrl: imageUrl,
+                        width: 72,
+                        height: 72,
+                        fit: BoxFit.cover,
+                        errorWidget: (_, __, ___) => _imagePlaceholder(),
+                        placeholder: (_, __) => _imagePlaceholder(),
+                      )
+                    : _imagePlaceholder(),
+              ),
+              if (isSoldOut)
+                Positioned(
+                  top: -6,
+                  right: -6,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE53935),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Text(
+                      'Épuisé',
+                      style: TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
           ),
           const SizedBox(width: 12),
           Expanded(

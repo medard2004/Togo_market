@@ -6,6 +6,7 @@ import '../model/location_model.dart';
 import '../services/auth_service.dart';
 import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '../core/api_client.dart';
 
 class AuthController extends GetxController {
   final AuthService _authService;
@@ -231,6 +232,12 @@ class AuthController extends GetxController {
   }
 
   Future<void> logout() async {
+    try {
+      final apiClient = Get.find<ApiClient>();
+      await apiClient.delete('/user/fcm-token');
+    } catch (e) {
+      debugPrint('Error deleting FCM token on logout: $e');
+    }
     await _authService.logout();
     currentUser.value = null;
     hasToken.value = false;

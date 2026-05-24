@@ -87,6 +87,16 @@ class ApiClient {
     }
   }
 
+  /// General DELETE request
+  Future<Response> delete(String endpoint, {dynamic data}) async {
+    try {
+      final response = await _dio.delete(endpoint, data: data);
+      return response;
+    } on DioException catch (e) {
+      throw _handleException(e);
+    }
+  }
+
   // --- ERROR HANDLING --- //
 
 

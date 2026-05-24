@@ -4,6 +4,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:get/get.dart';
 import '../models/chat_model.dart';
+import '../../core/api_client.dart';
 
 class ChatService extends GetxService {
   static ChatService get to => Get.find();
@@ -125,11 +126,60 @@ class ChatService extends GetxService {
 
   /// Upload un fichier média vers Firebase Storage
   Future<String> uploadMedia(String chatId, File file, String type) async {
-    final ext = type == 'image' ? 'jpg' : 'm4a';
-    final fileName = '${DateTime.now().millisecondsSinceEpoch}.$ext';
-    final ref = _storage.ref().child('chats/$chatId/$type/$fileName');
-    final uploadTask = await ref.putFile(file);
-    return await uploadTask.ref.getDownloadURL();
+    try {
+      // Nettoyer le chemin d'accès au fichier pour s'assurer qu'il n'y a pas de préfixe "file://" ou "file:"
+      String filePath = file.path;
+      if (filePath.startsWith('file://')) {
+        try {
+          filePath = Uri.parse(filePath).toFilePath();
+        } catch (e) {
+          filePath = filePath.replaceFirst('file://', '');
+        }
+      } else if (filePath.startsWith('file:')) {
+        filePath = filePath.replaceFirst('file:', '');
+      }
+      
+      final cleanFile = File(filePath);
+      
+      if (!await cleanFile.exists()) {
+        throw Exception("Fichier introuvable après nettoyage: ${cleanFile.path}");
+      }
+      
+      final fileSize = await cleanFile.length();
+      if (fileSize == 0) {
+        throw Exception("Le fichier généré est vide (0 octet). L'enregistrement a probablement échoué.");
+      }
+      
+      debugPrint('ChatService.uploadMedia: type=$type, size=${fileSize}B, path=${cleanFile.path}');
+      
+      final ext = type == 'image' ? 'jpg' : 'm4a';
+      final contentType = type == 'image' ? 'image/jpeg' : 'audio/mp4';
+      final fileName = '${DateTime.now().millisecondsSinceEpoch}.$ext';
+      final storagePath = 'chats/$chatId/$type/$fileName';
+      
+      debugPrint('ChatService.uploadMedia: Uploading to Firebase Storage path -> $storagePath');
+      final ref = _storage.ref().child(storagePath);
+      
+      final metadata = SettableMetadata(contentType: contentType);
+      
+      // Utilisation de putData au lieu de putFile pour contourner les problèmes de permissions
+      // de fichiers sur certains appareils qui causent un échec silencieux de putFile,
+      // ce qui entraîne ensuite une erreur "object-not-found" lors de getDownloadURL.
+      final bytes = await cleanFile.readAsBytes();
+      final snapshot = await ref.putData(bytes, metadata);
+      
+      if (snapshot.state != TaskState.success) {
+        throw Exception("L'upload a échoué avec l'état: ${snapshot.state}");
+      }
+      
+      final downloadUrl = await snapshot.ref.getDownloadURL();
+      
+      debugPrint('ChatService.uploadMedia: Upload réussi → $downloadUrl');
+      return downloadUrl;
+    } catch (e) {
+      debugPrint('❌ ChatService.uploadMedia ERREUR: $e');
+      rethrow;
+    }
   }
 
   /// Envoie un message dans une conversation
@@ -190,6 +240,23 @@ class ChatService extends GetxService {
         }, SetOptions(merge: true));
       }
     });
+
+    // Envoyer la notification push via le backend Laravel
+    _sendChatPushNotification(receiverId, chatId, lastMessageText, productId);
+  }
+
+  Future<void> _sendChatPushNotification(String receiverId, String chatId, String content, String? productId) async {
+    try {
+      final apiClient = Get.find<ApiClient>();
+      await apiClient.post('/notifications/send-chat-push', data: {
+        'receiver_id': receiverId,
+        'chat_id': chatId,
+        'content': content,
+        'product_id': productId ?? '',
+      });
+    } catch (e) {
+      debugPrint('ChatService: Erreur envoi push notification: $e');
+    }
   }
 
   /// Marque les messages comme lus (backward compat)
