@@ -162,7 +162,7 @@ class ShopInformationScreen extends StatelessWidget {
                               const SizedBox(height: 8),
                               Text(
                                 boutique.categories?.isNotEmpty == true
-                                    ? '${boutique.categories!.first['nom']} • Vendeur vérifié'
+                                    ? '${boutique.categories!.first['name']} • Vendeur vérifié'
                                     : 'Vendeur vérifié',
                                 style: const TextStyle(
                                   fontSize: 13,
@@ -208,7 +208,7 @@ class ShopInformationScreen extends StatelessWidget {
               _buildInfoRow(
                   Icons.category_outlined,
                   'Catégories',
-                  boutique.categories!.map((c) => c['nom'].toString()).join(', ')),
+                  boutique.categories!.map((c) => c['name'].toString()).join(', ')),
               const SizedBox(height: 12),
             ],
             _buildInfoRow(

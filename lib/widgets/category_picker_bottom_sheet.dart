@@ -108,7 +108,7 @@ class _CategoryListState extends State<_CategoryList> {
                 Expanded(
                   child: Text(
                     parent != null 
-                        ? parent.nom 
+                        ? parent.name 
                         : 'Choisissez une catégorie',
                     style: TextStyle(
                       fontSize: 18,
@@ -142,13 +142,13 @@ class _CategoryListState extends State<_CategoryList> {
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
-                      CategoryIconHelper.getIcon(cat.slug),
+                      CategoryIconHelper.getIconFromString(cat.icon),
                       color: AppTheme.primary,
                       size: 20,
                     ),
                   ),
                   title: Text(
-                    cat.nom,
+                    cat.name,
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,

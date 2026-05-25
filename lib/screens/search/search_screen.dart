@@ -225,7 +225,7 @@ class _EmptyQueryContent extends StatelessWidget {
               itemBuilder: (_, i) {
                 final cat = apiCats[i];
                 return GestureDetector(
-                  onTap: () => onSearch(cat.nom),
+                  onTap: () => onSearch(cat.name),
                   child: Container(
                     decoration: BoxDecoration(
                       color: AppTheme.cardColor,
@@ -235,10 +235,10 @@ class _EmptyQueryContent extends StatelessWidget {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(CategoryIconHelper.getIcon(cat.slug),
+                        Icon(CategoryIconHelper.getIconFromString(cat.icon),
                             size: 26, color: AppTheme.primary),
                         const SizedBox(height: 4),
-                        Text(cat.nom,
+                        Text(cat.name,
                             textAlign: TextAlign.center,
                             style: TextStyle(
                                 fontSize: 11,

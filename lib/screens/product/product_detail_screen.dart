@@ -227,7 +227,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         spacing: r.s(8),
                         runSpacing: r.s(8),
                         children: [
-                          if (product.categoryObj != null) product.categoryObj!.nom,
+                          if (product.categoryObj != null) product.categoryObj!.name,
                           product.condition,
                           product.isPriceNegotiable ? 'Prix Négociable' : 'Prix Fixe'
                         ]
@@ -237,7 +237,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                     color: AppTheme.muted,
                                     borderRadius: BorderRadius.circular(r.rad(30)),
                                   ),
-                                  child: Text(tag,
+                                  child: Text(tag.toString(),
                                       style: TextStyle(fontSize: r.fs(13), fontWeight: FontWeight.w500, color: AppTheme.foreground)),
                                 ))
                             .toList(),

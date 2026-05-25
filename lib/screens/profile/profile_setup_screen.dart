@@ -24,7 +24,9 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
   String _step = 'profile';
   final _nameCtrl = TextEditingController();
   final _detailsCtrl = TextEditingController();
+  int? _selectedVilleId;
   int? _selectedQuartierId;
+  bool _gpsLoading = false;
   final Set<int> _selectedInterests = {};
   String? _selectedProfilePhotoPath;
 
@@ -64,15 +66,15 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
     switch (_step) {
       case 'profile':
         return Obx(() {
-          final allQuartiers =
-              _authController.locations.expand((v) => v.quartiers).toList();
           return _ProfileStep(
             key: const ValueKey('profile'),
             nameCtrl: _nameCtrl,
             detailsCtrl: _detailsCtrl,
-            quartiers: allQuartiers,
+            villes: _authController.locations.toList(),
+            selectedVilleId: _selectedVilleId,
             selectedQuartierId: _selectedQuartierId,
             photoPath: _selectedProfilePhotoPath,
+            gpsLoading: _gpsLoading,
             onPickPhoto: () async {
               final ImagePicker picker = ImagePicker();
               final XFile? image = await picker.pickImage(
@@ -86,14 +88,19 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                 setState(() => _selectedProfilePhotoPath = optimizedFile.path);
               }
             },
+            onVilleChanged: (v) => setState(() {
+              _selectedVilleId = v;
+              _selectedQuartierId = null; // Reset quartier quand ville change
+            }),
             onQuartierChanged: (v) => setState(() => _selectedQuartierId = v),
+            onRequestGps: _handleGpsRequest,
             onSkip: () {
               _authController.markOnboardingComplete();
               Get.offAllNamed('/home');
             },
             onContinue: () {
-              if (_nameCtrl.text.isEmpty || _selectedQuartierId == null) {
-                AppToasts.warning(context, "Attention", "Veuillez remplir tous les champs");
+              if (_nameCtrl.text.isEmpty || _selectedVilleId == null || _selectedQuartierId == null) {
+                AppToasts.warning(context, "Attention", "Veuillez remplir les champs obligatoires (Nom, Ville, Quartier)");
                 return;
               }
               setState(() => _step = 'interests');
@@ -103,7 +110,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
       case 'interests':
         return Obx(() => _InterestsStep(
               key: const ValueKey('interests'),
-              categories: _authController.categories,
+              categories: _authController.categories.toList(),
               selected: _selectedInterests,
               onToggle: (id) => setState(() {
                 if (_selectedInterests.contains(id)) {
@@ -141,6 +148,29 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
         return const SizedBox.shrink();
     }
   }
+
+  Future<void> _handleGpsRequest() async {
+    setState(() => _gpsLoading = true);
+    try {
+      final authCtrl = Get.find<AuthController>();
+      final location = await authCtrl.getCurrentLocationAndMatch();
+      if (location != null && mounted) {
+        setState(() {
+          _selectedVilleId = location['villeId'];
+          _selectedQuartierId = location['quartierId'];
+        });
+        AppToasts.success(context, "Position trouvée", "Votre zone a été pré-remplie.");
+      } else if (mounted) {
+        AppToasts.warning(context, "Non trouvée", "Impossible de déterminer votre zone automatiquement.");
+      }
+    } catch (e) {
+      if (mounted) {
+        AppToasts.error(context, "Erreur GPS", "Veuillez activer la localisation ou sélectionner manuellement.");
+      }
+    } finally {
+      if (mounted) setState(() => _gpsLoading = false);
+    }
+  }
 }
 
 // ╔══════════════════════════════════════════════════════╗
@@ -149,22 +179,32 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
 class _ProfileStep extends StatelessWidget {
   final TextEditingController nameCtrl;
   final TextEditingController detailsCtrl;
-  final List<Quartier> quartiers;
+  final List<Ville> villes;
+  final int? selectedVilleId;
   final int? selectedQuartierId;
   final String? photoPath;
+  final bool gpsLoading;
+  final ValueChanged<int?> onVilleChanged;
   final ValueChanged<int?> onQuartierChanged;
+  final VoidCallback onRequestGps;
   final VoidCallback onSkip, onContinue, onPickPhoto;
-  const _ProfileStep(
-      {super.key,
-      required this.nameCtrl,
-      required this.detailsCtrl,
-      required this.quartiers,
-      required this.selectedQuartierId,
-      required this.photoPath,
-      required this.onQuartierChanged,
-      required this.onSkip,
-      required this.onContinue,
-      required this.onPickPhoto});
+
+  const _ProfileStep({
+    super.key,
+    required this.nameCtrl,
+    required this.detailsCtrl,
+    required this.villes,
+    required this.selectedVilleId,
+    required this.selectedQuartierId,
+    required this.photoPath,
+    required this.gpsLoading,
+    required this.onVilleChanged,
+    required this.onQuartierChanged,
+    required this.onRequestGps,
+    required this.onSkip,
+    required this.onContinue,
+    required this.onPickPhoto,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -290,10 +330,10 @@ class _ProfileStep extends StatelessWidget {
                   ),
                   SizedBox(height: r.s(16)),
 
-                  // Quartier / Zone
+                  // Ville / Commune
                   Align(
                       alignment: Alignment.centerLeft,
-                      child: Text('Quartier / Zone',
+                      child: Text('Ville / Commune *',
                           style: TextStyle(
                               fontSize: r.fs(13),
                               fontWeight: FontWeight.w600,
@@ -301,8 +341,7 @@ class _ProfileStep extends StatelessWidget {
                   SizedBox(height: r.s(8)),
                   GestureDetector(
                     onTap: () {
-                      _showZonePicker(context, quartiers, selectedQuartierId,
-                          onQuartierChanged);
+                      _showVillePicker(context, villes, selectedVilleId, onVilleChanged);
                     },
                     child: Container(
                       padding: EdgeInsets.symmetric(
@@ -316,15 +355,12 @@ class _ProfileStep extends StatelessWidget {
                         children: [
                           Expanded(
                             child: Text(
-                              selectedQuartierId != null
-                                  ? quartiers
-                                      .firstWhere(
-                                          (q) => q.id == selectedQuartierId)
-                                      .nom
-                                  : 'Rechercher votre zone / quartier',
+                              selectedVilleId != null
+                                  ? villes.firstWhere((v) => v.id == selectedVilleId).nom
+                                  : 'Sélectionner une ville',
                               style: TextStyle(
                                 fontSize: r.fs(14),
-                                color: selectedQuartierId != null
+                                color: selectedVilleId != null
                                     ? AppTheme.foreground
                                     : AppTheme.mutedForeground,
                               ),
@@ -337,6 +373,90 @@ class _ProfileStep extends StatelessWidget {
                     ),
                   ),
                   SizedBox(height: r.s(16)),
+
+                  // Quartier / Zone
+                  if (selectedVilleId != null) ...[
+                    Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text('Quartier *',
+                            style: TextStyle(
+                                fontSize: r.fs(13),
+                                fontWeight: FontWeight.w600,
+                                color: AppTheme.foreground))),
+                    SizedBox(height: r.s(8)),
+                    GestureDetector(
+                      onTap: () {
+                        final quartiers = villes.firstWhere((v) => v.id == selectedVilleId).quartiers;
+                        _showZonePicker(context, quartiers, selectedQuartierId, onQuartierChanged);
+                      },
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                            horizontal: r.s(16), vertical: r.s(14)),
+                        decoration: BoxDecoration(
+                          color: AppTheme.cardColor,
+                          borderRadius: BorderRadius.circular(r.rad(12)),
+                          border: Border.all(color: AppTheme.border),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                selectedQuartierId != null
+                                    ? villes.firstWhere((v) => v.id == selectedVilleId)
+                                        .quartiers.firstWhere((q) => q.id == selectedQuartierId).nom
+                                    : 'Sélectionner un quartier',
+                                style: TextStyle(
+                                  fontSize: r.fs(14),
+                                  color: selectedQuartierId != null
+                                      ? AppTheme.foreground
+                                      : AppTheme.mutedForeground,
+                                ),
+                              ),
+                            ),
+                            Icon(Icons.keyboard_arrow_down,
+                                color: AppTheme.mutedForeground, size: r.s(22)),
+                          ],
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: r.s(16)),
+                  ],
+
+                  // Position Actuelle
+                  GestureDetector(
+                    onTap: gpsLoading ? null : onRequestGps,
+                    child: Container(
+                      padding: EdgeInsets.symmetric(vertical: r.s(12)),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primary.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(r.rad(12)),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          if (gpsLoading)
+                            SizedBox(
+                              width: r.s(18),
+                              height: r.s(18),
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: AppTheme.primary,
+                              ),
+                            )
+                          else
+                            Icon(Icons.my_location_rounded,
+                                color: AppTheme.primary, size: r.s(18)),
+                          SizedBox(width: r.s(8)),
+                          Text('Utiliser ma position actuelle',
+                              style: TextStyle(
+                                  fontSize: r.fs(13),
+                                  fontWeight: FontWeight.w600,
+                                  color: AppTheme.primary)),
+                        ],
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: r.s(24)),
 
                   // Détails Location
                   Align(
@@ -492,8 +612,8 @@ class _InterestsStep extends StatelessWidget {
                       itemBuilder: (_, i) {
                         final item = categories[i];
                         final id = item.id;
-                        final label = item.nom;
-                        final icon = CategoryIconHelper.getIcon(item.slug);
+                        final label = item.name;
+                        final icon = CategoryIconHelper.getIconFromString(item.icon);
                         final isSel = selected.contains(id);
                         return GestureDetector(
                           onTap: () => onToggle(id),
@@ -813,6 +933,102 @@ void _showZonePicker(BuildContext context, List<Quartier> quartiers,
                           : null,
                       onTap: () {
                         onSelected(q.id);
+                        Get.back();
+                      },
+                    );
+                  },
+                )),
+          ),
+        ],
+      ),
+    ),
+    isScrollControlled: true,
+  );
+}
+
+void _showVillePicker(BuildContext context, List<Ville> villes,
+    int? currentId, ValueChanged<int?> onSelected) {
+  final r = R(context);
+  final searchCtrl = TextEditingController();
+  final rxVilles = RxList<Ville>(villes);
+
+  searchCtrl.addListener(() {
+    final query = searchCtrl.text.toLowerCase();
+    if (query.isEmpty) {
+      rxVilles.assignAll(villes);
+    } else {
+      rxVilles.assignAll(
+          villes.where((v) => v.nom.toLowerCase().contains(query)));
+    }
+  });
+
+  Get.bottomSheet(
+    Container(
+      height: r.screenH * 0.75,
+      decoration: BoxDecoration(
+        color: AppTheme.background,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(r.rad(24))),
+      ),
+      child: Column(
+        children: [
+          SizedBox(height: r.s(12)),
+          Container(
+              width: 40,
+              height: 5,
+              decoration: BoxDecoration(
+                  color: AppTheme.border,
+                  borderRadius: BorderRadius.circular(10))),
+          SizedBox(height: r.s(16)),
+          Text('Choisissez votre ville / commune',
+              style: TextStyle(
+                  fontSize: r.fs(18),
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.foreground)),
+          SizedBox(height: r.s(16)),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: r.s(20)),
+            child: Container(
+              decoration: BoxDecoration(
+                  color: AppTheme.cardColor,
+                  borderRadius: BorderRadius.circular(r.rad(12)),
+                  border: Border.all(color: AppTheme.border)),
+              child: TextField(
+                controller: searchCtrl,
+                style: TextStyle(fontSize: r.fs(14)),
+                decoration: InputDecoration(
+                  hintText: 'Rechercher une ville...',
+                  hintStyle: TextStyle(
+                      color: AppTheme.mutedForeground, fontSize: r.fs(14)),
+                  prefixIcon:
+                      Icon(Icons.search, color: AppTheme.mutedForeground),
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.symmetric(vertical: r.s(14)),
+                ),
+              ),
+            ),
+          ),
+          SizedBox(height: r.s(12)),
+          Expanded(
+            child: Obx(() => ListView.builder(
+                  itemCount: rxVilles.length,
+                  itemBuilder: (context, i) {
+                    final v = rxVilles[i];
+                    final isSel = v.id == currentId;
+                    return ListTile(
+                      title: Text(v.nom,
+                          style: TextStyle(
+                              fontSize: r.fs(15),
+                              fontWeight:
+                                  isSel ? FontWeight.w700 : FontWeight.w500,
+                              color: isSel
+                                  ? AppTheme.primary
+                                  : AppTheme.foreground)),
+                      trailing: isSel
+                          ? const Icon(Icons.check_circle,
+                              color: AppTheme.primary)
+                          : null,
+                      onTap: () {
+                        onSelected(v.id);
                         Get.back();
                       },
                     );

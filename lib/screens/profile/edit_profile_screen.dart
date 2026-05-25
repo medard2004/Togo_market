@@ -25,7 +25,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   bool _isSaving = false;
   File? _selectedImage;
   final ImagePicker _picker = ImagePicker();
-  String _ville = '';
+  int? _villeId;
+  int? _quartierId;
 
   @override
   void initState() {
@@ -42,11 +43,20 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       final firstAdresse = adresses.first;
       if (firstAdresse is Map) {
         detailsText = firstAdresse['details']?.toString() ?? '';
-        villeText = firstAdresse['ville']?.toString() ?? '';
       }
     }
-    final villeNames = authCtrl.locations.map((v) => v.nom).toList();
-    _ville = villeNames.contains(villeText) ? villeText : '';
+    
+    // Find ville and quartier from user profileQuartierId
+    final quartierId = user?.profileQuartierId;
+    if (quartierId != null && quartierId > 0) {
+      _quartierId = quartierId;
+      for (var v in authCtrl.locations) {
+        if (v.quartiers.any((q) => q.id == quartierId)) {
+          _villeId = v.id;
+          break;
+        }
+      }
+    }
     _detailsController = TextEditingController(text: detailsText);
   }
 
@@ -91,6 +101,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       await authCtrl.updateProfile(
         nom: _nameController.text.trim(),
         details: _detailsController.text.trim(),
+        quartierId: _quartierId,
         photoPath: _selectedImage?.path,
       );
 
@@ -310,21 +321,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
                   // Dropdown Ville
                   const Text(
-                    'Ville',
+                    'Ville / Commune',
                     style: TextStyle(
                         fontSize: 14, fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 8),
                   Obx(() {
                     final authCtrl = Get.find<AuthController>();
-                    final villeNames = authCtrl.locations.map((v) => v.nom).toList();
-                    if (villeNames.isNotEmpty &&
-                        !villeNames.contains(_ville) &&
-                        _ville.isEmpty) {
-                      WidgetsBinding.instance.addPostFrameCallback((_) {
-                        if (mounted) setState(() => _ville = villeNames.first);
-                      });
-                    }
+                    final villes = authCtrl.locations;
                     return Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12),
                       decoration: BoxDecoration(
@@ -332,24 +336,72 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: DropdownButtonHideUnderline(
-                        child: DropdownButton<String>(
-                          value: villeNames.contains(_ville) ? _ville : null,
+                        child: DropdownButton<int>(
+                          value: _villeId,
                           isExpanded: true,
                           hint: const Text('Sélectionner une ville'),
-                          items: villeNames
-                              .map((v) =>
-                                  DropdownMenuItem(value: v, child: Text(v)))
+                          items: villes
+                              .map((v) => DropdownMenuItem(
+                                  value: v.id, child: Text(v.nom)))
                               .toList(),
-                          onChanged: (v) => setState(() => _ville = v!),
+                          onChanged: (v) {
+                            setState(() {
+                              _villeId = v;
+                              _quartierId = null; // reset
+                            });
+                          },
                         ),
                       ),
                     );
                   }),
                   const SizedBox(height: 16),
 
-                  // TextField Adresse / Quartier
+                  // Dropdown Quartier
+                  if (_villeId != null) ...[
+                    const Text(
+                      'Quartier',
+                      style: TextStyle(
+                          fontSize: 14, fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 8),
+                    Obx(() {
+                      final authCtrl = Get.find<AuthController>();
+                      final ville = authCtrl.locations.firstWhereOrNull((v) => v.id == _villeId);
+                      final quartiers = ville?.quartiers ?? [];
+                      
+                      // Ensure current quartierId is valid for selected ville
+                      if (_quartierId != null && !quartiers.any((q) => q.id == _quartierId)) {
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                           if (mounted) setState(() => _quartierId = null);
+                        });
+                      }
+
+                      return Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: AppTheme.border),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<int>(
+                            value: _quartierId,
+                            isExpanded: true,
+                            hint: const Text('Sélectionner un quartier'),
+                            items: quartiers
+                                .map((q) => DropdownMenuItem(
+                                    value: q.id, child: Text(q.nom)))
+                                .toList(),
+                            onChanged: (v) => setState(() => _quartierId = v),
+                          ),
+                        ),
+                      );
+                    }),
+                    const SizedBox(height: 16),
+                  ],
+
+                  // TextField Détails
                   const Text(
-                    'Adresse / Quartier',
+                    'Détails supplémentaires (facultatif)',
                     style: TextStyle(
                         fontSize: 14, fontWeight: FontWeight.w600),
                   ),
@@ -358,7 +410,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     controller: _detailsController,
                     decoration: const InputDecoration(
                       hintText:
-                          'Ex: Quartier Tokoin, près de la pharmacie...',
+                          'Ex: Derrière la station Total, portail bleu...',
                     ),
                   ),
                 ],

@@ -27,7 +27,7 @@ class _TrendingExplorerScreenState extends State<TrendingExplorerScreen> {
   bool _loadingMore = false;
   bool _hasMore = true;
   int _nextPage = 1;
-  String? _error;
+  String? _error; // ignore: unused_field
   bool _requestBusy = false;
 
   static const int _perPage = 20;
@@ -121,7 +121,7 @@ class _TrendingExplorerScreenState extends State<TrendingExplorerScreen> {
     if (_selectedFilter == 'Tout') return _items;
     // Filtres démo : correspondance approximative sur le libellé de catégorie
     return _items.where((p) {
-      final name = p.categoryObj?.nom ?? '';
+      final name = p.categoryObj?.name ?? '';
       return name.toLowerCase().contains(_selectedFilter.toLowerCase());
     }).toList();
   }

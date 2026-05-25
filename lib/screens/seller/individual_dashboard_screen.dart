@@ -96,7 +96,7 @@ class _IndividualDashboardScreenState extends State<IndividualDashboardScreen> {
                             Icons.settings_outlined,
                             AppTheme.primary,
                             AppTheme.primary.withOpacity(0.1),
-                            onTap: () => Get.toNamed('/settings'),
+                            onTap: () => Get.toNamed('/shop-information'),
                           ),
                         ],
                       ),

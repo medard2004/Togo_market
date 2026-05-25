@@ -21,7 +21,8 @@ class StoreConfigData {
   String description = '';
   String phone = '';
   List<String> secondaryPhones = [];
-  String ville = '';       // Ville sélectionnée depuis l'API
+  int? villeId;
+  int? quartierId;
   String address = '';     // Adresse libre saisie par l'utilisateur
 
   // Catégories sélectionnées (IDs depuis la DB)
@@ -82,13 +83,20 @@ class StoreConfigData {
       return '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
     }
 
+    String? villeNom;
+    String? quartierNom;
+    
+    // We can't access AuthController from here easily, so we will pass the resolved names or resolve them in the controller.
+    // Or we just send the IDs if backend supports it. But backend expects 'adresse' as string.
+    // We will let the UI pass the resolved string into 'adresse' or we pass it here.
+    // Actually, let's keep 'adresse' as it is, but we will pass the quartierId to the payload.
     final payload = <String, dynamic>{
       'nom': name,
       'telephone': phone,
       if (secondaryPhones.isNotEmpty) 'contacts': secondaryPhones,
       'description': description.isNotEmpty ? description : null,
-      'adresse': ville,
-      'details_adresse': address.isNotEmpty ? address : null,
+      'adresse': address.isNotEmpty ? address : null,
+      'quartier_id': quartierId, // if the backend can accept it
       'horaires': {
         'jours': joursOuverts,
         'ouverture': formatTime(firstOpen),

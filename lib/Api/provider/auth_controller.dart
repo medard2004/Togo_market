@@ -8,6 +8,8 @@ import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../core/api_client.dart';
 import '../firebase/services/firebase_auth_bridge_service.dart';
+import 'package:geolocator/geolocator.dart';
+import '../../utils/location_service.dart';
 
 class AuthController extends GetxController {
   final AuthService _authService;
@@ -84,10 +86,10 @@ class AuthController extends GetxController {
       var cats = await _authService.getCategories();
       if (cats.isEmpty) {
         cats = [
-          Category(id: 1, nom: 'Électronique', slug: 'electronique'),
-          Category(id: 2, nom: 'Mode', slug: 'mode'),
-          Category(id: 3, nom: 'Alimentation', slug: 'alimentation'),
-          Category(id: 4, nom: 'Maison', slug: 'maison'),
+          Category(id: 1, name: 'Électronique', slug: 'electronique'),
+          Category(id: 2, name: 'Mode', slug: 'mode'),
+          Category(id: 3, name: 'Alimentation', slug: 'alimentation'),
+          Category(id: 4, name: 'Maison', slug: 'maison'),
         ];
       }
       categories.assignAll(cats);
@@ -113,9 +115,9 @@ class AuthController extends GetxController {
       debugPrint("Failed to load public data: $e");
       // Fallback
       categories.assignAll([
-        Category(id: 1, nom: 'Électronique', slug: 'electronique'),
-        Category(id: 2, nom: 'Mode', slug: 'mode'),
-        Category(id: 3, nom: 'Alimentation', slug: 'alimentation'),
+        Category(id: 1, name: 'Électronique', slug: 'electronique'),
+        Category(id: 2, name: 'Mode', slug: 'mode'),
+        Category(id: 3, name: 'Alimentation', slug: 'alimentation'),
       ]);
       locations.assignAll([
         Ville(id: 1, nom: 'Lomé', quartiers: [
@@ -281,5 +283,65 @@ class AuthController extends GetxController {
     } finally {
       isLoading.value = false;
     }
+  }
+
+  Future<Map<String, int>?> getCurrentLocationAndMatch({double? lat, double? lon}) async {
+    try {
+      double latitude;
+      double longitude;
+
+      if (lat != null && lon != null) {
+        latitude = lat;
+        longitude = lon;
+      } else {
+        bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+        if (!serviceEnabled) return null;
+        LocationPermission permission = await Geolocator.checkPermission();
+        if (permission == LocationPermission.denied) {
+          permission = await Geolocator.requestPermission();
+          if (permission == LocationPermission.denied) return null;
+        }
+        if (permission == LocationPermission.deniedForever) return null;
+
+        final position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+        latitude = position.latitude;
+        longitude = position.longitude;
+      }
+
+      final data = await LocationService.reverseGeocode(latitude, longitude);
+      if (data != null) {
+        final villeName = data['ville']?.toLowerCase() ?? '';
+        final quartierName = data['quartier']?.toLowerCase() ?? '';
+
+        Ville? matchedVille;
+        if (villeName.isNotEmpty) {
+          for (var v in locations) {
+            if (villeName.contains(v.nom.toLowerCase()) || v.nom.toLowerCase().contains(villeName)) {
+              matchedVille = v;
+              break;
+            }
+          }
+        }
+        
+        if (matchedVille != null) {
+          Quartier? matchedQuartier;
+          if (quartierName.isNotEmpty) {
+            for (var q in matchedVille.quartiers) {
+              if (quartierName.contains(q.nom.toLowerCase()) || q.nom.toLowerCase().contains(quartierName)) {
+                matchedQuartier = q;
+                break;
+              }
+            }
+          }
+          return {
+            'villeId': matchedVille.id,
+            'quartierId': matchedQuartier?.id ?? (matchedVille.quartiers.isNotEmpty ? matchedVille.quartiers.first.id : 0),
+          };
+        }
+      }
+    } catch (e) {
+      debugPrint("Erreur getCurrentLocationAndMatch: $e");
+    }
+    return null;
   }
 }

@@ -58,13 +58,33 @@ class BoutiqueService extends GetxService {
       } else if (entry.value is List) {
         final list = entry.value as List;
         for (int i = 0; i < list.length; i++) {
-          formDataMap['${entry.key}[$i]'] = list[i];
+          formDataMap['${entry.key}[$i]'] = list[i].toString();
         }
+      } else if (entry.value is Map) {
+        // Encode nested Maps (e.g. horaires) as individual keys for multipart
+        _flattenMap(entry.key, entry.value as Map, formDataMap);
       } else {
         formDataMap[entry.key] = entry.value;
       }
     }
     return FormData.fromMap(formDataMap);
+  }
+
+  /// Recursively flatten a nested map for FormData (e.g. horaires[jours][0] = 'Lun')
+  void _flattenMap(String prefix, Map map, Map<String, dynamic> output) {
+    for (var key in map.keys) {
+      final value = map[key];
+      final fullKey = '$prefix[$key]';
+      if (value is Map) {
+        _flattenMap(fullKey, value, output);
+      } else if (value is List) {
+        for (int i = 0; i < value.length; i++) {
+          output['$fullKey[$i]'] = value[i].toString();
+        }
+      } else {
+        output[fullKey] = value?.toString() ?? '';
+      }
+    }
   }
 
   /// Create a new boutique

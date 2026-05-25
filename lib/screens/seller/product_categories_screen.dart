@@ -3,6 +3,8 @@ import 'package:get/get.dart';
 
 import '../../data/mock_data.dart';
 import '../../theme/app_theme.dart';
+import '../../utils/category_icon_helper.dart';
+import '../../controllers/app_controller.dart';
 
 class ProductCategoriesScreen extends StatefulWidget {
   const ProductCategoriesScreen({super.key});
@@ -13,26 +15,6 @@ class ProductCategoriesScreen extends StatefulWidget {
 }
 
 class _ProductCategoriesScreenState extends State<ProductCategoriesScreen> {
-  final List<_CategoryRow> _categories = [
-    _CategoryRow(
-        id: 'electronique', label: 'Électronique', icon: Icons.devices),
-    _CategoryRow(id: 'mode', label: 'Mode & Vêtements', icon: Icons.checkroom),
-    _CategoryRow(id: 'maison', label: 'Maison & Déco', icon: Icons.home),
-    _CategoryRow(
-        id: 'beaute', label: 'Beauté & Santé', icon: Icons.health_and_safety),
-    _CategoryRow(id: 'auto', label: 'Auto & Moto', icon: Icons.directions_car),
-    _CategoryRow(
-        id: 'alimentation',
-        label: 'Alimentation',
-        icon: Icons.local_grocery_store),
-    _CategoryRow(
-        id: 'sports', label: 'Sports & Loisirs', icon: Icons.sports_basketball),
-    _CategoryRow(id: 'livres', label: 'Livres & Éducation', icon: Icons.book),
-    _CategoryRow(
-        id: 'enfants', label: 'Enfants & Bébés', icon: Icons.child_care),
-    _CategoryRow(id: 'services', label: 'Services', icon: Icons.build),
-  ];
-
   final Set<String> _selectedCategories = {};
 
   void _toggleCategory(String id) {
@@ -46,13 +28,15 @@ class _ProductCategoriesScreenState extends State<ProductCategoriesScreen> {
   }
 
   int _countCategory(String id) {
+    // Dans une version complète, on filtrerait les vrais produits de l'API.
+    // Ici on garde le mock ou on met 0 si le mock ne correspond pas.
     return mockProducts.where((product) => product.category == id).length;
   }
 
   @override
   Widget build(BuildContext context) {
     final hasSelected = _selectedCategories.isNotEmpty;
-
+    // On utilise Obx pour réagir aux changements de catégories si nécessaire
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
@@ -85,19 +69,22 @@ class _ProductCategoriesScreenState extends State<ProductCategoriesScreen> {
           SizedBox(width: 8),
         ],
       ),
-      body: ListView.separated(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-        itemCount: _categories.length + 1,
-        separatorBuilder: (_, __) => SizedBox(height: 14),
-        itemBuilder: (context, index) {
-          if (index == 0) {
-            return _buildHeader();
-          }
-          final category = _categories[index - 1];
-          final count = _countCategory(category.id);
-          return _buildCategoryItem(category, count);
-        },
-      ),
+      body: Obx(() {
+        final categories = Get.find<AppController>().categories;
+        return ListView.separated(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+          itemCount: categories.length + 1,
+          separatorBuilder: (_, __) => SizedBox(height: 14),
+          itemBuilder: (context, index) {
+            if (index == 0) {
+              return _buildHeader();
+            }
+            final category = categories[index - 1];
+            final count = _countCategory(category.slug);
+            return _buildCategoryItem(category, count);
+          },
+        );
+      }),
     );
   }
 
@@ -164,11 +151,11 @@ class _ProductCategoriesScreenState extends State<ProductCategoriesScreen> {
     );
   }
 
-  Widget _buildCategoryItem(_CategoryRow category, int count) {
-    final bool selected = _selectedCategories.contains(category.id);
+  Widget _buildCategoryItem(category, int count) {
+    final bool selected = _selectedCategories.contains(category.slug);
     return InkWell(
       borderRadius: BorderRadius.circular(18),
-      onTap: () => _toggleCategory(category.id),
+      onTap: () => _toggleCategory(category.slug),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         decoration: BoxDecoration(
@@ -187,8 +174,9 @@ class _ProductCategoriesScreenState extends State<ProductCategoriesScreen> {
                 color: selected ? AppTheme.primary : AppTheme.cardColor,
                 borderRadius: BorderRadius.circular(14),
               ),
-              child: Icon(category.icon,
-                  color: selected ? Colors.white : AppTheme.primary, size: 24),
+              child: Icon(
+                CategoryIconHelper.getIconFromString(category.icon),
+                color: selected ? Colors.white : AppTheme.primary, size: 24),
             ),
             SizedBox(width: 14),
             Expanded(
@@ -196,7 +184,7 @@ class _ProductCategoriesScreenState extends State<ProductCategoriesScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    category.label,
+                    category.name,
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
@@ -221,16 +209,4 @@ class _ProductCategoriesScreenState extends State<ProductCategoriesScreen> {
       ),
     );
   }
-}
-
-class _CategoryRow {
-  final String id;
-  final String label;
-  final IconData icon;
-
-  const _CategoryRow({
-    required this.id,
-    required this.label,
-    required this.icon,
-  });
 }

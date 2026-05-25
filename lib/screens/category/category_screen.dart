@@ -137,7 +137,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
               child: Obx(() {
                 final apiCats = Get.find<AppController>().categories;
                 final displayCats = [
-                  Category(id: -1, nom: 'Tout', slug: 'tout'),
+                  Category(id: -1, name: 'Tout', slug: 'tout', icon: ''),
                   ...apiCats
                 ];
 
@@ -167,13 +167,13 @@ class _CategoryScreenState extends State<CategoryScreen> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(
-                              CategoryIconHelper.getIcon(cat.slug),
+                              CategoryIconHelper.getIconFromString(cat.icon),
                               size: 16,
                               color: isActive ? Colors.white : AppTheme.primary,
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              cat.nom,
+                              cat.name,
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,

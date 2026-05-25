@@ -75,8 +75,12 @@ List<Category> filterCategoryTreeForBoutiqueProducts(
     if (prunedChildren.isEmpty) return null;
     return Category(
       id: node.id,
-      nom: node.nom,
+      name: node.name,
       slug: node.slug,
+      icon: node.icon,
+      image: node.image,
+      sortOrder: node.sortOrder,
+      isActive: node.isActive,
       parentId: node.parentId,
       children: prunedChildren,
     );

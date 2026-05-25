@@ -83,7 +83,7 @@ class HomeBody extends StatelessWidget {
                   child: Builder(builder: (_) {
                     final apiCats = ctrl.categories;
                     final displayCats = [
-                      Category(id: -1, nom: 'Tout', slug: 'tout'),
+                      Category(id: -1, name: 'Tout', slug: 'tout', icon: ''),
                       ...apiCats
                     ];
 
@@ -119,14 +119,14 @@ class HomeBody extends StatelessWidget {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Icon(
-                                  CategoryIconHelper.getIcon(cat.slug),
+                                  CategoryIconHelper.getIconFromString(cat.icon),
                                   size: r.fs(16),
                                   color: isActive
                                       ? Colors.white
                                       : AppTheme.primary,
                                 ),
                                 SizedBox(width: r.s(8)),
-                                Text(cat.nom,
+                                Text(cat.name,
                                     style: TextStyle(
                                         fontSize: r.fs(12),
                                         fontWeight: FontWeight.w600,

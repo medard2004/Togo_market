@@ -115,9 +115,19 @@ class PublicProfileScreen extends StatelessWidget {
                             Icon(Icons.location_on, size: r.s(14), color: Colors.white70),
                             SizedBox(width: r.s(4)),
                             Text(
-                              (user.adresses != null && user.adresses!.isNotEmpty) 
-                                  ? (user.adresses!.first['ville']?.toString() ?? user.adresses!.first['village']?.toString() ?? 'Togo') 
-                                  : 'Togo',
+                              (() {
+                                if (user.profileQuartierId != null) {
+                                  final auth = Get.find<AuthController>();
+                                  for (var v in auth.locations) {
+                                    for (var q in v.quartiers) {
+                                      if (q.id == user.profileQuartierId) {
+                                        return '${v.nom}, ${q.nom}';
+                                      }
+                                    }
+                                  }
+                                }
+                                return 'Togo';
+                              })(),
                               style: TextStyle(
                                 fontSize: r.fs(13),
                                 color: Colors.white70,

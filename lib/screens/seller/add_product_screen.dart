@@ -263,14 +263,14 @@ class _AddProductScreenState extends State<AddProductScreen> {
                                   return Row(
                                     children: [
                                       Icon(
-                                        CategoryIconHelper.getIcon(matchingCat.slug),
+                                        CategoryIconHelper.getIconFromString(matchingCat.icon),
                                         size: 16,
                                         color: AppTheme.primary,
                                       ),
                                       const SizedBox(width: 8),
                                       Expanded(
                                         child: Text(
-                                          matchingCat.nom,
+                                          matchingCat.name,
                                           style: TextStyle(fontSize: 12, color: AppTheme.foreground),
                                           overflow: TextOverflow.ellipsis,
                                         ),

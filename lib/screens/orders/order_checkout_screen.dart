@@ -7,6 +7,7 @@ import 'package:latlong2/latlong.dart';
 import '../../../Api/services/order_service.dart';
 import '../../../Api/firebase/services/chat_service.dart';
 import '../../../utils/location_service.dart';
+import '../../../Api/model/location_model.dart';
 import '../../../theme/app_theme.dart';
 import '../../../data/mock_data.dart';
 import '../../../models/models.dart';
@@ -36,6 +37,8 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen>
   bool _waitingForLocationActivation = false;
   double? _deliveryLat;
   double? _deliveryLon;
+  int? _deliveryVilleId;
+  int? _deliveryQuartierId;
   String? _phoneError;
   Map<String, dynamic>? _orderResult; // Réponse de l'API après création
   int _countdown = 10; // Compte à rebours avant redirection
@@ -210,10 +213,10 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen>
                     _confirmRow(
                         Icons.phone_outlined, 'Téléphone', _formattedPhone),
                     if (_mode == 'livraison' &&
-                        _addressCtrl.text.isNotEmpty) ...[
+                        _deliveryVilleId != null) ...[
                       const SizedBox(height: 8),
                       _confirmRow(Icons.location_on_outlined, 'Adresse',
-                          _addressCtrl.text),
+                          _buildDeliveryAddressString()),
                     ],
                     const SizedBox(height: 8),
                     _confirmRow(
@@ -502,16 +505,34 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen>
   }
 
   Future<void> _reverseGeocodeAndFillAddress(double lat, double lon) async {
-    final data = await LocationService.reverseGeocode(lat, lon);
-    if (data != null && mounted) {
-      String formatted = '';
-      if (data['ville'] != null && data['ville']!.isNotEmpty)
-        formatted += data['ville']!;
-      if (data['quartier'] != null && data['quartier']!.isNotEmpty) {
-        formatted += (formatted.isNotEmpty ? ', ' : '') + data['quartier']!;
+    try {
+      final authCtrl = Get.find<AuthController>();
+      final location = await authCtrl.getCurrentLocationAndMatch();
+      if (location != null && mounted) {
+        setState(() {
+          _deliveryVilleId = location['villeId'];
+          _deliveryQuartierId = location['quartierId'];
+        });
       }
-      if (formatted.isNotEmpty) setState(() => _addressCtrl.text = formatted);
+    } catch (_) {}
+  }
+
+  /// Build a human-readable delivery address from selected ville/quartier + details
+  String _buildDeliveryAddressString() {
+    final authCtrl = Get.find<AuthController>();
+    String parts = '';
+    final ville = authCtrl.locations.firstWhereOrNull((v) => v.id == _deliveryVilleId);
+    if (ville != null) {
+      parts = ville.nom;
+      final quartier = ville.quartiers.firstWhereOrNull((q) => q.id == _deliveryQuartierId);
+      if (quartier != null) {
+        parts += ', ${quartier.nom}';
+      }
     }
+    if (_addressCtrl.text.trim().isNotEmpty) {
+      parts += (parts.isNotEmpty ? ' – ' : '') + _addressCtrl.text.trim();
+    }
+    return parts;
   }
 
   /// Get real product from AppController, fallback to mock
@@ -852,10 +873,10 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen>
                             _recapDivider(),
                             _recapRowIcon(r, modeIcon, 'Livraison', modeLabel),
                             if (_mode == 'livraison' &&
-                                _addressCtrl.text.isNotEmpty) ...[
+                                _deliveryVilleId != null) ...[
                               _recapDivider(),
                               _recapRow(r, Icons.location_on_outlined,
-                                  'Adresse', _addressCtrl.text),
+                                  'Adresse', _buildDeliveryAddressString()),
                             ],
                             _recapDivider(),
                             _recapRow(r, Icons.credit_card_outlined, 'Paiement',
@@ -1258,6 +1279,105 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen>
                     letterSpacing: 0.7),
               ),
               SizedBox(height: r.s(7)),
+
+              // Ville / Commune
+              Text('Ville / Commune *',
+                  style: TextStyle(
+                      fontSize: r.fs(12),
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.foreground)),
+              SizedBox(height: r.s(5)),
+              Obx(() {
+                final authCtrl = Get.find<AuthController>();
+                final villes = authCtrl.locations;
+                return Container(
+                  padding: EdgeInsets.symmetric(horizontal: r.s(12)),
+                  decoration: BoxDecoration(
+                    color: AppTheme.cardColor,
+                    borderRadius: BorderRadius.circular(r.rad(12)),
+                    border: Border.all(color: AppTheme.border),
+                  ),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<int>(
+                      value: _deliveryVilleId,
+                      isExpanded: true,
+                      hint: Text('Sélectionner une ville',
+                          style: TextStyle(
+                              fontSize: r.fs(13),
+                              color: AppTheme.mutedForeground)),
+                      items: villes
+                          .map((v) => DropdownMenuItem(
+                              value: v.id, child: Text(v.nom)))
+                          .toList(),
+                      onChanged: (v) {
+                        setState(() {
+                          _deliveryVilleId = v;
+                          _deliveryQuartierId = null;
+                        });
+                      },
+                    ),
+                  ),
+                );
+              }),
+              SizedBox(height: r.s(10)),
+
+              // Quartier / Zone
+              if (_deliveryVilleId != null) ...[
+                Text('Quartier / Zone *',
+                    style: TextStyle(
+                        fontSize: r.fs(12),
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.foreground)),
+                SizedBox(height: r.s(5)),
+                Obx(() {
+                  final authCtrl = Get.find<AuthController>();
+                  final ville = authCtrl.locations
+                      .firstWhereOrNull((v) => v.id == _deliveryVilleId);
+                  final quartiers = ville?.quartiers ?? [];
+
+                  if (_deliveryQuartierId != null &&
+                      !quartiers.any((q) => q.id == _deliveryQuartierId)) {
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (mounted)
+                        setState(() => _deliveryQuartierId = null);
+                    });
+                  }
+
+                  return Container(
+                    padding: EdgeInsets.symmetric(horizontal: r.s(12)),
+                    decoration: BoxDecoration(
+                      color: AppTheme.cardColor,
+                      borderRadius: BorderRadius.circular(r.rad(12)),
+                      border: Border.all(color: AppTheme.border),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<int>(
+                        value: _deliveryQuartierId,
+                        isExpanded: true,
+                        hint: Text('Sélectionner un quartier',
+                            style: TextStyle(
+                                fontSize: r.fs(13),
+                                color: AppTheme.mutedForeground)),
+                        items: quartiers
+                            .map((q) => DropdownMenuItem(
+                                value: q.id, child: Text(q.nom)))
+                            .toList(),
+                        onChanged: (v) =>
+                            setState(() => _deliveryQuartierId = v),
+                      ),
+                    ),
+                  );
+                }),
+                SizedBox(height: r.s(10)),
+              ],
+
+              // Détails supplémentaires (facultatif)
+              Text('Détails (facultatif)',
+                  style: TextStyle(
+                      fontSize: r.fs(12),
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.foreground)),
+              SizedBox(height: r.s(5)),
               Container(
                 decoration: BoxDecoration(
                   color: AppTheme.cardColor,
@@ -1272,7 +1392,7 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen>
                     border: InputBorder.none,
                     contentPadding: EdgeInsets.all(r.s(14)),
                     isDense: true,
-                    hintText: 'Ex: Lomé, Quartier Tokoin, Villa 452',
+                    hintText: 'Ex: Derrière la station Total, portail bleu...',
                     hintStyle: TextStyle(
                         fontSize: r.fs(13), color: AppTheme.mutedForeground),
                   ),
@@ -1673,9 +1793,9 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen>
                       if (!_validatePhone()) return;
 
                       if (_mode == 'livraison' &&
-                          _addressCtrl.text.trim().isEmpty) {
+                          (_deliveryVilleId == null || _deliveryQuartierId == null)) {
                         AppToasts.error(context, 'Adresse requise',
-                            'Veuillez renseigner votre adresse de livraison.');
+                            'Veuillez sélectionner une ville et un quartier.');
                         return;
                       }
 
@@ -1692,7 +1812,7 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen>
                           quantity: _quantity,
                           paymentMethod: _paymentMode,
                           deliveryMethod: _mode,
-                          deliveryAddress: _addressCtrl.text,
+                          deliveryAddress: _buildDeliveryAddressString(),
                           deliveryLat: _deliveryLat,
                           deliveryLon: _deliveryLon,
                           phone: _formattedPhone,
@@ -1736,8 +1856,8 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen>
                             'total': '$totalPriceMain FCFA',
                             'mode': modeLabel,
                             'address': (_mode == 'livraison' &&
-                                    _addressCtrl.text.isNotEmpty)
-                                ? _addressCtrl.text
+                                    _deliveryVilleId != null)
+                                ? _buildDeliveryAddressString()
                                 : '',
                             'payment': payLabel,
                             'phone': _formattedPhone,

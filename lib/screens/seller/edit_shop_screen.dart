@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -10,15 +9,14 @@ import 'package:latlong2/latlong.dart';
 
 import '../../theme/app_theme.dart';
 import '../../widgets/common_widgets.dart';
-import '../../models/models.dart'; // Used for AppCategory (UI model)
-import '../../Api/model/boutique_model.dart';
+import '../../models/models.dart';
 import '../../controllers/boutique_controller.dart';
 import '../../Api/core/api_client.dart';
 import '../../Api/config/api_constants.dart';
 import '../../Api/provider/auth_controller.dart';
-import '../../utils/location_service.dart';
 import '../../utils/app_toasts.dart';
 import '../../utils/image_optimization_service.dart';
+import '../../utils/category_icon_helper.dart';
 
 class EditShopScreen extends StatefulWidget {
   const EditShopScreen({super.key});
@@ -37,7 +35,8 @@ class _EditShopScreenState extends State<EditShopScreen> {
   String? _bannerPath;
   String? _logoPath;
 
-  String _ville = '';
+  int? _villeId;
+  int? _quartierId;
   List<String> _selectedCategoryIds = [];
 
   TimeOfDay? _openingTime = const TimeOfDay(hour: 8, minute: 0);
@@ -77,15 +76,19 @@ class _EditShopScreenState extends State<EditShopScreen> {
         : '';
     _detailsCtrl.text = _boutique.detailsAdresse ?? '';
 
-    // Préremplir la ville
     final adresse = _boutique.adresse ?? '';
-    _ville = adresse;
+    if (adresse.isNotEmpty) {
+      for (var v in _authCtrl.locations) {
+        if (v.nom.toLowerCase() == adresse.toLowerCase()) {
+          _villeId = v.id;
+          break;
+        }
+      }
+    }
     
-    // Préremplir GPS
     _latitude = _boutique.latitude;
     _longitude = _boutique.longitude;
 
-    // Préremplir les horaires
     if (_boutique.horaires is Map) {
       final h = _boutique.horaires as Map;
       final ouv = h['ouverture']?.toString();
@@ -107,7 +110,7 @@ class _EditShopScreenState extends State<EditShopScreen> {
         );
       }
       if (jours is List) {
-        _selectedDays = List<String>.from(jours);
+        _selectedDays = List<String>.from(jours.map((e) => e.toString()));
       }
     }
   }
@@ -120,27 +123,16 @@ class _EditShopScreenState extends State<EditShopScreen> {
         if (mounted) {
           setState(() {
             _dbCategories = data.map((e) {
-              final nom = e['nom'].toString();
-              IconData iconData = Icons.category_rounded;
-              if (e['slug'] == 'mode') iconData = Icons.shopping_bag_rounded;
-              else if (e['slug'] == 'beaute-sante') iconData = Icons.face_retouching_natural_rounded;
-              else if (e['slug'] == 'electronique') iconData = Icons.devices_rounded;
-              else if (e['slug'] == 'alimentation') iconData = Icons.restaurant_rounded;
-              else if (e['slug'] == 'maison-decoration') iconData = Icons.home_rounded;
-              else if (e['slug'] == 'immobilier') iconData = Icons.apartment_rounded;
-              else if (e['slug'] == 'vehicules') iconData = Icons.directions_car_rounded;
-              else if (e['slug'] == 'services') iconData = Icons.build_rounded;
-
+              final nom = e['name'].toString();
+              final IconData iconData = CategoryIconHelper.getIconFromString(e['icon']?.toString());
               return AppCategory(id: e['id'].toString(), label: nom, icon: iconData);
             }).toList();
 
-            // Préremplir les catégories existantes
             if (_boutique.categories != null) {
               _selectedCategoryIds = _boutique.categories!
                   .map((c) => c['id'].toString())
                   .toList();
             }
-
             _isLoadingCategories = false;
           });
         }
@@ -248,24 +240,13 @@ class _EditShopScreenState extends State<EditShopScreen> {
   }
 
   Future<void> _performReverseGeocoding(double lat, double lon) async {
-    final address = await LocationService.reverseGeocode(lat, lon);
-    if (address != null && mounted) {
+    final location = await _authCtrl.getCurrentLocationAndMatch(lat: lat, lon: lon);
+    if (location != null && mounted) {
       setState(() {
-        if (address['ville'] != null && address['ville']!.isNotEmpty) {
-          // Find if the returned city matches one of our available cities
-          final villeNames = _authCtrl.locations.map((v) => v.nom).toList();
-          final mappedCity = villeNames.firstWhere((v) => 
-            v.toLowerCase().contains(address['ville']!.toLowerCase()) || 
-            address['ville']!.toLowerCase().contains(v.toLowerCase()), 
-            orElse: () => '');
-          if (mappedCity.isNotEmpty) {
-            _ville = mappedCity;
-          }
-        }
-        if (address['quartier'] != null && address['quartier']!.isNotEmpty) {
-          _detailsCtrl.text = address['quartier']!;
-        }
+        _villeId = location['villeId'];
+        _quartierId = location['quartierId'];
       });
+      AppToasts.success(context, "Position trouvée", "Votre zone a été pré-remplie.");
     }
   }
 
@@ -302,7 +283,6 @@ class _EditShopScreenState extends State<EditShopScreen> {
       _mapController.move(LatLng(position.latitude, position.longitude), 15.0);
       if (mounted) AppToasts.success(context, 'GPS', 'Position détectée avec succès');
       
-      // Lancer le reverse geocoding en arrière-plan
       _performReverseGeocoding(position.latitude, position.longitude);
     } catch (e) {
       if (mounted) AppToasts.error(context, 'Erreur GPS', e.toString().substring(0, 50));
@@ -341,551 +321,608 @@ class _EditShopScreenState extends State<EditShopScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.dark,
-      ),
-      child: Scaffold(
-        resizeToAvoidBottomInset: true,
-        backgroundColor: AppTheme.background,
-        appBar: AppBar(
-          title: const Text('Modifier la boutique'),
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: AppTheme.primary),
-            onPressed: Get.back,
-          ),
-          centerTitle: true,
-        ),
-        body: _isLoadingCategories
-            ? const Center(child: CircularProgressIndicator())
-            : SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Cover & Avatar
-                    Center(
-                      child: Stack(
-                        clipBehavior: Clip.none,
-                        alignment: Alignment.bottomCenter,
-                        children: [
-                          GestureDetector(
-                            onTap: () => _pickImage(true),
-                            child: Container(
-                              width: double.infinity,
-                              height: 140,
-                              decoration: BoxDecoration(
+    return Scaffold(
+      backgroundColor: AppTheme.background,
+      body: CustomScrollView(
+        slivers: [
+          // Header with Images
+          SliverAppBar(
+            expandedHeight: 200,
+            pinned: true,
+            stretch: true,
+            backgroundColor: AppTheme.background,
+            elevation: 0,
+            leading: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: AppBackButton(onTap: () => Get.back()),
+            ),
+            flexibleSpace: FlexibleSpaceBar(
+              background: Stack(
+                fit: StackFit.expand,
+                children: [
+                  // Banner Image
+                  GestureDetector(
+                    onTap: () => _pickImage(true),
+                    child: _bannerPath != null
+                        ? Image.file(File(_bannerPath!), fit: BoxFit.cover)
+                        : (_boutique.bannerUrl.isNotEmpty
+                            ? CachedNetworkImage(
+                                imageUrl: _resolveUrl(_boutique.bannerUrl),
+                                fit: BoxFit.cover,
+                              )
+                            : Container(
                                 color: AppTheme.primaryLight,
-                                borderRadius: BorderRadius.circular(20),
-                                image: _bannerPath != null
-                                    ? DecorationImage(
-                                        image: FileImage(File(_bannerPath!)),
-                                        fit: BoxFit.cover,
-                                      )
-                                    : (_boutique.bannerUrl.isNotEmpty
-                                        ? DecorationImage(
-                                            image: CachedNetworkImageProvider(_resolveUrl(_boutique.bannerUrl)),
-                                            fit: BoxFit.cover,
-                                          )
-                                        : null),
-                              ),
-                              child: _bannerPath == null && _boutique.bannerUrl.isEmpty
-                                  ? Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        Icon(Icons.panorama_outlined,
-                                            size: 40,
-                                            color: AppTheme.primary.withOpacity(0.5)),
-                                        const SizedBox(height: 8),
-                                        Text('Ajouter une bannière',
-                                            style: TextStyle(
-                                                color: AppTheme.primary.withOpacity(0.7),
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.w600)),
-                                      ],
-                                    )
-                                  : Align(
-                                      alignment: Alignment.topRight,
-                                      child: Padding(
-                                        padding: const EdgeInsets.all(8.0),
-                                        child: CircleAvatar(
-                                          backgroundColor: Colors.white.withOpacity(0.8),
-                                          child: const Icon(Icons.edit, color: AppTheme.primary),
-                                        ),
-                                      ),
-                                    ),
+                                child: Center(
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.panorama_outlined, size: 40, color: AppTheme.primary.withOpacity(0.5)),
+                                      const SizedBox(height: 8),
+                                      Text('Ajouter une bannière', style: TextStyle(color: AppTheme.primary.withOpacity(0.8), fontWeight: FontWeight.w600)),
+                                    ],
+                                  ),
+                                ),
+                              )),
+                  ),
+                  // Gradient Overlay
+                  DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [Colors.black.withOpacity(0.4), Colors.transparent, Colors.black.withOpacity(0.6)],
+                      ),
+                    ),
+                  ),
+                  // Banner Edit Icon
+                  Positioned(
+                    top: 16,
+                    right: 16,
+                    child: GestureDetector(
+                      onTap: () => _pickImage(true),
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), shape: BoxShape.circle),
+                        child: const Icon(Icons.edit, color: Colors.white, size: 20),
+                      ),
+                    ),
+                  ),
+                  // Logo Avatar
+                  Positioned(
+                    bottom: 20,
+                    left: 20,
+                    child: GestureDetector(
+                      onTap: () => _pickImage(false),
+                      child: Stack(
+                        alignment: Alignment.bottomRight,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(color: AppTheme.background, shape: BoxShape.circle),
+                            child: CircleAvatar(
+                              radius: 40,
+                              backgroundColor: AppTheme.cardColor,
+                              backgroundImage: (_logoPath != null
+                                  ? FileImage(File(_logoPath!))
+                                  : (_boutique.logoUrl.isNotEmpty
+                                      ? CachedNetworkImageProvider(_resolveUrl(_boutique.logoUrl))
+                                      : null)) as ImageProvider?,
+                              child: _logoPath == null && _boutique.logoUrl.isEmpty
+                                  ? const Icon(Icons.storefront, size: 40, color: AppTheme.primary)
+                                  : null,
                             ),
                           ),
-                          Positioned(
-                            bottom: -36,
-                            child: GestureDetector(
-                              onTap: () => _pickImage(false),
-                              child: Container(
-                                padding: const EdgeInsets.all(4),
-                                decoration: BoxDecoration(
-                                  color: AppTheme.background,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: CircleAvatar(
-                                  radius: 36,
-                                  backgroundColor: AppTheme.cardColor,
-                                  backgroundImage: (_logoPath != null
-                                      ? FileImage(File(_logoPath!))
-                                      : (_boutique.logoUrl.isNotEmpty
-                                          ? CachedNetworkImageProvider(_resolveUrl(_boutique.logoUrl))
-                                          : null)) as ImageProvider?,
-                                  child: _logoPath == null && _boutique.logoUrl.isEmpty
-                                      ? const Icon(Icons.storefront,
-                                          size: 40, color: AppTheme.primary)
-                                      : const Align(
-                                          alignment: Alignment.bottomRight,
-                                          child: CircleAvatar(
-                                            radius: 12,
-                                            backgroundColor: AppTheme.primary,
-                                            child: Icon(Icons.edit, size: 14, color: Colors.white),
-                                          ),
-                                        ),
-                                ),
-                              ),
-                            ),
+                          Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: const BoxDecoration(color: AppTheme.primary, shape: BoxShape.circle),
+                            child: const Icon(Icons.camera_alt, color: Colors.white, size: 16),
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(height: 52),
+                  ),
+                ],
+              ),
+            ),
+          ),
 
-                    // Nom de la boutique
-                    const Text('Nom de la boutique *',
-                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: _nameCtrl,
-                      onChanged: (_) {
-                        if (_errors.containsKey('nom')) setState(() => _errors.remove('nom'));
-                        setState(() {});
-                      },
-                      decoration: InputDecoration(
-                        hintText: 'Ex: Ma Super Boutique',
-                        errorText: _errors['nom'] != null
-                            ? (_errors['nom'] is List ? _errors['nom'].join('\n') : _errors['nom'].toString())
-                            : null,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    const Text('Catégorie de produits *',
-                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: _dbCategories.map((c) {
-                        final isSelected = _selectedCategoryIds.contains(c.id);
-                        return FilterChip(
-                          label: Text(c.label),
-                          labelStyle: TextStyle(
-                            color: isSelected ? Colors.white : AppTheme.foreground,
-                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                          ),
-                          selected: isSelected,
-                          onSelected: (bool selected) {
-                            setState(() {
-                              if (selected) {
-                                _selectedCategoryIds.add(c.id);
-                              } else {
-                                _selectedCategoryIds.remove(c.id);
-                              }
-                            });
-                          },
-                          backgroundColor: AppTheme.cardColor,
-                          selectedColor: AppTheme.primary,
-                          checkmarkColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20),
-                            side: BorderSide(
-                              color: isSelected ? AppTheme.primary : AppTheme.border,
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Description
-                    const Text('Description',
-                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: _descCtrl,
-                      maxLines: 3,
-                      decoration: const InputDecoration(
-                          hintText: 'Ex: Produits de qualité et livraison rapide.'),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Téléphone Principal
-                    const Text('Téléphone Principal *',
-                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: _phoneCtrl,
-                      keyboardType: TextInputType.phone,
-                      onChanged: (_) {
-                        if (_errors.containsKey('telephone')) setState(() => _errors.remove('telephone'));
-                        setState(() {});
-                      },
-                      decoration: InputDecoration(
-                        hintText: 'Ex: 90 00 00 00',
-                        errorText: _errors['telephone'] != null
-                            ? (_errors['telephone'] is List
-                                ? _errors['telephone'].join('\n')
-                                : _errors['telephone'].toString())
-                            : null,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Téléphone Secondaire
-                    const Text('Téléphone / Contact 2 (Optionnel)',
-                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: _phone2Ctrl,
-                      keyboardType: TextInputType.phone,
-                      onChanged: (_) {
-                        if (_errors.containsKey('contacts.0')) setState(() => _errors.remove('contacts.0'));
-                        if (_errors.containsKey('contacts')) setState(() => _errors.remove('contacts'));
-                        setState(() {});
-                      },
-                      decoration: InputDecoration(
-                        hintText: 'Ex: 99 00 00 00',
-                        errorText: _errors['contacts.0'] != null
-                            ? (_errors['contacts.0'] is List
-                                ? _errors['contacts.0'].join('\n')
-                                : _errors['contacts.0'].toString())
-                            : (_errors['contacts'] != null
-                                ? (_errors['contacts'] is List
-                                    ? _errors['contacts'].join('\n')
-                                    : _errors['contacts'].toString())
-                                : null),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Jours d'ouverture
-                    const Text('Jours d\'ouverture *',
-                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 10),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: _days.map((day) {
-                        final isSelected = _selectedDays.contains(day);
-                        return GestureDetector(
-                          onTap: () => _toggleDay(day),
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 200),
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                            decoration: BoxDecoration(
-                              color: isSelected ? AppTheme.primary : AppTheme.cardColor,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: isSelected ? AppTheme.primary : AppTheme.border,
-                              ),
-                            ),
-                            child: Text(
-                              day,
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                                color: isSelected ? Colors.white : AppTheme.foreground,
-                              ),
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Horaires d'ouverture
-                    const Text('Horaires d\'ouverture *',
-                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 8),
-                    Row(
+          // Content
+          SliverToBoxAdapter(
+            child: _isLoadingCategories
+                ? const Padding(
+                    padding: EdgeInsets.only(top: 100),
+                    child: Center(child: CircularProgressIndicator()),
+                  )
+                : Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Expanded(
-                          child: GestureDetector(
-                            onTap: () => _pickTime(true),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              decoration: BoxDecoration(
-                                color: AppTheme.cardColor,
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(color: AppTheme.border),
-                              ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  const Icon(Icons.wb_sunny_outlined, size: 18, color: Colors.orange),
-                                  const SizedBox(width: 8),
-                                  Text(_formatTime(_openingTime),
-                                      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: Text('à',
-                              style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                  color: AppTheme.mutedForeground)),
-                        ),
-                        Expanded(
-                          child: GestureDetector(
-                            onTap: () => _pickTime(false),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              decoration: BoxDecoration(
-                                color: AppTheme.cardColor,
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(color: AppTheme.border),
-                              ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  const Icon(Icons.nights_stay_outlined, size: 18, color: Colors.indigo),
-                                  const SizedBox(width: 8),
-                                  Text(_formatTime(_closingTime),
-                                      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Localisation / Ville
-                    const Text('Ville *',
-                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 8),
-                    Obx(() {
-                      final villeNames = _authCtrl.locations.map((v) => v.nom).toList();
-                      if (villeNames.isNotEmpty && !villeNames.contains(_ville) && _ville.isEmpty) {
-                        WidgetsBinding.instance.addPostFrameCallback((_) {
-                          if (mounted) setState(() => _ville = villeNames.first);
-                        });
-                      }
-                      return Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        decoration: BoxDecoration(
-                          border: Border.all(color: AppTheme.border),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: DropdownButtonHideUnderline(
-                          child: DropdownButton<String>(
-                            value: villeNames.contains(_ville) ? _ville : null,
-                            isExpanded: true,
-                            hint: const Text('Sélectionner une ville'),
-                            items: villeNames
-                                .map((v) => DropdownMenuItem(value: v, child: Text(v)))
-                                .toList(),
-                            onChanged: (v) => setState(() => _ville = v!),
-                          ),
-                        ),
-                      );
-                    }),
-                    const SizedBox(height: 16),
-
-                    // Détails de l'adresse
-                    const Text('Adresse / Quartier',
-                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: _detailsCtrl,
-                      decoration: const InputDecoration(
-                          hintText: 'Ex: Quartier Tokoin, près de la pharmacie XYZ...'),
-                    ),
-                    const SizedBox(height: 24),
-                    
-                    // Carte pour sélectionner la localisation
-                    const Text('Localisation de la boutique',
-                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 8),
-                    Container(
-                      height: 250,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: AppTheme.border),
-                      ),
-                      clipBehavior: Clip.hardEdge,
-                      child: Stack(
-                        children: [
-                          FlutterMap(
-                            mapController: _mapController,
-                            options: MapOptions(
-                              initialCenter: _latitude != null && _longitude != null
-                                  ? LatLng(_latitude!, _longitude!)
-                                  : const LatLng(6.137, 1.212), // Lomé by default
-                              initialZoom: 13.0,
-                              minZoom: 6.0,
-                              maxZoom: 18.0,
-                              cameraConstraint: CameraConstraint.contain(
-                                bounds: LatLngBounds(
-                                  const LatLng(5.9, -0.4), // Sud-Ouest
-                                  const LatLng(11.3, 1.9), // Nord-Est
-                                ),
-                              ),
-                              interactionOptions: const InteractionOptions(
-                                flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
-                              ),
-                              onTap: (tapPosition, point) {
-                                setState(() {
-                                  _latitude = point.latitude;
-                                  _longitude = point.longitude;
-                                });
-                                _performReverseGeocoding(point.latitude, point.longitude);
+                        _buildSectionCard(
+                          title: 'Informations Générales',
+                          icon: Icons.info_outline,
+                          children: [
+                            _buildModernTextField(
+                              label: 'Nom de la boutique *',
+                              controller: _nameCtrl,
+                              hint: 'Ex: Ma Super Boutique',
+                              errorText: _errors['nom'],
+                              onChanged: (_) {
+                                if (_errors.containsKey('nom')) setState(() => _errors.remove('nom'));
                               },
                             ),
-                            children: [
-                              TileLayer(
-                                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                                userAgentPackageName: 'com.togomarket.app',
-                              ),
-                              if (_latitude != null && _longitude != null)
-                                MarkerLayer(
-                                  markers: [
-                                    Marker(
-                                      point: LatLng(_latitude!, _longitude!),
-                                      width: 40,
-                                      height: 40,
-                                      child: const Icon(
-                                        Icons.location_on,
-                                        color: Colors.red,
-                                        size: 40,
+                            const SizedBox(height: 16),
+                            _buildModernTextField(
+                              label: 'Description',
+                              controller: _descCtrl,
+                              hint: 'Ex: Produits de qualité et livraison rapide.',
+                              maxLines: 3,
+                            ),
+                            const SizedBox(height: 16),
+                            _buildModernTextField(
+                              label: 'Téléphone Principal *',
+                              controller: _phoneCtrl,
+                              hint: 'Ex: 90 00 00 00',
+                              keyboardType: TextInputType.phone,
+                              errorText: _errors['telephone'],
+                              onChanged: (_) {
+                                if (_errors.containsKey('telephone')) setState(() => _errors.remove('telephone'));
+                              },
+                            ),
+                            const SizedBox(height: 16),
+                            _buildModernTextField(
+                              label: 'Téléphone / Contact 2',
+                              controller: _phone2Ctrl,
+                              hint: 'Ex: 99 00 00 00',
+                              keyboardType: TextInputType.phone,
+                              errorText: _errors['contacts.0'] ?? _errors['contacts'],
+                              onChanged: (_) {
+                                if (_errors.containsKey('contacts.0')) setState(() => _errors.remove('contacts.0'));
+                                if (_errors.containsKey('contacts')) setState(() => _errors.remove('contacts'));
+                              },
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+                        
+                        _buildSectionCard(
+                          title: 'Catégories de produits *',
+                          icon: Icons.category_outlined,
+                          children: [
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: _dbCategories.map((c) {
+                                final isSelected = _selectedCategoryIds.contains(c.id);
+                                return FilterChip(
+                                  label: Text(c.label),
+                                  labelStyle: TextStyle(
+                                    color: isSelected ? Colors.white : AppTheme.foreground,
+                                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                                    fontSize: 13,
+                                  ),
+                                  selected: isSelected,
+                                  onSelected: (bool selected) {
+                                    setState(() {
+                                      if (selected) {
+                                        _selectedCategoryIds.add(c.id);
+                                      } else {
+                                        _selectedCategoryIds.remove(c.id);
+                                      }
+                                    });
+                                  },
+                                  backgroundColor: AppTheme.background,
+                                  selectedColor: AppTheme.primary,
+                                  checkmarkColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(24),
+                                    side: BorderSide(color: isSelected ? AppTheme.primary : AppTheme.border),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+
+                        _buildSectionCard(
+                          title: 'Jours et Horaires d\'ouverture *',
+                          icon: Icons.schedule_outlined,
+                          children: [
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: _days.map((day) {
+                                final isSelected = _selectedDays.contains(day);
+                                return GestureDetector(
+                                  onTap: () => _toggleDay(day),
+                                  child: AnimatedContainer(
+                                    duration: const Duration(milliseconds: 200),
+                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                                    decoration: BoxDecoration(
+                                      color: isSelected ? AppTheme.primary : AppTheme.background,
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(color: isSelected ? AppTheme.primary : AppTheme.border),
+                                    ),
+                                    child: Text(
+                                      day,
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                                        color: isSelected ? Colors.white : AppTheme.foreground,
                                       ),
                                     ),
-                                  ],
-                                ),
-                            ],
-                          ),
-                          Positioned(
-                            bottom: 16,
-                            right: 16,
-                            child: FloatingActionButton.small(
-                              onPressed: _gpsLoading ? null : _requestGpsPosition,
-                              backgroundColor: AppTheme.primary,
-                              child: _gpsLoading
-                                  ? const SizedBox(
-                                      width: 16,
-                                      height: 16,
-                                      child: CircularProgressIndicator(
-                                        color: Colors.white,
-                                        strokeWidth: 2,
-                                      ),
-                                    )
-                                  : const Icon(Icons.my_location, color: Colors.white),
+                                  ),
+                                );
+                              }).toList(),
                             ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Appuyez sur la carte pour définir la position de votre boutique ou utilisez le bouton pour utiliser votre position actuelle.',
-                      style: TextStyle(fontSize: 12, color: AppTheme.mutedForeground),
-                    ),
-                    const SizedBox(height: 32),
-                    const SizedBox(height: 32),
-                    Opacity(
-                      opacity: (_isFormValid && !_isLoading) ? 1.0 : 0.5,
-                      child: AppButton(
-                        label: _isLoading ? 'Enregistrement...' : 'Enregistrer les modifications',
-                        icon: _isLoading ? Icons.hourglass_empty : Icons.save_outlined,
-                        onTap: (_isFormValid && !_isLoading)
-                            ? () async {
-                                setState(() {
-                                  _errors.clear();
-                                  _isLoading = true;
-                                });
+                            const SizedBox(height: 20),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _buildTimePickerTile(
+                                    title: 'Ouverture',
+                                    time: _openingTime,
+                                    icon: Icons.wb_sunny_outlined,
+                                    color: Colors.orange,
+                                    onTap: () => _pickTime(true),
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: _buildTimePickerTile(
+                                    title: 'Fermeture',
+                                    time: _closingTime,
+                                    icon: Icons.nights_stay_outlined,
+                                    color: Colors.indigo,
+                                    onTap: () => _pickTime(false),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
 
-                                final telephoneFormatted = _formatPhoneNumber(_phoneCtrl.text.trim());
-                                final phone2Raw = _phone2Ctrl.text.trim();
-                                final phone2Formatted = _formatPhoneNumber(phone2Raw);
-
-                                if (phone2Formatted.isNotEmpty && telephoneFormatted == phone2Formatted) {
-                                  setState(() {
-                                    _errors['contacts.0'] = 'Le contact secondaire ne peut pas être identique au numéro principal.';
-                                    _isLoading = false;
+                        _buildSectionCard(
+                          title: 'Localisation',
+                          icon: Icons.place_outlined,
+                          children: [
+                            Obx(() {
+                              final villes = _authCtrl.locations;
+                              return _buildModernDropdown(
+                                label: 'Ville / Commune *',
+                                value: _villeId,
+                                items: villes.map((v) => DropdownMenuItem(value: v.id, child: Text(v.nom))).toList(),
+                                onChanged: (v) => setState(() { _villeId = v; _quartierId = null; }),
+                              );
+                            }),
+                            const SizedBox(height: 16),
+                            if (_villeId != null) ...[
+                              Obx(() {
+                                final ville = _authCtrl.locations.firstWhereOrNull((v) => v.id == _villeId);
+                                final quartiers = ville?.quartiers ?? [];
+                                
+                                if (_quartierId != null && !quartiers.any((q) => q.id == _quartierId)) {
+                                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                                    if (mounted) setState(() => _quartierId = null);
                                   });
-                                  return;
                                 }
 
-                                // On envoie toujours contacts pour ne pas perdre la valeur existante.
-                                // Si le champ est vide → tableau vide → le backend supprime le contact.
-                                // Si rempli → met à jour.
-                                final List<String> contacts =
-                                    phone2Formatted.isNotEmpty ? [phone2Formatted] : [];
+                                return _buildModernDropdown(
+                                  label: 'Quartier *',
+                                  value: _quartierId,
+                                  items: quartiers.map((q) => DropdownMenuItem(value: q.id, child: Text(q.nom))).toList(),
+                                  onChanged: (v) => setState(() => _quartierId = v),
+                                );
+                              }),
+                              const SizedBox(height: 16),
+                            ],
+                            _buildModernTextField(
+                              label: 'Détails supplémentaires (facultatif)',
+                              controller: _detailsCtrl,
+                              hint: 'Ex: Derrière la pharmacie XYZ...',
+                            ),
+                            const SizedBox(height: 20),
+                            const Text('Localisation précise sur la carte', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                            const SizedBox(height: 8),
+                            Container(
+                              height: 220,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(color: AppTheme.border),
+                              ),
+                              clipBehavior: Clip.hardEdge,
+                              child: Stack(
+                                children: [
+                                  FlutterMap(
+                                    mapController: _mapController,
+                                    options: MapOptions(
+                                      initialCenter: _latitude != null && _longitude != null
+                                          ? LatLng(_latitude!, _longitude!)
+                                          : const LatLng(6.137, 1.212),
+                                      initialZoom: 13.0,
+                                      minZoom: 6.0,
+                                      maxZoom: 18.0,
+                                      cameraConstraint: CameraConstraint.contain(
+                                        bounds: LatLngBounds(const LatLng(5.9, -0.4), const LatLng(11.3, 1.9)),
+                                      ),
+                                      interactionOptions: const InteractionOptions(flags: InteractiveFlag.all & ~InteractiveFlag.rotate),
+                                      onTap: (tapPosition, point) {
+                                        setState(() {
+                                          _latitude = point.latitude;
+                                          _longitude = point.longitude;
+                                        });
+                                        _performReverseGeocoding(point.latitude, point.longitude);
+                                      },
+                                    ),
+                                    children: [
+                                      TileLayer(
+                                        urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                                        userAgentPackageName: 'com.togomarket.app',
+                                      ),
+                                      if (_latitude != null && _longitude != null)
+                                        MarkerLayer(
+                                          markers: [
+                                            Marker(
+                                              point: LatLng(_latitude!, _longitude!),
+                                              width: 40,
+                                              height: 40,
+                                              child: const Icon(Icons.location_on, color: AppTheme.destructive, size: 40),
+                                            ),
+                                          ],
+                                        ),
+                                    ],
+                                  ),
+                                  Positioned(
+                                    bottom: 12,
+                                    right: 12,
+                                    child: FloatingActionButton.small(
+                                      onPressed: _gpsLoading ? null : _requestGpsPosition,
+                                      backgroundColor: AppTheme.primary,
+                                      elevation: 2,
+                                      child: _gpsLoading
+                                          ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                                          : const Icon(Icons.my_location, color: Colors.white),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Appuyez sur la carte pour marquer l\'emplacement exact.',
+                              style: TextStyle(fontSize: 12, color: AppTheme.mutedForeground),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 32),
 
-                                final payload = {
-                                  'nom': _nameCtrl.text.trim(),
-                                  'telephone': telephoneFormatted,
-                                  'adresse': _ville,
-                                  'details_adresse': _detailsCtrl.text.trim(),
-                                  'description': _descCtrl.text.trim(),
-                                  'contacts': contacts,
-                                  'horaires': {
-                                    'jours': _selectedDays,
-                                    'ouverture': _formatTime(_openingTime),
-                                    'fermeture': _formatTime(_closingTime),
-                                  },
-                                  'categories': _selectedCategoryIds,
-                                  if (_latitude != null) 'latitude': _latitude,
-                                  if (_longitude != null) 'longitude': _longitude,
-                                  if (_bannerPath != null) 'bannerPath': _bannerPath,
-                                  if (_logoPath != null) 'logoPath': _logoPath,
-                                };
-
-                                try {
-                                  final result = await BoutiqueController.to.updateBoutique(payload);
-                                  if (result == true) {
-                                    AppToasts.success(
-                                      context,
-                                      'Succès',
-                                      'Votre boutique a été modifiée avec succès.',
-                                    );
-                                    Get.back();
-                                  } else if (result is Map) {
-                                    setState(() {
-                                      _errors = Map<String, dynamic>.from(result);
-                                    });
-                                    AppToasts.error(
-                                      context,
-                                      'Erreur de validation',
-                                      'Veuillez corriger les erreurs dans le formulaire.',
-                                    );
-                                  } else {
-                                    AppToasts.error(context, 'Erreur', 'Une erreur inattendue est survenue.');
-                                  }
-                                } finally {
-                                  if (mounted) {
-                                    setState(() => _isLoading = false);
-                                  }
-                                }
-                              }
-                            : () {},
-                      ),
+                        // Bouton d'enregistrement
+                        Opacity(
+                          opacity: (_isFormValid && !_isLoading) ? 1.0 : 0.5,
+                          child: AppButton(
+                            label: _isLoading ? 'Enregistrement en cours...' : 'Enregistrer les modifications',
+                            icon: _isLoading ? Icons.hourglass_empty : Icons.save_outlined,
+                            onTap: (_isFormValid && !_isLoading) ? _saveShopChanges : () {},
+                          ),
+                        ),
+                        const SizedBox(height: 40),
+                      ],
                     ),
-                    const SizedBox(height: 24),
-                  ],
-                ),
-              ),
+                  ),
+          ),
+        ],
       ),
     );
+  }
+
+  Widget _buildSectionCard({required String title, required IconData icon, required List<Widget> children}) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppTheme.cardColor,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: AppTheme.shadowSm,
+        border: Border.all(color: AppTheme.border.withOpacity(0.5)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, color: AppTheme.primary, size: 22),
+              const SizedBox(width: 10),
+              Text(title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppTheme.foreground)),
+            ],
+          ),
+          const SizedBox(height: 20),
+          ...children,
+        ],
+      ),
+    );
+  }
+
+  Widget _buildModernTextField({
+    required String label,
+    required TextEditingController controller,
+    required String hint,
+    int maxLines = 1,
+    TextInputType? keyboardType,
+    dynamic errorText,
+    Function(String)? onChanged,
+  }) {
+    final String? parsedError = errorText != null
+        ? (errorText is List ? errorText.join('\n') : errorText.toString())
+        : null;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppTheme.foreground)),
+        const SizedBox(height: 8),
+        TextField(
+          controller: controller,
+          maxLines: maxLines,
+          keyboardType: keyboardType,
+          onChanged: onChanged,
+          decoration: InputDecoration(
+            hintText: hint,
+            errorText: parsedError,
+            filled: true,
+            fillColor: AppTheme.background,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide(color: AppTheme.border),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide(color: AppTheme.border),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: const BorderSide(color: AppTheme.primary, width: 1.5),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: const BorderSide(color: AppTheme.destructive),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildModernDropdown({
+    required String label,
+    required int? value,
+    required List<DropdownMenuItem<int>> items,
+    required Function(int?) onChanged,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppTheme.foreground)),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          decoration: BoxDecoration(
+            color: AppTheme.background,
+            border: Border.all(color: AppTheme.border),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<int>(
+              value: value,
+              isExpanded: true,
+              hint: const Text('Sélectionner'),
+              items: items,
+              onChanged: onChanged,
+              icon: Icon(Icons.keyboard_arrow_down_rounded, color: AppTheme.mutedForeground),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTimePickerTile({
+    required String title,
+    required TimeOfDay? time,
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: AppTheme.background,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppTheme.border),
+        ),
+        child: Column(
+          children: [
+            Text(title, style: TextStyle(fontSize: 12, color: AppTheme.mutedForeground, fontWeight: FontWeight.w600)),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, size: 16, color: color),
+                const SizedBox(width: 6),
+                Text(_formatTime(time), style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800)),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _saveShopChanges() async {
+    setState(() {
+      _errors.clear();
+      _isLoading = true;
+    });
+
+    final telephoneFormatted = _formatPhoneNumber(_phoneCtrl.text.trim());
+    final phone2Raw = _phone2Ctrl.text.trim();
+    final phone2Formatted = _formatPhoneNumber(phone2Raw);
+
+    if (phone2Formatted.isNotEmpty && telephoneFormatted == phone2Formatted) {
+      setState(() {
+        _errors['contacts.0'] = 'Le contact secondaire ne peut pas être identique au principal.';
+        _isLoading = false;
+      });
+      return;
+    }
+
+    final List<String> contacts = phone2Formatted.isNotEmpty ? [phone2Formatted] : [];
+
+    final ville = _authCtrl.locations.firstWhereOrNull((v) => v.id == _villeId);
+    final villeNom = ville?.nom ?? '';
+    final adresseComplete = villeNom;
+
+    final payload = {
+      'nom': _nameCtrl.text.trim(),
+      'telephone': telephoneFormatted,
+      'adresse': adresseComplete,
+      'quartier_id': _quartierId,
+      'details_adresse': _detailsCtrl.text.trim(),
+      'description': _descCtrl.text.trim(),
+      'contacts': contacts,
+      'horaires': {
+        'jours': _selectedDays,
+        'ouverture': _formatTime(_openingTime),
+        'fermeture': _formatTime(_closingTime),
+      },
+      'categories': _selectedCategoryIds,
+      if (_latitude != null) 'latitude': _latitude,
+      if (_longitude != null) 'longitude': _longitude,
+      if (_bannerPath != null) 'bannerPath': _bannerPath,
+      if (_logoPath != null) 'logoPath': _logoPath,
+    };
+
+    try {
+      final result = await BoutiqueController.to.updateBoutique(payload);
+      if (result == true) {
+        AppToasts.success(context, 'Succès', 'Votre boutique a été modifiée avec succès.');
+        Get.back();
+      } else if (result is Map) {
+        setState(() {
+          _errors = Map<String, dynamic>.from(result);
+        });
+        AppToasts.error(context, 'Erreur de validation', 'Veuillez corriger les erreurs dans le formulaire.');
+      } else {
+        AppToasts.error(context, 'Erreur', 'Une erreur inattendue est survenue.');
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 }

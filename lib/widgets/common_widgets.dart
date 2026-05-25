@@ -650,8 +650,8 @@ class FavoriteTicketCard extends StatelessWidget {
     final isParticulier = product.boutiqueObj == null;
 
     final stripe = _stripeColor();
-    final catLabel = product.categoryObj?.nom ?? 'Produit';
-    final iconData = CategoryIconHelper.getIcon(product.categoryObj?.slug);
+    final catLabel = product.categoryObj?.name ?? 'Produit';
+    final iconData = CategoryIconHelper.getIconFromString(product.categoryObj?.icon);
 
     return GestureDetector(
       onTap: () => Get.toNamed('/product/${product.id}'),

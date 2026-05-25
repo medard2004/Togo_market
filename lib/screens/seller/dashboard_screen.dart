@@ -94,7 +94,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       Icons.settings_outlined,
                       AppTheme.primary,
                       AppTheme.primaryLight,
-                      onTap: () => Get.toNamed('/shop-settings'),
+                      onTap: () => Get.toNamed('/shop-information'),
                     ),
                   ],
                 ),

@@ -334,7 +334,7 @@ class AppController extends GetxController {
       final locationMatch = p.location.toLowerCase().contains(q);
       final conditionMatch = p.condition.toLowerCase().contains(q);
       
-      final catMatch = (p.categoryObj?.nom ?? '').toLowerCase().contains(q);
+      final catMatch = (p.categoryObj?.name ?? '').toLowerCase().contains(q);
       
       final boutiqueNomMatch = (p.boutiqueObj?.nom ?? '').toLowerCase().contains(q);
       final boutiqueAdresseMatch = (p.boutiqueObj?.adresse ?? '').toLowerCase().contains(q);

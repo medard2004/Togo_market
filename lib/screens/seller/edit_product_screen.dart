@@ -350,10 +350,10 @@ class _EditProductScreenState extends State<EditProductScreen> {
                                   }
                                   return Row(
                                     children: [
-                                      Icon(CategoryIconHelper.getIcon(matchingCat.slug), size: 16, color: AppTheme.primary),
+                                      Icon(CategoryIconHelper.getIconFromString(matchingCat.icon), size: 16, color: AppTheme.primary),
                                       const SizedBox(width: 8),
                                       Expanded(
-                                        child: Text(matchingCat.nom, style: TextStyle(fontSize: 12, color: AppTheme.foreground), overflow: TextOverflow.ellipsis),
+                                        child: Text(matchingCat.name, style: TextStyle(fontSize: 12, color: AppTheme.foreground), overflow: TextOverflow.ellipsis),
                                       ),
                                       Icon(Icons.edit, size: 14, color: AppTheme.primary),
                                     ],

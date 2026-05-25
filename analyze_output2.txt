@@ -192,16 +192,6 @@ warning • Unused import: '../../controllers/app_controller.dart' • lib/scree
 warning • The declaration '_SocialButton' isn't referenced • lib/screens/profile/profile_setup_screen.dart:759:7 • unused_element
 warning • The declaration '_GoogleIcon' isn't referenced • lib/screens/profile/profile_setup_screen.dart:784:7 • unused_element
 warning • The declaration '_Avatar' isn't referenced • lib/screens/profile/profile_setup_screen.dart:836:7 • unused_element
-  error • Expected to find ';' • lib/screens/profile/profile_setup_screen.dart:945:5 • expected_token
-  error • Expected an identifier • lib/screens/profile/profile_setup_screen.dart:945:6 • missing_identifier
-  error • Unexpected text ';' • lib/screens/profile/profile_setup_screen.dart:945:6 • unexpected_token
-warning • The label 'isScrollControlled' isn't used • lib/screens/profile/profile_setup_screen.dart:946:5 • unused_label
-  error • Expected to find ';' • lib/screens/profile/profile_setup_screen.dart:946:25 • expected_token
-  error • Expected an identifier • lib/screens/profile/profile_setup_screen.dart:946:29 • missing_identifier
-  error • Expected to find ';' • lib/screens/profile/profile_setup_screen.dart:946:29 • expected_token
-  error • Unexpected text ';' • lib/screens/profile/profile_setup_screen.dart:946:29 • unexpected_token
-  error • Expected an identifier • lib/screens/profile/profile_setup_screen.dart:947:3 • missing_identifier
-  error • Unexpected text ';' • lib/screens/profile/profile_setup_screen.dart:947:3 • unexpected_token
    info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/profile/public_profile_screen.dart:72:46 • deprecated_member_use
    info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/profile/public_profile_screen.dart:91:52 • deprecated_member_use
    info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/profile/public_profile_screen.dart:169:49 • deprecated_member_use
@@ -309,10 +299,13 @@ warning • Unused import: 'edit_shop_screen.dart' • lib/screens/seller/shop_i
    info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/seller/shop_settings_screen.dart:312:55 • deprecated_member_use
 warning • The value of the local variable 'villeNom' isn't used • lib/screens/seller/store_config_model.dart:86:13 • unused_local_variable
 warning • The value of the local variable 'quartierNom' isn't used • lib/screens/seller/store_config_model.dart:87:13 • unused_local_variable
+warning • Unused import: 'package:geolocator/geolocator.dart' • lib/screens/seller/store_configuration_screen.dart:6:8 • unused_import
 warning • Unused import: '../../theme/app_theme.dart' • lib/screens/seller/store_configuration_screen.dart:7:8 • unused_import
 warning • Unused import: '../../theme/app_spacing.dart' • lib/screens/seller/store_configuration_screen.dart:10:8 • unused_import
 warning • Unused import: '../../widgets/common_widgets.dart' • lib/screens/seller/store_configuration_screen.dart:13:8 • unused_import
 warning • Unused import: '../../Api/model/location_model.dart' • lib/screens/seller/store_configuration_screen.dart:15:8 • unused_import
+warning • Unused import: '../../utils/location_service.dart' • lib/screens/seller/store_configuration_screen.dart:18:8 • unused_import
+warning • Unused import: '../../utils/togo_cities.dart' • lib/screens/seller/store_configuration_screen.dart:19:8 • unused_import
 warning • The value of the field '_gpsStatus' isn't used • lib/screens/seller/store_configuration_screen.dart:49:11 • unused_field
    info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/seller/store_configuration_screen.dart:271:60 • deprecated_member_use
    info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/seller/store_configuration_screen.dart:401:42 • deprecated_member_use
@@ -323,28 +316,18 @@ warning • The value of the field '_gpsStatus' isn't used • lib/screens/selle
    info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/seller/store_configuration_screen.dart:636:56 • deprecated_member_use
    info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/seller/store_configuration_screen.dart:752:54 • deprecated_member_use
    info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/seller/store_configuration_screen.dart:799:54 • deprecated_member_use
-warning • The declaration '_buildGpsButton' isn't referenced • lib/screens/seller/store_configuration_screen.dart:820:10 • unused_element
    info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/seller/store_configuration_screen.dart:826:36 • deprecated_member_use
    info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/seller/store_configuration_screen.dart:909:62 • deprecated_member_use
    info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/seller/store_configuration_screen.dart:912:55 • deprecated_member_use
    info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/seller/store_configuration_screen.dart:918:62 • deprecated_member_use
    info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/seller/store_configuration_screen.dart:951:59 • deprecated_member_use
-   info • 'desiredAccuracy' is deprecated and shouldn't be used. use settings parameter with AndroidSettings, AppleSettings, WebSettings, or LocationSettings • lib/screens/seller/store_configuration_screen.dart:995:11 • deprecated_member_use
-  error • The setter 'ville' isn't defined for the type 'StoreConfigData' • lib/screens/seller/store_configuration_screen.dart:1019:19 • undefined_setter
-  error • The name '_buildGpsButton' is already defined • lib/screens/seller/store_configuration_screen.dart:1030:10 • duplicate_definition
-   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/seller/store_configuration_screen.dart:1038:35 • deprecated_member_use
-   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/seller/store_configuration_screen.dart:1039:35 • deprecated_member_use
-   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/seller/store_configuration_screen.dart:1043:37 • deprecated_member_use
-   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/seller/store_configuration_screen.dart:1044:37 • deprecated_member_use
-   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/seller/store_configuration_screen.dart:1095:37 • deprecated_member_use
-   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/seller/store_configuration_screen.dart:1096:36 • deprecated_member_use
-   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/seller/store_configuration_screen.dart:1108:45 • deprecated_member_use
-   info • 'activeColor' is deprecated and shouldn't be used. Use activeThumbColor or activeTrackColor instead. This feature was deprecated after v3.31.0-2.0.pre • lib/screens/seller/store_configuration_screen.dart:1125:19 • deprecated_member_use
-  error • The getter 'ville' isn't defined for the type 'StoreConfigData' • lib/screens/seller/store_configuration_screen.dart:1259:27 • undefined_getter
-  error • The getter 'ville' isn't defined for the type 'StoreConfigData' • lib/screens/seller/store_configuration_screen.dart:1259:55 • undefined_getter
-   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/seller/store_configuration_screen.dart:1280:42 • deprecated_member_use
-   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/seller/store_configuration_screen.dart:1301:60 • deprecated_member_use
-   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/seller/store_configuration_screen.dart:1324:62 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/seller/store_configuration_screen.dart:987:37 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/seller/store_configuration_screen.dart:988:36 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/seller/store_configuration_screen.dart:1000:45 • deprecated_member_use
+   info • 'activeColor' is deprecated and shouldn't be used. Use activeThumbColor or activeTrackColor instead. This feature was deprecated after v3.31.0-2.0.pre • lib/screens/seller/store_configuration_screen.dart:1017:19 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/seller/store_configuration_screen.dart:1181:42 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/seller/store_configuration_screen.dart:1202:60 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/seller/store_configuration_screen.dart:1225:62 • deprecated_member_use
    info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/seller/widgets/seller_product_card.dart:29:35 • deprecated_member_use
    info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/seller/widgets/seller_product_card.dart:102:53 • deprecated_member_use
    info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/theme/app_shadows.dart:7:30 • deprecated_member_use
