@@ -1,0 +1,105 @@
+Analyzing Togo_market...                                        
+
+warning • The value of the field '_baseService' isn't used • lib/Api/provider/api_provider.dart:7:21 • unused_field
+warning • Unused import: 'package:image_picker/image_picker.dart' • lib/screens/auth/auth_screen.dart:3:8 • unused_import
+warning • Unused import: 'dart:io' • lib/screens/auth/auth_screen.dart:4:8 • unused_import
+warning • Unused import: '../../Api/model/location_model.dart' • lib/screens/auth/auth_screen.dart:7:8 • unused_import
+warning • Unused import: '../../Api/model/category_model.dart' • lib/screens/auth/auth_screen.dart:8:8 • unused_import
+warning • The value of the field '_detailsCtrl' isn't used • lib/screens/auth/auth_screen.dart:29:9 • unused_field
+warning • The value of the field '_selectedQuartierId' isn't used • lib/screens/auth/auth_screen.dart:30:8 • unused_field
+warning • The value of the field '_selectedInterests' isn't used • lib/screens/auth/auth_screen.dart:31:18 • unused_field
+warning • The value of the field '_selectedProfilePhotoPath' isn't used • lib/screens/auth/auth_screen.dart:34:11 • unused_field
+warning • The declaration '_ProfileStep' isn't referenced • lib/screens/auth/auth_screen.dart:1033:7 • unused_element
+warning • A value for optional parameter 'key' isn't ever given • lib/screens/auth/auth_screen.dart:1040:14 • unused_element_parameter
+warning • The declaration '_InterestsStep' isn't referenced • lib/screens/auth/auth_screen.dart:1241:7 • unused_element
+warning • A value for optional parameter 'key' isn't ever given • lib/screens/auth/auth_screen.dart:1247:14 • unused_element_parameter
+warning • Unused import: 'package:url_launcher/url_launcher.dart' • lib/screens/chat/chat_screen.dart:13:8 • unused_import
+warning • Unused import: '../../utils/image_optimization_service.dart' • lib/screens/chat/chat_screen.dart:27:8 • unused_import
+warning • The value of the field '_isBuyer' isn't used • lib/screens/chat/chat_screen.dart:50:8 • unused_field
+warning • The declaration '_TypingIndicator' isn't referenced • lib/screens/chat/chat_screen.dart:2696:7 • unused_element
+warning • The value of the local variable 'nearbyProds' isn't used • lib/screens/home/widgets/home_body.dart:31:15 • unused_local_variable
+warning • The declaration '_buildZoneEmptyState' isn't referenced • lib/screens/home/widgets/home_body.dart:543:10 • unused_element
+warning • Unused import: 'package:get/get.dart' • lib/screens/messages/widgets/conversation_tile.dart:2:8 • unused_import
+warning • Unused import: '../../../utils/location_service.dart' • lib/screens/orders/order_checkout_screen.dart:9:8 • unused_import
+warning • Unused import: '../../../Api/model/location_model.dart' • lib/screens/orders/order_checkout_screen.dart:10:8 • unused_import
+warning • The value of the field '_gpsLoading' isn't used • lib/screens/orders/order_checkout_screen.dart:36:8 • unused_field
+warning • The declaration '_onMapTap' isn't referenced • lib/screens/orders/order_checkout_screen.dart:497:16 • unused_element
+warning • The operand can't be 'null', so the condition is always 'true' • lib/screens/orders/order_checkout_screen.dart:989:25 • unnecessary_null_comparison
+warning • The receiver can't be null, so the null-aware operator '?.' is unnecessary • lib/screens/orders/order_checkout_screen.dart:1550:40 • invalid_null_aware_operator
+warning • The operand can't be 'null', so the condition is always 'true' • lib/screens/orders/order_checkout_screen.dart:1551:46 • unnecessary_null_comparison
+warning • The receiver can't be null, so the null-aware operator '?.' is unnecessary • lib/screens/orders/order_checkout_screen.dart:1564:40 • invalid_null_aware_operator
+warning • The receiver can't be null, so the null-aware operator '?.' is unnecessary • lib/screens/orders/order_checkout_screen.dart:1565:44 • invalid_null_aware_operator
+warning • The operand can't be 'null', so the condition is always 'true' • lib/screens/orders/order_checkout_screen.dart:1566:46 • unnecessary_null_comparison
+warning • The receiver can't be null, so the null-aware operator '?.' is unnecessary • lib/screens/orders/order_checkout_screen.dart:1583:32 • invalid_null_aware_operator
+warning • The '!' will have no effect because the receiver can't be null • lib/screens/orders/order_checkout_screen.dart:1584:32 • unnecessary_non_null_assertion
+warning • The '!' will have no effect because the receiver can't be null • lib/screens/orders/order_checkout_screen.dart:1592:54 • unnecessary_non_null_assertion
+warning • The '!' will have no effect because the receiver can't be null • lib/screens/orders/order_checkout_screen.dart:1593:54 • unnecessary_non_null_assertion
+warning • The '!' will have no effect because the receiver can't be null • lib/screens/orders/order_checkout_screen.dart:1595:46 • unnecessary_non_null_assertion
+warning • The '!' will have no effect because the receiver can't be null • lib/screens/orders/order_checkout_screen.dart:1596:50 • unnecessary_non_null_assertion
+warning • The receiver can't be null, so the null-aware operator '?.' is unnecessary • lib/screens/orders/order_checkout_screen.dart:1617:51 • invalid_null_aware_operator
+warning • The receiver can't be null, so the null-aware operator '?.' is unnecessary • lib/screens/orders/order_checkout_screen.dart:1638:40 • invalid_null_aware_operator
+warning • The operand can't be 'null', so the condition is always 'true' • lib/screens/orders/order_checkout_screen.dart:1738:39 • unnecessary_null_comparison
+warning • The '!' will have no effect because the receiver can't be null • lib/screens/orders/order_details_screen.dart:560:46 • unnecessary_non_null_assertion
+warning • The '!' will have no effect because the receiver can't be null • lib/screens/orders/order_details_screen.dart:561:46 • unnecessary_non_null_assertion
+warning • The '!' will have no effect because the receiver can't be null • lib/screens/orders/order_details_screen.dart:562:46 • unnecessary_non_null_assertion
+warning • The '!' will have no effect because the receiver can't be null • lib/screens/orders/order_details_screen.dart:564:51 • unnecessary_non_null_assertion
+warning • The '!' will have no effect because the receiver can't be null • lib/screens/orders/order_details_screen.dart:564:82 • unnecessary_non_null_assertion
+warning • The '!' will have no effect because the receiver can't be null • lib/screens/orders/order_details_screen.dart:565:53 • unnecessary_non_null_assertion
+warning • The '!' will have no effect because the receiver can't be null • lib/screens/orders/order_details_screen.dart:567:46 • unnecessary_non_null_assertion
+warning • The '!' will have no effect because the receiver can't be null • lib/screens/orders/order_details_screen.dart:570:46 • unnecessary_non_null_assertion
+warning • The '!' will have no effect because the receiver can't be null • lib/screens/orders/order_details_screen.dart:571:46 • unnecessary_non_null_assertion
+warning • The '!' will have no effect because the receiver can't be null • lib/screens/orders/order_details_screen.dart:579:46 • unnecessary_non_null_assertion
+warning • The '!' will have no effect because the receiver can't be null • lib/screens/orders/order_details_screen.dart:580:46 • unnecessary_non_null_assertion
+warning • The '!' will have no effect because the receiver can't be null • lib/screens/orders/order_details_screen.dart:581:46 • unnecessary_non_null_assertion
+warning • The '!' will have no effect because the receiver can't be null • lib/screens/orders/order_details_screen.dart:583:51 • unnecessary_non_null_assertion
+warning • The '!' will have no effect because the receiver can't be null • lib/screens/orders/order_details_screen.dart:583:73 • unnecessary_non_null_assertion
+warning • The '!' will have no effect because the receiver can't be null • lib/screens/orders/order_details_screen.dart:584:53 • unnecessary_non_null_assertion
+warning • The '!' will have no effect because the receiver can't be null • lib/screens/orders/order_details_screen.dart:585:46 • unnecessary_non_null_assertion
+warning • The '!' will have no effect because the receiver can't be null • lib/screens/orders/order_details_screen.dart:586:60 • unnecessary_non_null_assertion
+warning • A value for optional parameter 'width' isn't ever given • lib/screens/orders/orders_screen.dart:557:10 • unused_element_parameter
+warning • The '!' will have no effect because the receiver can't be null • lib/screens/product/product_detail_screen.dart:249:51 • unnecessary_non_null_assertion
+warning • The value of the local variable 'r' isn't used • lib/screens/product/trending_explorer_screen.dart:131:11 • unused_local_variable
+warning • Unused import: '../../controllers/app_controller.dart' • lib/screens/profile/my_products_screen.dart:6:8 • unused_import
+warning • Unused import: '../seller/add_product_screen.dart' • lib/screens/profile/my_products_screen.dart:11:8 • unused_import
+warning • Unused import: '../../controllers/app_controller.dart' • lib/screens/profile/profile_setup_screen.dart:9:8 • unused_import
+warning • The declaration '_SocialButton' isn't referenced • lib/screens/profile/profile_setup_screen.dart:788:7 • unused_element
+warning • The declaration '_GoogleIcon' isn't referenced • lib/screens/profile/profile_setup_screen.dart:813:7 • unused_element
+warning • The declaration '_Avatar' isn't referenced • lib/screens/profile/profile_setup_screen.dart:865:7 • unused_element
+warning • Unused import: 'package:latlong2/latlong.dart' • lib/screens/seller/edit_shop_screen.dart:7:8 • unused_import
+warning • The value of the field '_gpsLoading' isn't used • lib/screens/seller/edit_shop_screen.dart:51:8 • unused_field
+warning • The declaration '_requestGpsPosition' isn't referenced • lib/screens/seller/edit_shop_screen.dart:253:16 • unused_element
+warning • Dead code • lib/screens/seller/individual_dashboard_screen.dart:365:33 • dead_code
+warning • Dead code • lib/screens/seller/individual_dashboard_screen.dart:374:17 • dead_code
+warning • Dead code • lib/screens/seller/individual_dashboard_screen.dart:454:40 • dead_code
+warning • Dead code • lib/screens/seller/individual_dashboard_screen.dart:458:54 • dead_code
+warning • Dead code • lib/screens/seller/return_policy_screen_new.dart:234:25 • dead_code
+warning • Dead code • lib/screens/seller/return_policy_screen_new.dart:237:25 • dead_code
+warning • Dead code • lib/screens/seller/return_policy_screen_new.dart:244:67 • dead_code
+warning • Dead code • lib/screens/seller/return_policy_screen_new.dart:245:43 • dead_code
+warning • Dead code • lib/screens/seller/return_policy_screen_new.dart:258:43 • dead_code
+warning • Dead code • lib/screens/seller/return_policy_screen_new.dart:273:40 • dead_code
+warning • Unused import: '../../theme/app_colors.dart' • lib/screens/seller/sell_choice_sheet.dart:4:8 • unused_import
+warning • The '!' will have no effect because the receiver can't be null • lib/screens/seller/seller_screen.dart:357:34 • unnecessary_non_null_assertion
+warning • The '!' will have no effect because the receiver can't be null • lib/screens/seller/seller_screen.dart:359:74 • unnecessary_non_null_assertion
+warning • The '!' will have no effect because the receiver can't be null • lib/screens/seller/seller_screen.dart:416:48 • unnecessary_non_null_assertion
+warning • The '!' will have no effect because the receiver can't be null • lib/screens/seller/seller_screen.dart:418:86 • unnecessary_non_null_assertion
+warning • The '!' will have no effect because the receiver can't be null • lib/screens/seller/seller_screen.dart:434:48 • unnecessary_non_null_assertion
+warning • The '!' will have no effect because the receiver can't be null • lib/screens/seller/seller_screen.dart:444:53 • unnecessary_non_null_assertion
+warning • The '!' will have no effect because the receiver can't be null • lib/screens/seller/seller_screen.dart:461:59 • unnecessary_non_null_assertion
+warning • Unused import: '../../widgets/common_widgets.dart' • lib/screens/seller/shop_information_screen.dart:7:8 • unused_import
+warning • Unused import: '../../models/shop_info_model.dart' • lib/screens/seller/shop_information_screen.dart:9:8 • unused_import
+warning • Unused import: 'edit_shop_screen.dart' • lib/screens/seller/shop_information_screen.dart:11:8 • unused_import
+warning • The value of the local variable 'villeNom' isn't used • lib/screens/seller/store_config_model.dart:86:13 • unused_local_variable
+warning • The value of the local variable 'quartierNom' isn't used • lib/screens/seller/store_config_model.dart:87:13 • unused_local_variable
+warning • Unused import: 'package:geolocator/geolocator.dart' • lib/screens/seller/store_configuration_screen.dart:6:8 • unused_import
+warning • Unused import: '../../theme/app_theme.dart' • lib/screens/seller/store_configuration_screen.dart:7:8 • unused_import
+warning • Unused import: '../../theme/app_spacing.dart' • lib/screens/seller/store_configuration_screen.dart:10:8 • unused_import
+warning • Unused import: '../../widgets/common_widgets.dart' • lib/screens/seller/store_configuration_screen.dart:13:8 • unused_import
+warning • Unused import: '../../Api/model/location_model.dart' • lib/screens/seller/store_configuration_screen.dart:15:8 • unused_import
+warning • Unused import: '../../utils/location_service.dart' • lib/screens/seller/store_configuration_screen.dart:18:8 • unused_import
+warning • Unused import: '../../utils/togo_cities.dart' • lib/screens/seller/store_configuration_screen.dart:19:8 • unused_import
+warning • The value of the field '_gpsStatus' isn't used • lib/screens/seller/store_configuration_screen.dart:49:11 • unused_field
+warning • A value for optional parameter 'parent' isn't ever given • lib/widgets/category_picker_bottom_sheet.dart:54:10 • unused_element_parameter
+warning • The left operand can't be null, so the right operand is never executed • lib/widgets/common_widgets.dart:430:68 • dead_null_aware_expression
+warning • The value of the field '_fallbackIcons' isn't used • lib/widgets/common_widgets.dart:620:16 • unused_field
+

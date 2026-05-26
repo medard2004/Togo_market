@@ -419,14 +419,18 @@ class ProductCard extends StatelessWidget {
                               try {
                                 final chatId =
                                     await ChatService.to.getOrCreateChat(
-                                  myId: me.id.toString(),
+                                  conversationType: 'shop',
+                                  myEntityId: me.id.toString(),
+                                  myEntityType: 'user',
                                   myName: me.nom ?? 'Utilisateur',
                                   myAvatar: me.avatarUrl ?? '',
-                                  otherId: boutique.id.toString(),
+                                  otherEntityId: boutique.id.toString(),
+                                  otherEntityType: 'shop',
                                   otherName: boutique.nom,
                                   otherAvatar: boutique.logoUrl ?? '',
+                                  relatedShopId: boutique.id.toString(),
                                 );
-                                Get.toNamed('/chat/$chatId');
+                                Get.toNamed('/chat/$chatId?asBoutique=false');
                               } catch (_) {
                                 Get.snackbar(
                                   'Erreur',

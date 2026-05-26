@@ -463,34 +463,49 @@ class _OrderCard extends StatelessWidget {
                           final boutiqueId = order.product?.boutiqueId;
 
                           String otherId;
+                          String myEntityType = 'user';
+                          String otherEntityType = 'user';
+                          String conversationType = 'personal';
+
                           if (isSale) {
                             // Vendeur → acheteur (myId = boutiqueId si produit boutique)
                             otherId = order.userId.toString();
-                            if (boutiqueId != null)
+                            if (boutiqueId != null) {
                               myId = boutiqueId.toString();
+                              myEntityType = 'shop';
+                              conversationType = 'shop';
+                            }
                           } else {
                             // Acheteur → boutique ou vendeur particulier
                             otherId = boutiqueId != null
                                 ? boutiqueId.toString()
                                 : order.sellerId.toString();
+                            if (boutiqueId != null) {
+                              otherEntityType = 'shop';
+                              conversationType = 'shop';
+                            }
                           }
 
                           if (otherId.isEmpty) return;
 
                           try {
                             final chatId = await ChatService.to.getOrCreateChat(
-                              myId: myId,
+                              conversationType: conversationType,
+                              myEntityId: myId,
+                              myEntityType: myEntityType,
                               myName: myName,
                               myAvatar: myAvatar,
-                              otherId: otherId,
+                              otherEntityId: otherId,
+                              otherEntityType: otherEntityType,
                               otherName: partnerName,
                               otherAvatar: '',
                               productId: order.productId.toString(),
                               productTitle: title,
                               productImage: order.product?.image ?? '',
+                              relatedShopId: boutiqueId?.toString(),
                             );
                             Get.toNamed(
-                                '/chat/$chatId${isSale ? "?asBoutique=true" : ""}');
+                                '/chat/$chatId${(conversationType == 'shop' && isSale) ? "?asBoutique=true" : ""}');
                           } catch (e) {
                             AppToasts.error(context, 'Erreur',
                                 'Impossible d\'ouvrir le chat.');

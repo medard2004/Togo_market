@@ -1,179 +1,178 @@
 🎯 Objectif
-Revoir complètement la logique de la messagerie afin d’avoir une architecture propre, scalable et strictement séparée entre **messagerie particulier** et **messagerie boutique**.
+Refondre complètement le système de notifications afin qu’il soit fiable, fonctionnel, clair visuellement et intelligent selon le contexte Boutique ou Particulier.
 
-🧩 Contexte métier (très important)
-L’application possède **deux messageries totalement indépendantes** :
+🧩 Contexte
+Le système actuel de notifications n’est pas suffisamment fiable/cohérent. Je veux une vraie gestion de notifications fonctionnelle dans toute l’application.
 
-1. **Messagerie particulier**
+Je veux un système propre, fluide et cohérent avec la logique Boutique vs Particulier déjà présente dans le projet.
 
-* liée au compte utilisateur personnel,
-* utilisée uniquement pour les **annonces particulières** (produits publiés comme particulier).
+1. Notifications fonctionnelles avec Toast Notification
 
-2. **Messagerie boutique**
+Je veux que les notifications fonctionnent réellement et utilisent un système de toast notification moderne.
 
-* liée à une boutique,
-* utilisée uniquement pour les **produits de boutique**.
+Quand une notification arrive :
 
-⚠️ Règle absolue :
-Les deux messageries ne doivent **jamais se mélanger**.
+afficher un toast propre et visible,
+design moderne, professionnel et discret,
+animation fluide,
+non intrusif.
 
-Un message destiné à la boutique ne doit **jamais** apparaître dans la messagerie particulier.
-Un message particulier ne doit **jamais** apparaître dans la boutique.
+Le toast doit fonctionner même si l’utilisateur est déjà dans l’application.
 
----
+Je veux un comportement intelligent selon le contexte.
 
-## Logique métier attendue
+Exemples :
 
-### Cas 1 : Produit particulier
+Nouveau message particulier
 
-Si un utilisateur publie une annonce particulière :
+Toast :
+Nouveau message reçu de Jean
 
-**Produit particulier → conversation particulier uniquement**
+Nouveau message boutique
 
-Exemple :
-User A publie un iPhone comme particulier.
-User B clique sur discuter.
+Toast :
+Nouvelle conversation boutique – Fashion Shop
 
-Résultat attendu :
+Nouvelle commande boutique
 
-* conversation créée dans la **messagerie particulier de A**,
-* conversation visible chez B dans sa messagerie particulier,
-* jamais dans une boutique.
+Toast :
+Nouvelle commande reçue dans votre boutique
 
----
+Commande acceptée
 
-### Cas 2 : Produit boutique
+Toast :
+Votre commande a été acceptée
 
-Si un produit appartient à une boutique :
+2. Distinction visible Boutique vs Particulier
 
-**Produit boutique → conversation boutique uniquement**
+Je veux une différence visuelle claire entre les notifications destinées :
 
-Exemple :
-User A possède Boutique X.
-User B discute à propos d’un produit de Boutique X.
+à la boutique
 
-Résultat attendu :
+et
 
-* message reçu dans la **messagerie de Boutique X**,
-* jamais dans la messagerie particulier de A.
+au particulier
 
-Dans le chat :
+Je veux qu’on puisse identifier immédiatement le contexte.
 
-* afficher **nom + logo de la boutique**,
-* pas le profil personnel du propriétaire.
+Exemples de distinction possibles :
 
----
+Notifications boutique
+badge spécifique,
+icon boutique/store,
+style visuel différent,
+label clair type : Boutique
+Notifications particulier
+icon utilisateur/message,
+style propre au compte personnel,
+label type : Personnel
 
-### Cas 3 : Utilisateur qui achète dans sa propre boutique
+Je veux quelque chose de visible et intuitif.
 
-Cas très important.
+3. Redirection intelligente des notifications
 
-Un utilisateur **peut acheter dans sa propre boutique**.
+Quand on clique sur une notification :
 
-Exemple :
-User A possède Boutique X.
-User A achète un produit de Boutique X.
+Je veux une redirection directe vers le bon écran, sans navigation intermédiaire inutile.
 
-Le système doit considérer :
-
-**User A (particulier)** ≠ **Boutique X**
-
-Même si le propriétaire est le même.
-
-Résultat attendu :
-
-* création d’une conversation entre :
-  **Messagerie particulier de User A** ↔ **Messagerie boutique de Boutique X**
-* la boutique traite ce message comme n’importe quel client,
-* le particulier voit la boutique comme un vendeur normal.
-
-⚠️ Le système ne doit jamais détecter cela comme “message à soi-même” et bloquer ou fusionner la discussion.
-
----
-
-### Cas 4 : Conversations séparées obligatoires
-
-Aucune fusion entre particulier et boutique.
+Cas : commande boutique
 
 Exemple :
 
-User A a :
+Quelqu’un passe une commande dans une boutique.
 
-* une annonce particulière
-* une boutique
+Le propriétaire reçoit une notification :
 
-User B discute :
+Nouvelle commande reçue
 
-Produit particulier → conversation particulier
-Produit boutique → conversation boutique
+Quand il clique :
 
-Même si le propriétaire est le même :
-➡️ **2 conversations totalement séparées**
+➡️ redirection directe vers le détail exact de cette commande dans la boutique.
 
----
+Pas juste vers la liste des commandes.
 
-## Architecture attendue (important)
+Cas : commande particulier
 
-Je veux une architecture **scalable**, pensée pour plusieurs boutiques dans le futur.
+➡️ redirection vers le détail de commande particulier.
 
-Le système ne doit **jamais** reposer uniquement sur `user_id`.
+Cas : message boutique
 
-Je veux une logique orientée **entity messaging**.
+➡️ ouvrir directement :
 
-Exemple recommandé :
+Messagerie boutique → bonne conversation
 
-### Conversation
+Cas : message particulier
 
-* id
-* conversation_type (`personal`, `shop`)
-* sender_entity_type (`user`, `shop`)
-* sender_entity_id
-* receiver_entity_type (`user`, `shop`)
-* receiver_entity_id
-* related_product_id (nullable)
-* related_shop_id (nullable)
+➡️ ouvrir directement :
 
-### Message
+Messagerie particulier → bonne conversation
 
-* conversation_id
-* sender_entity_type
-* sender_entity_id
-* content
-* media
-* timestamps
+Cas : validation commande
 
-Ainsi :
+Quand une boutique accepte une commande :
 
-User ↔ User
-User ↔ Shop
-Shop ↔ User
+L’acheteur reçoit une notification.
 
-fonctionnent proprement sans ambiguïté.
+Quand il clique :
 
----
+➡️ redirection directe vers le détail exact de la commande concernée.
 
-## Ouverture des discussions (UX attendue)
+4. Notifications de messages (Boutique + Particulier)
 
-Je veux une ouverture de discussion **instantanée et fluide** :
+Je veux de vraies notifications quand un message est reçu.
 
-* si conversation existe → ouvrir immédiatement,
-* sinon → créer puis ouvrir sans délai visible.
+Messagerie particulier
+notification message reçue.
+Messagerie boutique
+notification message reçue.
 
-Le header doit afficher la bonne identité :
+Même si l’utilisateur n’est pas actuellement dans la discussion.
 
-### Conversation boutique
+⚠️ Important :
 
-* logo boutique
-* nom boutique
+Ne pas notifier inutilement si l’utilisateur est déjà dans cette conversation ouverte.
 
-### Conversation particulier
+Je veux une logique intelligente.
 
-* photo profil utilisateur
-* nom utilisateur
+5. Badge du nombre de notifications non lues
 
-Jamais de fallback générique type **“Utilisateur”** si les données existent.
+Je veux afficher le nombre de notifications non lues sur l’icône notification de l’écran d’accueil.
 
----
+Exemple :
 
-📦 Livrable
-Refonte complète de la logique de messagerie avec séparation stricte particulier/boutique, architecture scalable, conversations fiables, ouverture fluide et aucune confusion entre les contextes.
+🔔 3
+
+Le compteur doit :
+
+✅ se mettre à jour automatiquement,
+✅ diminuer lorsqu’une notification est lue,
+✅ disparaître quand tout est lu.
+
+Je veux un comportement temps réel ou refresh intelligent.
+
+6. Marquer automatiquement comme lu
+
+Quand une notification arrive et que l’utilisateur clique directement dessus :
+
+➡️ elle doit être automatiquement marquée comme lue.
+
+Le système doit :
+
+retirer le badge non lu,
+mettre à jour l’état dans la page notifications,
+synchroniser correctement partout.
+
+Je ne veux plus de notifications déjà ouvertes qui restent non lues.
+
+Résultat attendu
+
+Je veux un système de notifications :
+
+✅ totalement fonctionnel
+✅ toast moderne
+✅ distinction boutique/personnel visible
+✅ redirection intelligente vers le bon écran
+✅ notifications messages fonctionnelles
+✅ badge compteur non lu sur accueil
+✅ lecture automatique après ouverture
+✅ cohérent avec toute la logique Boutique vs Particulier du projet.

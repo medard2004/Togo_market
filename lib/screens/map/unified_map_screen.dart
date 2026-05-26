@@ -4,19 +4,31 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/location_service.dart';
 
-class LocationPickerScreen extends StatefulWidget {
-  const LocationPickerScreen({super.key});
+class UnifiedMapScreen extends StatefulWidget {
+  final bool viewMode;
+  final double? initialLat;
+  final double? initialLon;
+  final String? initialAddress;
+
+  const UnifiedMapScreen({
+    super.key,
+    this.viewMode = false,
+    this.initialLat,
+    this.initialLon,
+    this.initialAddress,
+  });
 
   @override
-  State<LocationPickerScreen> createState() => _LocationPickerScreenState();
+  State<UnifiedMapScreen> createState() => _UnifiedMapScreenState();
 }
 
-class _LocationPickerScreenState extends State<LocationPickerScreen> {
+class _UnifiedMapScreenState extends State<UnifiedMapScreen> {
   final MapController _mapController = MapController();
-  LatLng _currentCenter = const LatLng(6.137, 1.212); // Lomé por défaut
+  late LatLng _currentCenter;
   String _address = 'Recherche de l\'adresse...';
   bool _isLoadingAddress = false;
   bool _gpsLoading = false;
@@ -24,18 +36,32 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _requestGpsPosition(silent: true);
-    });
+    _currentCenter = (widget.initialLat != null && widget.initialLon != null)
+        ? LatLng(widget.initialLat!, widget.initialLon!)
+        : const LatLng(6.137, 1.212); // Lomé por défaut
+
+    if (widget.initialAddress != null && widget.initialAddress!.isNotEmpty) {
+      _address = widget.initialAddress!;
+    } else {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!widget.viewMode && widget.initialLat == null) {
+          _requestGpsPosition(silent: true);
+        } else {
+          _reverseGeocode(_currentCenter);
+        }
+      });
+    }
   }
 
   Future<void> _reverseGeocode(LatLng point) async {
+    if (!mounted) return;
     setState(() {
       _isLoadingAddress = true;
     });
 
     try {
       final res = await LocationService.reverseGeocode(point.latitude, point.longitude);
+      if (!mounted) return;
       if (res != null) {
         final ville = res['ville'] ?? '';
         final quartier = res['quartier'] ?? '';
@@ -52,45 +78,51 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
         });
       }
     } catch (_) {
+      if (!mounted) return;
       setState(() {
         _address = '${point.latitude.toStringAsFixed(5)}, ${point.longitude.toStringAsFixed(5)}';
       });
     } finally {
-      setState(() {
-        _isLoadingAddress = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoadingAddress = false;
+        });
+      }
     }
   }
 
   Future<void> _requestGpsPosition({bool silent = false}) async {
     if (_gpsLoading) return;
+    if (!mounted) return;
     setState(() {
       _gpsLoading = true;
     });
 
     try {
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!mounted) return;
       if (!serviceEnabled) {
         if (!silent && mounted) {
           Get.snackbar('Erreur', 'Les services de localisation sont désactivés.',
               backgroundColor: Colors.redAccent, colorText: Colors.white);
         }
         setState(() => _gpsLoading = false);
-        // Geocode default center
-        _reverseGeocode(_currentCenter);
+        if (_address == 'Recherche de l\'adresse...') _reverseGeocode(_currentCenter);
         return;
       }
 
       LocationPermission permission = await Geolocator.checkPermission();
+      if (!mounted) return;
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
+        if (!mounted) return;
         if (permission == LocationPermission.denied) {
           if (!silent && mounted) {
             Get.snackbar('Erreur', 'Permission GPS refusée.',
                 backgroundColor: Colors.redAccent, colorText: Colors.white);
           }
           setState(() => _gpsLoading = false);
-          _reverseGeocode(_currentCenter);
+          if (_address == 'Recherche de l\'adresse...') _reverseGeocode(_currentCenter);
           return;
         }
       }
@@ -101,13 +133,14 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
               backgroundColor: Colors.redAccent, colorText: Colors.white);
         }
         setState(() => _gpsLoading = false);
-        _reverseGeocode(_currentCenter);
+        if (_address == 'Recherche de l\'adresse...') _reverseGeocode(_currentCenter);
         return;
       }
 
       final position = await Geolocator.getCurrentPosition(
           desiredAccuracy: LocationAccuracy.high);
       
+      if (!mounted) return;
       final newCenter = LatLng(position.latitude, position.longitude);
       _mapController.move(newCenter, 16.0);
       setState(() {
@@ -116,13 +149,19 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
       });
       _reverseGeocode(newCenter);
     } catch (e) {
+      if (!mounted) return;
       if (!silent && mounted) {
         Get.snackbar('Erreur', 'Impossible de récupérer la position GPS.',
             backgroundColor: Colors.redAccent, colorText: Colors.white);
       }
       setState(() => _gpsLoading = false);
-      _reverseGeocode(_currentCenter);
+      if (_address == 'Recherche de l\'adresse...') _reverseGeocode(_currentCenter);
     }
+  }
+
+  void _openInGoogleMaps() {
+    final url = Uri.parse('https://www.google.com/maps/search/?api=1&query=${_currentCenter.latitude},${_currentCenter.longitude}');
+    launchUrl(url, mode: LaunchMode.externalApplication);
   }
 
   @override
@@ -147,8 +186,8 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
               ),
             ),
           ),
-          title: const Text('Partager une localisation', 
-            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: Colors.black)),
+          title: Text(widget.viewMode ? 'Localisation' : 'Choisir une localisation', 
+            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: Colors.black)),
           centerTitle: true,
         ),
         body: Stack(
@@ -162,52 +201,71 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
                 minZoom: 5.0,
                 maxZoom: 18.0,
                 onMapEvent: (event) {
-                  if (event is MapEventMoveEnd) {
+                  if (!widget.viewMode && event is MapEventMoveEnd) {
                     final newCenter = event.camera.center;
-                    setState(() {
-                      _currentCenter = newCenter;
-                    });
-                    _reverseGeocode(newCenter);
+                    if (mounted) {
+                      setState(() {
+                        _currentCenter = newCenter;
+                      });
+                      _reverseGeocode(newCenter);
+                    }
                   }
                 },
               ),
               children: [
                 TileLayer(
                   urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                  userAgentPackageName: 'com.togo.market',
+                  userAgentPackageName: 'com.togomarket.app',
                 ),
+                if (widget.viewMode)
+                  MarkerLayer(
+                    markers: [
+                      Marker(
+                        point: _currentCenter,
+                        width: 44,
+                        height: 44,
+                        child: Icon(
+                          Icons.location_on,
+                          size: 44,
+                          color: AppTheme.primary,
+                        ),
+                      ),
+                    ],
+                  ),
               ],
             ),
 
-            // Épinglette de sélection centrale (Uber-like)
-            Center(
-              child: Padding(
-                padding: const EdgeInsets.only(bottom: 35), // Aligne la pointe de l'épingle au centre exact
-                child: Icon(
-                  Icons.location_on,
-                  size: 44,
-                  color: AppTheme.primary,
+            // Épinglette de sélection centrale (Uber-like) - seulement en mode sélection
+            if (!widget.viewMode)
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 35), // Aligne la pointe de l'épingle au centre exact
+                  child: Icon(
+                    Icons.location_on,
+                    size: 44,
+                    color: AppTheme.primary,
+                  ),
                 ),
               ),
-            ),
 
             // Bouton Ma position flotant
-            Positioned(
-              right: 16,
-              bottom: 200,
-              child: FloatingActionButton(
-                heroTag: 'gps_fab',
-                onPressed: () => _requestGpsPosition(),
-                backgroundColor: AppTheme.primary,
-                child: _gpsLoading
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                      )
-                    : const Icon(Icons.my_location, color: Colors.white),
+            if (!widget.viewMode)
+              Positioned(
+                right: 16,
+                bottom: 200,
+                child: FloatingActionButton(
+                  heroTag: 'gps_fab',
+                  onPressed: () => _requestGpsPosition(),
+                  backgroundColor: AppTheme.primary,
+                  child: _gpsLoading
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                        )
+                      : const Icon(Icons.my_location, color: Colors.white),
+                ),
               ),
-            ),
 
             // Panel inférieur d'adresse & confirmation
             Positioned(
@@ -243,7 +301,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
                         ),
                         const SizedBox(width: 12),
                         const Text(
-                          'Adresse sélectionnée',
+                          'Adresse',
                           style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                         ),
                       ],
@@ -285,12 +343,16 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
                     const SizedBox(height: 20),
                     GestureDetector(
                       onTap: () {
-                        // Retourne les données de localisation au chat
-                        Get.back(result: {
-                          'latitude': _currentCenter.latitude,
-                          'longitude': _currentCenter.longitude,
-                          'address': _address,
-                        });
+                        if (widget.viewMode) {
+                          _openInGoogleMaps();
+                        } else {
+                          // Retourne les données de localisation
+                          Get.back(result: {
+                            'latitude': _currentCenter.latitude,
+                            'longitude': _currentCenter.longitude,
+                            'address': _address,
+                          });
+                        }
                       },
                       child: Container(
                         height: 52,
@@ -308,10 +370,10 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
                             )
                           ],
                         ),
-                        child: const Center(
+                        child: Center(
                           child: Text(
-                            'Confirmer et envoyer la position',
-                            style: TextStyle(
+                            widget.viewMode ? 'Ouvrir dans Google Maps' : 'Valider cette position',
+                            style: const TextStyle(
                               color: Colors.white,
                               fontSize: 15,
                               fontWeight: FontWeight.bold,

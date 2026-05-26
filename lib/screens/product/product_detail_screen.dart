@@ -57,6 +57,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     final similar = ctrl.getSimilarProducts(product.id.toString(), product.category);
     final images = product.images.isNotEmpty ? product.images : [product.image];
 
+    final auth = Get.isRegistered<AuthController>() ? Get.find<AuthController>() : null;
+    final isMyPersonalProduct = boutique == null && 
+        auth != null && 
+        auth.isAuthenticated && 
+        auth.currentUser.value?.id.toString() == (product.userObj?.id.toString() ?? product.sellerId.toString());
+
     return Scaffold(
       backgroundColor: AppTheme.background,
       body: Stack(
@@ -342,13 +348,17 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 children: [
                   // Bouton Commander (outline)
                   GestureDetector(
-                    onTap: (product.stockType == 'stock' && product.stock <= 0) || (product.stockType == 'unique' && product.stock <= 0)
+                    onTap: isMyPersonalProduct
+                        ? () {
+                            AppToasts.error(context, 'Action impossible', 'Vous ne pouvez pas commander votre propre article.');
+                          }
+                        : (product.stockType == 'stock' && product.stock <= 0) || (product.stockType == 'unique' && product.stock <= 0)
                         ? () {
                             AppToasts.error(context, 'Indisponible', 'Cet article n’est plus disponible.');
                           }
                         : () {
-                            final auth = Get.find<AuthController>();
-                            if (!auth.isAuthenticated) {
+                            final authCtrl = Get.find<AuthController>();
+                            if (!authCtrl.isAuthenticated) {
                               Get.toNamed('/auth', arguments: {
                                 'redirect': '/order',
                                 'arguments': {'productId': product.id},
@@ -361,12 +371,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       height: r.s(50).clamp(44, 56),
                       padding: EdgeInsets.symmetric(horizontal: r.s(16)),
                       decoration: BoxDecoration(
-                        color: (product.stockType == 'stock' && product.stock <= 0) || (product.stockType == 'unique' && product.stock <= 0)
+                        color: isMyPersonalProduct || (product.stockType == 'stock' && product.stock <= 0) || (product.stockType == 'unique' && product.stock <= 0)
                             ? Colors.grey.withOpacity(0.1)
                             : AppTheme.primaryLight.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(r.rad(30)),
                         border: Border.all(
-                          color: (product.stockType == 'stock' && product.stock <= 0) || (product.stockType == 'unique' && product.stock <= 0)
+                          color: isMyPersonalProduct || (product.stockType == 'stock' && product.stock <= 0) || (product.stockType == 'unique' && product.stock <= 0)
                               ? Colors.grey
                               : AppTheme.primary,
                           width: 1.5,
@@ -376,23 +386,27 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(
-                            (product.stockType == 'stock' && product.stock <= 0) || (product.stockType == 'unique' && product.stock <= 0)
+                            isMyPersonalProduct
+                                ? Icons.block
+                                : (product.stockType == 'stock' && product.stock <= 0) || (product.stockType == 'unique' && product.stock <= 0)
                                 ? Icons.remove_shopping_cart_outlined
                                 : Icons.shopping_cart_outlined,
                             size: r.s(18),
-                            color: (product.stockType == 'stock' && product.stock <= 0) || (product.stockType == 'unique' && product.stock <= 0)
+                            color: isMyPersonalProduct || (product.stockType == 'stock' && product.stock <= 0) || (product.stockType == 'unique' && product.stock <= 0)
                                 ? Colors.grey
                                 : AppTheme.primary,
                           ),
                           SizedBox(width: r.s(6)),
                           Text(
-                            (product.stockType == 'stock' && product.stock <= 0) || (product.stockType == 'unique' && product.stock <= 0)
+                            isMyPersonalProduct
+                                ? 'Mon article'
+                                : (product.stockType == 'stock' && product.stock <= 0) || (product.stockType == 'unique' && product.stock <= 0)
                                 ? 'Épuisé'
                                 : 'Commander',
                             style: TextStyle(
                               fontSize: r.fs(13),
                               fontWeight: FontWeight.w800,
-                              color: (product.stockType == 'stock' && product.stock <= 0) || (product.stockType == 'unique' && product.stock <= 0)
+                              color: isMyPersonalProduct || (product.stockType == 'stock' && product.stock <= 0) || (product.stockType == 'unique' && product.stock <= 0)
                                   ? Colors.grey
                                   : AppTheme.primary,
                             ),
@@ -406,8 +420,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   Expanded(
                     child: GestureDetector(
                       onTap: () async {
-                        final auth = Get.isRegistered<AuthController>() ? Get.find<AuthController>() : null;
-                        if (auth == null || !auth.isAuthenticated) {
+                        if (isMyPersonalProduct) {
+                          AppToasts.error(context, 'Action impossible', 'Vous ne pouvez pas discuter avec vous-même.');
+                          return;
+                        }
+                        
+                        final authCtrl = Get.isRegistered<AuthController>() ? Get.find<AuthController>() : null;
+                        if (authCtrl == null || !authCtrl.isAuthenticated) {
                           Get.toNamed('/auth', arguments: {
                             'redirect': 'discuss_product',
                             'arguments': product,
@@ -415,7 +434,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                           return;
                         }
                         
-                        final currentUser = auth.currentUser.value!;
+                        final currentUser = authCtrl.currentUser.value!;
                         final myId = currentUser.id.toString();
                         final myName = currentUser.nom ?? 'Utilisateur';
                         final myAvatar = currentUser.avatarUrl ?? '';
@@ -429,19 +448,23 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         
 
 
-                        try {
-                          final chatId = await ChatService.to.getOrCreateChat(
-                            myId: myId,
-                            myName: myName,
-                            myAvatar: myAvatar,
-                            otherId: sellerId,
-                            otherName: sellerName,
-                            otherAvatar: sellerAvatar,
-                            productId: product.id.toString(),
-                            productTitle: product.title,
-                            productImage: product.image,
-                          );
-                          Get.toNamed('/chat/$chatId', arguments: product);
+                          try {
+                            final chatId = await ChatService.to.getOrCreateChat(
+                              conversationType: boutique != null ? 'shop' : 'personal',
+                              myEntityId: myId,
+                              myEntityType: 'user',
+                              myName: myName,
+                              myAvatar: myAvatar,
+                              otherEntityId: sellerId,
+                              otherEntityType: boutique != null ? 'shop' : 'user',
+                              otherName: sellerName,
+                              otherAvatar: sellerAvatar,
+                              productId: product.id.toString(),
+                              productTitle: product.title,
+                              productImage: product.image,
+                              relatedShopId: boutique?.id.toString(),
+                            );
+                            Get.toNamed('/chat/$chatId?asBoutique=false', arguments: product);
                         } catch (e) {
                           AppToasts.error(context, 'Erreur Chat', 'Impossible de démarrer la discussion.');
                         }
@@ -450,12 +473,16 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         height: r.s(50).clamp(44, 56),
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
-                            colors: [AppTheme.primary, AppTheme.primary.withOpacity(0.8)],
+                            colors: isMyPersonalProduct 
+                                ? [Colors.grey.shade400, Colors.grey.shade500]
+                                : [AppTheme.primary, AppTheme.primary.withOpacity(0.8)],
                           ),
                           borderRadius: BorderRadius.circular(r.rad(30)),
                           boxShadow: [
                             BoxShadow(
-                              color: AppTheme.primary.withOpacity(0.3),
+                              color: isMyPersonalProduct 
+                                  ? Colors.transparent 
+                                  : AppTheme.primary.withOpacity(0.3),
                               blurRadius: 12,
                               offset: const Offset(0, 4),
                             ),

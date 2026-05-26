@@ -14,6 +14,9 @@ class ApiClient {
       headers: {
         'Accept': 'application/json',
       },
+      validateStatus: (status) {
+        return status != null && status < 500;
+      },
     ));
 
     // Add interceptors
@@ -28,7 +31,14 @@ class ApiClient {
           return handler.next(options);
         },
         onError: (DioException e, handler) {
-          // You can handle global errors here (e.g., 401 Unauthorized -> logout)
+          // Debug logging for failed requests
+          print('=== DIO ERROR ===');
+          print('URL: ${e.requestOptions.uri}');
+          print('Method: ${e.requestOptions.method}');
+          print('Status: ${e.response?.statusCode}');
+          print('Request Data: ${e.requestOptions.data}');
+          print('Response Body: ${e.response?.data}');
+          print('=================');
           return handler.next(e);
         },
       ),
@@ -51,9 +61,9 @@ class ApiClient {
   Future<Response> get(String endpoint, {Map<String, dynamic>? queryParameters}) async {
     try {
       final response = await _dio.get(endpoint, queryParameters: queryParameters);
-      return response;
+      return _processResponse(response);
     } on DioException catch (e) {
-      throw _handleException(e);
+      throw _handleNetworkError(e);
     }
   }
 
@@ -61,9 +71,9 @@ class ApiClient {
   Future<Response> post(String endpoint, {dynamic data}) async {
     try {
       final response = await _dio.post(endpoint, data: data);
-      return response;
+      return _processResponse(response);
     } on DioException catch (e) {
-      throw _handleException(e);
+      throw _handleNetworkError(e);
     }
   }
 
@@ -71,9 +81,9 @@ class ApiClient {
   Future<Response> put(String endpoint, {dynamic data}) async {
     try {
       final response = await _dio.put(endpoint, data: data);
-      return response;
+      return _processResponse(response);
     } on DioException catch (e) {
-      throw _handleException(e);
+      throw _handleNetworkError(e);
     }
   }
 
@@ -81,9 +91,9 @@ class ApiClient {
   Future<Response> patch(String endpoint, {dynamic data}) async {
     try {
       final response = await _dio.patch(endpoint, data: data);
-      return response;
+      return _processResponse(response);
     } on DioException catch (e) {
-      throw _handleException(e);
+      throw _handleNetworkError(e);
     }
   }
 
@@ -91,16 +101,60 @@ class ApiClient {
   Future<Response> delete(String endpoint, {dynamic data}) async {
     try {
       final response = await _dio.delete(endpoint, data: data);
-      return response;
+      return _processResponse(response);
     } on DioException catch (e) {
-      throw _handleException(e);
+      throw _handleNetworkError(e);
     }
   }
 
   // --- ERROR HANDLING --- //
 
+  Response _processResponse(Response response) {
+    final int statusCode = response.statusCode ?? 500;
+    
+    // 2xx status codes are successful
+    if (statusCode >= 200 && statusCode < 300) {
+      return response;
+    }
 
-  Exception _handleException(DioException e) {
+    final data = response.data;
+    String message = "Une erreur s'est produite";
+
+    if (data is Map<String, dynamic> && data.containsKey('message')) {
+      message = data['message'];
+    }
+
+    // Handle Laravel 422 Validation Errors specifically
+    if (statusCode == 422) {
+      if (data is Map<String, dynamic> && data.containsKey('errors')) {
+         print('=== VALIDATION ERROR 422 ===');
+         print(data['errors']);
+         // We extract the first error message as a default readable message
+         final Map<String, dynamic> errors = data['errors'];
+         if (errors.isNotEmpty) {
+           final firstError = errors.values.first;
+           if (firstError is List && firstError.isNotEmpty) {
+             message = firstError.first;
+           } else {
+             message = firstError.toString();
+           }
+         }
+      }
+      throw ValidationException(message, data is Map<String, dynamic> ? data['errors'] : null);
+    }
+
+    if (statusCode == 401) {
+      throw UnauthorizedException(message);
+    }
+
+    if (statusCode == 404) {
+      throw NotFoundException(message);
+    }
+
+    throw ServerException('$statusCode: $message');
+  }
+
+  Exception _handleNetworkError(DioException e) {
     if (e.response != null) {
       final int statusCode = e.response?.statusCode ?? 500;
       final data = e.response?.data;
@@ -113,6 +167,8 @@ class ApiClient {
       // Handle Laravel 422 Validation Errors specifically
       if (statusCode == 422) {
         if (data is Map<String, dynamic> && data.containsKey('errors')) {
+           print('=== VALIDATION ERROR 422 ===');
+           print(data['errors']);
            // We extract the first error message as a default readable message
            final Map<String, dynamic> errors = data['errors'];
            if (errors.isNotEmpty) {

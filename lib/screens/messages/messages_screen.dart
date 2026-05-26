@@ -29,37 +29,41 @@ class _MessagesScreenState extends State<MessagesScreen> {
   final Set<String> _selectedMessages = {}; // Utilise le nom comme clé unique
 
   String get _currentUserId {
-    final auth = Get.isRegistered<AuthController>() ? Get.find<AuthController>() : null;
+    final auth =
+        Get.isRegistered<AuthController>() ? Get.find<AuthController>() : null;
     return auth?.currentUser.value?.id.toString() ?? '';
   }
-  
+
   // Modèle converti depuis Firestore
   List<_ConvItem> get _convItems {
     if (!Get.isRegistered<ChatController>()) return [];
     final chats = ChatController.to.userChats.toList();
     final myId = _currentUserId;
-    
+    final myUid = 'user_$myId';
+
     return chats.map((chat) {
-      final otherName = chat.otherParticipantName(myId);
-      final otherAvatar = chat.otherParticipantAvatar(myId);
-      final resolvedAvatar = otherAvatar.isNotEmpty 
-          ? ApiConstants.resolveImageUrl(otherAvatar) 
+      final otherName = chat.otherParticipantName(myUid);
+      final otherAvatar = chat.otherParticipantAvatar(myUid);
+      final resolvedAvatar = otherAvatar.isNotEmpty
+          ? ApiConstants.resolveImageUrl(otherAvatar)
           : '';
-      final productImg = chat.productImage != null && chat.productImage!.isNotEmpty
-          ? ApiConstants.resolveImageUrl(chat.productImage!)
-          : null;
-      
-      final otherId = chat.otherParticipantId(myId);
-      final isSentByMe = chat.lastMessageSenderId == myId;
-      final isSeenByOther = chat.unreadCounts[otherId] == 0;
+      final productImg =
+          chat.productImage != null && chat.productImage!.isNotEmpty
+              ? ApiConstants.resolveImageUrl(chat.productImage!)
+              : null;
+
+      final otherUid = chat.otherParticipantUid(myUid);
+      final isSentByMe = chat.lastMessageSenderId == myUid || chat.lastMessageSenderId == myId;
+      final isSeenByOther = chat.unreadCounts[otherUid] == 0;
 
       return _ConvItem(
         id: chat.id,
         name: otherName,
-        time: '${chat.lastMessageTime.hour.toString().padLeft(2, '0')}:${chat.lastMessageTime.minute.toString().padLeft(2, '0')}',
+        time:
+            '${chat.lastMessageTime.hour.toString().padLeft(2, '0')}:${chat.lastMessageTime.minute.toString().padLeft(2, '0')}',
         rawTime: chat.lastMessageTime,
         msg: chat.lastMessage,
-        unread: chat.unreadCountFor(myId),
+        unread: chat.unreadCountFor(myUid),
         img: resolvedAvatar,
         productImg: productImg,
         isSentByMe: isSentByMe,
@@ -67,7 +71,6 @@ class _MessagesScreenState extends State<MessagesScreen> {
       );
     }).toList();
   }
-
 
   List<_ConvItem> get _filtered {
     List<_ConvItem> filtered = List.from(_convItems);
@@ -137,7 +140,6 @@ class _MessagesScreenState extends State<MessagesScreen> {
 
   void _deleteSelectedMessages() {
     setState(() {
-
       // Pour Firebase, on appellerait une méthode de suppression.
       // ChatService.to.deleteChats(_selectedMessages.toList());
 
@@ -315,15 +317,17 @@ class _MessagesScreenState extends State<MessagesScreen> {
                           if (_isSelectionMode) {
                             _toggleMessageSelection(_filtered[i].name);
                           } else {
-                            Get.toNamed('/chat/${_filtered[i].id}');
+                            Get.toNamed('/chat/${_filtered[i].id}?asBoutique=false');
                           }
                         },
                         child: ConversationTile(
                           item: _filtered[i],
                           r: r,
                           isSelectionMode: _isSelectionMode,
-                          isSelected: _selectedMessages.contains(_filtered[i].name),
-                          onSelectionChanged: () => _toggleMessageSelection(_filtered[i].name),
+                          isSelected:
+                              _selectedMessages.contains(_filtered[i].name),
+                          onSelectionChanged: () =>
+                              _toggleMessageSelection(_filtered[i].name),
                         ),
                       ),
                     );
@@ -370,7 +374,9 @@ class _MessagesScreenState extends State<MessagesScreen> {
                 ),
                 child: Center(
                   child: Text(
-                    allSelected ? 'Tout dÃ©sÃ©lectionner' : 'Tout sÃ©lectionner',
+                    allSelected
+                        ? 'Tout dÃ©sÃ©lectionner'
+                        : 'Tout sÃ©lectionner',
                     style: TextStyle(
                       fontSize: r.fs(14),
                       fontWeight: FontWeight.w600,
@@ -455,4 +461,3 @@ class _ConvItem {
     this.isSeenByOther = false,
   });
 }
-

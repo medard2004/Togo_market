@@ -100,6 +100,8 @@ class AuthService {
     String? email,
     String? nom,
     int? quartierId,
+    int? villeId,
+    String? quartier,
     List<int>? categories,
     String? details,
     String? photoPath,
@@ -110,6 +112,8 @@ class AuthService {
       if (email != null && email.isNotEmpty) formDataMap['email'] = email;
       if (nom != null) formDataMap['nom'] = nom;
       if (quartierId != null) formDataMap['quartier_id'] = quartierId;
+      if (villeId != null) formDataMap['ville_id'] = villeId;
+      if (quartier != null && quartier.isNotEmpty) formDataMap['quartier'] = quartier;
       if (details != null && details.isNotEmpty) formDataMap['details'] = details;
       if (categories != null) {
         for (int i = 0; i < categories.length; i++) {
@@ -137,6 +141,8 @@ class AuthService {
       if (email != null && email.isNotEmpty) body['email'] = email;
       if (nom != null) body['nom'] = nom;
       if (quartierId != null) body['quartier_id'] = quartierId;
+      if (villeId != null) body['ville_id'] = villeId;
+      if (quartier != null && quartier.isNotEmpty) body['quartier'] = quartier;
       if (categories != null) body['categories'] = categories;
       if (details != null && details.isNotEmpty) body['details'] = details;
 

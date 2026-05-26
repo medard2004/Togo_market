@@ -4,8 +4,8 @@ import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import '../map/unified_map_screen.dart';
 
 import '../../theme/app_theme.dart';
 import '../../widgets/common_widgets.dart';
@@ -53,7 +53,7 @@ class _EditShopScreenState extends State<EditShopScreen> {
   double? _longitude;
   List<AppCategory> _dbCategories = [];
   final ImagePicker _picker = ImagePicker();
-  final MapController _mapController = MapController();
+
 
   late Boutique _boutique;
   late final AuthController _authCtrl;
@@ -280,7 +280,7 @@ class _EditShopScreenState extends State<EditShopScreen> {
         _longitude = position.longitude;
         _gpsLoading = false;
       });
-      _mapController.move(LatLng(position.latitude, position.longitude), 15.0);
+
       if (mounted) AppToasts.success(context, 'GPS', 'Position détectée avec succès');
       
       _performReverseGeocoding(position.latitude, position.longitude);
@@ -625,76 +625,43 @@ class _EditShopScreenState extends State<EditShopScreen> {
                               hint: 'Ex: Derrière la pharmacie XYZ...',
                             ),
                             const SizedBox(height: 20),
-                            const Text('Localisation précise sur la carte', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-                            const SizedBox(height: 8),
-                            Container(
-                              height: 220,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(color: AppTheme.border),
-                              ),
-                              clipBehavior: Clip.hardEdge,
-                              child: Stack(
-                                children: [
-                                  FlutterMap(
-                                    mapController: _mapController,
-                                    options: MapOptions(
-                                      initialCenter: _latitude != null && _longitude != null
-                                          ? LatLng(_latitude!, _longitude!)
-                                          : const LatLng(6.137, 1.212),
-                                      initialZoom: 13.0,
-                                      minZoom: 6.0,
-                                      maxZoom: 18.0,
-                                      cameraConstraint: CameraConstraint.contain(
-                                        bounds: LatLngBounds(const LatLng(5.9, -0.4), const LatLng(11.3, 1.9)),
-                                      ),
-                                      interactionOptions: const InteractionOptions(flags: InteractiveFlag.all & ~InteractiveFlag.rotate),
-                                      onTap: (tapPosition, point) {
-                                        setState(() {
-                                          _latitude = point.latitude;
-                                          _longitude = point.longitude;
-                                        });
-                                        _performReverseGeocoding(point.latitude, point.longitude);
-                                      },
-                                    ),
-                                    children: [
-                                      TileLayer(
-                                        urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                                        userAgentPackageName: 'com.togomarket.app',
-                                      ),
-                                      if (_latitude != null && _longitude != null)
-                                        MarkerLayer(
-                                          markers: [
-                                            Marker(
-                                              point: LatLng(_latitude!, _longitude!),
-                                              width: 40,
-                                              height: 40,
-                                              child: const Icon(Icons.location_on, color: AppTheme.destructive, size: 40),
-                                            ),
-                                          ],
-                                        ),
-                                    ],
-                                  ),
-                                  Positioned(
-                                    bottom: 12,
-                                    right: 12,
-                                    child: FloatingActionButton.small(
-                                      onPressed: _gpsLoading ? null : _requestGpsPosition,
-                                      backgroundColor: AppTheme.primary,
-                                      elevation: 2,
-                                      child: _gpsLoading
-                                          ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                                          : const Icon(Icons.my_location, color: Colors.white),
-                                    ),
-                                  ),
-                                ],
+                            SizedBox(
+                              width: double.infinity,
+                              child: OutlinedButton.icon(
+                                onPressed: () async {
+                                  final result = await Get.to(() => UnifiedMapScreen(
+                                        initialLat: _latitude,
+                                        initialLon: _longitude,
+                                      ));
+                                  if (result != null && result is Map) {
+                                    setState(() {
+                                      _latitude = result['latitude'];
+                                      _longitude = result['longitude'];
+                                    });
+                                    _performReverseGeocoding(result['latitude'], result['longitude']);
+                                  }
+                                },
+                                icon: Icon(Icons.location_on, color: AppTheme.primary),
+                                label: Text(_latitude != null ? 'Modifier la localisation' : 'Choisir ma localisation'),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: AppTheme.primary,
+                                  padding: const EdgeInsets.symmetric(vertical: 14),
+                                  side: BorderSide(color: AppTheme.primary.withOpacity(0.5)),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                ),
                               ),
                             ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Appuyez sur la carte pour marquer l\'emplacement exact.',
-                              style: TextStyle(fontSize: 12, color: AppTheme.mutedForeground),
-                            ),
+                            if (_latitude != null)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 8),
+                                child: Row(
+                                  children: [
+                                    const Icon(Icons.check_circle, color: Colors.green, size: 14),
+                                    const SizedBox(width: 6),
+                                    const Text('Position sélectionnée', style: TextStyle(color: Colors.green, fontSize: 12)),
+                                  ],
+                                ),
+                              ),
                           ],
                         ),
                         const SizedBox(height: 32),

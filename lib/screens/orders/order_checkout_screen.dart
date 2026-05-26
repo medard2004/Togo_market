@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import '../map/unified_map_screen.dart';
 import '../../../Api/services/order_service.dart';
 import '../../../Api/firebase/services/chat_service.dart';
 import '../../../utils/location_service.dart';
@@ -46,7 +46,6 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen>
   final _phoneCtrl = TextEditingController();
   final _addressCtrl = TextEditingController();
   final _noteCtrl = TextEditingController();
-  final MapController _mapController = MapController();
 
   late final _orderService = OrderService(Get.find<ApiClient>());
   final _chatService = ChatService();
@@ -212,18 +211,17 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen>
                     const SizedBox(height: 8),
                     _confirmRow(
                         Icons.phone_outlined, 'Téléphone', _formattedPhone),
-                    if (_mode == 'livraison' &&
-                        _deliveryVilleId != null) ...[
+                    if (_mode == 'livraison' && _deliveryVilleId != null) ...[
                       const SizedBox(height: 8),
                       _confirmRow(Icons.location_on_outlined, 'Adresse',
                           _buildDeliveryAddressString()),
                     ],
                     const SizedBox(height: 8),
-                    _confirmRow(
-                        Icons.production_quantity_limits_outlined, 'Quantité', 'x $_quantity'),
+                    _confirmRow(Icons.production_quantity_limits_outlined,
+                        'Quantité', 'x $_quantity'),
                     const SizedBox(height: 8),
-                    _confirmRow(
-                        Icons.calculate_outlined, 'Total', '$totalPriceMain FCFA'),
+                    _confirmRow(Icons.calculate_outlined, 'Total',
+                        '$totalPriceMain FCFA'),
 
                     const SizedBox(height: 16),
                     // Avertissement
@@ -391,7 +389,7 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen>
         _deliveryLon = position.longitude;
         _gpsLoading = false;
       });
-      _mapController.move(LatLng(position.latitude, position.longitude), 15.0);
+
       _reverseGeocodeAndFillAddress(position.latitude, position.longitude);
       AppToasts.success(
           context, 'Localisation récupérée', 'Votre position a été ajoutée.');
@@ -507,7 +505,8 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen>
   Future<void> _reverseGeocodeAndFillAddress(double lat, double lon) async {
     try {
       final authCtrl = Get.find<AuthController>();
-      final location = await authCtrl.getCurrentLocationAndMatch();
+      final location =
+          await authCtrl.getCurrentLocationAndMatch(lat: lat, lon: lon);
       if (location != null && mounted) {
         setState(() {
           _deliveryVilleId = location['villeId'];
@@ -521,10 +520,12 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen>
   String _buildDeliveryAddressString() {
     final authCtrl = Get.find<AuthController>();
     String parts = '';
-    final ville = authCtrl.locations.firstWhereOrNull((v) => v.id == _deliveryVilleId);
+    final ville =
+        authCtrl.locations.firstWhereOrNull((v) => v.id == _deliveryVilleId);
     if (ville != null) {
       parts = ville.nom;
-      final quartier = ville.quartiers.firstWhereOrNull((q) => q.id == _deliveryQuartierId);
+      final quartier =
+          ville.quartiers.firstWhereOrNull((q) => q.id == _deliveryQuartierId);
       if (quartier != null) {
         parts += ', ${quartier.nom}';
       }
@@ -1078,7 +1079,8 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen>
                               },
                               child: Container(
                                 padding: EdgeInsets.all(r.s(6)),
-                                child: Icon(Icons.remove, size: r.s(16), color: AppTheme.foreground),
+                                child: Icon(Icons.remove,
+                                    size: r.s(16), color: AppTheme.foreground),
                               ),
                             ),
                             Container(
@@ -1097,12 +1099,14 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen>
                                 if (_quantity < product.stock) {
                                   setState(() => _quantity++);
                                 } else {
-                                  AppToasts.warning(context, 'Stock limite', 'La quantité maximale disponible en stock est de ${product.stock}.');
+                                  AppToasts.warning(context, 'Stock limite',
+                                      'La quantité maximale disponible en stock est de ${product.stock}.');
                                 }
                               },
                               child: Container(
                                 padding: EdgeInsets.all(r.s(6)),
-                                child: Icon(Icons.add, size: r.s(16), color: AppTheme.foreground),
+                                child: Icon(Icons.add,
+                                    size: r.s(16), color: AppTheme.foreground),
                               ),
                             ),
                           ],
@@ -1306,8 +1310,8 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen>
                               fontSize: r.fs(13),
                               color: AppTheme.mutedForeground)),
                       items: villes
-                          .map((v) => DropdownMenuItem(
-                              value: v.id, child: Text(v.nom)))
+                          .map((v) =>
+                              DropdownMenuItem(value: v.id, child: Text(v.nom)))
                           .toList(),
                       onChanged: (v) {
                         setState(() {
@@ -1338,8 +1342,7 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen>
                   if (_deliveryQuartierId != null &&
                       !quartiers.any((q) => q.id == _deliveryQuartierId)) {
                     WidgetsBinding.instance.addPostFrameCallback((_) {
-                      if (mounted)
-                        setState(() => _deliveryQuartierId = null);
+                      if (mounted) setState(() => _deliveryQuartierId = null);
                     });
                   }
 
@@ -1412,81 +1415,60 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen>
                         color: AppTheme.foreground)),
               ]),
               SizedBox(height: r.s(4)),
-              Text('Appuyez sur la carte ou utilisez le GPS',
+              Text('Sélectionnez votre position sur la carte',
                   style: TextStyle(
                       fontSize: r.fs(12), color: AppTheme.mutedForeground)),
               SizedBox(height: r.s(10)),
-              Container(
-                height: 200,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(r.rad(16)),
-                  border: Border.all(color: AppTheme.primary.withOpacity(0.3)),
-                ),
-                clipBehavior: Clip.hardEdge,
-                child: Stack(
-                  children: [
-                    FlutterMap(
-                      mapController: _mapController,
-                      options: MapOptions(
-                        initialCenter:
-                            _deliveryLat != null && _deliveryLon != null
-                                ? LatLng(_deliveryLat!, _deliveryLon!)
-                                : const LatLng(6.137, 1.212),
-                        initialZoom: 13.0,
-                        minZoom: 6.0,
-                        maxZoom: 18.0,
-                        cameraConstraint: CameraConstraint.contain(
-                          bounds: LatLngBounds(
-                            const LatLng(5.9, -0.4),
-                            const LatLng(11.3, 1.9),
-                          ),
-                        ),
-                        interactionOptions: const InteractionOptions(
-                          flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
-                        ),
-                        onTap: (_, point) => _onMapTap(point),
-                      ),
-                      children: [
-                        TileLayer(
-                          urlTemplate:
-                              'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                          userAgentPackageName: 'com.togomarket.app',
-                        ),
-                        if (_deliveryLat != null && _deliveryLon != null)
-                          MarkerLayer(
-                            markers: [
-                              Marker(
-                                point: LatLng(_deliveryLat!, _deliveryLon!),
-                                width: 40,
-                                height: 40,
-                                child: const Icon(Icons.location_on,
-                                    color: Colors.red, size: 40),
-                              ),
-                            ],
-                          ),
-                      ],
-                    ),
-                    // Bouton GPS
-                    Positioned(
-                      bottom: 12,
-                      right: 12,
-                      child: FloatingActionButton.small(
-                        heroTag: 'gps_delivery',
-                        onPressed: _gpsLoading ? null : _requestGpsPosition,
-                        backgroundColor: AppTheme.primary,
-                        child: _gpsLoading
-                            ? const SizedBox(
-                                width: 16,
-                                height: 16,
-                                child: CircularProgressIndicator(
-                                    color: Colors.white, strokeWidth: 2))
-                            : const Icon(Icons.my_location,
-                                color: Colors.white),
-                      ),
-                    ),
-                  ],
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () async {
+                    final result = await Get.to(() => UnifiedMapScreen(
+                          initialLat: _deliveryLat,
+                          initialLon: _deliveryLon,
+                        ));
+                    if (result != null && result is Map) {
+                      setState(() {
+                        _deliveryLat = result['latitude'];
+                        _deliveryLon = result['longitude'];
+                        if (result['address'] != null &&
+                            result['address'].toString().isNotEmpty &&
+                            _addressCtrl.text.isEmpty &&
+                            result['address'] != "Recherche de l'adresse...") {
+                          _addressCtrl.text = result['address'];
+                        }
+                      });
+                      _reverseGeocodeAndFillAddress(
+                          result['latitude'], result['longitude']);
+                    }
+                  },
+                  icon: Icon(Icons.location_on, color: AppTheme.primary),
+                  label: Text(_deliveryLat != null
+                      ? 'Modifier la localisation'
+                      : 'Choisir ma localisation'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppTheme.primary,
+                    padding: EdgeInsets.symmetric(vertical: r.s(14)),
+                    side: BorderSide(color: AppTheme.primary.withOpacity(0.5)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(r.rad(12))),
+                  ),
                 ),
               ),
+              if (_deliveryLat != null)
+                Padding(
+                  padding: EdgeInsets.only(top: r.s(8)),
+                  child: Row(
+                    children: [
+                      Icon(Icons.check_circle,
+                          color: Colors.green, size: r.s(14)),
+                      SizedBox(width: r.s(6)),
+                      Text('Position sélectionnée',
+                          style: TextStyle(
+                              color: Colors.green, fontSize: r.fs(12))),
+                    ],
+                  ),
+                ),
               SizedBox(height: r.s(14)),
             ],
 
@@ -1597,44 +1579,33 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen>
                       ],
                     ),
                     SizedBox(height: r.s(12)),
-                    // Mini-carte boutique (lecture seule)
+                    // Bouton pour afficher la carte de la boutique
                     if (product?.boutiqueObj != null &&
                         product!.boutiqueObj!.latitude != 0 &&
                         product.boutiqueObj!.longitude != 0)
-                      Container(
-                        height: 140,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(r.rad(12)),
-                          border: Border.all(color: AppTheme.border),
-                        ),
-                        clipBehavior: Clip.hardEdge,
-                        child: FlutterMap(
-                          options: MapOptions(
-                            initialCenter: LatLng(product.boutiqueObj!.latitude,
-                                product.boutiqueObj!.longitude),
-                            initialZoom: 15.0,
-                            interactionOptions: const InteractionOptions(
-                                flags: InteractiveFlag.none),
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: () {
+                            Get.to(() => UnifiedMapScreen(
+                                  viewMode: true,
+                                  initialLat: product!.boutiqueObj!.latitude,
+                                  initialLon: product!.boutiqueObj!.longitude,
+                                  initialAddress:
+                                      product!.boutiqueObj!.adresse ??
+                                          product!.boutiqueObj!.detailsAdresse,
+                                ));
+                          },
+                          icon: Icon(Icons.map, color: AppTheme.primary),
+                          label: Text('Voir sur la carte'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppTheme.primary,
+                            padding: EdgeInsets.symmetric(vertical: r.s(12)),
+                            side: BorderSide(
+                                color: AppTheme.primary.withOpacity(0.5)),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(r.rad(12))),
                           ),
-                          children: [
-                            TileLayer(
-                              urlTemplate:
-                                  'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                              userAgentPackageName: 'com.togomarket.app',
-                            ),
-                            MarkerLayer(
-                              markers: [
-                                Marker(
-                                  point: LatLng(product.boutiqueObj!.latitude,
-                                      product.boutiqueObj!.longitude),
-                                  width: 40,
-                                  height: 40,
-                                  child: const Icon(Icons.storefront,
-                                      color: Colors.deepOrange, size: 36),
-                                ),
-                              ],
-                            ),
-                          ],
                         ),
                       ),
                     SizedBox(height: r.s(12)),
@@ -1793,15 +1764,16 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen>
                       if (!_validatePhone()) return;
 
                       if (_mode == 'livraison' &&
-                          (_deliveryVilleId == null || _deliveryQuartierId == null)) {
+                          (_deliveryVilleId == null ||
+                              _deliveryQuartierId == null)) {
                         AppToasts.error(context, 'Adresse requise',
                             'Veuillez sélectionner une ville et un quartier.');
                         return;
                       }
 
                       // ── Dialogue de confirmation ──────────────────────────────
-                      final userConfirmed =
-                          await _showConfirmationDialog(product, priceMain, totalPriceMain);
+                      final userConfirmed = await _showConfirmationDialog(
+                          product, priceMain, totalPriceMain);
                       if (!userConfirmed) return;
                       setState(() => _isLoading = true);
                       try {
@@ -1884,23 +1856,31 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen>
                               '';
 
                           final chatId = await _chatService.getOrCreateChat(
-                            myId: senderId,
+                            conversationType: product.boutiqueObj != null
+                                ? 'shop'
+                                : 'personal',
+                            myEntityId: senderId,
+                            myEntityType: 'user',
                             myName: buyerName,
                             myAvatar: buyerAvatar,
-                            otherId: sellerId,
+                            otherEntityId: sellerId,
+                            otherEntityType:
+                                product.boutiqueObj != null ? 'shop' : 'user',
                             otherName: sellerName,
                             otherAvatar: sellerAvatar,
                             productId: product.id.toString(),
                             productTitle: product.title,
                             productImage: product.image,
+                            relatedShopId: product.boutiqueObj?.id.toString(),
                           );
 
                           await _chatService.sendMessage(
                             chatId,
                             senderId,
+                            'user',
                             sellerId,
+                            product.boutiqueObj != null ? 'shop' : 'user',
                             orderJsonMessage,
-                            isBuyerSending: true,
                             type: 'order', // type spécial pour le rendu card
                           );
                         }

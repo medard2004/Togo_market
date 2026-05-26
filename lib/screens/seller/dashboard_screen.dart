@@ -27,19 +27,29 @@ class _DashboardScreenState extends State<DashboardScreen> {
   void initState() {
     super.initState();
     _ctrl = Get.find<DashboardController>();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _ctrl.loadMyProducts();
-      // Charger les commandes vendeur
-      if (Get.isRegistered<OrderController>()) {
-        OrderController.to.fetchOrders();
-      }
-      final boutique = Get.isRegistered<BoutiqueController>()
-          ? BoutiqueController.to.myBoutique.value
-          : null;
-      if (boutique != null && Get.isRegistered<ChatController>()) {
-        ChatController.to.initShopChats(boutique.id.toString());
-      }
-    });
+    WidgetsBinding.instance.addPostFrameCallback((_) => _initDashboard());
+  }
+
+  Future<void> _initDashboard() async {
+    // S'assurer que la boutique est chargée avant tout
+    final boutiqueCtrl = Get.isRegistered<BoutiqueController>()
+        ? BoutiqueController.to
+        : null;
+    if (boutiqueCtrl != null && boutiqueCtrl.myBoutique.value == null) {
+      await boutiqueCtrl.checkMyBoutique();
+    }
+
+    _ctrl.loadMyProducts();
+
+    // Charger les commandes vendeur
+    if (Get.isRegistered<OrderController>()) {
+      OrderController.to.fetchOrders();
+    }
+
+    final boutique = boutiqueCtrl?.myBoutique.value;
+    if (boutique != null && Get.isRegistered<ChatController>()) {
+      ChatController.to.initShopChats(boutique.id.toString());
+    }
   }
 
   /// Gère le retour arrière :
@@ -721,6 +731,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ? BoutiqueController.to.myBoutique.value
           : null;
       final shopId = boutique?.id.toString() ?? ChatController.to.currentUserId;
+      final shopUid = 'shop_$shopId';
 
       if (chats.isEmpty) {
         return Padding(
@@ -741,6 +752,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         separatorBuilder: (_, __) => const SizedBox(height: 8),
         itemBuilder: (_, i) {
           final chat = chats[i];
+          final otherUid = chat.otherParticipantUid(shopUid);
           return Container(
             margin: const EdgeInsets.only(bottom: 8),
             decoration: BoxDecoration(
@@ -757,23 +769,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
             child: ListTile(
               leading: CircleAvatar(
                 backgroundColor: AppTheme.muted,
-                backgroundImage: chat.otherParticipantAvatar(shopId).isNotEmpty
-                    ? NetworkImage(chat.otherParticipantAvatar(shopId))
+                backgroundImage: chat.otherParticipantAvatar(shopUid).isNotEmpty
+                    ? NetworkImage(chat.otherParticipantAvatar(shopUid))
                     : null,
-                child: chat.otherParticipantAvatar(shopId).isEmpty
+                child: chat.otherParticipantAvatar(shopUid).isEmpty
                     ? Icon(Icons.person, color: AppTheme.mutedForeground)
                     : null,
               ),
-              title: Text(chat.otherParticipantName(shopId),
+              title: Text(chat.otherParticipantName(shopUid),
                   style: const TextStyle(
                       fontWeight: FontWeight.bold, fontSize: 14)),
               subtitle: Row(
                 children: [
-                  if (chat.lastMessageSenderId == shopId) ...[
+                  if (chat.lastMessageSenderId == shopUid || chat.lastMessageSenderId == shopId) ...[
                     Icon(
-                      chat.unreadCounts[chat.otherParticipantId(shopId)] == 0 ? Icons.done_all : Icons.check,
+                      chat.unreadCounts[otherUid] == 0 ? Icons.done_all : Icons.check,
                       size: 14,
-                      color: chat.unreadCounts[chat.otherParticipantId(shopId)] == 0 ? Colors.blueAccent : AppTheme.mutedForeground,
+                      color: chat.unreadCounts[otherUid] == 0 ? Colors.blueAccent : AppTheme.mutedForeground,
                     ),
                     const SizedBox(width: 4),
                   ],
@@ -785,12 +797,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                 ],
               ),
-              trailing: chat.unreadCountFor(shopId) > 0
+              trailing: chat.unreadCountFor(shopUid) > 0
                   ? Container(
                       padding: const EdgeInsets.all(6),
                       decoration: const BoxDecoration(
                           color: AppTheme.primary, shape: BoxShape.circle),
-                      child: Text('${chat.unreadCountFor(shopId)}',
+                      child: Text('${chat.unreadCountFor(shopUid)}',
                           style: const TextStyle(
                               color: Colors.white,
                               fontSize: 10,

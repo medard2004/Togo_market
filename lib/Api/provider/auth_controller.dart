@@ -208,6 +208,8 @@ class AuthController extends GetxController {
     String? email,
     String? nom,
     int? quartierId,
+    int? villeId,
+    String? quartier,
     List<int>? selectedCategories,
     String? details,
     String? photoPath,
@@ -219,6 +221,8 @@ class AuthController extends GetxController {
         email: email,
         nom: nom,
         quartierId: quartierId,
+        villeId: villeId,
+        quartier: quartier,
         categories: selectedCategories,
         details: details,
         photoPath: photoPath,
@@ -285,7 +289,7 @@ class AuthController extends GetxController {
     }
   }
 
-  Future<Map<String, int>?> getCurrentLocationAndMatch({double? lat, double? lon}) async {
+  Future<Map<String, dynamic>?> getCurrentLocationAndMatch({double? lat, double? lon}) async {
     try {
       double latitude;
       double longitude;
@@ -335,7 +339,17 @@ class AuthController extends GetxController {
           }
           return {
             'villeId': matchedVille.id,
-            'quartierId': matchedQuartier?.id ?? (matchedVille.quartiers.isNotEmpty ? matchedVille.quartiers.first.id : 0),
+            'quartierId': matchedQuartier?.id, // Do not auto-select the first one if no match
+            'rawVille': villeName,
+            'rawQuartier': quartierName,
+          };
+        } else {
+           // Si on ne trouve pas la ville, on renvoie quand même les données brutes
+           return {
+            'villeId': null,
+            'quartierId': null,
+            'rawVille': villeName,
+            'rawQuartier': quartierName,
           };
         }
       }

@@ -11,7 +11,7 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'location_picker_screen.dart';
+import '../map/unified_map_screen.dart';
 import '../../utils/chat_media_cache_manager.dart';
 import '../../theme/app_theme.dart';
 import '../../Api/firebase/controllers/chat_controller.dart';
@@ -48,7 +48,7 @@ class _ChatScreenState extends State<ChatScreen> {
   bool _messageSentInThisSession = false;
   bool _isUploading = false;
   bool _isBuyer = true;
-  
+
   // Audio record variables
   final _recorder = AudioRecorder();
   String? _recordingPath;
@@ -79,7 +79,7 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   String get _actingUserId {
-    if (Get.parameters['asBoutique'] == 'true') {
+    if (_isActingAsBoutique) {
       if (Get.isRegistered<BoutiqueController>()) {
         final b = Get.find<BoutiqueController>().myBoutique.value;
         if (b != null) return b.id.toString();
@@ -90,7 +90,29 @@ class _ChatScreenState extends State<ChatScreen> {
 
   String get _convId => Get.parameters['id'] ?? '';
 
-  bool get _isActingAsBoutique => Get.parameters['asBoutique'] == 'true';
+  bool get _isActingAsBoutique {
+    // 1. Si le paramètre URL force une valeur, on l'utilise
+    final param = Get.parameters['asBoutique'];
+    if (param != null) {
+      return param == 'true';
+    }
+
+    // 2. Sinon, auto-détection robuste basée sur le chatId et la boutique de l'utilisateur
+    final convId = _convId;
+    if (convId.startsWith('shop_')) {
+      if (Get.isRegistered<BoutiqueController>()) {
+        final b = Get.find<BoutiqueController>().myBoutique.value;
+        if (b != null) {
+          final shopId = b.id.toString();
+          final parts = convId.split('_');
+          if (parts.length == 3) {
+            return parts[1] == shopId || parts[2] == shopId;
+          }
+        }
+      }
+    }
+    return false;
+  }
 
   bool _isValidConvId(String convId) =>
       convId.isNotEmpty && convId.contains('_');
@@ -114,20 +136,31 @@ class _ChatScreenState extends State<ChatScreen> {
 
     if (_isValidConvId(convId) &&
         Get.isRegistered<FirebaseAuthBridgeService>()) {
-      FirebaseAuthBridgeService.to.ensureSignedInForChat(
+      FirebaseAuthBridgeService.to
+          .ensureSignedInForChat(
         convId,
         asBoutique: _isActingAsBoutique,
-      );
-    }
-    
-    // Déterminer si l'utilisateur est acheteur (pour backward compat)
-    final parts = convId.split('_');
-    if (parts.length == 2) {
-      _isBuyer = parts[0] == _actingUserId || 
-                 int.tryParse(parts[0]).toString() == _actingUserId;
+      )
+          .catchError((e) {
+        debugPrint('ChatScreen initState: ensureSignedInForChat failed: $e');
+      });
     }
 
-    _chatCtrl.loadConversation(convId, isBuyer: _isBuyer, actingUserId: _actingUserId);
+    // Déterminer si l'utilisateur est acheteur (pour backward compat)
+    final parts = convId.split('_');
+    if (parts.length == 3) {
+      _isBuyer = parts[1] == _actingUserId ||
+          int.tryParse(parts[1]).toString() == _actingUserId;
+    } else if (parts.length == 2) {
+      _isBuyer = parts[0] == _actingUserId ||
+          int.tryParse(parts[0]).toString() == _actingUserId;
+    }
+
+    _chatCtrl.loadConversation(
+      convId, 
+      actingEntityId: _actingUserId,
+      actingEntityType: _isActingAsBoutique ? 'shop' : 'user',
+    );
 
     _activeProduct =
         (Get.arguments is Product) ? Get.arguments as Product : null;
@@ -169,24 +202,34 @@ class _ChatScreenState extends State<ChatScreen> {
 
     // Trouver l'ID du destinataire depuis la session Firestore
     final session = _chatCtrl.currentChatSession.value;
+    final myUid = '${_isActingAsBoutique ? 'shop' : 'user'}_$myId';
     String receiverId = '';
+    String receiverEntityType = 'user';
     if (session != null) {
-      receiverId = session.otherParticipantId(myId);
+      final receiverUid = session.otherParticipantUid(myUid);
+      final parts = receiverUid.split('_');
+      if (parts.length >= 2) {
+        receiverEntityType = parts[0];
+        receiverId = parts.sublist(1).join('_');
+      }
     } else {
       // Fallback: extraire depuis l'ID de conversation
       final parts = convId.split('_');
-      if (parts.length == 2) {
+      if (parts.length == 3) {
+        receiverId = parts[1] == myId ? parts[2] : parts[1];
+      } else if (parts.length == 2) {
         receiverId = parts[0] == myId ? parts[1] : parts[0];
       }
     }
 
     _chatCtrl.sendMessage(
-      convId, 
-      myId, 
-      receiverId, 
+      convId,
+      myId,
+      _isActingAsBoutique ? 'shop' : 'user',
+      receiverId,
+      receiverEntityType,
       content,
       productId: _showProductPreview ? _activeProduct?.id.toString() : null,
-      isBuyerSending: _isBuyer,
     );
 
     _messageSentInThisSession = true;
@@ -252,12 +295,12 @@ class _ChatScreenState extends State<ChatScreen> {
                 color: Colors.green,
                 onTap: () async {
                   Navigator.pop(context);
-                  final res = await Get.to(() => const LocationPickerScreen());
+                  final res = await Get.to(() => const UnifiedMapScreen());
                   if (res != null && res is Map) {
                     final lat = res['latitude'] as double;
                     final lon = res['longitude'] as double;
                     final address = res['address'] as String;
-                    
+
                     final convId = _convId;
                     if (!_isValidConvId(convId)) {
                       _showInvalidConversationError();
@@ -265,17 +308,28 @@ class _ChatScreenState extends State<ChatScreen> {
                     }
                     final myId = _actingUserId;
                     final session = _chatCtrl.currentChatSession.value;
-                    final receiverId = session?.otherParticipantId(myId) ?? '';
+                    final myUid = '${_isActingAsBoutique ? 'shop' : 'user'}_$myId';
+                    String receiverId = '';
+                    String receiverEntityType = 'user';
+                    if (session != null) {
+                      final receiverUid = session.otherParticipantUid(myUid);
+                      final parts = receiverUid.split('_');
+                      if (parts.length >= 2) {
+                        receiverEntityType = parts[0];
+                        receiverId = parts[1];
+                      }
+                    }
                     if (receiverId.isEmpty) return;
 
                     await _chatCtrl.sendLocationMessage(
                       convId,
                       myId,
+                      _isActingAsBoutique ? 'shop' : 'user',
                       receiverId,
+                      receiverEntityType,
                       lat,
                       lon,
                       address,
-                      _isBuyer,
                     );
                     _messageSentInThisSession = true;
                   }
@@ -316,7 +370,10 @@ class _ChatScreenState extends State<ChatScreen> {
                   selectedFiles.length == 1
                       ? 'Prévisualiser l\'image'
                       : 'Prévisualiser (${selectedFiles.length} images)',
-                  style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold),
                 ),
               ),
               body: Column(
@@ -334,7 +391,8 @@ class _ChatScreenState extends State<ChatScreen> {
                           )
                         : GridView.builder(
                             padding: const EdgeInsets.all(16),
-                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                            gridDelegate:
+                                const SliverGridDelegateWithFixedCrossAxisCount(
                               crossAxisCount: 2,
                               crossAxisSpacing: 12,
                               mainAxisSpacing: 12,
@@ -383,7 +441,8 @@ class _ChatScreenState extends State<ChatScreen> {
                           ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 12),
                     color: Colors.black87,
                     child: SafeArea(
                       top: false,
@@ -397,14 +456,17 @@ class _ChatScreenState extends State<ChatScreen> {
                               ),
                               child: TextField(
                                 controller: textController,
-                                style: const TextStyle(color: Colors.white, fontSize: 15),
+                                style: const TextStyle(
+                                    color: Colors.white, fontSize: 15),
                                 maxLines: 4,
                                 minLines: 1,
                                 decoration: InputDecoration(
                                   hintText: 'Ajouter une légende...',
-                                  hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
+                                  hintStyle: TextStyle(
+                                      color: Colors.white.withOpacity(0.5)),
                                   border: InputBorder.none,
-                                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                  contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 16, vertical: 12),
                                 ),
                               ),
                             ),
@@ -413,7 +475,8 @@ class _ChatScreenState extends State<ChatScreen> {
                           GestureDetector(
                             onTap: () {
                               Get.back();
-                              _uploadAndSendMultipleImages(selectedFiles, textController.text.trim());
+                              _uploadAndSendMultipleImages(
+                                  selectedFiles, textController.text.trim());
                             },
                             child: Container(
                               width: 48,
@@ -422,7 +485,8 @@ class _ChatScreenState extends State<ChatScreen> {
                                 color: AppTheme.primary,
                                 shape: BoxShape.circle,
                               ),
-                              child: const Icon(Icons.send, color: Colors.white, size: 20),
+                              child: const Icon(Icons.send,
+                                  color: Colors.white, size: 20),
                             ),
                           ),
                         ],
@@ -455,8 +519,18 @@ class _ChatScreenState extends State<ChatScreen> {
       return;
     }
     final myId = _actingUserId;
+    final myUid = '${_isActingAsBoutique ? 'shop' : 'user'}_$myId';
     final session = _chatCtrl.currentChatSession.value;
-    final receiverId = session?.otherParticipantId(myId) ?? '';
+    String receiverId = '';
+    String receiverEntityType = 'user';
+    if (session != null) {
+      final receiverUid = session.otherParticipantUid(myUid);
+      final parts = receiverUid.split('_');
+      if (parts.length >= 2) {
+        receiverEntityType = parts[0];
+        receiverId = parts.sublist(1).join('_');
+      }
+    }
     if (receiverId.isEmpty) return;
 
     _messageSentInThisSession = true;
@@ -467,10 +541,11 @@ class _ChatScreenState extends State<ChatScreen> {
       _chatCtrl.uploadAndSendImage(
         convId,
         myId,
+        _isActingAsBoutique ? 'shop' : 'user',
         receiverId,
+        receiverEntityType,
         imageFiles[i],
         messageCaption,
-        _isBuyer,
         _isActingAsBoutique,
         productId: wasProductPreview && i == 0 ? productPreviewId : null,
       );
@@ -481,18 +556,21 @@ class _ChatScreenState extends State<ChatScreen> {
     final picker = ImagePicker();
     if (source == ImageSource.gallery) {
       try {
-        final pickedList = await picker.pickMultiImage(imageQuality: 70, maxWidth: 1200);
+        final pickedList =
+            await picker.pickMultiImage(imageQuality: 70, maxWidth: 1200);
         if (pickedList.isEmpty) return;
         final files = pickedList.map((picked) => File(picked.path)).toList();
         _showMultipleImagesPreview(files);
       } catch (e) {
         debugPrint('Error picking multi image: $e');
-        final picked = await picker.pickImage(source: ImageSource.gallery, imageQuality: 70, maxWidth: 1200);
+        final picked = await picker.pickImage(
+            source: ImageSource.gallery, imageQuality: 70, maxWidth: 1200);
         if (picked == null) return;
         _showMultipleImagesPreview([File(picked.path)]);
       }
     } else {
-      final picked = await picker.pickImage(source: source, imageQuality: 70, maxWidth: 1200);
+      final picked = await picker.pickImage(
+          source: source, imageQuality: 70, maxWidth: 1200);
       if (picked == null) return;
       _showMultipleImagesPreview([File(picked.path)]);
     }
@@ -522,8 +600,10 @@ class _ChatScreenState extends State<ChatScreen> {
   Future<void> _startRecording() async {
     if (await _recorder.hasPermission()) {
       final dir = Directory.systemTemp;
-      final path = '${dir.path}/voice_${DateTime.now().millisecondsSinceEpoch}.m4a';
-      await _recorder.start(const RecordConfig(encoder: AudioEncoder.aacLc), path: path);
+      final path =
+          '${dir.path}/voice_${DateTime.now().millisecondsSinceEpoch}.m4a';
+      await _recorder.start(const RecordConfig(encoder: AudioEncoder.aacLc),
+          path: path);
       setState(() {
         _recordState = VoiceRecordState.recording;
         _recordingPath = path;
@@ -532,7 +612,7 @@ class _ChatScreenState extends State<ChatScreen> {
       _startTimer();
     } else {
       Get.snackbar(
-        'Permission requise', 
+        'Permission requise',
         'Veuillez autoriser l\'accès au microphone dans les paramètres de votre appareil.',
         backgroundColor: Colors.red.withOpacity(0.9),
         colorText: Colors.white,
@@ -588,7 +668,7 @@ class _ChatScreenState extends State<ChatScreen> {
   Future<void> _stopAndPreviewRecording() async {
     // Sauvegarder la durée AVANT de l'annuler
     final savedDuration = _recordDuration;
-    
+
     String? path;
     try {
       path = await _recorder.stop();
@@ -596,15 +676,16 @@ class _ChatScreenState extends State<ChatScreen> {
       debugPrint('Error stopping recorder: $e');
     }
     _stopTimer();
-    
+
     // Utiliser le path retourné, ou celui stocké au début de l'enregistrement
     final finalPath = _cleanFilePath(path ?? _recordingPath ?? '');
     if (finalPath.isEmpty) {
-      debugPrint('❌ Aucun fichier audio trouvé après arrêt de l\'enregistrement');
+      debugPrint(
+          '❌ Aucun fichier audio trouvé après arrêt de l\'enregistrement');
       setState(() => _recordState = VoiceRecordState.none);
       return;
     }
-    
+
     // Vérifier que le fichier existe
     final audioFile = File(finalPath);
     if (!await audioFile.exists()) {
@@ -612,12 +693,14 @@ class _ChatScreenState extends State<ChatScreen> {
       setState(() => _recordState = VoiceRecordState.none);
       return;
     }
-    
+
     final fileSize = await audioFile.length();
-    debugPrint('✅ Audio enregistré: $finalPath (${fileSize}B, ${savedDuration}s)');
-    
+    debugPrint(
+        '✅ Audio enregistré: $finalPath (${fileSize}B, ${savedDuration}s)');
+
     // Durée : utiliser la durée du timer comme base fiable
-    Duration duration = Duration(seconds: savedDuration > 0 ? savedDuration : 1);
+    Duration duration =
+        Duration(seconds: savedDuration > 0 ? savedDuration : 1);
     try {
       final player = AudioPlayer();
       await player.setSourceDeviceFile(finalPath);
@@ -673,12 +756,12 @@ class _ChatScreenState extends State<ChatScreen> {
     if (_recordingPath == null) return;
     await _previewPlayer.stop();
     final cleanPath = _cleanFilePath(_recordingPath!);
-    
+
     setState(() {
       _isUploading = true;
       _recordState = VoiceRecordState.none;
     });
-    
+
     try {
       final file = File(cleanPath);
       if (!await file.exists()) {
@@ -691,17 +774,28 @@ class _ChatScreenState extends State<ChatScreen> {
         return;
       }
       final myId = _actingUserId;
+      final myUid = '${_isActingAsBoutique ? 'shop' : 'user'}_$myId';
       final session = _chatCtrl.currentChatSession.value;
-      final receiverId = session?.otherParticipantId(myId) ?? '';
+      String receiverId = '';
+      String receiverEntityType = 'user';
+      if (session != null) {
+        final receiverUid = session.otherParticipantUid(myUid);
+        final parts = receiverUid.split('_');
+        if (parts.length >= 2) {
+          receiverEntityType = parts[0];
+          receiverId = parts.sublist(1).join('_');
+        }
+      }
       if (receiverId.isEmpty) {
         throw Exception("Destinataire introuvable dans la session.");
       }
 
-      final durationSec = _previewDuration.inSeconds > 0 
-          ? _previewDuration.inSeconds 
+      final durationSec = _previewDuration.inSeconds > 0
+          ? _previewDuration.inSeconds
           : (_recordDuration > 0 ? _recordDuration : 1);
 
-      debugPrint('Uploading voice note of duration: $durationSec s, file: ${file.path}');
+      debugPrint(
+          'Uploading voice note of duration: $durationSec s, file: ${file.path}');
       final url = await ChatService.to.uploadMedia(
         convId,
         file,
@@ -711,8 +805,12 @@ class _ChatScreenState extends State<ChatScreen> {
       debugPrint('Voice note uploaded successfully: $url');
 
       await _chatCtrl.sendMessage(
-        convId, myId, receiverId, '',
-        isBuyerSending: _isBuyer,
+        convId,
+        myId,
+        _isActingAsBoutique ? 'shop' : 'user',
+        receiverId,
+        receiverEntityType,
+        '',
         type: 'voice',
         mediaUrl: url,
         mediaDuration: durationSec,
@@ -757,469 +855,540 @@ class _ChatScreenState extends State<ChatScreen> {
     final myId = _actingUserId;
 
     return PopScope(
-      canPop: false,
-      onPopInvoked: (didPop) {
-        if (didPop) return;
-        if (_messageSentInThisSession && _activeProduct != null) {
-          Get.offAllNamed('/messages');
-        } else {
-          Get.back();
-        }
-      },
-      child: Scaffold(
-        resizeToAvoidBottomInset: true,
-        backgroundColor: AppTheme.background,
-
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(kToolbarHeight),
-        child: Obx(() {
-          final session = _chatCtrl.currentChatSession.value;
-          
-          // Résoudre le nom et l'avatar de l'interlocuteur
-          String otherName = 'Chargement...';
-          String otherAvatar = '';
-          
-          if (session != null) {
-            otherName = session.otherParticipantName(myId);
-            otherAvatar = session.otherParticipantAvatar(myId);
-          } else if (_activeProduct != null) {
-            // Fallback depuis le produit passé en argument
-            final p = _activeProduct!;
-            if (p.boutiqueObj != null) {
-              otherName = p.boutiqueObj!.nom;
-              otherAvatar = p.boutiqueObj!.logoUrl;
-            } else if (p.userObj != null) {
-              otherName = p.userObj!.nom ?? 'Vendeur';
-              otherAvatar = p.userObj!.avatarUrl ?? '';
-            }
+        canPop: false,
+        onPopInvoked: (didPop) {
+          if (didPop) return;
+          if (_messageSentInThisSession && _activeProduct != null) {
+            Get.offAllNamed('/messages');
+          } else {
+            Get.back();
           }
-          
-          final resolvedAvatar = otherAvatar.isNotEmpty 
-              ? ApiConstants.resolveImageUrl(otherAvatar) 
-              : '';
-          
-          // Image produit pour l'action de l'AppBar
-          final productImage = session?.productImage ?? _activeProduct?.image;
-          final productId = session?.productId ?? _activeProduct?.id.toString();
+        },
+        child: Scaffold(
+          resizeToAvoidBottomInset: true,
+          backgroundColor: AppTheme.background,
+          appBar: PreferredSize(
+            preferredSize: const Size.fromHeight(kToolbarHeight),
+            child: Obx(() {
+              final session = _chatCtrl.currentChatSession.value;
 
-          return AppBar(
-            backgroundColor: AppTheme.cardColor,
-            elevation: 0,
-            titleSpacing: 0,
-            leading: IconButton(
-              icon: const Icon(Icons.arrow_back, size: 18),
-              onPressed: () {
-                if (_messageSentInThisSession && _activeProduct != null) {
-                  Get.offAllNamed('/messages');
-                } else {
-                  Get.back();
+              // Résoudre le nom et l'avatar de l'interlocuteur
+              String otherName = 'Chargement...';
+              String otherAvatar = '';
+
+              if (session != null) {
+                final myUid = '${_isActingAsBoutique ? 'shop' : 'user'}_$myId';
+                otherName = session.otherParticipantName(myUid);
+                otherAvatar = session.otherParticipantAvatar(myUid);
+              } else if (_activeProduct != null) {
+                // Fallback depuis le produit passé en argument
+                final p = _activeProduct!;
+                if (p.boutiqueObj != null) {
+                  otherName = p.boutiqueObj!.nom;
+                  otherAvatar = p.boutiqueObj!.logoUrl;
+                } else if (p.userObj != null) {
+                  otherName = p.userObj!.nom ?? 'Vendeur';
+                  otherAvatar = p.userObj!.avatarUrl ?? '';
                 }
-              },
-            ),
-            title: Row(
-              children: [
-                if (resolvedAvatar.isNotEmpty)
-                  CircleAvatar(
-                    radius: 18,
-                    backgroundImage: CachedNetworkImageProvider(resolvedAvatar),
-                  )
-                else
-                  CircleAvatar(
-                    radius: 18,
-                    backgroundColor: AppTheme.muted,
-                    child: Icon(Icons.person, size: 18, color: AppTheme.mutedForeground),
-                  ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        otherName,
-                        style: const TextStyle(
-                            fontSize: 14, fontWeight: FontWeight.w700),
-                      ),
-                      Text(
-                        'En ligne',
-                        style: TextStyle(
-                            fontSize: 11, color: AppTheme.mutedForeground),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            actions: [
-              if (productImage != null && productImage.isNotEmpty)
-                GestureDetector(
-                  onTap: () {
-                    if (productId != null) Get.toNamed('/product/$productId');
+              }
+
+              final resolvedAvatar = otherAvatar.isNotEmpty
+                  ? ApiConstants.resolveImageUrl(otherAvatar)
+                  : '';
+
+              // Image produit pour l'action de l'AppBar
+              final productImage =
+                  session?.productImage ?? _activeProduct?.image;
+              final productId =
+                  session?.productId ?? _activeProduct?.id.toString();
+
+              return AppBar(
+                backgroundColor: AppTheme.cardColor,
+                elevation: 0,
+                titleSpacing: 0,
+                leading: IconButton(
+                  icon: const Icon(Icons.arrow_back, size: 18),
+                  onPressed: () {
+                    if (_messageSentInThisSession && _activeProduct != null) {
+                      Get.offAllNamed('/messages');
+                    } else {
+                      Get.back();
+                    }
                   },
-                  child: Container(
-                    width: 40,
-                    height: 40,
-                    margin: const EdgeInsets.only(right: 12),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(8),
-                      image: DecorationImage(
-                        image: CachedNetworkImageProvider(ApiConstants.resolveImageUrl(productImage)),
-                        fit: BoxFit.cover,
+                ),
+                title: Row(
+                  children: [
+                    if (resolvedAvatar.isNotEmpty)
+                      CircleAvatar(
+                        radius: 18,
+                        backgroundImage:
+                            CachedNetworkImageProvider(resolvedAvatar),
+                      )
+                    else
+                      CircleAvatar(
+                        radius: 18,
+                        backgroundColor: AppTheme.muted,
+                        child: Icon(Icons.person,
+                            size: 18, color: AppTheme.mutedForeground),
+                      ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            otherName,
+                            style: const TextStyle(
+                                fontSize: 14, fontWeight: FontWeight.w700),
+                          ),
+                          Text(
+                            'En ligne',
+                            style: TextStyle(
+                                fontSize: 11, color: AppTheme.mutedForeground),
+                          ),
+                        ],
                       ),
                     ),
-                  ),
+                  ],
                 ),
-            ],
-          );
-        }),
-      ),
-      body: Column(
-        children: [
-          // Messages
-          Expanded(
-            child: Obx(() {
-              final realMessages = _chatCtrl.currentMessages;
-              final pending = _chatCtrl.pendingMessages;
-              final totalCount = realMessages.length + pending.length;
-
-              return ListView.builder(
-                controller: _scrollCtrl,
-                reverse: true,
-                padding: const EdgeInsets.all(16),
-                itemCount: totalCount,
-                itemBuilder: (_, i) {
-                  final session = _chatCtrl.currentChatSession.value;
-                  final otherAvatar = session?.otherParticipantAvatar(myId) ?? '';
-
-                  // Pending messages appear first (index 0..pending.length-1) since list is reversed
-                  if (i < pending.length) {
-                    final pm = pending[pending.length - 1 - i];
-                    return _PendingMessageBubble(
-                      pending: pm,
-                      onRetry: () {
-                        final convId = _convId;
-                        final receiverId = session?.otherParticipantId(myId) ?? '';
-                        if (pm.type == 'image' && pm.originalFile != null) {
-                          _chatCtrl.uploadAndSendImage(
-                            convId, myId, receiverId, pm.originalFile!,
-                            pm.content, _isBuyer, _isActingAsBoutique,
-                            existing: pm,
-                          );
-                        } else if (pm.type == 'voice' && pm.originalFile != null) {
-                          _chatCtrl.uploadAndSendVoiceNote(
-                            convId, myId, receiverId, pm.originalFile!,
-                            pm.mediaDuration ?? 1, _isBuyer, _isActingAsBoutique,
-                            existing: pm,
-                          );
-                        }
+                actions: [
+                  if (productImage != null && productImage.isNotEmpty)
+                    GestureDetector(
+                      onTap: () {
+                        if (productId != null)
+                          Get.toNamed('/product/$productId');
                       },
-                    );
-                  }
-
-                  final realIdx = i - pending.length;
-                  final msg = realMessages[realIdx];
-                  return _MessageBubble(
-                      message: msg, sellerAvatar: otherAvatar, isMe: msg.senderId == myId);
-                },
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        margin: const EdgeInsets.only(right: 12),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(8),
+                          image: DecorationImage(
+                            image: CachedNetworkImageProvider(
+                                ApiConstants.resolveImageUrl(productImage)),
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
               );
             }),
           ),
-          // Quick replies
-          Obx(() {
-            if (_chatCtrl.currentMessages.isNotEmpty) return const SizedBox.shrink();
-            return SizedBox(
-              height: 44,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                itemCount: _quickReplies.length,
-                separatorBuilder: (_, __) => SizedBox(width: 8),
-                itemBuilder: (_, i) => GestureDetector(
-                  onTap: () => _send(_quickReplies[i]),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: AppTheme.cardColor,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: AppTheme.border),
-                    ),
-                    child: Text(
-                      _quickReplies[i],
-                      style: TextStyle(fontSize: 13),
+          body: Column(
+            children: [
+              // Messages
+              Expanded(
+                child: Obx(() {
+                  final realMessages = _chatCtrl.currentMessages;
+                  final pending = _chatCtrl.pendingMessages;
+                  final totalCount = realMessages.length + pending.length;
+
+                  return ListView.builder(
+                    controller: _scrollCtrl,
+                    reverse: true,
+                    padding: const EdgeInsets.all(16),
+                    itemCount: totalCount,
+                    itemBuilder: (_, i) {
+                      final session = _chatCtrl.currentChatSession.value;
+                      final itemMyUid = '${_isActingAsBoutique ? 'shop' : 'user'}_$myId';
+                      final otherAvatar =
+                          session?.otherParticipantAvatar(itemMyUid) ?? '';
+
+                      // Pending messages appear first (index 0..pending.length-1) since list is reversed
+                      if (i < pending.length) {
+                        final pm = pending[pending.length - 1 - i];
+                        return _PendingMessageBubble(
+                          pending: pm,
+                          onRetry: () {
+                            final convId = _convId;
+                            final retryMyUid = '${_isActingAsBoutique ? 'shop' : 'user'}_$myId';
+                            String receiverId = '';
+                            String retryReceiverEntityType = 'user';
+                            if (session != null) {
+                              final receiverUid = session.otherParticipantUid(retryMyUid);
+                              final parts = receiverUid.split('_');
+                              if (parts.length >= 2) {
+                                retryReceiverEntityType = parts[0];
+                                receiverId = parts.sublist(1).join('_');
+                              }
+                            }
+                            if (pm.type == 'image' && pm.originalFile != null) {
+                              _chatCtrl.uploadAndSendImage(
+                                convId,
+                                myId,
+                                _isActingAsBoutique ? 'shop' : 'user',
+                                receiverId,
+                                retryReceiverEntityType,
+                                pm.originalFile!,
+                                pm.content,
+                                _isActingAsBoutique,
+                                existing: pm,
+                              );
+                            } else if (pm.type == 'voice' &&
+                                pm.originalFile != null) {
+                              _chatCtrl.uploadAndSendVoiceNote(
+                                convId,
+                                myId,
+                                _isActingAsBoutique ? 'shop' : 'user',
+                                receiverId,
+                                retryReceiverEntityType,
+                                pm.originalFile!,
+                                pm.mediaDuration ?? 1,
+                                _isActingAsBoutique,
+                                existing: pm,
+                              );
+                            }
+                          },
+                        );
+                      }
+
+                      final realIdx = i - pending.length;
+                      final msg = realMessages[realIdx];
+                      return _MessageBubble(
+                          message: msg,
+                          sellerAvatar: otherAvatar,
+                          isMe: msg.senderEntityId == myId);
+                    },
+                  );
+                }),
+              ),
+              // Quick replies
+              Obx(() {
+                if (_chatCtrl.currentMessages.isNotEmpty)
+                  return const SizedBox.shrink();
+                return SizedBox(
+                  height: 44,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    itemCount: _quickReplies.length,
+                    separatorBuilder: (_, __) => SizedBox(width: 8),
+                    itemBuilder: (_, i) => GestureDetector(
+                      onTap: () => _send(_quickReplies[i]),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: AppTheme.cardColor,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: AppTheme.border),
+                        ),
+                        child: Text(
+                          _quickReplies[i],
+                          style: TextStyle(fontSize: 13),
+                        ),
+                      ),
                     ),
                   ),
+                );
+              }),
+              SizedBox(height: 8),
+              // Input
+              Container(
+                padding: EdgeInsets.fromLTRB(
+                    16, 4, 16, MediaQuery.of(context).padding.bottom + 8),
+                decoration: BoxDecoration(
+                  color: AppTheme.cardColor,
+                  border: Border(
+                      top: BorderSide(color: AppTheme.border.withOpacity(0.3))),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (_activeProduct != null && _showProductPreview)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 8.0),
+                        child: _ProductInputPreview(
+                          product: _activeProduct!,
+                          onClose: () =>
+                              setState(() => _showProductPreview = false),
+                        ),
+                      ),
+                    if (_recordState == VoiceRecordState.none)
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          GestureDetector(
+                            onTap: _showAttachMenu,
+                            child: Container(
+                              padding:
+                                  const EdgeInsets.only(right: 12, bottom: 12),
+                              child: Icon(Icons.add,
+                                  color: AppTheme.primary, size: r.s(24)),
+                            ),
+                          ),
+                          Expanded(
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: AppTheme.muted,
+                                borderRadius: BorderRadius.circular(24),
+                              ),
+                              child: TextField(
+                                controller: _msgCtrl,
+                                keyboardType: TextInputType.multiline,
+                                textInputAction: TextInputAction.newline,
+                                minLines: 1,
+                                maxLines: 5,
+                                onChanged: (val) {
+                                  setState(() {});
+                                },
+                                style: const TextStyle(
+                                  fontSize: 15,
+                                  height: 1.3,
+                                ),
+                                decoration: const InputDecoration(
+                                  hintText: 'Écrivez un message...',
+                                  border: InputBorder.none,
+                                  enabledBorder: InputBorder.none,
+                                  focusedBorder: InputBorder.none,
+                                  contentPadding: EdgeInsets.symmetric(
+                                      horizontal: 16, vertical: 12),
+                                  fillColor: Colors.transparent,
+                                  filled: false,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          if (_isUploading)
+                            Container(
+                              width: r.s(48),
+                              height: r.s(48),
+                              decoration: BoxDecoration(
+                                color: AppTheme.muted,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Padding(
+                                padding: EdgeInsets.all(12),
+                                child:
+                                    CircularProgressIndicator(strokeWidth: 2),
+                              ),
+                            )
+                          else if (_msgCtrl.text.trim().isEmpty)
+                            GestureDetector(
+                              onTap: _startRecording,
+                              child: Container(
+                                width: r.s(48),
+                                height: r.s(48),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.primary,
+                                  shape: BoxShape.circle,
+                                  boxShadow: AppTheme.shadowPrimary,
+                                ),
+                                child: const Icon(Icons.mic,
+                                    color: Colors.white, size: 20),
+                              ),
+                            )
+                          else
+                            GestureDetector(
+                              onTap: () => _send(),
+                              child: Container(
+                                width: r.s(48),
+                                height: r.s(48),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.primary,
+                                  shape: BoxShape.circle,
+                                  boxShadow: AppTheme.shadowPrimary,
+                                ),
+                                child: const Icon(Icons.send,
+                                    color: Colors.white, size: 20),
+                              ),
+                            ),
+                        ],
+                      )
+                    else if (_recordState == VoiceRecordState.recording ||
+                        _recordState == VoiceRecordState.paused)
+                      Row(
+                        children: [
+                          // Trash / Cancel
+                          GestureDetector(
+                            onTap: _cancelRecording,
+                            child: Container(
+                              padding: const EdgeInsets.all(12),
+                              child: const Icon(Icons.delete_outline,
+                                  color: Colors.redAccent, size: 24),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          // Animated pulse wave / Record State
+                          Expanded(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 14, vertical: 10),
+                              decoration: BoxDecoration(
+                                color: AppTheme.muted,
+                                borderRadius: BorderRadius.circular(24),
+                              ),
+                              child: Row(
+                                children: [
+                                  // Pulsing indicator
+                                  if (_recordState ==
+                                      VoiceRecordState.recording)
+                                    const _RecordingWaveform()
+                                  else
+                                    const Icon(Icons.pause,
+                                        color: Colors.grey, size: 16),
+                                  const SizedBox(width: 12),
+                                  // Recording duration
+                                  Text(
+                                    _formatTimer(_recordDuration),
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.redAccent,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          // Pause / Resume Button
+                          GestureDetector(
+                            onTap: _recordState == VoiceRecordState.recording
+                                ? _pauseRecording
+                                : _resumeRecording,
+                            child: Container(
+                              width: r.s(40),
+                              height: r.s(40),
+                              decoration: BoxDecoration(
+                                color: AppTheme.cardColor,
+                                shape: BoxShape.circle,
+                                border: Border.all(color: AppTheme.border),
+                              ),
+                              child: Icon(
+                                _recordState == VoiceRecordState.recording
+                                    ? Icons.pause
+                                    : Icons.play_arrow,
+                                color: AppTheme.primary,
+                                size: 20,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          // Stop & Preview Button
+                          GestureDetector(
+                            onTap: _stopAndPreviewRecording,
+                            child: Container(
+                              width: r.s(48),
+                              height: r.s(48),
+                              decoration: BoxDecoration(
+                                color: Colors.redAccent,
+                                shape: BoxShape.circle,
+                                boxShadow: AppTheme.shadowPrimary,
+                              ),
+                              child: const Icon(Icons.stop,
+                                  color: Colors.white, size: 20),
+                            ),
+                          ),
+                        ],
+                      )
+                    else if (_recordState == VoiceRecordState.preview)
+                      Row(
+                        children: [
+                          // Discard / Trash
+                          GestureDetector(
+                            onTap: _deletePreview,
+                            child: Container(
+                              padding: const EdgeInsets.all(12),
+                              child: const Icon(Icons.delete_outline,
+                                  color: Colors.redAccent, size: 24),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          // Player preview
+                          Expanded(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: AppTheme.muted,
+                                borderRadius: BorderRadius.circular(24),
+                              ),
+                              child: Row(
+                                children: [
+                                  GestureDetector(
+                                    onTap: _playPreview,
+                                    child: Icon(
+                                      _isPreviewPlaying
+                                          ? Icons.pause
+                                          : Icons.play_arrow,
+                                      color: AppTheme.primary,
+                                      size: 24,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Expanded(
+                                    child: SliderTheme(
+                                      data: SliderTheme.of(context).copyWith(
+                                        trackHeight: 3.0,
+                                        thumbShape: const RoundSliderThumbShape(
+                                            enabledThumbRadius: 5.0),
+                                        overlayShape:
+                                            const RoundSliderOverlayShape(
+                                                overlayRadius: 10.0),
+                                        activeTrackColor: AppTheme.primary,
+                                        inactiveTrackColor: AppTheme.border,
+                                        thumbColor: AppTheme.primary,
+                                      ),
+                                      child: Slider(
+                                        value: _previewPosition.inMilliseconds
+                                            .toDouble()
+                                            .clamp(
+                                                0.0,
+                                                _previewDuration.inMilliseconds
+                                                    .toDouble()),
+                                        min: 0.0,
+                                        max: _previewDuration.inMilliseconds
+                                                    .toDouble() >
+                                                0
+                                            ? _previewDuration.inMilliseconds
+                                                .toDouble()
+                                            : 1.0,
+                                        onChanged: (val) {
+                                          _previewPlayer.seek(Duration(
+                                              milliseconds: val.toInt()));
+                                        },
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    _formatTimer(_previewDuration.inSeconds),
+                                    style: const TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          // Confirm Send Button
+                          GestureDetector(
+                            onTap: _sendVoiceNote,
+                            child: Container(
+                              width: r.s(48),
+                              height: r.s(48),
+                              decoration: BoxDecoration(
+                                color: AppTheme.primary,
+                                shape: BoxShape.circle,
+                                boxShadow: AppTheme.shadowPrimary,
+                              ),
+                              child: const Icon(Icons.send,
+                                  color: Colors.white, size: 20),
+                            ),
+                          ),
+                        ],
+                      ),
+                  ],
                 ),
               ),
-            );
-          }),
-          SizedBox(height: 8),
-          // Input
-          Container(
-            padding: EdgeInsets.fromLTRB(
-                16, 4, 16, MediaQuery.of(context).padding.bottom + 8),
-            decoration: BoxDecoration(
-              color: AppTheme.cardColor,
-              border: Border(
-                  top: BorderSide(color: AppTheme.border.withOpacity(0.3))),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (_activeProduct != null && _showProductPreview)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 8.0),
-                    child: _ProductInputPreview(
-                      product: _activeProduct!,
-                      onClose: () =>
-                          setState(() => _showProductPreview = false),
-                    ),
-                  ),
-                if (_recordState == VoiceRecordState.none)
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      GestureDetector(
-                        onTap: _showAttachMenu,
-                        child: Container(
-                          padding: const EdgeInsets.only(right: 12, bottom: 12),
-                          child: Icon(Icons.add, color: AppTheme.primary, size: r.s(24)),
-                        ),
-                      ),
-                      Expanded(
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: AppTheme.muted,
-                            borderRadius: BorderRadius.circular(24),
-                          ),
-                          child: TextField(
-                            controller: _msgCtrl,
-                            keyboardType: TextInputType.multiline,
-                            textInputAction: TextInputAction.newline,
-                            minLines: 1,
-                            maxLines: 5,
-                            onChanged: (val) {
-                              setState(() {});
-                            },
-                            style: const TextStyle(
-                              fontSize: 15,
-                              height: 1.3,
-                            ),
-                            decoration: const InputDecoration(
-                              hintText: 'Écrivez un message...',
-                              border: InputBorder.none,
-                              enabledBorder: InputBorder.none,
-                              focusedBorder: InputBorder.none,
-                              contentPadding: EdgeInsets.symmetric(
-                                  horizontal: 16, vertical: 12),
-                              fillColor: Colors.transparent,
-                              filled: false,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      if (_isUploading)
-                        Container(
-                          width: r.s(48),
-                          height: r.s(48),
-                          decoration: BoxDecoration(
-                            color: AppTheme.muted,
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Padding(
-                            padding: EdgeInsets.all(12),
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          ),
-                        )
-                      else if (_msgCtrl.text.trim().isEmpty)
-                        GestureDetector(
-                          onTap: _startRecording,
-                          child: Container(
-                            width: r.s(48),
-                            height: r.s(48),
-                            decoration: BoxDecoration(
-                              color: AppTheme.primary,
-                              shape: BoxShape.circle,
-                              boxShadow: AppTheme.shadowPrimary,
-                            ),
-                            child: const Icon(Icons.mic, color: Colors.white, size: 20),
-                          ),
-                        )
-                      else
-                        GestureDetector(
-                          onTap: () => _send(),
-                          child: Container(
-                            width: r.s(48),
-                            height: r.s(48),
-                            decoration: BoxDecoration(
-                              color: AppTheme.primary,
-                              shape: BoxShape.circle,
-                              boxShadow: AppTheme.shadowPrimary,
-                            ),
-                            child: const Icon(Icons.send, color: Colors.white, size: 20),
-                          ),
-                        ),
-                    ],
-                  )
-                else if (_recordState == VoiceRecordState.recording || _recordState == VoiceRecordState.paused)
-                  Row(
-                    children: [
-                      // Trash / Cancel
-                      GestureDetector(
-                        onTap: _cancelRecording,
-                        child: Container(
-                          padding: const EdgeInsets.all(12),
-                          child: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 24),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      // Animated pulse wave / Record State
-                      Expanded(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                          decoration: BoxDecoration(
-                            color: AppTheme.muted,
-                            borderRadius: BorderRadius.circular(24),
-                          ),
-                          child: Row(
-                            children: [
-                              // Pulsing indicator
-                              if (_recordState == VoiceRecordState.recording)
-                                const _RecordingWaveform()
-                              else
-                                const Icon(Icons.pause, color: Colors.grey, size: 16),
-                              const SizedBox(width: 12),
-                              // Recording duration
-                              Text(
-                                _formatTimer(_recordDuration),
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.redAccent,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      // Pause / Resume Button
-                      GestureDetector(
-                        onTap: _recordState == VoiceRecordState.recording ? _pauseRecording : _resumeRecording,
-                        child: Container(
-                          width: r.s(40),
-                          height: r.s(40),
-                          decoration: BoxDecoration(
-                            color: AppTheme.cardColor,
-                            shape: BoxShape.circle,
-                            border: Border.all(color: AppTheme.border),
-                          ),
-                          child: Icon(
-                            _recordState == VoiceRecordState.recording ? Icons.pause : Icons.play_arrow,
-                            color: AppTheme.primary,
-                            size: 20,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      // Stop & Preview Button
-                      GestureDetector(
-                        onTap: _stopAndPreviewRecording,
-                        child: Container(
-                          width: r.s(48),
-                          height: r.s(48),
-                          decoration: BoxDecoration(
-                            color: Colors.redAccent,
-                            shape: BoxShape.circle,
-                            boxShadow: AppTheme.shadowPrimary,
-                          ),
-                          child: const Icon(Icons.stop, color: Colors.white, size: 20),
-                        ),
-                      ),
-                    ],
-                  )
-                else if (_recordState == VoiceRecordState.preview)
-                  Row(
-                    children: [
-                      // Discard / Trash
-                      GestureDetector(
-                        onTap: _deletePreview,
-                        child: Container(
-                          padding: const EdgeInsets.all(12),
-                          child: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 24),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      // Player preview
-                      Expanded(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: AppTheme.muted,
-                            borderRadius: BorderRadius.circular(24),
-                          ),
-                          child: Row(
-                            children: [
-                              GestureDetector(
-                                onTap: _playPreview,
-                                child: Icon(
-                                  _isPreviewPlaying ? Icons.pause : Icons.play_arrow,
-                                  color: AppTheme.primary,
-                                  size: 24,
-                                ),
-                              ),
-                              const SizedBox(width: 4),
-                              Expanded(
-                                child: SliderTheme(
-                                  data: SliderTheme.of(context).copyWith(
-                                    trackHeight: 3.0,
-                                    thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 5.0),
-                                    overlayShape: const RoundSliderOverlayShape(overlayRadius: 10.0),
-                                    activeTrackColor: AppTheme.primary,
-                                    inactiveTrackColor: AppTheme.border,
-                                    thumbColor: AppTheme.primary,
-                                  ),
-                                  child: Slider(
-                                    value: _previewPosition.inMilliseconds.toDouble().clamp(0.0, _previewDuration.inMilliseconds.toDouble()),
-                                    min: 0.0,
-                                    max: _previewDuration.inMilliseconds.toDouble() > 0 ? _previewDuration.inMilliseconds.toDouble() : 1.0,
-                                    onChanged: (val) {
-                                      _previewPlayer.seek(Duration(milliseconds: val.toInt()));
-                                    },
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                _formatTimer(_previewDuration.inSeconds),
-                                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      // Confirm Send Button
-                      GestureDetector(
-                        onTap: _sendVoiceNote,
-                        child: Container(
-                          width: r.s(48),
-                          height: r.s(48),
-                          decoration: BoxDecoration(
-                            color: AppTheme.primary,
-                            shape: BoxShape.circle,
-                            boxShadow: AppTheme.shadowPrimary,
-                          ),
-                          child: const Icon(Icons.send, color: Colors.white, size: 20),
-                        ),
-                      ),
-                    ],
-                  ),
-              ],
-            ),
+            ],
           ),
-        ],
-      ),
-    ));
+        ));
   }
 }
 
@@ -1228,7 +1397,8 @@ class _MessageBubble extends StatelessWidget {
   final String sellerAvatar;
   final bool isMe;
 
-  const _MessageBubble({required this.message, required this.sellerAvatar, required this.isMe});
+  const _MessageBubble(
+      {required this.message, required this.sellerAvatar, required this.isMe});
 
   @override
   Widget build(BuildContext context) {
@@ -1240,16 +1410,20 @@ class _MessageBubble extends StatelessWidget {
       return Padding(
         padding: const EdgeInsets.only(bottom: 12),
         child: Row(
-          mainAxisAlignment: isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
+          mainAxisAlignment:
+              isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             if (!isMe) ...[
               CircleAvatar(
                 radius: 16,
                 backgroundImage: sellerAvatar.isNotEmpty
-                    ? CachedNetworkImageProvider(ApiConstants.resolveImageUrl(sellerAvatar))
+                    ? CachedNetworkImageProvider(
+                        ApiConstants.resolveImageUrl(sellerAvatar))
                     : null,
-                child: sellerAvatar.isEmpty ? const Icon(Icons.person, size: 16) : null,
+                child: sellerAvatar.isEmpty
+                    ? const Icon(Icons.person, size: 16)
+                    : null,
               ),
               const SizedBox(width: 8),
             ],
@@ -1275,11 +1449,10 @@ class _MessageBubble extends StatelessWidget {
             CircleAvatar(
               radius: 16,
               backgroundImage: sellerAvatar.isNotEmpty
-                  ? CachedNetworkImageProvider(ApiConstants.resolveImageUrl(sellerAvatar))
+                  ? CachedNetworkImageProvider(
+                      ApiConstants.resolveImageUrl(sellerAvatar))
                   : null,
-              child: sellerAvatar.isEmpty
-                  ? Icon(Icons.person, size: 16)
-                  : null,
+              child: sellerAvatar.isEmpty ? Icon(Icons.person, size: 16) : null,
             ),
             SizedBox(width: 8),
           ],
@@ -1334,12 +1507,15 @@ class _MessageBubble extends StatelessWidget {
                           placeholder: (_, __) => Container(
                             height: 150,
                             color: AppTheme.muted,
-                            child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                            child: const Center(
+                                child:
+                                    CircularProgressIndicator(strokeWidth: 2)),
                           ),
                           errorWidget: (_, __, ___) => Container(
                             height: 100,
                             color: AppTheme.muted,
-                            child: Icon(Icons.broken_image, color: AppTheme.mutedForeground),
+                            child: Icon(Icons.broken_image,
+                                color: AppTheme.mutedForeground),
                           ),
                         ),
                       ),
@@ -1357,10 +1533,13 @@ class _MessageBubble extends StatelessWidget {
                     ),
                   ),
                 // ── Text / Caption ──
-                if ((msgType == 'text' || msgType == 'image') && (message.content as String).isNotEmpty)
+                if ((msgType == 'text' || msgType == 'image') &&
+                    (message.content as String).isNotEmpty)
                   Padding(
                     padding: EdgeInsets.only(
-                        top: msgType == 'image' || message.productId != null ? r.s(8) : 0),
+                        top: msgType == 'image' || message.productId != null
+                            ? r.s(8)
+                            : 0),
                     child: Text(
                       message.content as String,
                       style: TextStyle(
@@ -1392,7 +1571,9 @@ class _MessageBubble extends StatelessWidget {
                         Icon(
                           message.seen ? Icons.done_all : Icons.check,
                           size: 14,
-                          color: message.seen ? Colors.blueAccent : Colors.white.withOpacity(0.7),
+                          color: message.seen
+                              ? Colors.blueAccent
+                              : Colors.white.withOpacity(0.7),
                         ),
                       ],
                     ],
@@ -1485,7 +1666,8 @@ class _LocationCardInBubble extends StatelessWidget {
                 ),
                 children: [
                   TileLayer(
-                    urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                    urlTemplate:
+                        'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                     userAgentPackageName: 'com.togo.market',
                   ),
                   MarkerLayer(
@@ -1494,7 +1676,8 @@ class _LocationCardInBubble extends StatelessWidget {
                         point: LatLng(lat, lon),
                         width: 30,
                         height: 30,
-                        child: const Icon(Icons.location_on, color: Colors.red, size: 30),
+                        child: const Icon(Icons.location_on,
+                            color: Colors.red, size: 30),
                       ),
                     ],
                   ),
@@ -1509,7 +1692,9 @@ class _LocationCardInBubble extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 8),
           child: Row(
             children: [
-              Icon(Icons.pin_drop, size: 14, color: isMe ? Colors.white70 : AppTheme.mutedForeground),
+              Icon(Icons.pin_drop,
+                  size: 14,
+                  color: isMe ? Colors.white70 : AppTheme.mutedForeground),
               const SizedBox(width: 4),
               Expanded(
                 child: Text(
@@ -1531,20 +1716,27 @@ class _LocationCardInBubble extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 8),
           child: GestureDetector(
             onTap: () {
-              final url = Uri.parse('https://www.google.com/maps/search/?api=1&query=$lat,$lon');
-              launchUrl(url, mode: LaunchMode.externalApplication);
+              Get.to(() => UnifiedMapScreen(
+                    viewMode: true,
+                    initialLat: lat,
+                    initialLon: lon,
+                    initialAddress:
+                        address.isNotEmpty ? address : 'Position partagée',
+                  ));
             },
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: isMe ? Colors.white.withOpacity(0.2) : AppTheme.primary.withOpacity(0.1),
+                color: isMe
+                    ? Colors.white.withOpacity(0.2)
+                    : AppTheme.primary.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.open_in_new, size: 13,
-                      color: isMe ? Colors.white : AppTheme.primary),
+                  Icon(Icons.open_in_new,
+                      size: 13, color: isMe ? Colors.white : AppTheme.primary),
                   const SizedBox(width: 4),
                   Text('Voir sur la carte',
                       style: TextStyle(
@@ -1574,7 +1766,8 @@ class _DownloadableMediaWidget extends StatefulWidget {
   });
 
   @override
-  State<_DownloadableMediaWidget> createState() => _DownloadableMediaWidgetState();
+  State<_DownloadableMediaWidget> createState() =>
+      _DownloadableMediaWidgetState();
 }
 
 class _DownloadableMediaWidgetState extends State<_DownloadableMediaWidget> {
@@ -1621,11 +1814,15 @@ class _DownloadableMediaWidgetState extends State<_DownloadableMediaWidget> {
                 color: AppTheme.primary.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
-              child: Icon(Icons.download_rounded, color: AppTheme.primary, size: 28),
+              child: Icon(Icons.download_rounded,
+                  color: AppTheme.primary, size: 28),
             ),
             const SizedBox(height: 10),
             Text('Appuyer pour télécharger',
-                style: TextStyle(fontSize: 12, color: AppTheme.mutedForeground, fontWeight: FontWeight.w500)),
+                style: TextStyle(
+                    fontSize: 12,
+                    color: AppTheme.mutedForeground,
+                    fontWeight: FontWeight.w500)),
           ],
         ),
       ),
@@ -1682,7 +1879,8 @@ class _PendingMessageBubble extends StatelessWidget {
                             errorBuilder: (_, __, ___) => Container(
                               height: 100,
                               color: AppTheme.muted,
-                              child: Icon(Icons.broken_image, color: AppTheme.mutedForeground),
+                              child: Icon(Icons.broken_image,
+                                  color: AppTheme.mutedForeground),
                             ),
                           ),
                         ),
@@ -1699,19 +1897,25 @@ class _PendingMessageBubble extends StatelessWidget {
                                     ? GestureDetector(
                                         onTap: onRetry,
                                         child: Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 16, vertical: 8),
                                           decoration: BoxDecoration(
                                             color: Colors.white,
-                                            borderRadius: BorderRadius.circular(20),
+                                            borderRadius:
+                                                BorderRadius.circular(20),
                                           ),
                                           child: Row(
                                             mainAxisSize: MainAxisSize.min,
                                             children: [
-                                              Icon(Icons.refresh, color: Colors.red, size: 18),
+                                              Icon(Icons.refresh,
+                                                  color: Colors.red, size: 18),
                                               const SizedBox(width: 6),
                                               Text('Réessayer',
                                                   style: TextStyle(
-                                                      color: Colors.red, fontWeight: FontWeight.w600, fontSize: 12)),
+                                                      color: Colors.red,
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                      fontSize: 12)),
                                             ],
                                           ),
                                         ),
@@ -1741,19 +1945,23 @@ class _PendingMessageBubble extends StatelessWidget {
                           Icon(Icons.mic, color: Colors.white, size: 20),
                           const SizedBox(width: 8),
                           Text('🎤 Vocal',
-                              style: TextStyle(color: Colors.white, fontSize: 13)),
+                              style:
+                                  TextStyle(color: Colors.white, fontSize: 13)),
                           const SizedBox(width: 8),
                           if (status == 'sending')
                             SizedBox(
                               width: 18,
                               height: 18,
                               child: CircularProgressIndicator(
-                                  color: Colors.white, strokeWidth: 2, value: progress > 0 ? progress : null),
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                  value: progress > 0 ? progress : null),
                             ),
                           if (status == 'error')
                             GestureDetector(
                               onTap: onRetry,
-                              child: Icon(Icons.refresh, color: Colors.white70, size: 20),
+                              child: Icon(Icons.refresh,
+                                  color: Colors.white70, size: 20),
                             ),
                         ],
                       ),
@@ -1763,17 +1971,21 @@ class _PendingMessageBubble extends StatelessWidget {
                     Padding(
                       padding: const EdgeInsets.only(top: 6, left: 8, right: 8),
                       child: Text(pending.content,
-                          style: const TextStyle(fontSize: 14, color: Colors.white)),
+                          style: const TextStyle(
+                              fontSize: 14, color: Colors.white)),
                     ),
                   // Time + status
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
                           '${pending.timestamp.hour.toString().padLeft(2, '0')}:${pending.timestamp.minute.toString().padLeft(2, '0')}',
-                          style: TextStyle(fontSize: 10, color: Colors.white.withOpacity(0.7)),
+                          style: TextStyle(
+                              fontSize: 10,
+                              color: Colors.white.withOpacity(0.7)),
                         ),
                         const SizedBox(width: 4),
                         if (status == 'sending')
@@ -1781,10 +1993,12 @@ class _PendingMessageBubble extends StatelessWidget {
                             width: 12,
                             height: 12,
                             child: CircularProgressIndicator(
-                                color: Colors.white.withOpacity(0.7), strokeWidth: 1.5),
+                                color: Colors.white.withOpacity(0.7),
+                                strokeWidth: 1.5),
                           ),
                         if (status == 'error')
-                          Icon(Icons.error_outline, color: Colors.red.shade200, size: 14),
+                          Icon(Icons.error_outline,
+                              color: Colors.red.shade200, size: 14),
                       ],
                     ),
                   ),
@@ -1821,7 +2035,11 @@ class _OrderRecapBubble extends StatelessWidget {
     }
   }
 
-  Widget _row(IconData icon, String label, String value, {Color? valueColor, bool bold = false, Color? iconColor, Color? textColor}) {
+  Widget _row(IconData icon, String label, String value,
+      {Color? valueColor,
+      bool bold = false,
+      Color? iconColor,
+      Color? textColor}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 5),
       child: Row(
@@ -1831,7 +2049,9 @@ class _OrderRecapBubble extends StatelessWidget {
           const SizedBox(width: 8),
           Expanded(
             flex: 2,
-            child: Text(label, style: TextStyle(fontSize: 12, color: textColor ?? Colors.white70)),
+            child: Text(label,
+                style: TextStyle(
+                    fontSize: 12, color: textColor ?? Colors.white70)),
           ),
           Expanded(
             flex: 3,
@@ -1850,7 +2070,8 @@ class _OrderRecapBubble extends StatelessWidget {
     );
   }
 
-  Widget _divider({Color? color}) => Divider(height: 1, thickness: 0.4, color: color ?? Colors.white.withOpacity(0.2));
+  Widget _divider({Color? color}) => Divider(
+      height: 1, thickness: 0.4, color: color ?? Colors.white.withOpacity(0.2));
 
   @override
   Widget build(BuildContext context) {
@@ -1863,7 +2084,8 @@ class _OrderRecapBubble extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: AppTheme.border),
         ),
-        child: Text(content, style: TextStyle(fontSize: 13, color: AppTheme.foreground)),
+        child: Text(content,
+            style: TextStyle(fontSize: 13, color: AppTheme.foreground)),
       );
     }
 
@@ -1880,7 +2102,8 @@ class _OrderRecapBubble extends StatelessWidget {
     final note = data['note'] ?? '';
     final status = data['status'] ?? 'En attente';
 
-    final timeStr = '${timestamp.hour.toString().padLeft(2, '0')}:${timestamp.minute.toString().padLeft(2, '0')}';
+    final timeStr =
+        '${timestamp.hour.toString().padLeft(2, '0')}:${timestamp.minute.toString().padLeft(2, '0')}';
 
     // Couleurs adaptées selon l'expéditeur
     final bgGradient = isMe
@@ -1893,12 +2116,17 @@ class _OrderRecapBubble extends StatelessWidget {
     final bgColor = isMe ? null : AppTheme.cardColor;
     final textPrimaryColor = isMe ? Colors.white : AppTheme.foreground;
     final textSecondaryColor = isMe ? Colors.white70 : AppTheme.mutedForeground;
-    final dividerColor = isMe ? Colors.white.withOpacity(0.2) : AppTheme.border.withOpacity(0.5);
+    final dividerColor =
+        isMe ? Colors.white.withOpacity(0.2) : AppTheme.border.withOpacity(0.5);
     final iconColor = isMe ? Colors.white70 : AppTheme.mutedForeground;
     final totalColor = isMe ? Colors.yellow.shade200 : AppTheme.primary;
     final timestampColor = isMe ? Colors.white54 : AppTheme.mutedForeground;
-    final shadowColor = isMe ? AppTheme.primary.withOpacity(0.3) : Colors.black.withOpacity(0.06);
-    final imageOverlayColor = isMe ? AppTheme.primary.withOpacity(0.9) : Colors.black.withOpacity(0.55);
+    final shadowColor = isMe
+        ? AppTheme.primary.withOpacity(0.3)
+        : Colors.black.withOpacity(0.06);
+    final imageOverlayColor = isMe
+        ? AppTheme.primary.withOpacity(0.9)
+        : Colors.black.withOpacity(0.55);
 
     return GestureDetector(
       onTap: () {
@@ -1907,7 +2135,9 @@ class _OrderRecapBubble extends StatelessWidget {
           'title': productTitle,
           'price': total,
           'status': status,
-          'image': productImage.isNotEmpty ? ApiConstants.resolveImageUrl(productImage) : '',
+          'image': productImage.isNotEmpty
+              ? ApiConstants.resolveImageUrl(productImage)
+              : '',
           'date': date,
           'isSale': !isMe,
         });
@@ -1920,8 +2150,10 @@ class _OrderRecapBubble extends StatelessWidget {
           borderRadius: BorderRadius.only(
             topLeft: const Radius.circular(18),
             topRight: const Radius.circular(18),
-            bottomLeft: isMe ? const Radius.circular(18) : const Radius.circular(4),
-            bottomRight: isMe ? const Radius.circular(4) : const Radius.circular(18),
+            bottomLeft:
+                isMe ? const Radius.circular(18) : const Radius.circular(4),
+            bottomRight:
+                isMe ? const Radius.circular(4) : const Radius.circular(18),
           ),
           boxShadow: [
             BoxShadow(
@@ -1930,7 +2162,8 @@ class _OrderRecapBubble extends StatelessWidget {
               offset: const Offset(0, 4),
             ),
           ],
-          border: isMe ? null : Border.all(color: AppTheme.border.withOpacity(0.4)),
+          border:
+              isMe ? null : Border.all(color: AppTheme.border.withOpacity(0.4)),
         ),
         clipBehavior: Clip.antiAlias,
         child: Column(
@@ -1947,10 +2180,12 @@ class _OrderRecapBubble extends StatelessWidget {
                     CachedNetworkImage(
                       imageUrl: ApiConstants.resolveImageUrl(productImage),
                       fit: BoxFit.cover,
-                      placeholder: (_, __) => Container(color: isMe ? Colors.white12 : AppTheme.muted),
+                      placeholder: (_, __) => Container(
+                          color: isMe ? Colors.white12 : AppTheme.muted),
                       errorWidget: (_, __, ___) => Container(
                         color: isMe ? Colors.white12 : AppTheme.muted,
-                        child: Icon(Icons.image_not_supported, color: iconColor, size: 36),
+                        child: Icon(Icons.image_not_supported,
+                            color: iconColor, size: 36),
                       ),
                     ),
                     // Gradient par-dessus l'image
@@ -1968,7 +2203,8 @@ class _OrderRecapBubble extends StatelessWidget {
                       top: 10,
                       right: 10,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
                           color: Colors.orange.shade700,
                           borderRadius: BorderRadius.circular(20),
@@ -1976,9 +2212,14 @@ class _OrderRecapBubble extends StatelessWidget {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.hourglass_top_outlined, size: 11, color: Colors.white),
+                            const Icon(Icons.hourglass_top_outlined,
+                                size: 11, color: Colors.white),
                             const SizedBox(width: 4),
-                            Text(status, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Colors.white)),
+                            Text(status,
+                                style: const TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white)),
                           ],
                         ),
                       ),
@@ -1993,13 +2234,17 @@ class _OrderRecapBubble extends StatelessWidget {
                         children: [
                           Text(
                             'Commande #$orderId',
-                            style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w800),
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w800),
                           ),
                           Text(
                             productTitle,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(color: Colors.white70, fontSize: 11),
+                            style: const TextStyle(
+                                color: Colors.white70, fontSize: 11),
                           ),
                         ],
                       ),
@@ -2012,21 +2257,30 @@ class _OrderRecapBubble extends StatelessWidget {
                 padding: const EdgeInsets.fromLTRB(14, 14, 14, 8),
                 child: Row(
                   children: [
-                    Icon(Icons.receipt_long_outlined, color: textPrimaryColor, size: 18),
+                    Icon(Icons.receipt_long_outlined,
+                        color: textPrimaryColor, size: 18),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         'Commande #$orderId',
-                        style: TextStyle(color: textPrimaryColor, fontSize: 14, fontWeight: FontWeight.w800),
+                        style: TextStyle(
+                            color: textPrimaryColor,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800),
                       ),
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
                         color: Colors.orange.shade700,
                         borderRadius: BorderRadius.circular(20),
                       ),
-                      child: Text(status, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Colors.white)),
+                      child: Text(status,
+                          style: const TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white)),
                     ),
                   ],
                 ),
@@ -2038,26 +2292,50 @@ class _OrderRecapBubble extends StatelessWidget {
               child: Column(
                 children: [
                   if (date.isNotEmpty) ...[
-                    _row(Icons.calendar_today_outlined, 'Date', date, iconColor: iconColor, textColor: textSecondaryColor, valueColor: textPrimaryColor),
+                    _row(Icons.calendar_today_outlined, 'Date', date,
+                        iconColor: iconColor,
+                        textColor: textSecondaryColor,
+                        valueColor: textPrimaryColor),
                     _divider(color: dividerColor),
                   ],
-                  _row(Icons.numbers_outlined, 'Quantité', quantity, iconColor: iconColor, textColor: textSecondaryColor, valueColor: textPrimaryColor),
+                  _row(Icons.numbers_outlined, 'Quantité', quantity,
+                      iconColor: iconColor,
+                      textColor: textSecondaryColor,
+                      valueColor: textPrimaryColor),
                   _divider(color: dividerColor),
                   _row(Icons.payments_outlined, 'Total', total,
-                      iconColor: iconColor, textColor: textSecondaryColor, valueColor: totalColor, bold: true),
+                      iconColor: iconColor,
+                      textColor: textSecondaryColor,
+                      valueColor: totalColor,
+                      bold: true),
                   _divider(color: dividerColor),
-                  _row(Icons.local_shipping_outlined, 'Livraison', mode, iconColor: iconColor, textColor: textSecondaryColor, valueColor: textPrimaryColor),
+                  _row(Icons.local_shipping_outlined, 'Livraison', mode,
+                      iconColor: iconColor,
+                      textColor: textSecondaryColor,
+                      valueColor: textPrimaryColor),
                   if (address.isNotEmpty) ...[
                     _divider(color: dividerColor),
-                    _row(Icons.location_on_outlined, 'Adresse', address, iconColor: iconColor, textColor: textSecondaryColor, valueColor: textPrimaryColor),
+                    _row(Icons.location_on_outlined, 'Adresse', address,
+                        iconColor: iconColor,
+                        textColor: textSecondaryColor,
+                        valueColor: textPrimaryColor),
                   ],
                   _divider(color: dividerColor),
-                  _row(Icons.credit_card_outlined, 'Paiement', payment, iconColor: iconColor, textColor: textSecondaryColor, valueColor: textPrimaryColor),
+                  _row(Icons.credit_card_outlined, 'Paiement', payment,
+                      iconColor: iconColor,
+                      textColor: textSecondaryColor,
+                      valueColor: textPrimaryColor),
                   _divider(color: dividerColor),
-                  _row(Icons.phone_outlined, 'Téléphone', phone, iconColor: iconColor, textColor: textSecondaryColor, valueColor: textPrimaryColor),
+                  _row(Icons.phone_outlined, 'Téléphone', phone,
+                      iconColor: iconColor,
+                      textColor: textSecondaryColor,
+                      valueColor: textPrimaryColor),
                   if (note.isNotEmpty) ...[
                     _divider(color: dividerColor),
-                    _row(Icons.notes_outlined, 'Note', note, iconColor: iconColor, textColor: textSecondaryColor, valueColor: textPrimaryColor),
+                    _row(Icons.notes_outlined, 'Note', note,
+                        iconColor: iconColor,
+                        textColor: textSecondaryColor,
+                        valueColor: textPrimaryColor),
                   ],
                 ],
               ),
@@ -2069,11 +2347,15 @@ class _OrderRecapBubble extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.touch_app_outlined, size: 12, color: textSecondaryColor),
+                  Icon(Icons.touch_app_outlined,
+                      size: 12, color: textSecondaryColor),
                   const SizedBox(width: 4),
                   Text(
                     'Appuyez pour voir les détails',
-                    style: TextStyle(fontSize: 10, color: textSecondaryColor, fontStyle: FontStyle.italic),
+                    style: TextStyle(
+                        fontSize: 10,
+                        color: textSecondaryColor,
+                        fontStyle: FontStyle.italic),
                   ),
                 ],
               ),
@@ -2085,7 +2367,8 @@ class _OrderRecapBubble extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  Text(timeStr, style: TextStyle(fontSize: 10, color: timestampColor)),
+                  Text(timeStr,
+                      style: TextStyle(fontSize: 10, color: timestampColor)),
                   if (isMe) ...[
                     const SizedBox(width: 4),
                     Icon(
@@ -2103,13 +2386,18 @@ class _OrderRecapBubble extends StatelessWidget {
     );
   }
 }
+
 class _AttachOption extends StatelessWidget {
   final IconData icon;
   final String label;
   final Color color;
   final VoidCallback onTap;
 
-  const _AttachOption({required this.icon, required this.label, required this.color, required this.onTap});
+  const _AttachOption(
+      {required this.icon,
+      required this.label,
+      required this.color,
+      required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -2128,7 +2416,11 @@ class _AttachOption extends StatelessWidget {
             child: Icon(icon, color: color, size: 28),
           ),
           const SizedBox(height: 8),
-          Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.foreground)),
+          Text(label,
+              style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.foreground)),
         ],
       ),
     );
@@ -2143,9 +2435,36 @@ class _WaveformProgressBar extends StatelessWidget {
 
   // Pré-calcul des hauteurs d'ondes pour une superbe signature visuelle
   static const List<double> _waveHeights = [
-    8, 14, 10, 20, 26, 14, 18, 12, 22, 28,
-    16, 22, 10, 26, 32, 16, 24, 12, 18, 26,
-    14, 22, 8, 18, 24, 14, 20, 10, 16, 12
+    8,
+    14,
+    10,
+    20,
+    26,
+    14,
+    18,
+    12,
+    22,
+    28,
+    16,
+    22,
+    10,
+    26,
+    32,
+    16,
+    24,
+    12,
+    18,
+    26,
+    14,
+    22,
+    8,
+    18,
+    24,
+    14,
+    20,
+    10,
+    16,
+    12
   ];
 
   const _WaveformProgressBar({
@@ -2202,7 +2521,8 @@ class _VoicePlayerWidget extends StatefulWidget {
   final int duration;
   final bool isMe;
 
-  const _VoicePlayerWidget({required this.url, required this.duration, required this.isMe});
+  const _VoicePlayerWidget(
+      {required this.url, required this.duration, required this.isMe});
 
   @override
   State<_VoicePlayerWidget> createState() => _VoicePlayerWidgetState();
@@ -2219,15 +2539,15 @@ class _VoicePlayerWidgetState extends State<_VoicePlayerWidget> {
   void initState() {
     super.initState();
     _totalDuration = Duration(seconds: widget.duration);
-    
+
     _player.onPositionChanged.listen((pos) {
       if (mounted) setState(() => _position = pos);
     });
-    
+
     _player.onDurationChanged.listen((dur) {
       if (mounted && dur.inSeconds > 0) setState(() => _totalDuration = dur);
     });
-    
+
     _player.onPlayerComplete.listen((_) {
       if (mounted) {
         setState(() {
@@ -2240,7 +2560,9 @@ class _VoicePlayerWidgetState extends State<_VoicePlayerWidget> {
     _player.onPlayerStateChanged.listen((state) {
       if (mounted) {
         setState(() {
-          _isLoading = (state == PlayerState.playing && _position == Duration.zero && _totalDuration == Duration.zero);
+          _isLoading = (state == PlayerState.playing &&
+              _position == Duration.zero &&
+              _totalDuration == Duration.zero);
         });
       }
     });
@@ -2291,7 +2613,9 @@ class _VoicePlayerWidgetState extends State<_VoicePlayerWidget> {
         : 0.0;
 
     final activeColor = widget.isMe ? Colors.white : AppTheme.primary;
-    final inactiveColor = widget.isMe ? Colors.white.withOpacity(0.3) : AppTheme.mutedForeground.withOpacity(0.4);
+    final inactiveColor = widget.isMe
+        ? Colors.white.withOpacity(0.3)
+        : AppTheme.mutedForeground.withOpacity(0.4);
 
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -2302,7 +2626,9 @@ class _VoicePlayerWidgetState extends State<_VoicePlayerWidget> {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: widget.isMe ? Colors.white.withOpacity(0.2) : AppTheme.primary.withOpacity(0.1),
+              color: widget.isMe
+                  ? Colors.white.withOpacity(0.2)
+                  : AppTheme.primary.withOpacity(0.1),
               shape: BoxShape.circle,
             ),
             child: _isLoading
@@ -2310,7 +2636,8 @@ class _VoicePlayerWidgetState extends State<_VoicePlayerWidget> {
                     padding: const EdgeInsets.all(12.0),
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation(widget.isMe ? Colors.white : AppTheme.primary),
+                      valueColor: AlwaysStoppedAnimation(
+                          widget.isMe ? Colors.white : AppTheme.primary),
                     ),
                   )
                 : Icon(
@@ -2330,7 +2657,8 @@ class _VoicePlayerWidgetState extends State<_VoicePlayerWidget> {
                 activeColor: activeColor,
                 inactiveColor: inactiveColor,
                 onSeek: (percent) {
-                  final targetMs = (percent * _totalDuration.inMilliseconds).toInt();
+                  final targetMs =
+                      (percent * _totalDuration.inMilliseconds).toInt();
                   _player.seek(Duration(milliseconds: targetMs));
                 },
               ),
@@ -2344,7 +2672,9 @@ class _VoicePlayerWidgetState extends State<_VoicePlayerWidget> {
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w600,
-                        color: widget.isMe ? Colors.white.withOpacity(0.7) : AppTheme.mutedForeground,
+                        color: widget.isMe
+                            ? Colors.white.withOpacity(0.7)
+                            : AppTheme.mutedForeground,
                       ),
                     ),
                     Text(
@@ -2352,7 +2682,9 @@ class _VoicePlayerWidgetState extends State<_VoicePlayerWidget> {
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w600,
-                        color: widget.isMe ? Colors.white.withOpacity(0.7) : AppTheme.mutedForeground,
+                        color: widget.isMe
+                            ? Colors.white.withOpacity(0.7)
+                            : AppTheme.mutedForeground,
                       ),
                     ),
                   ],
@@ -2373,7 +2705,8 @@ class _RecordingWaveform extends StatefulWidget {
   State<_RecordingWaveform> createState() => _RecordingWaveformState();
 }
 
-class _RecordingWaveformState extends State<_RecordingWaveform> with SingleTickerProviderStateMixin {
+class _RecordingWaveformState extends State<_RecordingWaveform>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
 
   @override
@@ -2399,7 +2732,8 @@ class _RecordingWaveformState extends State<_RecordingWaveform> with SingleTicke
         return AnimatedBuilder(
           animation: _controller,
           builder: (context, child) {
-            final double value = (sin((_controller.value * 2 * pi) + (index * 1.0)) + 1) / 2;
+            final double value =
+                (sin((_controller.value * 2 * pi) + (index * 1.0)) + 1) / 2;
             final double height = 4.0 + (value * 20.0);
             return Container(
               width: 3,
@@ -2431,8 +2765,8 @@ class _TypingIndicator extends StatelessWidget {
           if (seller != null)
             CircleAvatar(
               radius: 16,
-              backgroundImage:
-                  CachedNetworkImageProvider(ApiConstants.resolveImageUrl(seller.avatar as String)),
+              backgroundImage: CachedNetworkImageProvider(
+                  ApiConstants.resolveImageUrl(seller.avatar as String)),
             ),
           SizedBox(width: 8),
           Container(
@@ -2535,7 +2869,8 @@ class _ProductInputPreview extends StatelessWidget {
                 width: r.s(32),
                 height: r.s(32),
                 color: AppTheme.muted,
-                child: Icon(Icons.image_not_supported, size: r.s(16), color: AppTheme.mutedForeground),
+                child: Icon(Icons.image_not_supported,
+                    size: r.s(16), color: AppTheme.mutedForeground),
               ),
             ),
           ),
@@ -2575,9 +2910,11 @@ class _MessageProductPreview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final r = R(context);
-    final appCtrl = Get.isRegistered<AppController>() ? Get.find<AppController>() : null;
-    final product = appCtrl?.products.firstWhereOrNull((p) => p.id.toString() == productId) 
-                    ?? getProductById(productId);
+    final appCtrl =
+        Get.isRegistered<AppController>() ? Get.find<AppController>() : null;
+    final product = appCtrl?.products
+            .firstWhereOrNull((p) => p.id.toString() == productId) ??
+        getProductById(productId);
     if (product == null) return const SizedBox.shrink();
 
     return GestureDetector(
@@ -2609,7 +2946,8 @@ class _MessageProductPreview extends StatelessWidget {
                   height: r.s(110),
                   width: double.infinity,
                   color: AppTheme.muted,
-                  child: Icon(Icons.image_not_supported, size: r.s(30), color: AppTheme.mutedForeground),
+                  child: Icon(Icons.image_not_supported,
+                      size: r.s(30), color: AppTheme.mutedForeground),
                 ),
               ),
             ),

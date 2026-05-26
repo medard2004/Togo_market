@@ -5,6 +5,7 @@ import '../../widgets/bottom_nav.dart';
 import '../../Api/provider/auth_controller.dart';
 import '../../widgets/user_avatar.dart';
 import '../../controllers/app_controller.dart';
+import '../../controllers/boutique_controller.dart';
 import 'widgets/profile_menu_item.dart';
 import 'widgets/profile_stat_card.dart';
 
@@ -254,7 +255,7 @@ class ProfileScreen extends StatelessWidget {
                       ProfileMenuItem(
                         icon: Icons.storefront_outlined,
                         label: 'Espace Vendeur Pro',
-                        onTap: () => Get.toNamed('/dashboard'),
+                        onTap: () => BoutiqueController.to.goToMyBoutique(),
                         flat: true,
                       ),
                       Divider(height: 1, color: AppTheme.border),

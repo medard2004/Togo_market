@@ -88,15 +88,19 @@ class _AuthScreenState extends State<AuthScreen> {
           final sellerAvatar = boutique?.logoUrl ?? product.userObj?.avatarUrl ?? '';
           
           final chatId = await ChatService.to.getOrCreateChat(
-            myId: myId,
+            conversationType: boutique != null ? 'shop' : 'personal',
+            myEntityId: myId,
+            myEntityType: 'user',
             myName: myName,
             myAvatar: myAvatar,
-            otherId: sellerId,
+            otherEntityId: sellerId,
+            otherEntityType: boutique != null ? 'shop' : 'user',
             otherName: sellerName,
             otherAvatar: sellerAvatar,
             productId: product.id.toString(),
             productTitle: product.title,
             productImage: product.image,
+            relatedShopId: boutique?.id.toString(),
           );
           
           if (Get.isDialogOpen == true) {
@@ -104,7 +108,7 @@ class _AuthScreenState extends State<AuthScreen> {
           }
           
           Get.offAllNamed('/home');
-          Get.toNamed('/chat/$chatId', arguments: product);
+          Get.toNamed('/chat/$chatId?asBoutique=false', arguments: product);
         } catch (e) {
           if (Get.isDialogOpen == true) {
             Get.back();

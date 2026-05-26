@@ -10,6 +10,7 @@ import '../../../widgets/user_avatar.dart';
 import 'change_email_screen.dart';
 import 'change_phone_screen.dart';
 import '../../../utils/image_optimization_service.dart';
+import '../map/unified_map_screen.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -20,13 +21,14 @@ class EditProfileScreen extends StatefulWidget {
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
   late final TextEditingController _nameController;
+  late final TextEditingController _quartierController;
   late final TextEditingController _detailsController;
   final _formKey = GlobalKey<FormState>();
   bool _isSaving = false;
   File? _selectedImage;
   final ImagePicker _picker = ImagePicker();
   int? _villeId;
-  int? _quartierId;
+  bool _gpsLoading = false;
 
   @override
   void initState() {
@@ -35,34 +37,42 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final user = authCtrl.currentUser.value;
     _nameController = TextEditingController(text: user?.nom ?? '');
 
-    // Pré-remplir la ville et les détails depuis l'adresse existante
+    // Pré-remplir la ville, le quartier et les détails depuis l'adresse existante
     final adresses = user?.adresses;
     String detailsText = '';
-    String villeText = '';
+    String quartierText = '';
     if (adresses != null && adresses.isNotEmpty) {
       final firstAdresse = adresses.first;
       if (firstAdresse is Map) {
         detailsText = firstAdresse['details']?.toString() ?? '';
+        // Try to get quartier name from nested relation
+        final quartierData = firstAdresse['quartier'];
+        if (quartierData is Map) {
+          quartierText = quartierData['nom']?.toString() ?? '';
+        }
       }
     }
     
-    // Find ville and quartier from user profileQuartierId
+    // Find ville from user profileQuartierId
     final quartierId = user?.profileQuartierId;
     if (quartierId != null && quartierId > 0) {
-      _quartierId = quartierId;
       for (var v in authCtrl.locations) {
-        if (v.quartiers.any((q) => q.id == quartierId)) {
+        final q = v.quartiers.firstWhereOrNull((q) => q.id == quartierId);
+        if (q != null) {
           _villeId = v.id;
+          if (quartierText.isEmpty) quartierText = q.nom;
           break;
         }
       }
     }
+    _quartierController = TextEditingController(text: quartierText);
     _detailsController = TextEditingController(text: detailsText);
   }
 
   @override
   void dispose() {
     _nameController.dispose();
+    _quartierController.dispose();
     _detailsController.dispose();
     super.dispose();
   }
@@ -101,7 +111,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       await authCtrl.updateProfile(
         nom: _nameController.text.trim(),
         details: _detailsController.text.trim(),
-        quartierId: _quartierId,
+        villeId: _villeId,
+        quartier: _quartierController.text.trim(),
         photoPath: _selectedImage?.path,
       );
 
@@ -128,6 +139,63 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     }
   }
 
+
+  Future<void> _handleGpsRequest() async {
+    final result = await Get.to(() => const UnifiedMapScreen());
+    if (result != null && result is Map) {
+      setState(() => _gpsLoading = true);
+      try {
+        final authCtrl = Get.find<AuthController>();
+        final location = await authCtrl.getCurrentLocationAndMatch(
+          lat: result['latitude'],
+          lon: result['longitude']
+        );
+        if (location != null && mounted) {
+          setState(() {
+            _villeId = location['villeId'];
+            // Fill quartier text from reverse geocoding
+            final rawQuartier = location['rawQuartier']?.toString() ?? '';
+            if (rawQuartier.isNotEmpty) {
+              _quartierController.text = rawQuartier;
+            }
+            if (result['address'] != null && result['address'].toString().isNotEmpty && result['address'] != "Recherche de l'adresse...") {
+              _detailsController.text = result['address'];
+            }
+          });
+          toastification.show(
+            context: context,
+            type: ToastificationType.success,
+            style: ToastificationStyle.flat,
+            title: const Text('Position trouvée'),
+            description: const Text('Votre zone a été pré-remplie.'),
+            autoCloseDuration: const Duration(seconds: 3),
+          );
+        } else if (mounted) {
+          toastification.show(
+            context: context,
+            type: ToastificationType.warning,
+            style: ToastificationStyle.flat,
+            title: const Text('Non trouvée'),
+            description: const Text('Impossible de déterminer votre zone automatiquement.'),
+            autoCloseDuration: const Duration(seconds: 3),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          toastification.show(
+            context: context,
+            type: ToastificationType.error,
+            style: ToastificationStyle.flat,
+            title: const Text('Erreur'),
+            description: const Text('Problème lors de la recherche de la zone.'),
+            autoCloseDuration: const Duration(seconds: 3),
+          );
+        }
+      } finally {
+        if (mounted) setState(() => _gpsLoading = false);
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -319,6 +387,25 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   ),
                   const SizedBox(height: 20),
 
+                  // Bouton choisir ma localisation
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: _gpsLoading ? null : _handleGpsRequest,
+                      icon: _gpsLoading
+                          ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.primary))
+                          : const Icon(Icons.location_on, color: AppTheme.primary),
+                      label: const Text('Choisir ma localisation'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppTheme.primary,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        side: BorderSide(color: AppTheme.primary.withOpacity(0.5)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
                   // Dropdown Ville
                   const Text(
                     'Ville / Commune',
@@ -347,7 +434,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           onChanged: (v) {
                             setState(() {
                               _villeId = v;
-                              _quartierId = null; // reset
                             });
                           },
                         ),
@@ -356,48 +442,28 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   }),
                   const SizedBox(height: 16),
 
-                  // Dropdown Quartier
-                  if (_villeId != null) ...[
-                    const Text(
-                      'Quartier',
-                      style: TextStyle(
-                          fontSize: 14, fontWeight: FontWeight.w600),
+                  // TextField Quartier / Zone
+                  const Text(
+                    'Quartier / Zone',
+                    style: TextStyle(
+                        fontSize: 14, fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: _quartierController,
+                    decoration: InputDecoration(
+                      hintText: 'ex. Adidogomé, Agoè...',
+                      filled: true,
+                      fillColor: AppTheme.muted,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide.none,
+                      ),
+                      contentPadding:
+                          const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                     ),
-                    const SizedBox(height: 8),
-                    Obx(() {
-                      final authCtrl = Get.find<AuthController>();
-                      final ville = authCtrl.locations.firstWhereOrNull((v) => v.id == _villeId);
-                      final quartiers = ville?.quartiers ?? [];
-                      
-                      // Ensure current quartierId is valid for selected ville
-                      if (_quartierId != null && !quartiers.any((q) => q.id == _quartierId)) {
-                        WidgetsBinding.instance.addPostFrameCallback((_) {
-                           if (mounted) setState(() => _quartierId = null);
-                        });
-                      }
-
-                      return Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        decoration: BoxDecoration(
-                          border: Border.all(color: AppTheme.border),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: DropdownButtonHideUnderline(
-                          child: DropdownButton<int>(
-                            value: _quartierId,
-                            isExpanded: true,
-                            hint: const Text('Sélectionner un quartier'),
-                            items: quartiers
-                                .map((q) => DropdownMenuItem(
-                                    value: q.id, child: Text(q.nom)))
-                                .toList(),
-                            onChanged: (v) => setState(() => _quartierId = v),
-                          ),
-                        ),
-                      );
-                    }),
-                    const SizedBox(height: 16),
-                  ],
+                  ),
+                  const SizedBox(height: 16),
 
                   // TextField Détails
                   const Text(

@@ -11,106 +11,124 @@ import 'firebase_auth_bridge_service.dart';
 
 class ChatService extends GetxService {
   static ChatService get to => Get.find();
-  
+
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
-  /// Génère un ID unique et déterministe pour la conversation entre deux utilisateurs.
-  /// On trie les IDs pour garantir un seul ID par paire.
-  String getChatId(String userId1, String userId2) {
-    final sorted = [userId1, userId2]..sort();
-    return '${sorted[0]}_${sorted[1]}';
+  /// Génère un ID unique et déterministe pour la conversation entre deux entités.
+  String getChatId({
+    required String conversationType,
+    required String entity1Id,
+    required String entity2Id,
+  }) {
+    final sorted = [entity1Id, entity2Id]..sort();
+    if (conversationType == 'shop') {
+      return 'shop_${sorted[0]}_${sorted[1]}';
+    } else {
+      return 'personal_${sorted[0]}_${sorted[1]}';
+    }
   }
 
-  /// Récupère ou crée la session de chat avec les infos des participants.
+  /// Récupère ou crée la session de chat avec les infos des entités participantes.
   Future<String> getOrCreateChat({
-    required String myId,
+    required String conversationType,
+    required String myEntityId,
+    required String myEntityType,
     required String myName,
     required String myAvatar,
-    required String otherId,
+    required String otherEntityId,
+    required String otherEntityType,
     required String otherName,
     required String otherAvatar,
     String? productId,
     String? productTitle,
     String? productImage,
+    String? relatedShopId,
   }) async {
-    final chatId = getChatId(myId, otherId);
+    final chatId = getChatId(
+      conversationType: conversationType,
+      entity1Id: myEntityId,
+      entity2Id: otherEntityId,
+    );
     final docRef = _db.collection('chats').doc(chatId);
-    
+
     final docSnap = await docRef.get();
     if (!docSnap.exists) {
       // Créer une nouvelle conversation
+      final myUid = '${myEntityType}_$myEntityId';
+      final otherUid = '${otherEntityType}_$otherEntityId';
+
       final newChat = ChatSession(
         id: chatId,
-        participants: [myId, otherId],
+        conversationType: conversationType,
+        participantUids: [myUid, otherUid],
         participantNames: {
-          myId: myName,
-          otherId: otherName,
+          myUid: myName,
+          otherUid: otherName,
         },
         participantAvatars: {
-          myId: myAvatar,
-          otherId: otherAvatar,
+          myUid: myAvatar,
+          otherUid: otherAvatar,
         },
         productId: productId,
         productTitle: productTitle,
         productImage: productImage,
+        relatedShopId: relatedShopId,
         lastMessage: '',
         lastMessageTime: DateTime.now(),
-        unreadCounts: {myId: 0, otherId: 0},
+        unreadCounts: {myUid: 0, otherUid: 0},
       );
       await docRef.set(newChat.toJson());
     } else {
       // La conversation existe déjà.
       // Mettre à jour les noms/avatars si changés (les profils peuvent évoluer).
+      final myUid = '${myEntityType}_$myEntityId';
+      final otherUid = '${otherEntityType}_$otherEntityId';
+      
       final updates = <String, dynamic>{};
-      updates['participantNames.$myId'] = myName;
-      updates['participantAvatars.$myId'] = myAvatar;
-      updates['participantNames.$otherId'] = otherName;
-      updates['participantAvatars.$otherId'] = otherAvatar;
-      
-      // Assurer que le champ participants existe (backward compat)
+      updates['participantNames.$myUid'] = myName;
+      updates['participantAvatars.$myUid'] = myAvatar;
+      updates['participantNames.$otherUid'] = otherName;
+      updates['participantAvatars.$otherUid'] = otherAvatar;
+
+      // Assurer que le champ participantUids existe (au cas où)
       final data = docSnap.data()!;
-      if (data['participants'] == null) {
-        updates['participants'] = [myId, otherId];
+      if (data['participantUids'] == null) {
+        updates['participantUids'] = [myUid, otherUid];
       }
-      
+
       await docRef.update(updates);
     }
     return chatId;
   }
 
-  /// Écoute TOUTES les conversations d'un utilisateur (acheteur OU vendeur).
-  /// Utilise le champ `participants` array-contains.
-  Stream<List<ChatSession>> getAllChatsStream(String userId) {
-    return _db.collection('chats')
-      .where('participants', arrayContains: userId)
-      .snapshots()
-      .map((snapshot) {
-        final list = snapshot.docs
+  /// Écoute TOUTES les conversations d'une entité (utilisateur ou boutique).
+  Stream<List<ChatSession>> getAllChatsStream(String entityUid) {
+    return _db
+        .collection('chats')
+        .where('participantUids', arrayContains: entityUid)
+        .snapshots()
+        .map((snapshot) {
+      final list = snapshot.docs
           .map((doc) => ChatSession.fromJson(doc.data(), doc.id))
           .where((chat) => chat.lastMessage.trim().isNotEmpty)
           .toList();
-        // Tri local pour éviter d'exiger un index composite sur Firestore
-        list.sort((a, b) => b.lastMessageTime.compareTo(a.lastMessageTime));
-        return list;
-      });
-  }
-
-  /// DEPRECATED: Conservé pour backward compat mais utiliser getAllChatsStream
-  Stream<List<ChatSession>> getUserChatsStream(String buyerId) {
-    return getAllChatsStream(buyerId);
-  }
-
-  /// DEPRECATED: Conservé pour backward compat mais utiliser getAllChatsStream
-  Stream<List<ChatSession>> getShopChatsStream(String sellerId) {
-    return getAllChatsStream(sellerId);
+      // Tri local pour éviter d'exiger un index composite sur Firestore
+      list.sort((a, b) => b.lastMessageTime.compareTo(a.lastMessageTime));
+      return list;
+    });
   }
 
   /// Écoute les messages d'une conversation spécifique
   Stream<List<ChatMessageData>> getMessagesStream(String chatId) {
-    return _db.collection('chats').doc(chatId).collection('messages')
-      .orderBy('timestamp', descending: true)
-      .snapshots()
-      .map((snapshot) => snapshot.docs.map((doc) => ChatMessageData.fromJson(doc.data(), doc.id)).toList());
+    return _db
+        .collection('chats')
+        .doc(chatId)
+        .collection('messages')
+        .orderBy('timestamp', descending: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => ChatMessageData.fromJson(doc.data(), doc.id))
+            .toList());
   }
 
   /// Récupère les métadonnées d'une conversation (one-shot)
@@ -132,7 +150,7 @@ class ChatService extends GetxService {
     }
     if (!chatId.contains('_')) {
       throw Exception(
-        'ID de conversation invalide (attendu: id1_id2). Rechargez la conversation.',
+        'ID de conversation invalide. Rechargez la conversation.',
       );
     }
   }
@@ -172,39 +190,44 @@ class ChatService extends GetxService {
       } else if (filePath.startsWith('file:')) {
         filePath = filePath.replaceFirst('file:', '');
       }
-      
+
       final cleanFile = File(filePath);
-      
+
       if (!await cleanFile.exists()) {
-        throw Exception("Fichier introuvable après nettoyage: ${cleanFile.path}");
+        throw Exception(
+            "Fichier introuvable après nettoyage: ${cleanFile.path}");
       }
-      
+
       final fileSize = await cleanFile.length();
       if (fileSize == 0) {
-        throw Exception("Le fichier généré est vide (0 octet). L'enregistrement a probablement échoué.");
+        throw Exception(
+            "Le fichier généré est vide (0 octet). L'enregistrement a probablement échoué.");
       }
-      
-      debugPrint('ChatService.uploadMedia: type=$type, size=${fileSize}B, path=${cleanFile.path}');
-      
+
+      debugPrint(
+          'ChatService.uploadMedia: type=$type, size=${fileSize}B, path=${cleanFile.path}');
+
       final ext = type == 'image' ? 'jpg' : 'm4a';
       final contentType = type == 'image' ? 'image/jpeg' : 'audio/mp4';
       final rand = Random().nextInt(100000);
       final fileName = '${DateTime.now().millisecondsSinceEpoch}_$rand.$ext';
       final storagePath = 'chats/$chatId/$type/$fileName';
-      
-      debugPrint('ChatService.uploadMedia: Uploading to Supabase Storage path -> $storagePath');
-      
+
+      debugPrint(
+          'ChatService.uploadMedia: Uploading to Supabase Storage path -> $storagePath');
+
       final supabase = Supabase.instance.client;
       final bytes = await cleanFile.readAsBytes();
-      
+
       await supabase.storage.from('chat_media').uploadBinary(
-        storagePath,
-        bytes,
-        fileOptions: FileOptions(contentType: contentType),
-      );
-      
-      final downloadUrl = supabase.storage.from('chat_media').getPublicUrl(storagePath);
-      
+            storagePath,
+            bytes,
+            fileOptions: FileOptions(contentType: contentType),
+          );
+
+      final downloadUrl =
+          supabase.storage.from('chat_media').getPublicUrl(storagePath);
+
       debugPrint('ChatService.uploadMedia: Upload réussi → $downloadUrl');
       return downloadUrl;
     } on StorageException catch (e) {
@@ -219,13 +242,20 @@ class ChatService extends GetxService {
   }
 
   /// Envoie un message dans une conversation
-  Future<void> sendMessage(String chatId, String senderId, String receiverId, String content, {String? productId, required bool isBuyerSending, String type = 'text', String? mediaUrl, int? mediaDuration}) async {
-    final msgRef = _db.collection('chats').doc(chatId).collection('messages').doc();
+  Future<void> sendMessage(String chatId, String senderEntityId,
+      String senderEntityType, String receiverEntityId, String receiverEntityType, String content,
+      {String? productId,
+      String type = 'text',
+      String? mediaUrl,
+      int? mediaDuration}) async {
+    final msgRef =
+        _db.collection('chats').doc(chatId).collection('messages').doc();
     final now = DateTime.now();
 
     final msg = ChatMessageData(
       id: msgRef.id,
-      senderId: senderId,
+      senderEntityId: senderEntityId,
+      senderEntityType: senderEntityType,
       content: content,
       timestamp: now,
       productId: productId,
@@ -250,42 +280,55 @@ class ChatService extends GetxService {
         lastMessageText = content;
     }
 
+    final senderUid = '${senderEntityType}_$senderEntityId';
+    final receiverUid = '${receiverEntityType}_$receiverEntityId';
+
     await _db.runTransaction((transaction) async {
       final chatRef = _db.collection('chats').doc(chatId);
       final chatDoc = await transaction.get(chatRef);
-      
+
       // Ajouter le message
       transaction.set(msgRef, msg.toJson());
-      
+
       if (chatDoc.exists) {
         // Mettre à jour le chat
         transaction.update(chatRef, {
           'lastMessage': lastMessageText,
           'lastMessageTime': Timestamp.fromDate(now),
-          'lastMessageSenderId': senderId,
-          'unreadCounts.$receiverId': FieldValue.increment(1),
+          'lastMessageSenderId': senderUid,
+          'unreadCounts.$receiverUid': FieldValue.increment(1),
         });
       } else {
         // Créer le chat s'il n'existe pas (fallback de sécurité)
-        transaction.set(chatRef, {
-          'participants': [senderId, receiverId],
-          'lastMessage': lastMessageText,
-          'lastMessageTime': Timestamp.fromDate(now),
-          'lastMessageSenderId': senderId,
-          'unreadCounts': {receiverId: 1, senderId: 0},
-        }, SetOptions(merge: true));
+        // Normalement getOrCreateChat a été appelé avant.
+        transaction.set(
+            chatRef,
+            {
+              'participantUids': [senderUid, receiverUid],
+              'lastMessage': lastMessageText,
+              'lastMessageTime': Timestamp.fromDate(now),
+              'lastMessageSenderId': senderUid,
+              'unreadCounts': {receiverUid: 1, senderUid: 0},
+            },
+            SetOptions(merge: true));
       }
     });
 
     // Envoyer la notification push via le backend Laravel
-    _sendChatPushNotification(receiverId, chatId, lastMessageText, productId);
+    _sendChatPushNotification(
+        receiverEntityId, chatId, lastMessageText, productId);
   }
 
-  Future<void> _sendChatPushNotification(String receiverId, String chatId, String content, String? productId) async {
+  Future<void> _sendChatPushNotification(String receiverId, String chatId,
+      String content, String? productId) async {
     try {
       final apiClient = Get.find<ApiClient>();
       await apiClient.post('/notifications/send-chat-push', data: {
-        'receiver_id': receiverId,
+        'receiver_id':
+            receiverId, // NOTE: Le backend utilise peut-être toujours l'ID utilisateur... Si c'est une boutique, que fait-il ?
+        // On laissera cela ainsi car les push dépendent du backend existant, qui s'attend peut-être à un userId.
+        // Si `receiverId` est un shopId, la notif échouera silencieusement côté backend si non géré.
+        // Pour l'instant on passe l'entityId.
         'chat_id': chatId,
         'content': content,
         'product_id': productId ?? '',
@@ -295,39 +338,34 @@ class ChatService extends GetxService {
     }
   }
 
-  /// Marque les messages comme lus (backward compat)
-  Future<void> markAsRead(String chatId, {required bool isBuyer}) async {
-    final chatRef = _db.collection('chats').doc(chatId);
-    if (isBuyer) {
-      await chatRef.update({'unreadCount_buyer': 0});
-    } else {
-      await chatRef.update({'unreadCount_seller': 0});
-    }
-  }
-
-  /// Marque comme lu pour un userId spécifique (nouveau format)
-  Future<void> markAsReadForUser(String chatId, String userId) async {
+  /// Marque comme lu pour une entité spécifique
+  Future<void> markAsReadForEntity(String chatId, String entityUid) async {
     final chatRef = _db.collection('chats').doc(chatId);
     try {
       final batch = _db.batch();
-      
+
       // 1. Remettre le compteur global à 0
-      batch.update(chatRef, {'unreadCounts.$userId': 0});
-      
-      // 2. Mettre à jour les messages non lus (dont l'expéditeur n'est pas userId)
-      final unreadMsgs = await chatRef.collection('messages')
+      batch.update(chatRef, {'unreadCounts.$entityUid': 0});
+
+      // 2. Mettre à jour les messages non lus (dont l'expéditeur n'est pas l'entité)
+      // Note: we can't query by senderEntityUid easily unless we compute it from entityId and entityType.
+      // Or we just check that seen == false and then ignore our own messages.
+      final unreadMsgs = await chatRef
+          .collection('messages')
           .where('seen', isEqualTo: false)
           .get();
-          
+
       for (var doc in unreadMsgs.docs) {
-        if (doc.data()['senderId'] != userId) {
+        final data = doc.data();
+        final msgSenderUid = '${data['senderEntityType']}_${data['senderEntityId']}';
+        if (msgSenderUid != entityUid) {
           batch.update(doc.reference, {
             'seen': true,
             'seenAt': FieldValue.serverTimestamp(),
           });
         }
       }
-      
+
       await batch.commit();
     } catch (e) {
       debugPrint('ChatService: Impossible de marquer comme lu ($e)');

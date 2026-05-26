@@ -395,6 +395,9 @@ class OrderDetailsScreen extends StatelessWidget {
                             final String otherId;
                             final String otherAvatar;
                             final boutiqueId = order?.product?.boutiqueId;
+                            String myEntityType = 'user';
+                            String otherEntityType = 'user';
+                            String conversationType = 'personal';
 
                             if (isSale) {
                               otherId = order?.userId.toString() ?? '';
@@ -402,12 +405,18 @@ class OrderDetailsScreen extends StatelessWidget {
                               if (boutiqueId != null) {
                                 myId = boutiqueId.toString();
                                 myName = order?.product?.boutiqueNom ?? myName;
+                                myEntityType = 'shop';
+                                conversationType = 'shop';
                               }
                             } else {
                               otherId = boutiqueId != null
                                   ? boutiqueId.toString()
                                   : (order?.sellerId.toString() ?? '');
                               otherAvatar = order?.seller?.avatar ?? '';
+                              if (boutiqueId != null) {
+                                otherEntityType = 'shop';
+                                conversationType = 'shop';
+                              }
                             }
 
                             if (otherId.isEmpty) {
@@ -424,20 +433,24 @@ class OrderDetailsScreen extends StatelessWidget {
                             try {
                               final chatId =
                                   await ChatService.to.getOrCreateChat(
-                                myId: myId,
+                                conversationType: conversationType,
+                                myEntityId: myId,
+                                myEntityType: myEntityType,
                                 myName: myName,
                                 myAvatar: myAvatar,
-                                otherId: otherId,
+                                otherEntityId: otherId,
+                                otherEntityType: otherEntityType,
                                 otherName: partnerName,
                                 otherAvatar: otherAvatar,
                                 productId: order?.productId.toString() ??
                                     orderData['productId']?.toString(),
                                 productTitle: title,
                                 productImage: rawImage,
+                                relatedShopId: boutiqueId?.toString(),
                               );
                               Get.back();
                               Get.toNamed(
-                                  '/chat/$chatId${isSale ? "?asBoutique=true" : ""}');
+                                  '/chat/$chatId${(conversationType == 'shop' && isSale) ? "?asBoutique=true" : ""}');
                             } catch (e) {
                               Get.back();
                               AppToasts.error(context, 'Erreur',

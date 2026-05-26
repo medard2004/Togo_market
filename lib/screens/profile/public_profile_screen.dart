@@ -259,14 +259,17 @@ class PublicProfileScreen extends StatelessWidget {
               final myId = me.id.toString();
               try {
                 final chatId = await ChatService.to.getOrCreateChat(
-                  myId: myId,
+                  conversationType: 'personal',
+                  myEntityId: myId,
+                  myEntityType: 'user',
                   myName: me.nom ?? 'Utilisateur',
                   myAvatar: me.avatarUrl ?? '',
-                  otherId: user.id.toString(),
+                  otherEntityId: user.id.toString(),
+                  otherEntityType: 'user',
                   otherName: user.nom ?? 'Vendeur',
                   otherAvatar: user.avatarUrl ?? '',
                 );
-                Get.toNamed('/chat/$chatId', arguments: user);
+                Get.toNamed('/chat/$chatId?asBoutique=false', arguments: user);
               } catch (_) {
                 Get.snackbar(
                   'Erreur',
