@@ -6,7 +6,11 @@ import '../../theme/app_theme.dart';
 import '../../utils/responsive.dart';
 import '../../controllers/app_controller.dart';
 import '../../Api/config/api_constants.dart';
+import '../../Api/provider/auth_controller.dart';
+import '../../Api/firebase/services/chat_service.dart';
+import '../../Api/firebase/services/firebase_auth_bridge_service.dart';
 import '../../models/models.dart';
+import '../../utils/app_toasts.dart';
 import 'widgets/seller_product_card.dart';
 
 class SellerScreen extends StatelessWidget {
@@ -123,10 +127,8 @@ class SellerScreen extends StatelessWidget {
                 scrollDirection: Axis.horizontal,
                 child: Row(
                   children: [
-                    _buildFilterChip(
-                        'Tous', 'all', selectedCondition, r),
-                    _buildFilterChip(
-                        'Neuf', 'Neuf', selectedCondition, r),
+                    _buildFilterChip('Tous', 'all', selectedCondition, r),
+                    _buildFilterChip('Neuf', 'Neuf', selectedCondition, r),
                     _buildFilterChip(
                         'Occasion', 'Occasion', selectedCondition, r),
                   ],
@@ -218,26 +220,29 @@ class SellerScreen extends StatelessWidget {
     final ctrl = Get.find<AppController>();
 
     // Essayer de récupérer la boutique depuis les arguments
-    Boutique? boutique = Get.arguments is Boutique ? Get.arguments as Boutique : null;
+    Boutique? boutique =
+        Get.arguments is Boutique ? Get.arguments as Boutique : null;
 
     // Si pas d'arguments, chercher dans la liste globale
-    final shopProducts = ctrl.products.where((p) => p.boutiqueObj?.id.toString() == id).toList();
-    
+    final shopProducts =
+        ctrl.products.where((p) => p.boutiqueObj?.id.toString() == id).toList();
+
     if (boutique == null) {
       if (shopProducts.isEmpty) {
         return Scaffold(
-          appBar: AppBar(title: const Text('Erreur')),
-          body: const Center(child: Text('Vendeur introuvable ou n\'a pas de produits actifs.'))
-        );
+            appBar: AppBar(title: const Text('Erreur')),
+            body: const Center(
+                child: Text(
+                    'Vendeur introuvable ou n\'a pas de produits actifs.')));
       }
       boutique = shopProducts.first.boutiqueObj;
     }
 
     if (boutique == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Erreur')),
-        body: const Center(child: Text('Données de la boutique introuvables.'))
-      );
+          appBar: AppBar(title: const Text('Erreur')),
+          body: const Center(
+              child: Text('Données de la boutique introuvables.')));
     }
 
     return Scaffold(
@@ -356,7 +361,8 @@ class SellerScreen extends StatelessWidget {
                   width: double.infinity,
                   child: boutique!.bannerUrl.isNotEmpty
                       ? CachedNetworkImage(
-                          imageUrl: ApiConstants.resolveImageUrl(boutique!.bannerUrl),
+                          imageUrl:
+                              ApiConstants.resolveImageUrl(boutique!.bannerUrl),
                           fit: BoxFit.cover,
                           placeholder: (_, __) => Container(
                             decoration: const BoxDecoration(
@@ -413,17 +419,21 @@ class SellerScreen extends StatelessWidget {
                               ),
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(r.rad(22)),
-                                child: boutique!.logoUrl.isNotEmpty 
-                                  ? CachedNetworkImage(
-                                      imageUrl: ApiConstants.resolveImageUrl(boutique!.logoUrl),
-                                      fit: BoxFit.cover,
-                                      placeholder: (_, __) => Shimmer.fromColors(
-                                        baseColor: AppTheme.muted,
-                                        highlightColor: Colors.white,
-                                        child: Container(color: AppTheme.muted),
-                                      ),
-                                    )
-                                  : Icon(Icons.storefront, size: r.s(40), color: AppTheme.primary),
+                                child: boutique!.logoUrl.isNotEmpty
+                                    ? CachedNetworkImage(
+                                        imageUrl: ApiConstants.resolveImageUrl(
+                                            boutique!.logoUrl),
+                                        fit: BoxFit.cover,
+                                        placeholder: (_, __) =>
+                                            Shimmer.fromColors(
+                                          baseColor: AppTheme.muted,
+                                          highlightColor: Colors.white,
+                                          child:
+                                              Container(color: AppTheme.muted),
+                                        ),
+                                      )
+                                    : Icon(Icons.storefront,
+                                        size: r.s(40), color: AppTheme.primary),
                               ),
                             ),
                             SizedBox(width: r.s(16)),
@@ -471,31 +481,6 @@ class SellerScreen extends StatelessWidget {
                             ),
                           ],
                         ),
-                        SizedBox(height: r.s(20)),
-                        // Action Button
-                        GestureDetector(
-                          onTap: () => Get.toNamed('/chat/c1'),
-                          child: Container(
-                            height: r.s(54),
-                            decoration: BoxDecoration(
-                              color: AppTheme.primary,
-                              borderRadius: BorderRadius.circular(r.rad(16)),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.chat_bubble_rounded,
-                                    color: Colors.white, size: r.s(18)),
-                                SizedBox(width: r.s(10)),
-                                Text('Discuter avec le vendeur',
-                                    style: TextStyle(
-                                        fontSize: r.fs(14),
-                                        fontWeight: FontWeight.w800,
-                                        color: Colors.white)),
-                              ],
-                            ),
-                          ),
-                        ),
                       ],
                     ),
                   ),
@@ -507,13 +492,23 @@ class SellerScreen extends StatelessWidget {
           // Spacer for floating card
           SliverToBoxAdapter(child: SizedBox(height: r.s(160))),
 
+          // ── Chat Button (en dehors du Stack pour recevoir les touch events) ──
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: r.s(16)),
+              child: _ChatWithSellerButton(boutique: boutique!, r: r),
+            ),
+          ),
+          SliverToBoxAdapter(child: SizedBox(height: r.s(16))),
+
           // ── Stats Row ──────────────────────────────────────────────────
           SliverToBoxAdapter(
             child: Padding(
               padding: EdgeInsets.symmetric(horizontal: r.s(16)),
               child: Row(
                 children: [
-                  _StatBox(label: 'Produits', value: '${shopProducts.length}', r: r),
+                  _StatBox(
+                      label: 'Produits', value: '${shopProducts.length}', r: r),
                   SizedBox(width: r.s(12)),
                   _StatBox(label: 'Réponse', value: '< 1h', r: r),
                   SizedBox(width: r.s(12)),
@@ -597,7 +592,8 @@ class SellerScreen extends StatelessWidget {
                     child: Column(
                       children: [
                         Icon(Icons.search_off_rounded,
-                            size: r.s(48), color: Colors.grey.withValues(alpha: 0.5)),
+                            size: r.s(48),
+                            color: Colors.grey.withValues(alpha: 0.5)),
                         SizedBox(height: r.s(12)),
                         Text(
                           searchQuery.value.isNotEmpty
@@ -676,6 +672,127 @@ class _StatBox extends StatelessWidget {
                     color: Colors.black)),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _ChatWithSellerButton extends StatefulWidget {
+  final Boutique boutique;
+  final R r;
+
+  const _ChatWithSellerButton({
+    required this.boutique,
+    required this.r,
+  });
+
+  @override
+  State<_ChatWithSellerButton> createState() => _ChatWithSellerButtonState();
+}
+
+class _ChatWithSellerButtonState extends State<_ChatWithSellerButton> {
+  bool _loading = false;
+
+  Future<void> _openChat() async {
+    if (_loading) return;
+
+    final authCtrl = Get.isRegistered<AuthController>()
+        ? Get.find<AuthController>()
+        : null;
+    if (authCtrl == null || !authCtrl.isAuthenticated) {
+      Get.toNamed('/auth', arguments: {
+        'redirect': '/seller/${widget.boutique.id}',
+      });
+      return;
+    }
+
+    final currentUser = authCtrl.currentUser.value;
+    if (currentUser == null) {
+      AppToasts.error(
+          context, 'Erreur', 'Informations utilisateur non disponibles.');
+      return;
+    }
+
+    setState(() => _loading = true);
+
+    try {
+      // 1. Générer le chatId attendu
+      final chatId = ChatService.to.getChatId(
+        conversationType: 'shop',
+        entity1Id: currentUser.id.toString(),
+        entity2Id: widget.boutique.id.toString(),
+      );
+
+      // 2. S'assurer que Firebase Auth est actif pour ce chat
+      if (Get.isRegistered<FirebaseAuthBridgeService>()) {
+        await FirebaseAuthBridgeService.to.ensureSignedInForChat(
+          chatId,
+          asBoutique: false,
+        );
+      }
+
+      // 3. Récupérer ou créer la conversation
+      await ChatService.to.getOrCreateChat(
+        conversationType: 'shop',
+        myEntityId: currentUser.id.toString(),
+        myEntityType: 'user',
+        myName: currentUser.nom ?? 'Utilisateur',
+        myAvatar: currentUser.avatarUrl ?? '',
+        otherEntityId: widget.boutique.id.toString(),
+        otherEntityType: 'shop',
+        otherName: widget.boutique.nom,
+        otherAvatar: widget.boutique.logoUrl ?? '',
+        relatedShopId: widget.boutique.id.toString(),
+      );
+
+      // 4. Naviguer vers la discussion
+      Get.toNamed('/chat/$chatId?asBoutique=false');
+    } catch (e, stackTrace) {
+      debugPrint('Erreur getOrCreateChat: $e\n$stackTrace');
+      if (mounted) {
+        AppToasts.error(
+            context, 'Erreur', 'Impossible de démarrer la discussion.');
+      }
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: _openChat,
+      child: Container(
+        height: widget.r.s(54),
+        decoration: BoxDecoration(
+          color: AppTheme.primary,
+          borderRadius: BorderRadius.circular(widget.r.rad(16)),
+        ),
+        child: _loading
+            ? const Center(
+                child: SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(
+                    color: Colors.white,
+                    strokeWidth: 2.5,
+                  ),
+                ),
+              )
+            : Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.chat_bubble_rounded,
+                      color: Colors.white, size: widget.r.s(18)),
+                  SizedBox(width: widget.r.s(10)),
+                  Text('Discuter avec le vendeur',
+                      style: TextStyle(
+                          fontSize: widget.r.fs(14),
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white)),
+                ],
+              ),
       ),
     );
   }

@@ -14,6 +14,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../map/unified_map_screen.dart';
 import '../../utils/chat_media_cache_manager.dart';
 import '../../theme/app_theme.dart';
+import '../../Api/firebase/models/chat_model.dart';
 import '../../Api/firebase/controllers/chat_controller.dart';
 import '../../Api/firebase/services/chat_service.dart';
 import '../../Api/firebase/services/firebase_auth_bridge_service.dart';
@@ -25,6 +26,9 @@ import '../../controllers/app_controller.dart';
 import '../../controllers/boutique_controller.dart';
 import '../../Api/config/api_constants.dart';
 import '../../utils/image_optimization_service.dart';
+import '../../Api/services/user_service.dart';
+import '../../Api/core/api_client.dart';
+import '../../utils/app_toasts.dart';
 
 enum VoiceRecordState {
   none,
@@ -128,6 +132,62 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
+  Future<void> _makePhoneCall(
+      BuildContext context, String entityType, String entityId) async {
+    String? phoneNumber;
+
+    if (_activeProduct != null) {
+      if (entityType == 'shop' && _activeProduct!.boutiqueObj != null) {
+        phoneNumber = _activeProduct!.boutiqueObj!.telephone;
+      } else if (entityType == 'user' && _activeProduct!.userObj != null) {
+        phoneNumber = _activeProduct!.userObj!.telephone;
+      }
+    }
+
+    if (phoneNumber == null && Get.arguments != null) {
+      if (Get.arguments is User) {
+        phoneNumber = (Get.arguments as User).telephone;
+      } else if (Get.arguments is Boutique) {
+        phoneNumber = (Get.arguments as Boutique).telephone;
+      }
+    }
+
+    if (phoneNumber == null || phoneNumber.isEmpty) {
+      try {
+        AppToasts.info(
+            context, 'Recherche...', 'Récupération du numéro de téléphone...');
+        final apiClient = Get.find<ApiClient>();
+        if (entityType == 'shop') {
+          final res = await apiClient.get('/boutiques/$entityId');
+          phoneNumber = res.data['telephone'] ?? res.data['data']?['telephone'];
+        } else {
+          final userService = Get.find<UserService>();
+          final user = await userService.getUserProfile(entityId);
+          phoneNumber = user.telephone;
+        }
+      } catch (e) {
+        AppToasts.error(context, 'Erreur',
+            'Impossible de récupérer le numéro de téléphone.');
+        return;
+      }
+    }
+
+    if (phoneNumber != null && phoneNumber.isNotEmpty) {
+      final Uri launchUri = Uri(
+        scheme: 'tel',
+        path: phoneNumber,
+      );
+      if (await canLaunchUrl(launchUri)) {
+        await launchUrl(launchUri);
+      } else {
+        AppToasts.error(context, 'Erreur', 'Impossible de lancer l\'appel.');
+      }
+    } else {
+      AppToasts.error(
+          context, 'Erreur', 'Ce contact n\'a pas de numéro de téléphone.');
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -157,7 +217,7 @@ class _ChatScreenState extends State<ChatScreen> {
     }
 
     _chatCtrl.loadConversation(
-      convId, 
+      convId,
       actingEntityId: _actingUserId,
       actingEntityType: _isActingAsBoutique ? 'shop' : 'user',
     );
@@ -249,6 +309,57 @@ class _ChatScreenState extends State<ChatScreen> {
     });
   }
 
+  void _showMessageOptions(
+      BuildContext context, ChatMessageData msg, String myId) {
+    final itemMyUid = '${_isActingAsBoutique ? 'shop' : 'user'}_$myId';
+    final msgSenderUid = '${msg.senderEntityType}_${msg.senderEntityId}';
+    final isSenderMe = msgSenderUid == itemMyUid;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppTheme.cardColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: Icon(Icons.delete_outline, color: AppTheme.foreground),
+                title: Text('Supprimer pour moi',
+                    style: TextStyle(color: AppTheme.foreground)),
+                onTap: () {
+                  Navigator.pop(context);
+                  _chatCtrl.deleteMessage(msg,
+                      forEveryone: false,
+                      actingUid:
+                          '${_isActingAsBoutique ? 'shop' : 'user'}_$myId');
+                },
+              ),
+              if (isSenderMe && msg.type != 'order' && !msg.isDeletedGlobally)
+                ListTile(
+                  leading:
+                      Icon(Icons.delete_forever, color: AppTheme.destructive),
+                  title: Text('Supprimer pour tout le monde',
+                      style: TextStyle(color: AppTheme.destructive)),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _chatCtrl.deleteMessage(msg,
+                        forEveryone: true,
+                        actingUid:
+                            '${_isActingAsBoutique ? 'shop' : 'user'}_$myId');
+                  },
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   void _showAttachMenu() {
     showModalBottomSheet(
       context: context,
@@ -308,7 +419,8 @@ class _ChatScreenState extends State<ChatScreen> {
                     }
                     final myId = _actingUserId;
                     final session = _chatCtrl.currentChatSession.value;
-                    final myUid = '${_isActingAsBoutique ? 'shop' : 'user'}_$myId';
+                    final myUid =
+                        '${_isActingAsBoutique ? 'shop' : 'user'}_$myId';
                     String receiverId = '';
                     String receiverEntityType = 'user';
                     if (session != null) {
@@ -952,26 +1064,39 @@ class _ChatScreenState extends State<ChatScreen> {
                   ],
                 ),
                 actions: [
-                  if (productImage != null && productImage.isNotEmpty)
-                    GestureDetector(
-                      onTap: () {
-                        if (productId != null)
-                          Get.toNamed('/product/$productId');
-                      },
-                      child: Container(
-                        width: 40,
-                        height: 40,
-                        margin: const EdgeInsets.only(right: 12),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(8),
-                          image: DecorationImage(
-                            image: CachedNetworkImageProvider(
-                                ApiConstants.resolveImageUrl(productImage)),
-                            fit: BoxFit.cover,
-                          ),
-                        ),
+                  IconButton(
+                    icon: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primary.withOpacity(0.1),
+                        shape: BoxShape.circle,
                       ),
+                      child: Icon(Icons.phone_rounded,
+                          color: AppTheme.primary, size: 20),
                     ),
+                    onPressed: () {
+                      final session = _chatCtrl.currentChatSession.value;
+                      String receiverId = '';
+                      String receiverEntityType = 'user';
+                      if (session != null) {
+                        final myUid =
+                            '${_isActingAsBoutique ? 'shop' : 'user'}_$_actingUserId';
+                        final receiverUid = session.otherParticipantUid(myUid);
+                        final parts = receiverUid.split('_');
+                        if (parts.length >= 2) {
+                          receiverEntityType = parts[0];
+                          receiverId = parts.sublist(1).join('_');
+                        }
+                      }
+                      if (receiverId.isNotEmpty) {
+                        _makePhoneCall(context, receiverEntityType, receiverId);
+                      } else {
+                        AppToasts.error(context, 'Erreur',
+                            'Impossible d\'identifier l\'interlocuteur.');
+                      }
+                    },
+                  ),
+                  const SizedBox(width: 8),
                 ],
               );
             }),
@@ -992,7 +1117,8 @@ class _ChatScreenState extends State<ChatScreen> {
                     itemCount: totalCount,
                     itemBuilder: (_, i) {
                       final session = _chatCtrl.currentChatSession.value;
-                      final itemMyUid = '${_isActingAsBoutique ? 'shop' : 'user'}_$myId';
+                      final itemMyUid =
+                          '${_isActingAsBoutique ? 'shop' : 'user'}_$myId';
                       final otherAvatar =
                           session?.otherParticipantAvatar(itemMyUid) ?? '';
 
@@ -1003,11 +1129,13 @@ class _ChatScreenState extends State<ChatScreen> {
                           pending: pm,
                           onRetry: () {
                             final convId = _convId;
-                            final retryMyUid = '${_isActingAsBoutique ? 'shop' : 'user'}_$myId';
+                            final retryMyUid =
+                                '${_isActingAsBoutique ? 'shop' : 'user'}_$myId';
                             String receiverId = '';
                             String retryReceiverEntityType = 'user';
                             if (session != null) {
-                              final receiverUid = session.otherParticipantUid(retryMyUid);
+                              final receiverUid =
+                                  session.otherParticipantUid(retryMyUid);
                               final parts = receiverUid.split('_');
                               if (parts.length >= 2) {
                                 retryReceiverEntityType = parts[0];
@@ -1046,10 +1174,15 @@ class _ChatScreenState extends State<ChatScreen> {
 
                       final realIdx = i - pending.length;
                       final msg = realMessages[realIdx];
-                      return _MessageBubble(
-                          message: msg,
-                          sellerAvatar: otherAvatar,
-                          isMe: msg.senderEntityId == myId);
+                      final msgSenderUid = '${msg.senderEntityType}_${msg.senderEntityId}';
+                      return GestureDetector(
+                        onLongPress: () =>
+                            _showMessageOptions(context, msg, myId),
+                        child: _MessageBubble(
+                            message: msg,
+                            sellerAvatar: otherAvatar,
+                            isMe: msgSenderUid == itemMyUid),
+                      );
                     },
                   );
                 }),
@@ -1404,6 +1537,41 @@ class _MessageBubble extends StatelessWidget {
   Widget build(BuildContext context) {
     final r = R(context);
     final msgType = message.type ?? 'text';
+
+    if (message is ChatMessageData && message.isDeletedGlobally) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: Row(
+          mainAxisAlignment:
+              isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: Colors.transparent,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AppTheme.border.withOpacity(0.5)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.block, size: 14, color: AppTheme.mutedForeground),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Ce message a été supprimé',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: AppTheme.mutedForeground,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
 
     // ── Type 'order' : même structure que les bulles normales ──────────
     if (msgType == 'order') {

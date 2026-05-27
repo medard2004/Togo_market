@@ -1,178 +1,118 @@
-🎯 Objectif
-Refondre complètement le système de notifications afin qu’il soit fiable, fonctionnel, clair visuellement et intelligent selon le contexte Boutique ou Particulier.
+*🎯 Objectif
+Mettre en place un système complet, intelligent et sécurisé de suppression des messages et des discussions dans la messagerie de l’application, tout en protégeant la sécurité du système, les preuves de commande et en limitant les abus/malveillances.
 
 🧩 Contexte
-Le système actuel de notifications n’est pas suffisamment fiable/cohérent. Je veux une vraie gestion de notifications fonctionnelle dans toute l’application.
+L’application possède une messagerie Particulier et une messagerie Boutique, totalement indépendantes. Je veux un système de suppression moderne, cohérent et inspiré des meilleures expériences utilisateur (WhatsApp, Telegram, Messenger), mais adapté à une marketplace avec commandes et litiges possibles.
 
-Je veux un système propre, fluide et cohérent avec la logique Boutique vs Particulier déjà présente dans le projet.
+Je veux un système simple pour l’utilisateur, mais robuste côté logique métier afin d’éviter les abus.
 
-1. Notifications fonctionnelles avec Toast Notification
+1. Suppression des messages
 
-Je veux que les notifications fonctionnent réellement et utilisent un système de toast notification moderne.
+Je veux plusieurs comportements intelligents de suppression.
 
-Quand une notification arrive :
+Supprimer un message pour soi
 
-afficher un toast propre et visible,
-design moderne, professionnel et discret,
-animation fluide,
-non intrusif.
+L’utilisateur doit pouvoir supprimer un message uniquement de sa propre interface.
 
-Le toast doit fonctionner même si l’utilisateur est déjà dans l’application.
+Cela signifie :
 
-Je veux un comportement intelligent selon le contexte.
+le message disparaît uniquement chez lui,
+l’autre participant continue de voir le message normalement,
+l’historique reste cohérent.
+
+Je veux une expérience fluide et naturelle.
+
+Supprimer un message pour tout le monde
+
+Je veux la possibilité de supprimer un message envoyé par erreur pour tous les participants.
 
 Exemples :
 
-Nouveau message particulier
+mauvaise photo envoyée,
+faute de frappe,
+mauvais vocal,
+mauvais destinataire.
 
-Toast :
-Nouveau message reçu de Jean
+Mais je veux une logique raisonnable et sécurisée pour éviter les abus.
 
-Nouveau message boutique
+Le comportement doit rester cohérent dans la discussion et ne pas casser l’historique du chat.
 
-Toast :
-Nouvelle conversation boutique – Fashion Shop
+Lorsqu’un message est supprimé globalement, je veux une indication claire dans la discussion indiquant qu’un message a été supprimé.
 
-Nouvelle commande boutique
+Messages sensibles / système
 
-Toast :
-Nouvelle commande reçue dans votre boutique
+Je veux réfléchir intelligemment aux messages qui ne devraient pas pouvoir être supprimés ou manipulés.
 
-Commande acceptée
+Exemples possibles :
 
-Toast :
-Votre commande a été acceptée
+récapitulatif de commande,
+validation de commande,
+changement de statut commande,
+preuves liées à une transaction,
+informations importantes vendeur/acheteur.
 
-2. Distinction visible Boutique vs Particulier
-
-Je veux une différence visuelle claire entre les notifications destinées :
-
-à la boutique
-
-et
-
-au particulier
-
-Je veux qu’on puisse identifier immédiatement le contexte.
-
-Exemples de distinction possibles :
-
-Notifications boutique
-badge spécifique,
-icon boutique/store,
-style visuel différent,
-label clair type : Boutique
-Notifications particulier
-icon utilisateur/message,
-style propre au compte personnel,
-label type : Personnel
-
-Je veux quelque chose de visible et intuitif.
-
-3. Redirection intelligente des notifications
-
-Quand on clique sur une notification :
-
-Je veux une redirection directe vers le bon écran, sans navigation intermédiaire inutile.
-
-Cas : commande boutique
+L’objectif est d’éviter les comportements malveillants :
 
 Exemple :
+un vendeur ou acheteur qui tente de supprimer des preuves après un problème.
 
-Quelqu’un passe une commande dans une boutique.
+Je veux une logique cohérente protégeant l’intégrité des échanges commerciaux.
 
-Le propriétaire reçoit une notification :
+2. Suppression des discussions
 
-Nouvelle commande reçue
+Je veux une expérience utilisateur simple.
 
-Quand il clique :
+L’utilisateur doit pouvoir :
 
-➡️ redirection directe vers le détail exact de cette commande dans la boutique.
+supprimer/masquer une discussion de sa liste,
+nettoyer son interface si nécessaire.
 
-Pas juste vers la liste des commandes.
+Mais je veux réfléchir à un système intelligent où :
 
-Cas : commande particulier
+la suppression ne casse pas la discussion de l’autre côté,
+l’historique peut rester cohérent,
+une conversation peut réapparaître si un nouveau message arrive.
 
-➡️ redirection vers le détail de commande particulier.
+Je veux quelque chose de naturel, moderne et proche des apps de messagerie populaires.
 
-Cas : message boutique
+3. Sécurité & prévention des abus
 
-➡️ ouvrir directement :
+Je veux que le système soit pensé pour une marketplace avec échanges acheteur/vendeur.
 
-Messagerie boutique → bonne conversation
+Il faut prendre en compte :
 
-Cas : message particulier
+messages malveillants,
+arnaques potentielles,
+harcèlement,
+spam,
+suppression abusive de preuves.
 
-➡️ ouvrir directement :
+Je veux des recommandations pertinentes pour limiter les abus sans rendre l’expérience compliquée.
 
-Messagerie particulier → bonne conversation
+4. Cohérence Boutique vs Particulier
 
-Cas : validation commande
+Très important :
 
-Quand une boutique accepte une commande :
-
-L’acheteur reçoit une notification.
-
-Quand il clique :
-
-➡️ redirection directe vers le détail exact de la commande concernée.
-
-4. Notifications de messages (Boutique + Particulier)
-
-Je veux de vraies notifications quand un message est reçu.
+L’application possède deux contextes indépendants :
 
 Messagerie particulier
-notification message reçue.
 Messagerie boutique
-notification message reçue.
 
-Même si l’utilisateur n’est pas actuellement dans la discussion.
+Je veux que toute logique de suppression respecte cette séparation.
 
-⚠️ Important :
+Une suppression dans une conversation boutique ne doit jamais affecter une conversation particulier, et inversement.
 
-Ne pas notifier inutilement si l’utilisateur est déjà dans cette conversation ouverte.
+5. Expérience utilisateur attendue
 
-Je veux une logique intelligente.
+Je veux une expérience :
 
-5. Badge du nombre de notifications non lues
+simple,
+moderne,
+intuitive,
+sécurisée,
+cohérente avec une application marketplace.
 
-Je veux afficher le nombre de notifications non lues sur l’icône notification de l’écran d’accueil.
+Je veux que tu proposes la meilleure logique globale et les bonnes recommandations en t’adaptant à l’architecture actuelle du projet.
 
-Exemple :
-
-🔔 3
-
-Le compteur doit :
-
-✅ se mettre à jour automatiquement,
-✅ diminuer lorsqu’une notification est lue,
-✅ disparaître quand tout est lu.
-
-Je veux un comportement temps réel ou refresh intelligent.
-
-6. Marquer automatiquement comme lu
-
-Quand une notification arrive et que l’utilisateur clique directement dessus :
-
-➡️ elle doit être automatiquement marquée comme lue.
-
-Le système doit :
-
-retirer le badge non lu,
-mettre à jour l’état dans la page notifications,
-synchroniser correctement partout.
-
-Je ne veux plus de notifications déjà ouvertes qui restent non lues.
-
-Résultat attendu
-
-Je veux un système de notifications :
-
-✅ totalement fonctionnel
-✅ toast moderne
-✅ distinction boutique/personnel visible
-✅ redirection intelligente vers le bon écran
-✅ notifications messages fonctionnelles
-✅ badge compteur non lu sur accueil
-✅ lecture automatique après ouverture
-✅ cohérent avec toute la logique Boutique vs Particulier du projet.
+📦 Résultat attendu
+Un système de suppression de messages et discussions réfléchi, cohérent, sécurisé et adapté aux réalités d’une marketplace avec boutique + particulier.

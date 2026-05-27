@@ -23,7 +23,8 @@ class _NearbyExplorerScreenState extends State<NearbyExplorerScreen> {
   Widget build(BuildContext context) {
     final r = R(context);
     final ctrl = Get.find<AppController>();
-    final allProducts = ctrl.products.toList();
+    final nearbyProds = ctrl.nearbyProducts.toList();
+    final zone = ctrl.selectedZone.value ?? 'Autour de vous';
 
     return Scaffold(
       backgroundColor: AppTheme.background,
@@ -37,7 +38,11 @@ class _NearbyExplorerScreenState extends State<NearbyExplorerScreen> {
           physics: const BouncingScrollPhysics(),
           slivers: [
             // Standard spacing for the extended app bar
-            SliverToBoxAdapter(child: SizedBox(height: MediaQuery.of(context).padding.top + kToolbarHeight + 10)),
+            SliverToBoxAdapter(
+                child: SizedBox(
+                    height: MediaQuery.of(context).padding.top +
+                        kToolbarHeight +
+                        10)),
 
             // ── Location & Filters ──────────────────────────────────────────
             SliverToBoxAdapter(
@@ -48,56 +53,23 @@ class _NearbyExplorerScreenState extends State<NearbyExplorerScreen> {
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.location_on_rounded, color: AppTheme.primary, size: 20),
+                        Icon(Icons.location_on_rounded,
+                            color: AppTheme.primary, size: 20),
                         SizedBox(width: 8),
-                        Text(
-                          'Lomé, Tokoin',
-                          style: TextStyle(
-                            fontSize: r.fs(14),
-                            fontWeight: FontWeight.w700,
-                            color: AppTheme.foreground,
+                        Expanded(
+                          child: Text(
+                            zone,
+                            style: TextStyle(
+                              fontSize: r.fs(14),
+                              fontWeight: FontWeight.w700,
+                              color: AppTheme.foreground,
+                            ),
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        SizedBox(width: 4),
-                        Icon(Icons.keyboard_arrow_down_rounded, color: AppTheme.mutedForeground, size: 18),
                       ],
                     ),
                     SizedBox(height: 16),
-                    SizedBox(
-                      height: 38,
-                      child: ListView.separated(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: _distances.length,
-                        separatorBuilder: (_, __) => SizedBox(width: 10),
-                        itemBuilder: (_, i) {
-                          final dist = _distances[i];
-                          final active = _selectedDistance == dist;
-                          return GestureDetector(
-                            onTap: () => setState(() => _selectedDistance = dist),
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 200),
-                              padding: const EdgeInsets.symmetric(horizontal: 16),
-                              decoration: BoxDecoration(
-                                color: active ? AppTheme.primary : AppTheme.cardColor,
-                                borderRadius: BorderRadius.circular(20),
-                                boxShadow: active ? AppTheme.shadowPrimary : AppTheme.shadowCard,
-                              ),
-                              child: Center(
-                                child: Text(
-                                  dist,
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w700,
-                                    color: active ? Colors.white : AppTheme.mutedForeground,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                    SizedBox(height: 12),
                   ],
                 ),
               ),
@@ -115,7 +87,7 @@ class _NearbyExplorerScreenState extends State<NearbyExplorerScreen> {
                 ),
                 delegate: SliverChildBuilderDelegate(
                   (context, i) {
-                    final product = allProducts[i % allProducts.length];
+                    final product = nearbyProds[i];
                     return AnimationConfiguration.staggeredGrid(
                       position: i,
                       duration: const Duration(milliseconds: 375),
@@ -126,41 +98,14 @@ class _NearbyExplorerScreenState extends State<NearbyExplorerScreen> {
                           child: Stack(
                             children: [
                               ProductCard(product: product),
-                              // Distance Badge
-                              Positioned(
-                                top: 8,
-                                right: 8,
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.9),
-                                    borderRadius: BorderRadius.circular(8),
-                                    boxShadow: AppTheme.shadowCard,
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(Icons.directions_walk_rounded, size: 10, color: AppTheme.primary),
-                                      SizedBox(width: 2),
-                                      Text(
-                                        '${(i + 1) * 0.3} km',
-                                        style: TextStyle(
-                                          fontSize: 9,
-                                          fontWeight: FontWeight.w800,
-                                          color: AppTheme.primary,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
+                              // Removed Distance Badge
                             ],
                           ),
                         ),
                       ),
                     );
                   },
-                  childCount: 10,
+                  childCount: nearbyProds.length,
                 ),
               ),
             ),
@@ -169,6 +114,7 @@ class _NearbyExplorerScreenState extends State<NearbyExplorerScreen> {
       ),
     );
   }
+
   double _gridAspectRatio(BuildContext context) {
     final r = R(context);
     final colW = (MediaQuery.of(context).size.width - 16 * 2 - 12) / 2;

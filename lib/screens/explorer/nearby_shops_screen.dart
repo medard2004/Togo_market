@@ -31,7 +31,9 @@ class _NearbyShopsScreenState extends State<NearbyShopsScreen> {
         onBack: () => Get.back(),
       ),
       body: Obx(() {
-        final boutiques = Get.find<AppController>().boutiques;
+        final ctrl = Get.find<AppController>();
+        final boutiques = ctrl.nearbyBoutiques.toList();
+        final zone = ctrl.selectedZone.value ?? 'Autour de vous';
 
         return AnimationLimiter(
           child: CustomScrollView(
@@ -39,9 +41,7 @@ class _NearbyShopsScreenState extends State<NearbyShopsScreen> {
             slivers: [
               SliverToBoxAdapter(
                   child: SizedBox(
-                      height:
-                          MediaQuery.of(context).padding.top + r.s(60))),
-
+                      height: MediaQuery.of(context).padding.top + r.s(60))),
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -55,7 +55,7 @@ class _NearbyShopsScreenState extends State<NearbyShopsScreen> {
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              'Lomé, Tokoin',
+                              zone,
                               style: TextStyle(
                                 fontSize: r.fs(14),
                                 fontWeight: FontWeight.w700,
@@ -64,69 +64,13 @@ class _NearbyShopsScreenState extends State<NearbyShopsScreen> {
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                          const SizedBox(width: 4),
-                          Icon(Icons.keyboard_arrow_down_rounded,
-                              color: AppTheme.mutedForeground,
-                              size: r.s(18)),
                         ],
-                      ),
-                      const SizedBox(height: 16),
-                      SizedBox(
-                        height: r.s(38),
-                        child: ListView.separated(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: _distances.length,
-                          separatorBuilder: (_, __) =>
-                              const SizedBox(width: 10),
-                          itemBuilder: (_, i) {
-                            final dist = _distances[i];
-                            final active = _selectedDistance == dist;
-                            return GestureDetector(
-                              onTap: () =>
-                                  setState(() => _selectedDistance = dist),
-                              child: AnimatedContainer(
-                                duration:
-                                    const Duration(milliseconds: 200),
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 16),
-                                decoration: BoxDecoration(
-                                  color: active
-                                      ? AppTheme.primary
-                                      : AppTheme.cardColor,
-                                  borderRadius: BorderRadius.circular(20),
-                                  border: Border.all(
-                                    color: active
-                                        ? AppTheme.primary
-                                        : AppTheme.border,
-                                    width: 1.5,
-                                  ),
-                                  boxShadow: active
-                                      ? AppTheme.shadowPrimary
-                                      : AppTheme.shadowSm,
-                                ),
-                                child: Center(
-                                  child: Text(
-                                    dist,
-                                    style: TextStyle(
-                                      fontSize: r.fs(12),
-                                      fontWeight: FontWeight.w700,
-                                      color: active
-                                          ? Colors.white
-                                          : AppTheme.mutedForeground,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            );
-                          },
-                        ),
                       ),
                       SizedBox(height: r.s(22)),
                     ],
                   ),
                 ),
               ),
-
               if (boutiques.isEmpty)
                 SliverFillRemaining(
                   child: Center(

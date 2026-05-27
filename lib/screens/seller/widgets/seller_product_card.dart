@@ -9,6 +9,9 @@ import '../../../utils/app_utils.dart';
 import '../../../utils/responsive.dart';
 import '../../../controllers/app_controller.dart';
 import '../../../Api/config/api_constants.dart';
+import '../../../Api/provider/auth_controller.dart';
+import '../../../Api/firebase/services/chat_service.dart';
+import '../../../utils/app_toasts.dart';
 
 class SellerProductCard extends StatelessWidget {
   final Product product;
@@ -164,7 +167,46 @@ class SellerProductCard extends StatelessWidget {
                   ),
                   SizedBox(width: r.s(4)),
                   GestureDetector(
-                    onTap: () => Get.toNamed('/chat/c1', arguments: product),
+                    onTap: () async {
+                      final authCtrl = Get.isRegistered<AuthController>() ? Get.find<AuthController>() : null;
+                      if (authCtrl == null || !authCtrl.isAuthenticated) {
+                        Get.toNamed('/auth', arguments: {
+                          'redirect': '/product/${product.id}',
+                        });
+                        return;
+                      }
+
+                      final currentUser = authCtrl.currentUser.value;
+                      if (currentUser == null) return;
+
+                      // Déterminer le vendeur
+                      final boutique = product.boutiqueObj;
+                      final isShop = boutique != null;
+                      final sellerId = isShop ? boutique.id.toString() : (product.userObj?.id.toString() ?? product.sellerId.toString());
+                      final sellerName = isShop ? boutique.nom : (product.userObj?.nom ?? 'Vendeur');
+                      final sellerAvatar = isShop ? (boutique.logoUrl ?? '') : (product.userObj?.avatarUrl ?? '');
+
+                      try {
+                        final chatId = await ChatService.to.getOrCreateChat(
+                          conversationType: isShop ? 'shop' : 'personal',
+                          myEntityId: currentUser.id.toString(),
+                          myEntityType: 'user',
+                          myName: currentUser.nom ?? 'Utilisateur',
+                          myAvatar: currentUser.avatarUrl ?? '',
+                          otherEntityId: sellerId,
+                          otherEntityType: isShop ? 'shop' : 'user',
+                          otherName: sellerName,
+                          otherAvatar: sellerAvatar,
+                          productId: product.id.toString(),
+                          productTitle: product.title,
+                          productImage: product.image,
+                          relatedShopId: isShop ? boutique.id.toString() : null,
+                        );
+                        Get.toNamed('/chat/$chatId?asBoutique=false', arguments: product);
+                      } catch (e) {
+                        AppToasts.error(context, 'Erreur', 'Impossible de démarrer la discussion.');
+                      }
+                    },
                     child: PhosphorIcon(
                       PhosphorIcons.chatCircleDots(),
                       size: r.s(15),

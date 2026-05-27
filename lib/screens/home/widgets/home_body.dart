@@ -28,7 +28,9 @@ class HomeBody extends StatelessWidget {
             ? ctrl.trendingProducts.toList()
             : allProducts.take(8).toList();
         final selectedZone = ctrl.selectedZone.value;
-        final nearbyProds = ctrl.getProductsByZone(selectedZone ?? '');
+        final nearbyProds = ctrl.nearbyProducts.isNotEmpty
+            ? ctrl.nearbyProducts.toList()
+            : ctrl.getProductsByZone(selectedZone ?? '');
 
         return RefreshIndicator(
           onRefresh: () async {
@@ -119,7 +121,8 @@ class HomeBody extends StatelessWidget {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Icon(
-                                  CategoryIconHelper.getIconFromString(cat.icon),
+                                  CategoryIconHelper.getIconFromString(
+                                      cat.icon),
                                   size: r.fs(16),
                                   color: isActive
                                       ? Colors.white
@@ -210,36 +213,37 @@ class HomeBody extends StatelessWidget {
                 ),
                 // Près de chez vous scroll
                 SliverToBoxAdapter(
-                  child: SizedBox(
-                    height: hScrollHeight,
-                    child: ListView.separated(
-                      scrollDirection: Axis.horizontal,
-                      padding: EdgeInsets.symmetric(horizontal: r.hPad),
-                      itemCount: allProducts.length,
-                      separatorBuilder: (_, __) => SizedBox(width: r.s(12)),
-                      itemBuilder: (_, i) {
-                        final idx =
-                            (allProducts.length - 1 - i) % allProducts.length;
-                        return AnimationConfiguration.staggeredList(
-                          position: i,
-                          duration: const Duration(milliseconds: 260),
-                          child: SlideAnimation(
-                            horizontalOffset: 28,
-                            curve: Curves.easeOutCubic,
-                            child: FadeInAnimation(
-                              curve: Curves.easeOutCubic,
-                              child: SizedBox(
-                                width: r.cardW,
-                                child: ProductCard(
-                                    product: allProducts[idx],
-                                    isHorizontal: true),
-                              ),
-                            ),
+                  child: nearbyProds.isEmpty
+                      ? _buildEmptyZone(r, 'Aucun produit près de chez vous')
+                      : SizedBox(
+                          height: hScrollHeight,
+                          child: ListView.separated(
+                            scrollDirection: Axis.horizontal,
+                            padding: EdgeInsets.symmetric(horizontal: r.hPad),
+                            itemCount: nearbyProds.length,
+                            separatorBuilder: (_, __) =>
+                                SizedBox(width: r.s(12)),
+                            itemBuilder: (_, i) {
+                              return AnimationConfiguration.staggeredList(
+                                position: i,
+                                duration: const Duration(milliseconds: 260),
+                                child: SlideAnimation(
+                                  horizontalOffset: 28,
+                                  curve: Curves.easeOutCubic,
+                                  child: FadeInAnimation(
+                                    curve: Curves.easeOutCubic,
+                                    child: SizedBox(
+                                      width: r.cardW,
+                                      child: ProductCard(
+                                          product: nearbyProds[i],
+                                          isHorizontal: true),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
                           ),
-                        );
-                      },
-                    ),
-                  ),
+                        ),
                 ),
 
                 SliverToBoxAdapter(child: SizedBox(height: r.vGap)),
@@ -264,7 +268,7 @@ class HomeBody extends StatelessWidget {
                     child: Obx(() {
                       final boutiques = ctrl.boutiques.take(5).toList();
                       if (boutiques.isEmpty) return const SizedBox.shrink();
-                      
+
                       return ListView.separated(
                         scrollDirection: Axis.horizontal,
                         padding: EdgeInsets.symmetric(horizontal: r.hPad),
@@ -304,10 +308,11 @@ class HomeBody extends StatelessWidget {
                   child: SizedBox(
                     height: r.s(165),
                     child: Obx(() {
-                      // Reverse list or shuffle for variation
-                      final nearbyBoutiques = ctrl.boutiques.toList().reversed.take(5).toList();
-                      if (nearbyBoutiques.isEmpty) return const SizedBox.shrink();
-                      
+                      final nearbyBoutiques = ctrl.nearbyBoutiques.toList();
+                      if (nearbyBoutiques.isEmpty)
+                        return _buildEmptyZone(
+                            r, 'Aucune boutique près de chez vous');
+
                       return ListView.separated(
                         scrollDirection: Axis.horizontal,
                         padding: EdgeInsets.symmetric(horizontal: r.hPad),
@@ -319,7 +324,8 @@ class HomeBody extends StatelessWidget {
                             duration: const Duration(milliseconds: 260),
                             child: FadeInAnimation(
                               curve: Curves.easeOutCubic,
-                              child: ShopCarouselCard(boutique: nearbyBoutiques[i]),
+                              child: ShopCarouselCard(
+                                  boutique: nearbyBoutiques[i]),
                             ),
                           );
                         },

@@ -40,7 +40,33 @@ class BoutiqueService extends GetxService {
     }
   }
 
-  Future<FormData> _buildFormData(Map<String, dynamic> payload, {bool isUpdate = false}) async {
+  /// Get nearby boutiques based on user location and preferences
+  Future<List<Boutique>> getNearbyBoutiques(
+      {String? zone, double? lat, double? lng}) async {
+    try {
+      final params = <String, dynamic>{};
+      if (zone != null && zone.isNotEmpty) params['zone'] = zone;
+      if (lat != null) params['lat'] = lat;
+      if (lng != null) params['lng'] = lng;
+
+      final response = await _apiClient.get(
+        ApiConstants.nearbyBoutiquesEndpoint,
+        queryParameters: params,
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data;
+        final List list = data is List ? data : (data['data'] ?? []);
+        return list.map((json) => Boutique.fromJson(json)).toList();
+      }
+      return [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  Future<FormData> _buildFormData(Map<String, dynamic> payload,
+      {bool isUpdate = false}) async {
     final Map<String, dynamic> formDataMap = {};
     if (isUpdate) {
       formDataMap['_method'] = 'PUT';
@@ -89,37 +115,44 @@ class BoutiqueService extends GetxService {
 
   /// Create a new boutique
   Future<Boutique> store(Map<String, dynamic> payload) async {
-    final bool hasFiles = payload.containsKey('logoPath') || payload.containsKey('bannerPath');
+    final bool hasFiles =
+        payload.containsKey('logoPath') || payload.containsKey('bannerPath');
     final data = hasFiles ? await _buildFormData(payload) : payload;
 
-    final response = await _apiClient.post(ApiConstants.boutiqueEndpoint, data: data);
-    return Boutique.fromJson(response.data['boutique'] ?? response.data['data'] ?? response.data);
+    final response =
+        await _apiClient.post(ApiConstants.boutiqueEndpoint, data: data);
+    return Boutique.fromJson(
+        response.data['boutique'] ?? response.data['data'] ?? response.data);
   }
 
   /// Update an existing boutique
   Future<Boutique> update(Map<String, dynamic> payload) async {
-    final bool hasFiles = payload.containsKey('logoPath') || payload.containsKey('bannerPath');
-    
+    final bool hasFiles =
+        payload.containsKey('logoPath') || payload.containsKey('bannerPath');
+
     if (hasFiles) {
       final data = await _buildFormData(payload, isUpdate: true);
       final response = await _apiClient.post(
         ApiConstants.boutiqueEndpoint,
         data: data,
       );
-      return Boutique.fromJson(response.data['boutique'] ?? response.data['data'] ?? response.data);
+      return Boutique.fromJson(
+          response.data['boutique'] ?? response.data['data'] ?? response.data);
     } else {
       final response = await _apiClient.put(
         ApiConstants.boutiqueEndpoint,
         data: payload,
       );
-      return Boutique.fromJson(response.data['boutique'] ?? response.data['data'] ?? response.data);
+      return Boutique.fromJson(
+          response.data['boutique'] ?? response.data['data'] ?? response.data);
     }
   }
 
   /// Validate a specific step data
   Future<bool> validateStep(int step, Map<String, dynamic> data) async {
     data['step'] = step;
-    await _apiClient.post('${ApiConstants.boutiqueEndpoint}/validate-step', data: data);
+    await _apiClient.post('${ApiConstants.boutiqueEndpoint}/validate-step',
+        data: data);
     return true; // If no exception thrown, validation passed
   }
 }

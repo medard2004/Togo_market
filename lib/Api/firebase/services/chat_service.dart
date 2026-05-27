@@ -83,7 +83,7 @@ class ChatService extends GetxService {
       // Mettre à jour les noms/avatars si changés (les profils peuvent évoluer).
       final myUid = '${myEntityType}_$myEntityId';
       final otherUid = '${otherEntityType}_$otherEntityId';
-      
+
       final updates = <String, dynamic>{};
       updates['participantNames.$myUid'] = myName;
       updates['participantAvatars.$myUid'] = myAvatar;
@@ -99,6 +99,38 @@ class ChatService extends GetxService {
       await docRef.update(updates);
     }
     return chatId;
+  }
+
+  /// Met à jour les informations (nom, avatar) d'une entité dans toutes ses conversations
+  Future<void> syncEntityProfileInChats({
+    required String entityType,
+    required String entityId,
+    required String newName,
+    required String newAvatar,
+  }) async {
+    final entityUid = '${entityType}_$entityId';
+    try {
+      final querySnapshot = await _db
+          .collection('chats')
+          .where('participantUids', arrayContains: entityUid)
+          .get();
+
+      if (querySnapshot.docs.isEmpty) return;
+
+      final batch = _db.batch();
+      for (var doc in querySnapshot.docs) {
+        batch.update(doc.reference, {
+          'participantNames.$entityUid': newName,
+          'participantAvatars.$entityUid': newAvatar,
+        });
+      }
+      await batch.commit();
+      debugPrint(
+          'ChatService: Profil synchronisé pour $entityUid dans ${querySnapshot.docs.length} conversations');
+    } catch (e) {
+      debugPrint(
+          'ChatService: Erreur lors de la synchronisation du profil: $e');
+    }
   }
 
   /// Écoute TOUTES les conversations d'une entité (utilisateur ou boutique).
@@ -119,7 +151,8 @@ class ChatService extends GetxService {
   }
 
   /// Écoute les messages d'une conversation spécifique
-  Stream<List<ChatMessageData>> getMessagesStream(String chatId) {
+  Stream<List<ChatMessageData>> getMessagesStream(
+      String chatId, String currentUid) {
     return _db
         .collection('chats')
         .doc(chatId)
@@ -128,6 +161,7 @@ class ChatService extends GetxService {
         .snapshots()
         .map((snapshot) => snapshot.docs
             .map((doc) => ChatMessageData.fromJson(doc.data(), doc.id))
+            .where((msg) => !msg.deletedForUids.contains(currentUid))
             .toList());
   }
 
@@ -242,8 +276,13 @@ class ChatService extends GetxService {
   }
 
   /// Envoie un message dans une conversation
-  Future<void> sendMessage(String chatId, String senderEntityId,
-      String senderEntityType, String receiverEntityId, String receiverEntityType, String content,
+  Future<void> sendMessage(
+      String chatId,
+      String senderEntityId,
+      String senderEntityType,
+      String receiverEntityId,
+      String receiverEntityType,
+      String content,
       {String? productId,
       String type = 'text',
       String? mediaUrl,
@@ -296,6 +335,7 @@ class ChatService extends GetxService {
           'lastMessage': lastMessageText,
           'lastMessageTime': Timestamp.fromDate(now),
           'lastMessageSenderId': senderUid,
+          'hiddenForUids': [],
           'unreadCounts.$receiverUid': FieldValue.increment(1),
         });
       } else {
@@ -308,6 +348,7 @@ class ChatService extends GetxService {
               'lastMessage': lastMessageText,
               'lastMessageTime': Timestamp.fromDate(now),
               'lastMessageSenderId': senderUid,
+              'hiddenForUids': [],
               'unreadCounts': {receiverUid: 1, senderUid: 0},
             },
             SetOptions(merge: true));
@@ -315,12 +356,12 @@ class ChatService extends GetxService {
     });
 
     // Envoyer la notification push via le backend Laravel
-    _sendChatPushNotification(
-        receiverEntityId, receiverEntityType, chatId, lastMessageText, productId);
+    _sendChatPushNotification(receiverEntityId, receiverEntityType, chatId,
+        lastMessageText, productId);
   }
 
-  Future<void> _sendChatPushNotification(String receiverId, String receiverType, String chatId,
-      String content, String? productId) async {
+  Future<void> _sendChatPushNotification(String receiverId, String receiverType,
+      String chatId, String content, String? productId) async {
     try {
       final apiClient = Get.find<ApiClient>();
       await apiClient.post('/notifications/send-chat-push', data: {
@@ -354,7 +395,8 @@ class ChatService extends GetxService {
 
       for (var doc in unreadMsgs.docs) {
         final data = doc.data();
-        final msgSenderUid = '${data['senderEntityType']}_${data['senderEntityId']}';
+        final msgSenderUid =
+            '${data['senderEntityType']}_${data['senderEntityId']}';
         if (msgSenderUid != entityUid) {
           batch.update(doc.reference, {
             'seen': true,
@@ -366,6 +408,58 @@ class ChatService extends GetxService {
       await batch.commit();
     } catch (e) {
       debugPrint('ChatService: Impossible de marquer comme lu ($e)');
+    }
+  }
+
+  /// Supprime un message uniquement pour l'utilisateur courant
+  Future<void> deleteMessageForMe(
+      String chatId, String messageId, String uid) async {
+    try {
+      await _db
+          .collection('chats')
+          .doc(chatId)
+          .collection('messages')
+          .doc(messageId)
+          .update({
+        'deletedForUids': FieldValue.arrayUnion([uid]),
+      });
+    } catch (e) {
+      debugPrint('ChatService: Erreur suppression message pour moi: $e');
+      rethrow;
+    }
+  }
+
+  /// Supprime un message pour tout le monde
+  Future<void> deleteMessageForEveryone(String chatId, String messageId) async {
+    try {
+      await _db
+          .collection('chats')
+          .doc(chatId)
+          .collection('messages')
+          .doc(messageId)
+          .update({
+        'isDeletedGlobally': true,
+      });
+    } catch (e) {
+      debugPrint('ChatService: Erreur suppression globale message: $e');
+      rethrow;
+    }
+  }
+
+  /// Masque une ou plusieurs conversations pour l'utilisateur courant
+  Future<void> hideChatsForUser(List<String> chatIds, String uid) async {
+    try {
+      final batch = _db.batch();
+      for (final chatId in chatIds) {
+        final ref = _db.collection('chats').doc(chatId);
+        batch.update(ref, {
+          'hiddenForUids': FieldValue.arrayUnion([uid]),
+        });
+      }
+      await batch.commit();
+    } catch (e) {
+      debugPrint('ChatService: Erreur masquage conversations: $e');
+      rethrow;
     }
   }
 }

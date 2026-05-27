@@ -13,7 +13,7 @@ import 'boutique_controller.dart';
 class AppController extends GetxController {
   // Auth state
   final isLoggedIn = false.obs;
-  
+
   // Guest mode prompt banner
   final showAuthPrompt = true.obs;
 
@@ -31,19 +31,21 @@ class AppController extends GetxController {
   final isDarkMode = false.obs;
 
   // Products
-  final products        = <Product>[].obs;
-  final favorites       = <Product>[].obs;
+  final products = <Product>[].obs;
+  final favorites = <Product>[].obs;
   final trendingProducts = <Product>[].obs;
+  final nearbyProducts = <Product>[].obs;
 
   // Boutiques
   final boutiques = <Boutique>[].obs;
+  final nearbyBoutiques = <Boutique>[].obs;
 
   // Zone
   final selectedZone = RxnString(); // ville / quartier sélectionné (nullable)
 
   // Notifications badge
   final unreadNotifications = 0.obs;
-  final unreadMessages      = 0.obs;
+  final unreadMessages = 0.obs;
 
   // Selected category on Home
   final selectedCategory = 'all'.obs;
@@ -91,6 +93,8 @@ class AppController extends GetxController {
   Future<void> _bootstrapHomeFeed() async {
     await fetchProduits();
     await fetchTrendingProducts();
+    await fetchNearbyProducts();
+    await fetchNearbyBoutiques();
   }
 
   // ── Categories ──────────────────────────────────────────────────────────────
@@ -115,6 +119,7 @@ class AppController extends GetxController {
         }
       }
     }
+
     traverse(categories);
     return flat;
   }
@@ -127,7 +132,9 @@ class AppController extends GetxController {
       // Toujours refléter la réponse API (pagination : souvent une seule page).
       products.assignAll(apiProducts);
 
-      final auth = Get.isRegistered<AuthController>() ? Get.find<AuthController>() : null;
+      final auth = Get.isRegistered<AuthController>()
+          ? Get.find<AuthController>()
+          : null;
       if (auth != null && auth.isAuthenticated) {
         // is_favoris sur /produits ne couvre que la page courante : on resynchronise via /favoris
         await fetchFavorites();
@@ -163,13 +170,50 @@ class AppController extends GetxController {
     }
   }
 
+  // ── Près de chez vous ────────────────────────────────────────────────────────
+
+  Future<void> fetchNearbyProducts() async {
+    try {
+      final nearby = await ProduitService.to.getNearbyProducts(
+        zone: selectedZone.value,
+      );
+      nearbyProducts.assignAll(nearby);
+      _applyFavoriteFlagsToNearby();
+      nearbyProducts.refresh();
+      update();
+    } catch (e) {
+      debugPrint("Error fetching nearby products: $e");
+    }
+  }
+
+  void _applyFavoriteFlagsToNearby() {
+    final favIds = favorites.map((f) => f.id.toString()).toSet();
+    for (final p in nearbyProducts) {
+      final id = p.id.toString();
+      p.isFavorite = favIds.contains(id) ||
+          products.any((x) => x.id.toString() == id && x.isFavorite);
+    }
+  }
+
+  Future<void> fetchNearbyBoutiques() async {
+    try {
+      final nearby = await BoutiqueService.to.getNearbyBoutiques(
+        zone: selectedZone.value,
+      );
+      nearbyBoutiques.assignAll(nearby);
+      update();
+    } catch (e) {
+      debugPrint("Error fetching nearby boutiques: $e");
+    }
+  }
+
   /// Aligne les cœurs tendances avec `favorites` / drapeaux sur `products`.
   void _applyFavoriteFlagsToTrending() {
     final favIds = favorites.map((f) => f.id.toString()).toSet();
     for (final p in trendingProducts) {
       final id = p.id.toString();
-      p.isFavorite =
-          favIds.contains(id) || products.any((x) => x.id.toString() == id && x.isFavorite);
+      p.isFavorite = favIds.contains(id) ||
+          products.any((x) => x.id.toString() == id && x.isFavorite);
     }
   }
 
@@ -179,6 +223,9 @@ class AppController extends GetxController {
       if (p.isFavorite) byId[p.id.toString()] = p;
     }
     for (final p in trendingProducts) {
+      if (p.isFavorite) byId[p.id.toString()] = p;
+    }
+    for (final p in nearbyProducts) {
       if (p.isFavorite) byId[p.id.toString()] = p;
     }
     favorites.assignAll(byId.values.toList());
@@ -201,7 +248,8 @@ class AppController extends GetxController {
   /// Si l'utilisateur n'est pas connecté, redirige vers l'authentification.
   Future<void> toggleFavorite(dynamic productId) async {
     // Vérifier si l'utilisateur est connecté
-    final authCtrl = Get.isRegistered<AuthController>() ? Get.find<AuthController>() : null;
+    final authCtrl =
+        Get.isRegistered<AuthController>() ? Get.find<AuthController>() : null;
     if (authCtrl != null && !authCtrl.isAuthenticated) {
       Get.toNamed('/auth');
       return;
@@ -209,20 +257,27 @@ class AppController extends GetxController {
 
     final idStr = productId.toString();
     final prodIdx = products.indexWhere((p) => p.id.toString() == idStr);
-    final trendIdx = trendingProducts.indexWhere((p) => p.id.toString() == idStr);
+    final trendIdx =
+        trendingProducts.indexWhere((p) => p.id.toString() == idStr);
+    final nearIdx = nearbyProducts.indexWhere((p) => p.id.toString() == idStr);
 
-    if (prodIdx == -1 && trendIdx == -1) return;
+    if (prodIdx == -1 && trendIdx == -1 && nearIdx == -1) return;
 
     final previousValue = prodIdx != -1
         ? products[prodIdx].isFavorite
-        : trendingProducts[trendIdx].isFavorite;
+        : (trendIdx != -1
+            ? trendingProducts[trendIdx].isFavorite
+            : nearbyProducts[nearIdx].isFavorite);
     final newVal = !previousValue;
 
-    // --- Optimistic update (flux principal + carrousel tendances) ---
+    // --- Optimistic update (flux principal + carrousel tendances + nearby) ---
     if (prodIdx != -1) products[prodIdx].isFavorite = newVal;
     if (trendIdx != -1) trendingProducts[trendIdx].isFavorite = newVal;
+    if (nearIdx != -1) nearbyProducts[nearIdx].isFavorite = newVal;
+
     products.refresh();
     trendingProducts.refresh();
+    nearbyProducts.refresh();
     _rebuildFavoritesFromLocalLists();
     update();
 
@@ -231,19 +286,26 @@ class AppController extends GetxController {
       final newStatus = await FavoriService.to.toggleFavorite(productId);
       if (prodIdx != -1) products[prodIdx].isFavorite = newStatus;
       if (trendIdx != -1) trendingProducts[trendIdx].isFavorite = newStatus;
+      if (nearIdx != -1) nearbyProducts[nearIdx].isFavorite = newStatus;
+
       products.refresh();
       trendingProducts.refresh();
+      nearbyProducts.refresh();
       _rebuildFavoritesFromLocalLists();
       update();
     } catch (e) {
       debugPrint("Error toggling favorite: $e");
       if (prodIdx != -1) products[prodIdx].isFavorite = previousValue;
       if (trendIdx != -1) trendingProducts[trendIdx].isFavorite = previousValue;
+      if (nearIdx != -1) nearbyProducts[nearIdx].isFavorite = previousValue;
+
       products.refresh();
       trendingProducts.refresh();
+      nearbyProducts.refresh();
       _rebuildFavoritesFromLocalLists();
       update();
-      Get.snackbar('Erreur', 'Impossible de mettre à jour les favoris. Vérifiez votre connexion.');
+      Get.snackbar('Erreur',
+          'Impossible de mettre à jour les favoris. Vérifiez votre connexion.');
     }
   }
 
@@ -262,6 +324,10 @@ class AppController extends GetxController {
         p.isFavorite = favIds.contains(p.id.toString());
       }
 
+      for (final p in nearbyProducts) {
+        p.isFavorite = favIds.contains(p.id.toString());
+      }
+
       // Favoris hors de la page courante de /produits : les ajouter au flux pour cohérence UI
       final existingIds = products.map((p) => p.id.toString()).toSet();
       for (final f in favs) {
@@ -275,6 +341,7 @@ class AppController extends GetxController {
 
       products.refresh();
       trendingProducts.refresh();
+      nearbyProducts.refresh();
       update();
     } catch (e) {
       debugPrint("Error fetching favorites: $e");
@@ -284,8 +351,12 @@ class AppController extends GetxController {
   bool isFavorite(dynamic productId) {
     final idStr = productId.toString();
     if (favorites.any((p) => p.id.toString() == idStr)) return true;
-    if (products.any((p) => p.id.toString() == idStr && p.isFavorite)) return true;
-    return trendingProducts.any((p) => p.id.toString() == idStr && p.isFavorite);
+    if (products.any((p) => p.id.toString() == idStr && p.isFavorite))
+      return true;
+    if (nearbyProducts.any((p) => p.id.toString() == idStr && p.isFavorite))
+      return true;
+    return trendingProducts
+        .any((p) => p.id.toString() == idStr && p.isFavorite);
   }
 
   // ── Zone ─────────────────────────────────────────────────────────────────────
@@ -311,6 +382,8 @@ class AppController extends GetxController {
   /// Change la zone active et met à jour la liste nearby.
   void setSelectedZone(String? zone) {
     selectedZone.value = zone;
+    fetchNearbyProducts();
+    fetchNearbyBoutiques();
     update();
   }
 
@@ -323,9 +396,10 @@ class AppController extends GetxController {
 
   List<Product> searchProducts(String query) {
     final q = query.toLowerCase();
-    
+
     // Pour gérer la recherche sur le type de prix ("négociable" ou "fixe")
-    final searchNegociable = q.contains('negociable') || q.contains('négociable');
+    final searchNegociable =
+        q.contains('negociable') || q.contains('négociable');
     final searchFixe = q.contains('fixe') && !searchNegociable;
 
     return products.where((p) {
@@ -333,12 +407,15 @@ class AppController extends GetxController {
       final descMatch = p.description.toLowerCase().contains(q);
       final locationMatch = p.location.toLowerCase().contains(q);
       final conditionMatch = p.condition.toLowerCase().contains(q);
-      
+
       final catMatch = (p.categoryObj?.name ?? '').toLowerCase().contains(q);
-      
-      final boutiqueNomMatch = (p.boutiqueObj?.nom ?? '').toLowerCase().contains(q);
-      final boutiqueAdresseMatch = (p.boutiqueObj?.adresse ?? '').toLowerCase().contains(q);
-      final boutiqueDescMatch = (p.boutiqueObj?.description ?? '').toLowerCase().contains(q);
+
+      final boutiqueNomMatch =
+          (p.boutiqueObj?.nom ?? '').toLowerCase().contains(q);
+      final boutiqueAdresseMatch =
+          (p.boutiqueObj?.adresse ?? '').toLowerCase().contains(q);
+      final boutiqueDescMatch =
+          (p.boutiqueObj?.description ?? '').toLowerCase().contains(q);
 
       bool priceTypeMatch = false;
       if (searchNegociable && p.isPriceNegotiable) priceTypeMatch = true;
@@ -353,6 +430,20 @@ class AppController extends GetxController {
           boutiqueAdresseMatch ||
           boutiqueDescMatch ||
           priceTypeMatch;
+    }).toList();
+  }
+
+  List<Boutique> searchBoutiques(String query) {
+    final q = query.toLowerCase();
+    return boutiques.where((b) {
+      final nomMatch = b.nom.toLowerCase().contains(q);
+      final adresseMatch = (b.adresse ?? '').toLowerCase().contains(q);
+      final descMatch = b.description.toLowerCase().contains(q);
+      final catMatch = (b.categories ?? []).any((c) {
+        final nom = (c is Map ? c['nom']?.toString() : c.toString()) ?? '';
+        return nom.toLowerCase().contains(q);
+      });
+      return nomMatch || adresseMatch || descMatch || catMatch;
     }).toList();
   }
 
@@ -379,8 +470,8 @@ class AppController extends GetxController {
 // ── DashboardController ───────────────────────────────────────────────────────
 class DashboardController extends GetxController {
   final selectedTab = 0.obs;
-  final myProducts  = <Product>[].obs;
-  final isLoading   = true.obs;
+  final myProducts = <Product>[].obs;
+  final isLoading = true.obs;
 
   @override
   void onInit() {
@@ -405,7 +496,8 @@ class DashboardController extends GetxController {
           ? BoutiqueController.to.myBoutique.value
           : null;
       if (boutique != null) {
-        final products = await ProduitService.to.getMyBoutiqueProducts(boutique.id.toString());
+        final products = await ProduitService.to
+            .getMyBoutiqueProducts(boutique.id.toString());
         myProducts.assignAll(products);
       }
     } catch (e) {
@@ -421,7 +513,9 @@ class DashboardController extends GetxController {
       myProducts.removeWhere((p) => p.id.toString() == productId);
       // Also remove from global list
       if (Get.isRegistered<AppController>()) {
-        Get.find<AppController>().products.removeWhere((p) => p.id.toString() == productId);
+        Get.find<AppController>()
+            .products
+            .removeWhere((p) => p.id.toString() == productId);
       }
       Get.snackbar('Succès', 'Produit supprimé avec succès');
     } catch (e) {

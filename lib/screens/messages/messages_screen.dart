@@ -26,7 +26,8 @@ class _MessagesScreenState extends State<MessagesScreen> {
   // Ã‰tat de sÃ©lection multiple
   bool _isSelectionMode = false;
 
-  final Set<String> _selectedMessages = {}; // Utilise le nom comme clé unique
+  final Set<String> _selectedMessages =
+      {}; // Utilise l'id de la conversation comme clé unique
 
   String get _currentUserId {
     final auth =
@@ -53,7 +54,8 @@ class _MessagesScreenState extends State<MessagesScreen> {
               : null;
 
       final otherUid = chat.otherParticipantUid(myUid);
-      final isSentByMe = chat.lastMessageSenderId == myUid || chat.lastMessageSenderId == myId;
+      final isSentByMe =
+          chat.lastMessageSenderId == myUid || chat.lastMessageSenderId == myId;
       final isSeenByOther = chat.unreadCounts[otherUid] == 0;
 
       return _ConvItem(
@@ -118,12 +120,12 @@ class _MessagesScreenState extends State<MessagesScreen> {
     });
   }
 
-  void _toggleMessageSelection(String messageName) {
+  void _toggleMessageSelection(String chatId) {
     setState(() {
-      if (_selectedMessages.contains(messageName)) {
-        _selectedMessages.remove(messageName);
+      if (_selectedMessages.contains(chatId)) {
+        _selectedMessages.remove(chatId);
       } else {
-        _selectedMessages.add(messageName);
+        _selectedMessages.add(chatId);
       }
     });
   }
@@ -133,16 +135,17 @@ class _MessagesScreenState extends State<MessagesScreen> {
       if (_selectedMessages.length == _filtered.length) {
         _selectedMessages.clear();
       } else {
-        _selectedMessages.addAll(_filtered.map((msg) => msg.name));
+        _selectedMessages.addAll(_filtered.map((msg) => msg.id));
       }
     });
   }
 
   void _deleteSelectedMessages() {
+    final chatIds = _selectedMessages.toList();
+    if (chatIds.isNotEmpty) {
+      ChatController.to.hideChats(chatIds, 'user_$_currentUserId');
+    }
     setState(() {
-      // Pour Firebase, on appellerait une méthode de suppression.
-      // ChatService.to.deleteChats(_selectedMessages.toList());
-
       _selectedMessages.clear();
       _isSelectionMode = false;
     });
@@ -317,7 +320,8 @@ class _MessagesScreenState extends State<MessagesScreen> {
                           if (_isSelectionMode) {
                             _toggleMessageSelection(_filtered[i].name);
                           } else {
-                            Get.toNamed('/chat/${_filtered[i].id}?asBoutique=false');
+                            Get.toNamed(
+                                '/chat/${_filtered[i].id}?asBoutique=false');
                           }
                         },
                         child: ConversationTile(
@@ -325,9 +329,9 @@ class _MessagesScreenState extends State<MessagesScreen> {
                           r: r,
                           isSelectionMode: _isSelectionMode,
                           isSelected:
-                              _selectedMessages.contains(_filtered[i].name),
+                              _selectedMessages.contains(_filtered[i].id),
                           onSelectionChanged: () =>
-                              _toggleMessageSelection(_filtered[i].name),
+                              _toggleMessageSelection(_filtered[i].id),
                         ),
                       ),
                     );

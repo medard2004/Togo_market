@@ -10,10 +10,11 @@ import '../core/api_client.dart';
 import '../firebase/services/firebase_auth_bridge_service.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../utils/location_service.dart';
+import '../firebase/services/chat_service.dart';
 
 class AuthController extends GetxController {
   final AuthService _authService;
-  
+
   AuthController(this._authService);
 
   // Observable state
@@ -21,7 +22,7 @@ class AuthController extends GetxController {
   final RxBool isLoading = false.obs;
   final RxBool isFirstTime = true.obs; // For onboarding
   final RxBool hasToken = false.obs;
-  
+
   // Public data
   final RxList<Category> categories = <Category>[].obs;
   final RxList<Ville> locations = <Ville>[].obs;
@@ -48,7 +49,7 @@ class AuthController extends GetxController {
     const storage = FlutterSecureStorage();
     final token = await storage.read(key: 'auth_token');
     final first = await storage.read(key: 'is_first_time');
-    
+
     if (first == 'false') {
       isFirstTime.value = false;
     }
@@ -93,7 +94,7 @@ class AuthController extends GetxController {
         ];
       }
       categories.assignAll(cats);
-      
+
       var locs = await _authService.getLocations();
       if (locs.isEmpty) {
         locs = [
@@ -228,6 +229,16 @@ class AuthController extends GetxController {
         photoPath: photoPath,
       );
       currentUser.value = updatedUser;
+
+      // Update the user's name and avatar in all their chats
+      if (Get.isRegistered<ChatService>()) {
+        ChatService.to.syncEntityProfileInChats(
+          entityType: 'user',
+          entityId: updatedUser.id.toString(),
+          newName: updatedUser.nom ?? '',
+          newAvatar: updatedUser.avatarUrl ?? '',
+        );
+      }
     } catch (e) {
       rethrow;
     } finally {
@@ -267,6 +278,7 @@ class AuthController extends GetxController {
     hasToken.value = false;
     // Redirect is now handled by the UI after the loading screen
   }
+
   Future<void> requestPasswordReset(String telephone) async {
     try {
       isLoading.value = true;
@@ -278,7 +290,8 @@ class AuthController extends GetxController {
     }
   }
 
-  Future<void> resetPassword(String telephone, String code, String password) async {
+  Future<void> resetPassword(
+      String telephone, String code, String password) async {
     try {
       isLoading.value = true;
       await _authService.resetPassword(telephone, code, password);
@@ -289,7 +302,8 @@ class AuthController extends GetxController {
     }
   }
 
-  Future<Map<String, dynamic>?> getCurrentLocationAndMatch({double? lat, double? lon}) async {
+  Future<Map<String, dynamic>?> getCurrentLocationAndMatch(
+      {double? lat, double? lon}) async {
     try {
       double latitude;
       double longitude;
@@ -307,7 +321,8 @@ class AuthController extends GetxController {
         }
         if (permission == LocationPermission.deniedForever) return null;
 
-        final position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+        final position = await Geolocator.getCurrentPosition(
+            desiredAccuracy: LocationAccuracy.high);
         latitude = position.latitude;
         longitude = position.longitude;
       }
@@ -320,18 +335,20 @@ class AuthController extends GetxController {
         Ville? matchedVille;
         if (villeName.isNotEmpty) {
           for (var v in locations) {
-            if (villeName.contains(v.nom.toLowerCase()) || v.nom.toLowerCase().contains(villeName)) {
+            if (villeName.contains(v.nom.toLowerCase()) ||
+                v.nom.toLowerCase().contains(villeName)) {
               matchedVille = v;
               break;
             }
           }
         }
-        
+
         if (matchedVille != null) {
           Quartier? matchedQuartier;
           if (quartierName.isNotEmpty) {
             for (var q in matchedVille.quartiers) {
-              if (quartierName.contains(q.nom.toLowerCase()) || q.nom.toLowerCase().contains(quartierName)) {
+              if (quartierName.contains(q.nom.toLowerCase()) ||
+                  q.nom.toLowerCase().contains(quartierName)) {
                 matchedQuartier = q;
                 break;
               }
@@ -339,13 +356,14 @@ class AuthController extends GetxController {
           }
           return {
             'villeId': matchedVille.id,
-            'quartierId': matchedQuartier?.id, // Do not auto-select the first one if no match
+            'quartierId': matchedQuartier
+                ?.id, // Do not auto-select the first one if no match
             'rawVille': villeName,
             'rawQuartier': quartierName,
           };
         } else {
-           // Si on ne trouve pas la ville, on renvoie quand même les données brutes
-           return {
+          // Si on ne trouve pas la ville, on renvoie quand même les données brutes
+          return {
             'villeId': null,
             'quartierId': null,
             'rawVille': villeName,

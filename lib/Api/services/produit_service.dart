@@ -14,7 +14,9 @@ class ProduitService extends GetxService {
   /// Parse a response that may be paginated {"data":[...]} or a bare array []
   List<dynamic> _parseList(dynamic rawData) {
     if (rawData is List) return rawData;
-    if (rawData is Map && rawData.containsKey('data') && rawData['data'] is List) {
+    if (rawData is Map &&
+        rawData.containsKey('data') &&
+        rawData['data'] is List) {
       return rawData['data'] as List;
     }
     return [];
@@ -52,21 +54,26 @@ class ProduitService extends GetxService {
 
   /// Create a new product for the store
   Future<Product> addStoreProduct(dynamic formData) async {
-    final response = await _apiClient.post(ApiConstants.productsEndpoint, data: formData);
+    final response =
+        await _apiClient.post(ApiConstants.productsEndpoint, data: formData);
     final raw = response.data;
-    return Product.fromJson(raw is Map && raw.containsKey('data') ? raw['data'] : raw);
+    return Product.fromJson(
+        raw is Map && raw.containsKey('data') ? raw['data'] : raw);
   }
 
   /// Update an existing product
   Future<Product> updateProduct(String id, dynamic formData) async {
-    final response = await _apiClient.post('${ApiConstants.productsEndpoint}/$id', data: formData);
+    final response = await _apiClient
+        .post('${ApiConstants.productsEndpoint}/$id', data: formData);
     final raw = response.data;
-    return Product.fromJson(raw is Map && raw.containsKey('data') ? raw['data'] : raw);
+    return Product.fromJson(
+        raw is Map && raw.containsKey('data') ? raw['data'] : raw);
   }
 
   /// Aperçu tendances (10 premiers) pour la page d'accueil.
   Future<List<Product>> getTrendingProducts() async {
-    final response = await _apiClient.get(ApiConstants.trendingProductsEndpoint);
+    final response =
+        await _apiClient.get(ApiConstants.trendingProductsEndpoint);
     final list = _parseList(response.data);
     return list.map((json) => Product.fromJson(json)).toList();
   }
@@ -95,6 +102,22 @@ class ProduitService extends GetxService {
     final response = await _apiClient.get(
       ApiConstants.productsByZoneEndpoint,
       queryParameters: {'zone': zone},
+    );
+    final list = _parseList(response.data);
+    return list.map((json) => Product.fromJson(json)).toList();
+  }
+
+  /// Get nearby products based on user location and preferences
+  Future<List<Product>> getNearbyProducts(
+      {String? zone, double? lat, double? lng}) async {
+    final params = <String, dynamic>{};
+    if (zone != null && zone.isNotEmpty) params['zone'] = zone;
+    if (lat != null) params['lat'] = lat;
+    if (lng != null) params['lng'] = lng;
+
+    final response = await _apiClient.get(
+      ApiConstants.nearbyProductsEndpoint,
+      queryParameters: params,
     );
     final list = _parseList(response.data);
     return list.map((json) => Product.fromJson(json)).toList();

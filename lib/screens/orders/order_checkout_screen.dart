@@ -38,7 +38,6 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen>
   double? _deliveryLat;
   double? _deliveryLon;
   int? _deliveryVilleId;
-  int? _deliveryQuartierId;
   String? _phoneError;
   Map<String, dynamic>? _orderResult; // Réponse de l'API après création
   int _countdown = 10; // Compte à rebours avant redirection
@@ -47,6 +46,7 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen>
   final _phoneCtrl = TextEditingController();
   final _addressCtrl = TextEditingController();
   final _noteCtrl = TextEditingController();
+  final _quartierCtrl = TextEditingController();
 
   late final _orderService = OrderService(Get.find<ApiClient>());
   final _chatService = ChatService();
@@ -512,8 +512,13 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen>
           await authCtrl.getCurrentLocationAndMatch(lat: lat, lon: lon);
       if (location != null && mounted) {
         setState(() {
-          _deliveryVilleId = location['villeId'];
-          _deliveryQuartierId = location['quartierId'];
+          if (location['villeId'] != null) {
+            _deliveryVilleId = location['villeId'];
+          }
+          final rawQuartier = location['rawQuartier']?.toString() ?? '';
+          if (rawQuartier.isNotEmpty) {
+            _quartierCtrl.text = rawQuartier.split(' ').map((str) => str.isNotEmpty ? '${str[0].toUpperCase()}${str.substring(1)}' : '').join(' ');
+          }
         });
       }
     } catch (_) {}
@@ -527,10 +532,8 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen>
         authCtrl.locations.firstWhereOrNull((v) => v.id == _deliveryVilleId);
     if (ville != null) {
       parts = ville.nom;
-      final quartier =
-          ville.quartiers.firstWhereOrNull((q) => q.id == _deliveryQuartierId);
-      if (quartier != null) {
-        parts += ', ${quartier.nom}';
+      if (_quartierCtrl.text.trim().isNotEmpty) {
+        parts += ', ${_quartierCtrl.text.trim()}';
       }
     }
     if (_addressCtrl.text.trim().isNotEmpty) {
@@ -556,6 +559,7 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen>
     _phoneCtrl.dispose();
     _addressCtrl.dispose();
     _noteCtrl.dispose();
+    _quartierCtrl.dispose();
     super.dispose();
   }
 
@@ -1318,7 +1322,6 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen>
                       onChanged: (v) {
                         setState(() {
                           _deliveryVilleId = v;
-                          _deliveryQuartierId = null;
                         });
                       },
                     ),
@@ -1335,44 +1338,26 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen>
                         fontWeight: FontWeight.w600,
                         color: AppTheme.foreground)),
                 SizedBox(height: r.s(5)),
-                Obx(() {
-                  final authCtrl = Get.find<AuthController>();
-                  final ville = authCtrl.locations
-                      .firstWhereOrNull((v) => v.id == _deliveryVilleId);
-                  final quartiers = ville?.quartiers ?? [];
-
-                  if (_deliveryQuartierId != null &&
-                      !quartiers.any((q) => q.id == _deliveryQuartierId)) {
-                    WidgetsBinding.instance.addPostFrameCallback((_) {
-                      if (mounted) setState(() => _deliveryQuartierId = null);
-                    });
-                  }
-
-                  return Container(
-                    padding: EdgeInsets.symmetric(horizontal: r.s(12)),
-                    decoration: BoxDecoration(
-                      color: AppTheme.cardColor,
-                      borderRadius: BorderRadius.circular(r.rad(12)),
-                      border: Border.all(color: AppTheme.border),
+                Container(
+                  decoration: BoxDecoration(
+                    color: AppTheme.cardColor,
+                    borderRadius: BorderRadius.circular(r.rad(12)),
+                    border: Border.all(color: AppTheme.border),
+                  ),
+                  child: TextField(
+                    controller: _quartierCtrl,
+                    style: TextStyle(
+                        fontSize: r.fs(13), color: AppTheme.foreground),
+                    decoration: InputDecoration(
+                      border: InputBorder.none,
+                      contentPadding: EdgeInsets.all(r.s(14)),
+                      isDense: true,
+                      hintText: 'Saisissez votre quartier',
+                      hintStyle: TextStyle(
+                          fontSize: r.fs(13), color: AppTheme.mutedForeground),
                     ),
-                    child: DropdownButtonHideUnderline(
-                      child: DropdownButton<int>(
-                        value: _deliveryQuartierId,
-                        isExpanded: true,
-                        hint: Text('Sélectionner un quartier',
-                            style: TextStyle(
-                                fontSize: r.fs(13),
-                                color: AppTheme.mutedForeground)),
-                        items: quartiers
-                            .map((q) => DropdownMenuItem(
-                                value: q.id, child: Text(q.nom)))
-                            .toList(),
-                        onChanged: (v) =>
-                            setState(() => _deliveryQuartierId = v),
-                      ),
-                    ),
-                  );
-                }),
+                  ),
+                ),
                 SizedBox(height: r.s(10)),
               ],
 
@@ -1767,9 +1752,9 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen>
 
                       if (_mode == 'livraison' &&
                           (_deliveryVilleId == null ||
-                              _deliveryQuartierId == null)) {
+                              _quartierCtrl.text.trim().isEmpty)) {
                         AppToasts.error(context, 'Adresse requise',
-                            'Veuillez sélectionner une ville et un quartier.');
+                            'Veuillez sélectionner une ville et préciser le quartier.');
                         return;
                       }
 

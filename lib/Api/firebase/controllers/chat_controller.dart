@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/foundation.dart' show debugPrint;
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'dart:io';
 import 'dart:async';
@@ -126,19 +126,25 @@ class ChatController extends GetxController {
 
       for (var doc in snap.docs) {
         final data = doc.data();
-        if (data['participantUids'] == null && data['participantEntities'] != null) {
-          final entities = List<dynamic>.from(data['participantEntities']).map((e) => e.toString()).toList();
-          final types = Map<String, dynamic>.from(data['participantEntityTypes'] ?? {});
-          
+        if (data['participantUids'] == null &&
+            data['participantEntities'] != null) {
+          final entities = List<dynamic>.from(data['participantEntities'])
+              .map((e) => e.toString())
+              .toList();
+          final types =
+              Map<String, dynamic>.from(data['participantEntityTypes'] ?? {});
+
           final uids = entities.map((e) {
             final type = types[e]?.toString() ?? 'user';
             return '${type}_$e';
           }).toList();
-          
+
           final unreads = Map<String, dynamic>.from(data['unreadCounts'] ?? {});
-          final names = Map<String, dynamic>.from(data['participantNames'] ?? {});
-          final avatars = Map<String, dynamic>.from(data['participantAvatars'] ?? {});
-          
+          final names =
+              Map<String, dynamic>.from(data['participantNames'] ?? {});
+          final avatars =
+              Map<String, dynamic>.from(data['participantAvatars'] ?? {});
+
           final newUnreads = <String, dynamic>{};
           final newNames = <String, dynamic>{};
           final newAvatars = <String, dynamic>{};
@@ -165,7 +171,8 @@ class ChatController extends GetxController {
 
       if (count > 0) {
         await batch.commit();
-        debugPrint('ChatController: Migrated $count legacy chats to participantUids');
+        debugPrint(
+            'ChatController: Migrated $count legacy chats to participantUids');
       }
     } catch (e) {
       debugPrint('ChatController: Error migrating legacy chats: $e');
@@ -183,37 +190,42 @@ class ChatController extends GetxController {
     userChats.bindStream(
       ChatService.to.getAllChatsStream(userUid).map((chats) {
         final myShopId = _myShopId;
-        
-        // SÉCURITÉ RENFORCÉE : 
-        // On filtre rigoureusement toute conversation de type 'shop' 
+
+        // SÉCURITÉ RENFORCÉE :
+        // On filtre rigoureusement toute conversation de type 'shop'
         // qui appartient à la propre boutique de l'utilisateur.
         // Ces conversations ne doivent apparaitre que dans shopChats,
         // SAUF si l'utilisateur est LUI-MÊME l'acheteur (il achète dans sa propre boutique).
         return chats.where((chat) {
-          if (chat.conversationType == 'shop' && myShopId != null && myShopId.isNotEmpty) {
-             bool isMyShop = false;
-             
-             // 1. Vérifier via le champ relatedShopId
-             if (chat.relatedShopId == myShopId) isMyShop = true;
-             
-             // 2. Vérifier via les participants (Méthode la plus sûre)
-             if (!isMyShop && chat.participantUids.contains('shop_$myShopId')) isMyShop = true;
-             
-             if (isMyShop) {
-               // Cette conversation implique ma boutique.
-               // Je dois la voir dans ma messagerie personnelle UNIQUEMENT 
-               // si je suis l'acheteur. Mon UID d'utilisateur (user_$userId) 
-               // doit être dans les participants.
-               bool iAmBuyer = chat.participantUids.contains('user_$userId');
-               
-               if (iAmBuyer) {
-                 // Je suis l'acheteur de ma propre boutique ! Je garde le chat ici.
-                 return true;
-               } else {
-                 // Je ne suis PAS l'acheteur. Ce chat appartient à la vue vendeur.
-                 return false;
-               }
-             }
+          if (chat.hiddenForUids.contains(userUid)) return false;
+
+          if (chat.conversationType == 'shop' &&
+              myShopId != null &&
+              myShopId.isNotEmpty) {
+            bool isMyShop = false;
+
+            // 1. Vérifier via le champ relatedShopId
+            if (chat.relatedShopId == myShopId) isMyShop = true;
+
+            // 2. Vérifier via les participants (Méthode la plus sûre)
+            if (!isMyShop && chat.participantUids.contains('shop_$myShopId'))
+              isMyShop = true;
+
+            if (isMyShop) {
+              // Cette conversation implique ma boutique.
+              // Je dois la voir dans ma messagerie personnelle UNIQUEMENT
+              // si je suis l'acheteur. Mon UID d'utilisateur (user_$userId)
+              // doit être dans les participants.
+              bool iAmBuyer = chat.participantUids.contains('user_$userId');
+
+              if (iAmBuyer) {
+                // Je suis l'acheteur de ma propre boutique ! Je garde le chat ici.
+                return true;
+              } else {
+                // Je ne suis PAS l'acheteur. Ce chat appartient à la vue vendeur.
+                return false;
+              }
+            }
           }
           return true;
         }).toList();
@@ -235,7 +247,9 @@ class ChatController extends GetxController {
     shopChats.bindStream(
       ChatService.to.getAllChatsStream(shopUid).map((chats) {
         // Idem, filtrage strict via 'shop_$shopId'
-        return chats;
+        return chats
+            .where((chat) => !chat.hiddenForUids.contains(shopUid))
+            .toList();
       }).handleError((error) {
         debugPrint('ChatController: Erreur chargement shopChats: $error');
         shopChats.clear();
@@ -255,11 +269,17 @@ class ChatController extends GetxController {
   }
 
   /// Charge une conversation (s'abonne aux messages + charge metadata)
-  void loadConversation(String chatId, {String? actingEntityId, String? actingEntityType}) {
+  void loadConversation(String chatId,
+      {String? actingEntityId, String? actingEntityType}) {
+    // Marquer comme lu pour l'entité actuelle et préparer l'UID courant
+    final entityId = actingEntityId ?? currentUserId;
+    final entityType = actingEntityType ?? 'user';
+    final currentUid = '${entityType}_$entityId';
+
     // Clear pending messages when switching conversations to avoid displaying old ones
     pendingMessages.clear();
     currentMessages.bindStream(
-      ChatService.to.getMessagesStream(chatId).handleError((error) {
+      ChatService.to.getMessagesStream(chatId, currentUid).handleError((error) {
         debugPrint('ChatController: Erreur chargement messages: $error');
         currentMessages.clear();
       }),
@@ -268,11 +288,8 @@ class ChatController extends GetxController {
     // Charger les metadata de la conversation
     _loadChatSession(chatId);
 
-    // Marquer comme lu pour l'entité actuelle
-    final entityId = actingEntityId ?? currentUserId;
-    final entityType = actingEntityType ?? 'user';
     if (entityId.isNotEmpty) {
-      ChatService.to.markAsReadForEntity(chatId, '${entityType}_$entityId');
+      ChatService.to.markAsReadForEntity(chatId, currentUid);
     }
   }
 
@@ -286,8 +303,13 @@ class ChatController extends GetxController {
   }
 
   /// Envoie un message
-  Future<void> sendMessage(String chatId, String senderEntityId,
-      String senderEntityType, String receiverEntityId, String receiverEntityType, String content,
+  Future<void> sendMessage(
+      String chatId,
+      String senderEntityId,
+      String senderEntityType,
+      String receiverEntityId,
+      String receiverEntityType,
+      String content,
       {String? productId,
       String type = 'text',
       String? mediaUrl,
@@ -483,5 +505,42 @@ class ChatController extends GetxController {
       type: 'location',
       mediaUrl: '$latitude,$longitude',
     );
+  }
+
+  /// Masque des conversations pour l'utilisateur courant (ex: dans la liste)
+  Future<void> hideChats(List<String> chatIds, String actingUid) async {
+    try {
+      await ChatService.to.hideChatsForUser(chatIds, actingUid);
+    } catch (e) {
+      debugPrint('ChatController: Erreur hideChats: $e');
+      Get.snackbar('Erreur', 'Impossible de masquer la discussion.');
+    }
+  }
+
+  /// Supprime un message avec la logique de sécurité
+  Future<void> deleteMessage(ChatMessageData message,
+      {required bool forEveryone, required String actingUid}) async {
+    try {
+      final chatId = currentChatSession.value?.id;
+      if (chatId == null) return;
+
+      if (forEveryone) {
+        // Sécurité: Pas de suppression globale pour les messages de type order
+        if (message.type == 'order') {
+          Get.snackbar('Action non permise',
+              'Les messages liés aux commandes ne peuvent pas être supprimés.',
+              snackPosition: SnackPosition.TOP,
+              backgroundColor: Colors.orange.withOpacity(0.9),
+              colorText: Colors.white);
+          return;
+        }
+        await ChatService.to.deleteMessageForEveryone(chatId, message.id);
+      } else {
+        await ChatService.to.deleteMessageForMe(chatId, message.id, actingUid);
+      }
+    } catch (e) {
+      debugPrint('ChatController: Erreur deleteMessage: $e');
+      Get.snackbar('Erreur', 'Impossible de supprimer le message.');
+    }
   }
 }

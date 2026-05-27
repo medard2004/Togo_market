@@ -15,9 +15,7 @@ class ApiConstants {
   /// Root URL (sans /api) pour construire les URLs de storage
   static String get storageBaseUrl {
     final base = baseUrl;
-    return base.endsWith('/api')
-        ? base.substring(0, base.length - 4)
-        : base;
+    return base.endsWith('/api') ? base.substring(0, base.length - 4) : base;
   }
 
   /// Résout un chemin image vers une URL complète.
@@ -46,20 +44,26 @@ class ApiConstants {
 
   // Profile Endpoints
   static const String userProfileEndpoint = '/user/profile';
-  static const String boutiqueEndpoint = '/boutique';       // Routes privées vendeur (POST/PUT)
-  static const String boutiquesEndpoint = '/boutiques';     // Liste publique des boutiques
+  static const String boutiqueEndpoint =
+      '/boutique'; // Routes privées vendeur (POST/PUT)
+  static const String boutiquesEndpoint =
+      '/boutiques'; // Liste publique des boutiques
   static const String boutiqueMeEndpoint = '/boutique/me';
+  static const String nearbyBoutiquesEndpoint = '/boutiques/nearby';
 
   // Example Endpoints
   static const String productsEndpoint = '/produits';
   static const String trendingProductsEndpoint = '/produits/trending';
-  static const String trendingProductsPaginatedEndpoint = '/produits/trending/paginated';
+  static const String trendingProductsPaginatedEndpoint =
+      '/produits/trending/paginated';
   static const String productsByZoneEndpoint = '/produits/zone';
+  static const String nearbyProductsEndpoint = '/produits/nearby';
   static const String ordersEndpoint = '/commandes';
 
   // Favoris Endpoints
   static const String favoritesEndpoint = '/favoris';
-  static String toggleFavoriteEndpoint(dynamic productId) => '/produits/$productId/toggle-favori';
+  static String toggleFavoriteEndpoint(dynamic productId) =>
+      '/produits/$productId/toggle-favori';
 
   // API Configuration
   static const int connectTimeout = 10000;

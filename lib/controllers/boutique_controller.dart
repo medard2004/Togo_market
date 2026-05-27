@@ -5,6 +5,7 @@ import '../Api/model/boutique_model.dart';
 import '../Api/services/boutique_service.dart';
 import '../Api/provider/auth_controller.dart';
 import '../utils/app_toasts.dart';
+import '../Api/firebase/services/chat_service.dart';
 
 class BoutiqueController extends GetxController {
   final BoutiqueService _boutiqueService;
@@ -38,7 +39,8 @@ class BoutiqueController extends GetxController {
       return true;
     } catch (e) {
       if (Get.context != null) {
-        AppToasts.error(Get.context!, 'Erreur de connexion', 'Veuillez vérifier votre réseau.');
+        AppToasts.error(Get.context!, 'Erreur de connexion',
+            'Veuillez vérifier votre réseau.');
       }
       return false;
     } finally {
@@ -106,6 +108,16 @@ class BoutiqueController extends GetxController {
     try {
       final boutique = await _boutiqueService.update(data);
       myBoutique.value = boutique;
+
+      if (Get.isRegistered<ChatService>()) {
+        ChatService.to.syncEntityProfileInChats(
+          entityType: 'shop',
+          entityId: boutique.id.toString(),
+          newName: boutique.nom,
+          newAvatar: boutique.logoUrl,
+        );
+      }
+
       return true;
     } catch (e) {
       if (e is DioException && e.response?.statusCode == 422) {
