@@ -156,7 +156,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     children: [
                       // Prix
                       Text(
-                        '${formatPrice(product.price).replaceAll(' F', '')} FCFA',
+                        formatPrice(product.price),
                         style: TextStyle(
                           fontSize: r.fs(28),
                           fontWeight: FontWeight.w800,

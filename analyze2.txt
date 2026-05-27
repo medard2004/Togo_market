@@ -3,8 +3,6 @@ Analyzing Togo_market...
    info • 'closeButtonShowType' is deprecated and shouldn't be used. IMPORTANT: The closeButtonShowType parameter is deprecated and will be removed in the next major version. Use the closeButton parameter instead • lib/Api/firebase/services/fcm_service.dart:201:7 • deprecated_member_use
 warning • The value of the field '_baseService' isn't used • lib/Api/provider/api_provider.dart:7:21 • unused_field
    info • 'desiredAccuracy' is deprecated and shouldn't be used. use settings parameter with AndroidSettings, AppleSettings, WebSettings, or LocationSettings • lib/Api/provider/auth_controller.dart:310:62 • deprecated_member_use
-  error • 'status' can't be used as a setter because it's final • lib/controllers/order_controller.dart:95:11 • assignment_to_final
-  error • 'status' can't be used as a setter because it's final • lib/controllers/order_controller.dart:107:13 • assignment_to_final
 warning • Unused import: 'package:image_picker/image_picker.dart' • lib/screens/auth/auth_screen.dart:3:8 • unused_import
 warning • Unused import: 'dart:io' • lib/screens/auth/auth_screen.dart:4:8 • unused_import
 warning • Unused import: '../../Api/model/location_model.dart' • lib/screens/auth/auth_screen.dart:7:8 • unused_import
@@ -147,9 +145,7 @@ warning • The '!' will have no effect because the receiver can't be null • l
 warning • The '!' will have no effect because the receiver can't be null • lib/screens/orders/order_details_screen.dart:685:44 • unnecessary_non_null_assertion
 warning • The '!' will have no effect because the receiver can't be null • lib/screens/orders/order_details_screen.dart:686:44 • unnecessary_non_null_assertion
 warning • The '!' will have no effect because the receiver can't be null • lib/screens/orders/order_details_screen.dart:694:46 • unnecessary_non_null_assertion
-warning • The operand can't be 'null', so the condition is always 'true' • lib/screens/orders/order_details_screen.dart:694:60 • unnecessary_null_comparison
 warning • The '!' will have no effect because the receiver can't be null • lib/screens/orders/order_details_screen.dart:695:46 • unnecessary_non_null_assertion
-warning • The operand can't be 'null', so the condition is always 'true' • lib/screens/orders/order_details_screen.dart:695:60 • unnecessary_null_comparison
 warning • The '!' will have no effect because the receiver can't be null • lib/screens/orders/order_details_screen.dart:696:46 • unnecessary_non_null_assertion
 warning • The '!' will have no effect because the receiver can't be null • lib/screens/orders/order_details_screen.dart:697:50 • unnecessary_non_null_assertion
 warning • The '!' will have no effect because the receiver can't be null • lib/screens/orders/order_details_screen.dart:698:50 • unnecessary_non_null_assertion
@@ -161,7 +157,6 @@ warning • The operand can't be 'null', so the condition is always 'true' • l
    info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/orders/order_details_screen.dart:806:56 • deprecated_member_use
    info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/orders/order_details_screen.dart:893:56 • deprecated_member_use
    info • 'onPopInvoked' is deprecated and shouldn't be used. Use onPopInvokedWithResult instead. This feature was deprecated after v3.22.0-12.0.pre • lib/screens/orders/orders_screen.dart:36:7 • deprecated_member_use
-  error • The getter 'notes' isn't defined for the type 'OrderModel' • lib/screens/orders/orders_screen.dart:286:26 • undefined_getter
    info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/orders/orders_screen.dart:442:45 • deprecated_member_use
    info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/orders/orders_screen.dart:514:49 • deprecated_member_use
 warning • A value for optional parameter 'width' isn't ever given • lib/screens/orders/orders_screen.dart:557:10 • unused_element_parameter
@@ -228,10 +223,8 @@ warning • The declaration '_Avatar' isn't referenced • lib/screens/profile/p
    info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/seller/dashboard_screen.dart:292:63 • deprecated_member_use
    info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/seller/dashboard_screen.dart:411:63 • deprecated_member_use
    info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/seller/dashboard_screen.dart:438:63 • deprecated_member_use
-  error • The getter 'notes' isn't defined for the type 'OrderModel' • lib/screens/seller/dashboard_screen.dart:505:24 • undefined_getter
    info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/seller/dashboard_screen.dart:626:55 • deprecated_member_use
    info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/seller/dashboard_screen.dart:655:47 • deprecated_member_use
-  error • The getter 'notes' isn't defined for the type 'OrderModel' • lib/screens/seller/dashboard_screen.dart:690:38 • undefined_getter
    info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/seller/dashboard_screen.dart:763:39 • deprecated_member_use
    info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/seller/dashboard_screen.dart:830:33 • deprecated_member_use
 warning • Unused import: 'package:latlong2/latlong.dart' • lib/screens/seller/edit_shop_screen.dart:7:8 • unused_import

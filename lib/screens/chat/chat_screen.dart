@@ -2974,7 +2974,7 @@ class _MessageProductPreview extends StatelessWidget {
                       borderRadius: BorderRadius.circular(r.rad(20)),
                     ),
                     child: Text(
-                      '${formatPrice(product.price).replaceAll(' F', '')} FCFA',
+                      formatPrice(product.price),
                       style: TextStyle(
                         fontSize: r.fs(11),
                         fontWeight: FontWeight.w700,

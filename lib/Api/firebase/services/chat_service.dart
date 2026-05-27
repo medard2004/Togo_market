@@ -316,19 +316,16 @@ class ChatService extends GetxService {
 
     // Envoyer la notification push via le backend Laravel
     _sendChatPushNotification(
-        receiverEntityId, chatId, lastMessageText, productId);
+        receiverEntityId, receiverEntityType, chatId, lastMessageText, productId);
   }
 
-  Future<void> _sendChatPushNotification(String receiverId, String chatId,
+  Future<void> _sendChatPushNotification(String receiverId, String receiverType, String chatId,
       String content, String? productId) async {
     try {
       final apiClient = Get.find<ApiClient>();
       await apiClient.post('/notifications/send-chat-push', data: {
-        'receiver_id':
-            receiverId, // NOTE: Le backend utilise peut-être toujours l'ID utilisateur... Si c'est une boutique, que fait-il ?
-        // On laissera cela ainsi car les push dépendent du backend existant, qui s'attend peut-être à un userId.
-        // Si `receiverId` est un shopId, la notif échouera silencieusement côté backend si non géré.
-        // Pour l'instant on passe l'entityId.
+        'receiver_id': receiverId,
+        'receiver_type': receiverType,
         'chat_id': chatId,
         'content': content,
         'product_id': productId ?? '',

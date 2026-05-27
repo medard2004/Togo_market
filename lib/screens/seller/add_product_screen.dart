@@ -208,8 +208,15 @@ class _AddProductScreenState extends State<AddProductScreen> {
                             TextFormField(
                               controller: _controller.priceController,
                               keyboardType: TextInputType.number,
-                              validator: (v) => v == null || v.isEmpty ? 'Prix requis' : null,
-                              decoration: const InputDecoration(hintText: 'Ex: 450000'),
+                              validator: (v) {
+                                if (v == null || v.isEmpty) return 'Prix requis';
+                                final price = double.tryParse(v);
+                                if (price == null) return 'Prix invalide';
+                                if (price > 500000) return 'Le prix max est de 500 000 FCFA';
+                                if (price < 0) return 'Le prix doit être positif';
+                                return null;
+                              },
+                              decoration: const InputDecoration(hintText: 'Ex: 450000', suffixText: 'FCFA'),
                             ),
                           ],
                         ),

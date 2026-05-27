@@ -10,9 +10,55 @@ import '../../Api/provider/auth_controller.dart';
 import '../../controllers/order_controller.dart';
 import '../../models/order_model.dart';
 import '../../utils/app_toasts.dart';
+import '../map/unified_map_screen.dart';
 
-class OrderDetailsScreen extends StatelessWidget {
+class OrderDetailsScreen extends StatefulWidget {
   const OrderDetailsScreen({super.key});
+
+  @override
+  State<OrderDetailsScreen> createState() => _OrderDetailsScreenState();
+}
+
+class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
+  bool _hasFetched = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkAndFetch();
+  }
+
+  void _checkAndFetch() {
+    final Map<String, dynamic> orderData = Get.arguments ?? {};
+    final String orderIdArg = (orderData['orderId'] ?? '').toString();
+    final int orderIdInt = int.tryParse(
+            orderIdArg.replaceAll('#', '').replaceAll('TG-', '').trim()) ??
+        0;
+    final bool isSale = orderData['isSale'] ?? false;
+    final ctrl = Get.find<OrderController>();
+
+    OrderModel? order = orderData['order'] as OrderModel?;
+    if (orderIdInt != 0 && order == null) {
+      final foundOrder = isSale
+          ? (ctrl.sellerOrders.firstWhereOrNull((o) => o.id == orderIdInt) ??
+              ctrl.buyerOrders.firstWhereOrNull((o) => o.id == orderIdInt))
+          : (ctrl.buyerOrders.firstWhereOrNull((o) => o.id == orderIdInt) ??
+              ctrl.sellerOrders.firstWhereOrNull((o) => o.id == orderIdInt));
+      if (foundOrder == null) {
+        ctrl.fetchOrders().then((_) {
+          if (mounted) {
+            setState(() {
+              _hasFetched = true;
+            });
+          }
+        });
+      } else {
+        _hasFetched = true;
+      }
+    } else {
+      _hasFetched = true;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -67,40 +113,106 @@ class OrderDetailsScreen extends StatelessWidget {
         OrderModel? order = orderData['order'] as OrderModel?;
         if (orderIdInt != 0) {
           final foundOrder = isSale
-              ? ctrl.sellerOrders.firstWhereOrNull((o) => o.id == orderIdInt)
-              : ctrl.buyerOrders.firstWhereOrNull((o) => o.id == orderIdInt);
+              ? (ctrl.sellerOrders.firstWhereOrNull((o) => o.id == orderIdInt) ??
+                  ctrl.buyerOrders.firstWhereOrNull((o) => o.id == orderIdInt))
+              : (ctrl.buyerOrders.firstWhereOrNull((o) => o.id == orderIdInt) ??
+                  ctrl.sellerOrders.firstWhereOrNull((o) => o.id == orderIdInt));
           if (foundOrder != null) {
             order = foundOrder;
           }
         }
 
+        if (order == null) {
+          if (ctrl.isLoading.value) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(40.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const CircularProgressIndicator(),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Chargement des détails...',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: r.fs(14),
+                        color: AppTheme.foreground,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          } else {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(40.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.search_off_outlined, color: AppTheme.mutedForeground, size: r.s(48)),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Commande introuvable',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: r.fs(16),
+                        color: AppTheme.foreground,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Les détails de cette commande ne sont pas disponibles.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: r.fs(12),
+                        color: AppTheme.mutedForeground,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        setState(() {
+                          _hasFetched = false;
+                        });
+                        _checkAndFetch();
+                      },
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Actualiser'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primary,
+                        foregroundColor: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+        }
+
+        final authCtrl = Get.find<AuthController>();
+        final currentUser = authCtrl.currentUser.value;
+        final bool effectiveIsSale = isSale;
+
         final String title =
-            order?.product?.titre ?? orderData['title'] ?? 'Commande';
-        final String price = order != null
-            ? '${order.formattedPrice} F'
-            : (orderData['price'] ?? '0 F');
-        final String status =
-            order?.status ?? orderData['status'] ?? 'En attente';
-        final String rawImage =
-            order?.product?.image ?? orderData['image'] ?? '';
+            order.product?.titre ?? orderData['title'] ?? 'Commande';
+        final String price = order.formattedPrice;
+        final String status = order.status;
+        final String rawImage = order.product?.image ?? '';
         final String image = rawImage.isNotEmpty
             ? (rawImage.startsWith('http')
                 ? rawImage
                 : ApiConstants.resolveImageUrl(rawImage))
             : '';
-        final String partnerName = order != null
-            ? (isSale
-                ? (order.user?.nom ?? 'Acheteur')
-                : (order.product?.boutiqueNom ??
-                    order.seller?.nom ??
-                    'Vendeur'))
-            : (orderData['vendor'] ?? orderData['buyer'] ?? 'Inconnu');
-        final String orderId = order != null
-            ? '#TG-${order.id}'
-            : (orderData['orderId'] ?? '#TG-8829');
-        final String date = order != null
-            ? order.formattedDate
-            : (orderData['date'] ?? '08 Mai 2026, 09:45');
+        final String partnerName = effectiveIsSale
+            ? (order.user?.nom ?? 'Acheteur')
+            : (order.product?.boutiqueNom ??
+                order.seller?.nom ??
+                'Vendeur');
+        final String orderId = '#TG-${order.id}';
+        final String date = order.formattedDate;
 
         Color statusColor;
         Color textColor;
@@ -316,7 +428,7 @@ class OrderDetailsScreen extends StatelessWidget {
 
               // ── Partner Info (Seller/Buyer) ──────────────────────────────────
               Text(
-                isSale
+                effectiveIsSale
                     ? 'Informations de l\'acheteur'
                     : (order?.product?.boutiqueNom != null
                         ? 'Informations de la boutique'
@@ -399,12 +511,13 @@ class OrderDetailsScreen extends StatelessWidget {
                             String otherEntityType = 'user';
                             String conversationType = 'personal';
 
-                            if (isSale) {
+                            if (effectiveIsSale) {
                               otherId = order?.userId.toString() ?? '';
                               otherAvatar = order?.user?.avatar ?? '';
                               if (boutiqueId != null) {
                                 myId = boutiqueId.toString();
                                 myName = order?.product?.boutiqueNom ?? myName;
+                                myAvatar = order?.product?.boutiqueLogo ?? myAvatar;
                                 myEntityType = 'shop';
                                 conversationType = 'shop';
                               }
@@ -412,7 +525,9 @@ class OrderDetailsScreen extends StatelessWidget {
                               otherId = boutiqueId != null
                                   ? boutiqueId.toString()
                                   : (order?.sellerId.toString() ?? '');
-                              otherAvatar = order?.seller?.avatar ?? '';
+                              otherAvatar = boutiqueId != null
+                                  ? (order?.product?.boutiqueLogo ?? '')
+                                  : (order?.seller?.avatar ?? '');
                               if (boutiqueId != null) {
                                 otherEntityType = 'shop';
                                 conversationType = 'shop';
@@ -425,14 +540,16 @@ class OrderDetailsScreen extends StatelessWidget {
                               return;
                             }
 
-                            Get.dialog(
-                              const Center(child: CircularProgressIndicator()),
-                              barrierDismissible: false,
-                            );
-
                             try {
-                              final chatId =
-                                  await ChatService.to.getOrCreateChat(
+                              // Calcul déterministe de l'ID du chat pour une navigation instantanée
+                              final chatId = ChatService.to.getChatId(
+                                conversationType: conversationType,
+                                entity1Id: myId,
+                                entity2Id: otherId,
+                              );
+                              
+                              // On lance la création/mise à jour de la session en arrière-plan (sans bloquer)
+                              ChatService.to.getOrCreateChat(
                                 conversationType: conversationType,
                                 myEntityId: myId,
                                 myEntityType: myEntityType,
@@ -448,11 +565,11 @@ class OrderDetailsScreen extends StatelessWidget {
                                 productImage: rawImage,
                                 relatedShopId: boutiqueId?.toString(),
                               );
-                              Get.back();
+
+                              // Navigation immédiate vers l'écran de chat
                               Get.toNamed(
-                                  '/chat/$chatId${(conversationType == 'shop' && isSale) ? "?asBoutique=true" : ""}');
+                                  '/chat/$chatId${(conversationType == 'shop' && effectiveIsSale) ? "?asBoutique=true" : ""}');
                             } catch (e) {
-                              Get.back();
                               AppToasts.error(context, 'Erreur',
                                   'Impossible de démarrer le chat : $e');
                             }
@@ -547,56 +664,62 @@ class OrderDetailsScreen extends StatelessWidget {
                             ),
                           ),
                           if (order != null &&
-                              ((!isSale && order.deliveryMethod == 'retrait') ||
-                                  (isSale &&
+                              ((!effectiveIsSale && order.deliveryMethod == 'retrait') ||
+                                  (effectiveIsSale &&
                                       order.deliveryMethod == 'livraison')))
                             Padding(
                               padding: EdgeInsets.only(top: r.s(8)),
                               child: OutlinedButton.icon(
-                                onPressed: () async {
-                                  String locationQuery = '';
-                                  if (!isSale &&
+                                onPressed: () {
+                                  double? lat;
+                                  double? lon;
+                                  String? address;
+
+                                  if (!effectiveIsSale &&
                                       order!.deliveryMethod == 'retrait') {
+                                    // Acheteur → voir localisation de la boutique
                                     if (order!.product?.boutiqueLat != null &&
                                         order!.product?.boutiqueLon != null &&
                                         order!.product!.boutiqueLat != 0) {
-                                      locationQuery =
-                                          '${order!.product!.boutiqueLat},${order!.product!.boutiqueLon}';
-                                    } else if (order!.product?.boutiqueAdresse !=
-                                            null ||
-                                        order!.product?.boutiqueDetailsAdresse !=
-                                            null) {
-                                      locationQuery = [
-                                        order!.product?.boutiqueDetailsAdresse,
-                                        order!.product?.boutiqueAdresse
-                                      ]
-                                          .where(
-                                              (s) => s != null && s.isNotEmpty)
-                                          .join(', ');
+                                      lat = order!.product!.boutiqueLat;
+                                      lon = order!.product!.boutiqueLon;
                                     }
-                                  } else if (isSale &&
+                                    address = [
+                                      order!.product?.boutiqueDetailsAdresse,
+                                      order!.product?.boutiqueAdresse,
+                                    ]
+                                        .where(
+                                            (s) => s != null && s.isNotEmpty)
+                                        .join(', ');
+                                  } else if (effectiveIsSale &&
                                       order!.deliveryMethod == 'livraison') {
+                                    // Vendeur → voir localisation de livraison
                                     if (order!.deliveryLat != null &&
                                         order!.deliveryLon != null &&
                                         order!.deliveryLat != 0) {
-                                      locationQuery =
-                                          '${order!.deliveryLat},${order!.deliveryLon}';
-                                    } else if (order!.deliveryAddress != null &&
-                                        order!.deliveryAddress!.isNotEmpty) {
-                                      locationQuery = order!.deliveryAddress!;
+                                      lat = order!.deliveryLat;
+                                      lon = order!.deliveryLon;
                                     }
+                                    address = order!.deliveryAddress;
                                   }
 
-                                  if (locationQuery.isNotEmpty) {
-                                    final uri = Uri.parse(
-                                        'https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(locationQuery)}');
-                                    try {
-                                      await launchUrl(uri,
-                                          mode: LaunchMode.externalApplication);
-                                    } catch (e) {
-                                      AppToasts.error(context, 'Erreur',
-                                          'Impossible d\'ouvrir Google Maps.');
-                                    }
+                                  if (lat != null && lon != null) {
+                                    Get.to(() => UnifiedMapScreen(
+                                          viewMode: true,
+                                          initialLat: lat,
+                                          initialLon: lon,
+                                          initialAddress: (address != null &&
+                                                  address.isNotEmpty)
+                                              ? address
+                                              : null,
+                                        ));
+                                  } else if (address != null &&
+                                      address.isNotEmpty) {
+                                    // Pas de coordonnées mais une adresse texte
+                                    Get.to(() => UnifiedMapScreen(
+                                          viewMode: true,
+                                          initialAddress: address,
+                                        ));
                                   } else {
                                     AppToasts.info(context, 'Information',
                                         'La localisation n\'est pas disponible.');
@@ -639,9 +762,37 @@ class OrderDetailsScreen extends StatelessWidget {
                 child: Column(
                   children: [
                     _PriceRow(label: 'Sous-total', value: price, r: r),
-                    SizedBox(height: r.s(12)),
-                    _PriceRow(
-                        label: 'Frais de livraison', value: '1 500 F', r: r),
+                    if (order?.deliveryMethod == 'livraison') ...[
+                      SizedBox(height: r.s(12)),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Frais de livraison',
+                            style: TextStyle(
+                              fontSize: r.fs(14),
+                              color: AppTheme.mutedForeground,
+                            ),
+                          ),
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                                horizontal: r.s(10), vertical: r.s(4)),
+                            decoration: BoxDecoration(
+                              color: AppTheme.primary.withOpacity(0.08),
+                              borderRadius: BorderRadius.circular(r.rad(8)),
+                            ),
+                            child: Text(
+                              'À définir',
+                              style: TextStyle(
+                                fontSize: r.fs(12),
+                                fontWeight: FontWeight.w600,
+                                color: AppTheme.primary,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                     Padding(
                       padding: EdgeInsets.symmetric(vertical: r.s(16)),
                       child: Divider(height: 1),
@@ -674,7 +825,7 @@ class OrderDetailsScreen extends StatelessWidget {
 
               // ── Actions ──────────────────────────────────────────────────────
               if (order != null) ...[
-                if (isSale) ...[
+                if (effectiveIsSale) ...[
                   if (status == 'En attente')
                     Row(
                       children: [

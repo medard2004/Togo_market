@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import '../Api/model/boutique_model.dart';
 import '../Api/services/boutique_service.dart';
 import '../Api/provider/auth_controller.dart';
+import '../utils/app_toasts.dart';
 
 class BoutiqueController extends GetxController {
   final BoutiqueService _boutiqueService;
@@ -36,7 +37,9 @@ class BoutiqueController extends GetxController {
       myBoutique.value = boutique;
       return true;
     } catch (e) {
-      Get.snackbar('Erreur de connexion', 'Veuillez vérifier votre réseau.');
+      if (Get.context != null) {
+        AppToasts.error(Get.context!, 'Erreur de connexion', 'Veuillez vérifier votre réseau.');
+      }
       return false;
     } finally {
       isLoading.value = false;
@@ -88,7 +91,9 @@ class BoutiqueController extends GetxController {
       if (e is DioException && e.response?.statusCode == 422) {
         return e.response?.data['errors'];
       }
-      Get.snackbar('Erreur', e.toString());
+      if (Get.context != null) {
+        AppToasts.error(Get.context!, 'Erreur', e.toString());
+      }
       return false;
     } finally {
       isLoading.value = false;
@@ -106,7 +111,9 @@ class BoutiqueController extends GetxController {
       if (e is DioException && e.response?.statusCode == 422) {
         return e.response?.data['errors'];
       }
-      Get.snackbar('Erreur', e.toString());
+      if (Get.context != null) {
+        AppToasts.error(Get.context!, 'Erreur', e.toString());
+      }
       return false;
     } finally {
       isLoading.value = false;
@@ -123,7 +130,9 @@ class BoutiqueController extends GetxController {
       if (e is DioException && e.response?.statusCode == 422) {
         return e.response?.data['errors'];
       }
-      Get.snackbar('Erreur', e.toString());
+      if (Get.context != null) {
+        AppToasts.error(Get.context!, 'Erreur', e.toString());
+      }
       return false;
     } finally {
       isLoading.value = false;

@@ -49,13 +49,30 @@ class FCMService extends GetxService {
           
           final notif = _parseRemoteMessage(message);
           
-          // Ajouter au contrôleur pour persistance locale instantanée
-          if (Get.isRegistered<NotificationController>()) {
-            NotificationController.to.addForegroundNotification(notif);
+          // Vérifier si l'utilisateur est déjà dans la discussion concernée
+          final type = notif.type.toLowerCase();
+          final data = notif.customData ?? {};
+          final chatId = data['chat_id']?.toString();
+          
+          bool shouldMute = false;
+          if (type == 'message' && chatId != null && chatId.isNotEmpty) {
+            final currentRoute = Get.currentRoute;
+            // Si on est dans le chat actuel, on mute la notification pour éviter de déranger
+            if (currentRoute.startsWith('/chat/$chatId')) {
+              shouldMute = true;
+              debugPrint('FCM: Utilisateur déjà dans le chat $chatId, notification mutée.');
+            }
           }
 
-          // Afficher une toast notification cliquable
-          _showNotificationToast(notif);
+          if (!shouldMute) {
+            // Ajouter au contrôleur pour persistance locale instantanée
+            if (Get.isRegistered<NotificationController>()) {
+              NotificationController.to.addForegroundNotification(notif);
+            }
+
+            // Afficher une toast notification cliquable
+            _showNotificationToast(notif);
+          }
         });
 
         // 2. Gérer le clic quand l'application est en arrière-plan (Background)
@@ -83,47 +100,102 @@ class FCMService extends GetxService {
   /// Affiche une toast notification premium et cliquable en foreground
   void _showNotificationToast(AppNotification notif) {
     final String type = notif.type.toLowerCase();
+    final data = notif.customData ?? {};
     
-    // Choisir l'icône et la couleur selon le type
+    // Détection du contexte (Boutique ou Particulier)
+    final receiverType = data['receiver_type']?.toString().toLowerCase();
+    final isShopContext = receiverType == 'shop' || data.containsKey('boutique_id');
+
+    // Choisir l'icône, la couleur et le label selon le contexte et le type
     IconData icon;
     Color accentColor;
-    switch (type) {
-      case 'order':
-        icon = PhosphorIcons.shoppingBag(PhosphorIconsStyle.fill);
-        accentColor = AppTheme.secondary;
-        break;
-      case 'message':
-        icon = PhosphorIcons.chatCircle(PhosphorIconsStyle.fill);
-        accentColor = AppTheme.primary;
-        break;
-      default:
-        icon = PhosphorIcons.bell(PhosphorIconsStyle.fill);
-        accentColor = AppTheme.primary;
+    String contextLabel;
+    
+    if (isShopContext) {
+      icon = type == 'order' 
+          ? PhosphorIcons.shoppingBag(PhosphorIconsStyle.fill)
+          : PhosphorIcons.storefront(PhosphorIconsStyle.fill);
+      accentColor = Colors.orange.shade700;
+      contextLabel = 'Boutique';
+    } else {
+      icon = type == 'order'
+          ? PhosphorIcons.package(PhosphorIconsStyle.fill)
+          : PhosphorIcons.user(PhosphorIconsStyle.fill);
+      accentColor = AppTheme.primary;
+      contextLabel = 'Personnel';
     }
 
     toastification.dismissAll();
     toastification.show(
       type: ToastificationType.info,
       style: ToastificationStyle.flat,
-      title: Text(
-        notif.title,
-        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+      title: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: accentColor.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(4),
+              border: Border.all(color: accentColor.withValues(alpha: 0.3)),
+            ),
+            child: Text(
+              contextLabel,
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+                color: accentColor,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              notif.title,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
       ),
-      description: Text(
-        notif.body,
-        maxLines: 2,
-        overflow: TextOverflow.ellipsis,
-        style: const TextStyle(fontSize: 12),
+      description: Padding(
+        padding: const EdgeInsets.only(top: 4.0),
+        child: Text(
+          notif.body,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(fontSize: 12),
+        ),
       ),
-      icon: Icon(icon, color: accentColor, size: 24),
+      icon: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: accentColor.withValues(alpha: 0.1),
+          shape: BoxShape.circle,
+        ),
+        child: Icon(icon, color: accentColor, size: 24),
+      ),
       primaryColor: accentColor,
+      backgroundColor: AppTheme.cardColor,
       alignment: Alignment.topCenter,
       autoCloseDuration: const Duration(seconds: 5),
       animationBuilder: (context, animation, alignment, child) {
-        return FadeTransition(opacity: animation, child: child);
+        return SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(0, -1),
+            end: Offset.zero,
+          ).animate(CurvedAnimation(parent: animation, curve: Curves.easeOutCubic)),
+          child: child,
+        );
       },
-      borderRadius: BorderRadius.circular(14),
-      boxShadow: highModeShadow,
+      borderRadius: BorderRadius.circular(16),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withValues(alpha: 0.1),
+          blurRadius: 10,
+          offset: const Offset(0, 4),
+        )
+      ],
       showProgressBar: true,
       dragToClose: true,
       closeButtonShowType: CloseButtonShowType.onHover,

@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../Api/core/api_client.dart';
 import '../Api/provider/auth_controller.dart';
 import '../models/models.dart';
+import 'boutique_controller.dart';
 
 class NotificationController extends GetxController {
   static NotificationController get to => Get.find();
@@ -156,15 +157,24 @@ class NotificationController extends GetxController {
     final String type = notif.type.toLowerCase();
     final data = notif.customData ?? {};
 
+    // Détection du contexte (Boutique ou Particulier)
+    final receiverType = data['receiver_type']?.toString().toLowerCase();
+    final isShopContext = receiverType == 'shop' || data.containsKey('boutique_id');
+
     if (type == 'message') {
       final String? chatId = data['chat_id']?.toString();
       if (chatId != null && chatId.isNotEmpty) {
-        Get.toNamed('/chat/$chatId');
+        Get.toNamed('/chat/$chatId?asBoutique=$isShopContext');
       } else {
-        Get.toNamed('/messages');
+        // Rediriger vers l'espace messages général ou dashboard
+        if (isShopContext) {
+          BoutiqueController.to.goToMyBoutique();
+        } else {
+          Get.toNamed('/messages');
+        }
       }
     } else if (type == 'order') {
-      _handleOrderNotificationTap(data);
+      _handleOrderNotificationTap(data, isShopContext);
     } else if (type == 'like') {
       final String? productId = data['product_id']?.toString();
       if (productId != null && productId.isNotEmpty) {
@@ -172,32 +182,45 @@ class NotificationController extends GetxController {
       } else {
         Get.toNamed('/favorites');
       }
+    } else if (type == 'boutique' || type == 'shop' || isShopContext) {
+      // Redirection intelligente vers la boutique
+      final String? boutiqueId = data['boutique_id']?.toString() ?? data['id']?.toString();
+      if (boutiqueId != null && boutiqueId.isNotEmpty) {
+        final myBoutiqueId = BoutiqueController.to.myBoutique.value?.id?.toString();
+        if (myBoutiqueId == boutiqueId) {
+          Get.toNamed('/dashboard');
+        } else {
+          Get.toNamed('/seller/$boutiqueId');
+        }
+      } else {
+        BoutiqueController.to.goToMyBoutique();
+      }
     }
   }
 
   /// Navigation intelligente pour les notifications de commande
-  /// Si on a un order_id → rediriger vers le détail de la commande
-  /// Sinon, si le vendeur a une boutique → rediriger vers le détail du produit commandé
-  /// Sinon (particulier) → rediriger vers l'espace commandes
-  void _handleOrderNotificationTap(Map<String, dynamic> data) {
+  void _handleOrderNotificationTap(Map<String, dynamic> data, bool isShopContext) {
     final String? orderId = data['order_id']?.toString();
-    final String? boutiqueId = data['boutique_id']?.toString();
     final String? productId = data['product_id']?.toString();
-    final bool isSale = data['is_sale']?.toString().toLowerCase() == 'true';
+    // Déduire isSale soit explicitement du payload, soit du contexte Boutique
+    final bool isSale = data['is_sale']?.toString().toLowerCase() == 'true' || isShopContext;
     
     if (orderId != null && orderId.isNotEmpty && orderId != 'null') {
-      // Rediriger vers le détail de la commande
+      // Rediriger vers le détail exact de la commande
       Get.toNamed('/order-details', arguments: {
         'orderId': orderId,
         'isSale': isSale,
       });
-    } else if (boutiqueId != null && boutiqueId.isNotEmpty && boutiqueId != 'null' 
-        && productId != null && productId.isNotEmpty && productId != 'null') {
-      // C'est une boutique → rediriger vers le détail du produit commandé
+    } else if (isShopContext && productId != null && productId.isNotEmpty && productId != 'null') {
+      // Fallback: rediriger vers le détail du produit si la commande n'a pas d'ID explicite mais qu'on a le produit
       Get.toNamed('/product/$productId');
     } else {
-      // C'est un particulier → rediriger vers l'espace commandes
-      Get.toNamed('/orders');
+      // Rediriger vers l'espace global
+      if (isSale) {
+        Get.toNamed('/dashboard'); // Redirection vers le tableau de bord vendeur
+      } else {
+        Get.toNamed('/orders'); // Redirection vers les achats particuliers
+      }
     }
   }
 

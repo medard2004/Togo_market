@@ -1,3 +1,4 @@
+import '../utils/app_utils.dart';
 // lib/models/order_model.dart
 // Modèle de commande utilisé pour l'affichage acheteur et vendeur.
 
@@ -76,11 +77,9 @@ class OrderModel {
     );
   }
 
-  /// Prix formaté façon "350.000 FCFA"
+  /// Prix formaté façon "350 000 FCFA"
   String get formattedPrice {
-    final v = totalPrice.toStringAsFixed(0);
-    return v.replaceAllMapped(
-        RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.');
+    return formatPrice(totalPrice);
   }
 
   /// Date formatée "10/05/2026 à 09:30"
@@ -103,6 +102,7 @@ class OrderProduct {
   final double? boutiqueLon;
   final String? boutiqueAdresse;
   final String? boutiqueDetailsAdresse;
+  final String? boutiqueLogo;
 
   OrderProduct({
     required this.id,
@@ -114,6 +114,7 @@ class OrderProduct {
     this.boutiqueLon,
     this.boutiqueAdresse,
     this.boutiqueDetailsAdresse,
+    this.boutiqueLogo,
   });
 
   factory OrderProduct.fromJson(Map<String, dynamic> json) {
@@ -131,6 +132,7 @@ class OrderProduct {
     double? bLon;
     String? bAdresse;
     String? bDetails;
+    String? bLogo;
     if (json['boutique'] != null) {
       bNom = json['boutique']['nom']?.toString();
       if (bId == null && json['boutique']['id'] != null) {
@@ -144,6 +146,7 @@ class OrderProduct {
       }
       bAdresse = json['boutique']['adresse']?.toString();
       bDetails = json['boutique']['details_adresse']?.toString();
+      bLogo = json['boutique']['logo_url']?.toString() ?? json['boutique']['logo']?.toString();
     }
 
     return OrderProduct(
@@ -156,6 +159,7 @@ class OrderProduct {
       boutiqueLon: bLon,
       boutiqueAdresse: bAdresse,
       boutiqueDetailsAdresse: bDetails,
+      boutiqueLogo: bLogo,
     );
   }
 }

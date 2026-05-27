@@ -196,32 +196,21 @@ class ChatController extends GetxController {
              // 1. Vérifier via le champ relatedShopId
              if (chat.relatedShopId == myShopId) isMyShop = true;
              
-             // 2. Vérifier via l'ID de la conversation (shop_X_Y)
-             final parts = chat.id.split('_');
-             if (!isMyShop && parts.length >= 3) {
-               if (parts[1] == myShopId || parts[2] == myShopId) isMyShop = true;
-             }
-             
-             // 3. Vérifier via les participants
+             // 2. Vérifier via les participants (Méthode la plus sûre)
              if (!isMyShop && chat.participantUids.contains('shop_$myShopId')) isMyShop = true;
              
              if (isMyShop) {
                // Cette conversation implique ma boutique.
                // Je dois la voir dans ma messagerie personnelle UNIQUEMENT 
-               // si je suis l'acheteur (mon user_$userId est dans participantUids 
-               // ET je ne suis pas seulement là à cause d'un vieux bug de migration).
-               // En fait, Firebase a déjà filtré sur participantUids.contains(userUid).
-               // L'ID de l'acheteur est celui qui n'est pas myShopId dans shop_buyer_shop
-               String buyerId = '';
-               if (parts.length >= 3) {
-                 buyerId = (parts[1] == myShopId) ? parts[2] : parts[1];
-               }
+               // si je suis l'acheteur. Mon UID d'utilisateur (user_$userId) 
+               // doit être dans les participants.
+               bool iAmBuyer = chat.participantUids.contains('user_$userId');
                
-               if (buyerId == userId) {
+               if (iAmBuyer) {
                  // Je suis l'acheteur de ma propre boutique ! Je garde le chat ici.
                  return true;
                } else {
-                 // Je ne suis PAS l'acheteur. Ce chat a fuité à cause d'une ancienne erreur.
+                 // Je ne suis PAS l'acheteur. Ce chat appartient à la vue vendeur.
                  return false;
                }
              }

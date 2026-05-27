@@ -69,10 +69,29 @@ class HomeTopBar extends StatelessWidget {
                   final unread = Get.find<NotificationController>().unreadCount.value;
                   if (unread > 0) {
                     return Positioned(
-                      top: r.s(4), right: r.s(4),
+                      top: 0, right: 0,
                       child: Container(
-                        width: r.s(10), height: r.s(10),
-                        decoration: BoxDecoration(color: Colors.red, shape: BoxShape.circle),
+                        padding: EdgeInsets.all(r.s(4)),
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: AppTheme.cardColor, width: 2),
+                        ),
+                        constraints: BoxConstraints(
+                          minWidth: r.s(18),
+                          minHeight: r.s(18),
+                        ),
+                        child: Center(
+                          child: Text(
+                            unread > 99 ? '99+' : unread.toString(),
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: r.fs(9),
+                              fontWeight: FontWeight.bold,
+                              height: 1,
+                            ),
+                          ),
+                        ),
                       ),
                     );
                   }

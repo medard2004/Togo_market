@@ -42,6 +42,7 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen>
   String? _phoneError;
   Map<String, dynamic>? _orderResult; // Réponse de l'API après création
   int _countdown = 10; // Compte à rebours avant redirection
+  String? _productId;
 
   final _phoneCtrl = TextEditingController();
   final _addressCtrl = TextEditingController();
@@ -53,6 +54,8 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen>
   @override
   void initState() {
     super.initState();
+    final args = Get.arguments as Map<String, dynamic>?;
+    _productId = args?['productId']?.toString();
     WidgetsBinding.instance.addObserver(this);
     _prefillPhone();
   }
@@ -639,10 +642,9 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen>
   @override
   Widget build(BuildContext context) {
     final r = R(context);
-    final args = Get.arguments as Map<String, dynamic>?;
-    final product = _getProduct(args?['productId']);
+    final product = _getProduct(_productId);
 
-    // ── Montant formaté façon maquette : "745.000 FCFA" ──────────────────────
+    // ── Montant formaté : "745 000 FCFA" ─────────────────────────────────────
     String priceMain = '';
     String totalPriceMain = '';
     if (product == null) {
@@ -654,11 +656,11 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen>
 
     final v = product.price.toStringAsFixed(0);
     priceMain = v.replaceAllMapped(
-        RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.');
+        RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]} ');
 
     final tv = (product.price * _quantity).toStringAsFixed(0);
     totalPriceMain = tv.replaceAllMapped(
-        RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.');
+        RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]} ');
 
     // ── Page de Confirmation ──────────────────────────────────────────────────
     if (_confirmed) {
@@ -866,10 +868,10 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen>
                                 product.title),
                             _recapDivider(),
                             _recapRow(
-                                r, Icons.numbers_outlined, 'Quantité', '1'),
+                                r, Icons.numbers_outlined, 'Quantité', '$_quantity'),
                             _recapDivider(),
                             _recapRow(r, Icons.payments_outlined, 'Prix total',
-                                '$priceMain FCFA',
+                                '$totalPriceMain FCFA',
                                 valueColor: AppTheme.primary, bold: true),
                             _recapDivider(),
                             _recapRowIcon(r, modeIcon, 'Livraison', modeLabel),

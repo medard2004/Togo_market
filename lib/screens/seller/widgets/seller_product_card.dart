@@ -106,7 +106,7 @@ class SellerProductCard extends StatelessWidget {
                         ],
                       ),
                       child: Text(
-                        '${formatPrice(product.price)}',
+                        formatPrice(product.price),
                         style: TextStyle(
                           fontSize: r.fs(10),
                           fontWeight: FontWeight.w900,

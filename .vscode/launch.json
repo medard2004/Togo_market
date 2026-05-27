@@ -1,1 +1,12 @@
-{"launch": {"configurations": [{"name": "Flutter", "type": "dart", "request": "launch", "program": "lib/main.dart"}]}}
+{
+    "launch": {
+        "configurations": [
+            {
+                "name": "Flutter",
+                "type": "dart",
+                "request": "launch",
+                "program": "lib/main.dart"
+            }
+        ]
+    }
+}

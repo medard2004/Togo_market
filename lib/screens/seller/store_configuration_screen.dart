@@ -18,6 +18,7 @@ import '../../utils/app_toasts.dart';
 import '../../utils/location_service.dart';
 import '../../utils/togo_cities.dart';
 import '../../utils/image_optimization_service.dart';
+import '../map/unified_map_screen.dart';
 import 'store_config_model.dart';
 
 class StoreConfigurationScreen extends StatefulWidget {
@@ -41,6 +42,7 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
   final _phoneCtrl = TextEditingController();
   final List<TextEditingController> _secondaryPhoneCtrls = [];
   final _addressCtrl = TextEditingController();
+  final _quartierCtrl = TextEditingController();
 
   final ImagePicker _picker = ImagePicker();
   bool _isLoading = false;
@@ -76,6 +78,7 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
       ctrl.dispose();
     }
     _addressCtrl.dispose();
+    _quartierCtrl.dispose();
     super.dispose();
   }
 
@@ -110,10 +113,11 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
         AppToasts.error(context, 'Erreur', 'Le numéro WhatsApp est requis.');
         return;
       }
-      if (_data.villeId == null || _data.quartierId == null) {
-        AppToasts.error(context, 'Erreur', 'Sélectionnez une ville et un quartier.');
+      if (_data.villeId == null || _quartierCtrl.text.trim().isEmpty) {
+        AppToasts.error(context, 'Erreur', 'Sélectionnez une ville et saisissez un quartier.');
         return;
       }
+      _data.quartierName = _quartierCtrl.text.trim();
 
       // Collect valid secondary phones
       _data.secondaryPhones = _secondaryPhoneCtrls
@@ -166,10 +170,11 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
       AppToasts.error(context, 'Erreur', 'Sélectionnez au moins une catégorie.');
       return;
     }
-    if (_data.villeId == null || _data.quartierId == null) {
-      AppToasts.error(context, 'Erreur', 'Sélectionnez une ville et un quartier.');
+    if (_data.villeId == null || _quartierCtrl.text.trim().isEmpty) {
+      AppToasts.error(context, 'Erreur', 'Sélectionnez une ville et saisissez un quartier.');
       return;
     }
+    _data.quartierName = _quartierCtrl.text.trim();
 
     setState(() => _isLoading = true);
 
@@ -498,13 +503,13 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
             ),
             const SizedBox(height: 32),
             _buildFieldLabel('Ville / Commune *'),
-            _buildVilleDropdown(),
+            _buildVillePicker(),
             const SizedBox(height: 16),
-            if (_data.villeId != null) ...[
-              _buildFieldLabel('Quartier / Zone *'),
-              _buildQuartierDropdown(),
-              const SizedBox(height: 16),
-            ],
+            _buildFieldLabel('Quartier / Zone *'),
+            _buildQuartierInput(),
+            const SizedBox(height: 16),
+            // Bouton GPS pour pré-remplir la localisation
+            _buildGpsButton(),
             const SizedBox(height: 24),
             _buildCharmingField(
               label: 'Détails de l\'adresse (facultatif)',
@@ -513,8 +518,6 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
               icon: Icons.near_me_rounded,
               onChanged: (v) => _data.address = v,
             ),
-            const SizedBox(height: 24),
-            _buildGpsButton(),
           ],
         ),
       ),
@@ -740,81 +743,186 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
     });
   }
 
-  Widget _buildVilleDropdown() {
+  Widget _buildVillePicker() {
     return Obx(() {
-      final villes = _authCtrl.locations;
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: AppRadius.lgBorderRadius,
-          boxShadow: AppShadows.shadowSm,
-          border: Border.all(color: AppColors.border.withOpacity(0.5)),
-        ),
-        child: DropdownButtonHideUnderline(
-          child: DropdownButton<int>(
-            value: _data.villeId,
-            isExpanded: true,
-            hint: const Text('Sélectionner une ville'),
-            icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.primary),
-            items: villes
-                .map((v) => DropdownMenuItem(
-                      value: v.id,
-                      child: Row(children: [
-                        const Icon(Icons.location_city_rounded, size: 18, color: AppColors.primary),
-                        const SizedBox(width: 12),
-                        Text(v.nom, style: const TextStyle(fontWeight: FontWeight.w600)),
-                      ]),
-                    ))
-                .toList(),
-            onChanged: (v) {
-              setState(() {
-                _data.villeId = v;
-                _data.quartierId = null;
-              });
-            },
+      final villes = _authCtrl.locations.toList();
+      final selectedVille = _data.villeId != null
+          ? villes.firstWhereOrNull((v) => v.id == _data.villeId)
+          : null;
+      return GestureDetector(
+        onTap: () => _showVillePicker(villes),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: AppRadius.lgBorderRadius,
+            boxShadow: AppShadows.shadowSm,
+            border: Border.all(color: AppColors.border.withOpacity(0.5)),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.location_city_rounded,
+                  size: 18,
+                  color: selectedVille != null
+                      ? AppColors.primary
+                      : AppColors.mutedForeground),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  selectedVille?.nom ?? 'Sélectionner une ville',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: selectedVille != null
+                        ? FontWeight.w600
+                        : FontWeight.w400,
+                    color: selectedVille != null
+                        ? AppColors.foreground
+                        : AppColors.mutedForeground,
+                  ),
+                ),
+              ),
+              const Icon(Icons.keyboard_arrow_down_rounded,
+                  color: AppColors.primary),
+            ],
           ),
         ),
       );
     });
   }
 
-  Widget _buildQuartierDropdown() {
-    return Obx(() {
-      final ville = _authCtrl.locations.firstWhereOrNull((v) => v.id == _data.villeId);
-      final quartiers = ville?.quartiers ?? [];
-      
-      if (_data.quartierId != null && !quartiers.any((q) => q.id == _data.quartierId)) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) setState(() => _data.quartierId = null);
-        });
-      }
+  void _showVillePicker(List<Ville> villes) {
+    final searchCtrl = TextEditingController();
+    final rxVilles = RxList<Ville>(villes);
 
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: AppRadius.lgBorderRadius,
-          boxShadow: AppShadows.shadowSm,
-          border: Border.all(color: AppColors.border.withOpacity(0.5)),
-        ),
-        child: DropdownButtonHideUnderline(
-          child: DropdownButton<int>(
-            value: _data.quartierId,
-            isExpanded: true,
-            hint: const Text('Sélectionner un quartier'),
-            icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.primary),
-            items: quartiers
-                .map((q) => DropdownMenuItem(
-                      value: q.id,
-                      child: Text(q.nom, style: const TextStyle(fontWeight: FontWeight.w600)),
-                    ))
-                .toList(),
-            onChanged: (v) => setState(() => _data.quartierId = v),
-          ),
-        ),
-      );
+    searchCtrl.addListener(() {
+      final query = searchCtrl.text.toLowerCase();
+      if (query.isEmpty) {
+        rxVilles.assignAll(villes);
+      } else {
+        rxVilles.assignAll(
+            villes.where((v) => v.nom.toLowerCase().contains(query)));
+      }
     });
+
+    Get.bottomSheet(
+      Container(
+        height: MediaQuery.of(context).size.height * 0.75,
+        decoration: BoxDecoration(
+          color: AppColors.background,
+          borderRadius:
+              const BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          children: [
+            const SizedBox(height: 12),
+            Container(
+                width: 40,
+                height: 5,
+                decoration: BoxDecoration(
+                    color: AppColors.border,
+                    borderRadius: BorderRadius.circular(10))),
+            const SizedBox(height: 16),
+            const Text('Choisissez votre ville / commune',
+                style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.foreground)),
+            const SizedBox(height: 16),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Container(
+                decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: AppRadius.lgBorderRadius,
+                    border: Border.all(color: AppColors.border)),
+                child: TextField(
+                  controller: searchCtrl,
+                  style: const TextStyle(fontSize: 14),
+                  decoration: const InputDecoration(
+                    hintText: 'Rechercher une ville...',
+                    hintStyle: TextStyle(
+                        color: AppColors.mutedForeground, fontSize: 14),
+                    prefixIcon:
+                        Icon(Icons.search, color: AppColors.mutedForeground),
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.symmetric(vertical: 14),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Expanded(
+              child: Obx(() => ListView.builder(
+                    itemCount: rxVilles.length,
+                    itemBuilder: (context, i) {
+                      final v = rxVilles[i];
+                      final isSel = v.id == _data.villeId;
+                      return ListTile(
+                        leading: Icon(
+                          Icons.location_city_rounded,
+                          size: 18,
+                          color: isSel
+                              ? AppColors.primary
+                              : AppColors.mutedForeground,
+                        ),
+                        title: Text(v.nom,
+                            style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: isSel
+                                    ? FontWeight.w700
+                                    : FontWeight.w500,
+                                color: isSel
+                                    ? AppColors.primary
+                                    : AppColors.foreground)),
+                        trailing: isSel
+                            ? const Icon(Icons.check_circle,
+                                color: AppColors.primary)
+                            : null,
+                        onTap: () {
+                          setState(() {
+                            _data.villeId = v.id;
+                            _data.quartierId = null;
+                          });
+                          Get.back();
+                        },
+                      );
+                    },
+                  )),
+            ),
+          ],
+        ),
+      ),
+      isScrollControlled: true,
+    );
+  }
+
+  Widget _buildQuartierInput() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: AppRadius.lgBorderRadius,
+        boxShadow: AppShadows.shadowSm,
+        border: Border.all(color: AppColors.border.withOpacity(0.5)),
+      ),
+      child: TextField(
+        controller: _quartierCtrl,
+        style: const TextStyle(fontSize: 14),
+        decoration: InputDecoration(
+          hintText: 'ex. Adidogomé, Agoè, Hédzranawoé...',
+          hintStyle: const TextStyle(
+              color: AppColors.mutedForeground, fontSize: 14),
+          prefixIcon: Icon(Icons.map_rounded,
+              color: AppColors.primary.withOpacity(0.6), size: 20),
+          border: InputBorder.none,
+          enabledBorder: InputBorder.none,
+          focusedBorder: InputBorder.none,
+          fillColor: Colors.transparent,
+          filled: false,
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        ),
+      ),
+    );
   }
 
   Widget _buildGpsButton() {
@@ -851,19 +959,46 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
   Future<void> _handleGpsRequest() async {
     setState(() => _gpsLoading = true);
     try {
-      final location = await _authCtrl.getCurrentLocationAndMatch();
-      if (location != null && mounted) {
-        setState(() {
-          _data.villeId = location['villeId'];
-          _data.quartierId = location['quartierId'];
-        });
-        AppToasts.success(context, "Position trouvée", "Votre zone a été pré-remplie.");
-      } else if (mounted) {
-        AppToasts.warning(context, "Non trouvée", "Impossible de déterminer votre zone automatiquement.");
+      final result = await Get.to(() => const UnifiedMapScreen());
+      if (result != null && result is Map<String, dynamic> && mounted) {
+        final location = await _authCtrl.getCurrentLocationAndMatch(
+          lat: result['latitude'],
+          lon: result['longitude'],
+        );
+        
+        if (location != null && mounted) {
+          setState(() {
+            if (location['villeId'] != null) {
+              _data.villeId = location['villeId'] as int?;
+            }
+
+            // Remplir le quartier texte depuis le GPS
+            String rawQuartier = location['rawQuartier']?.toString() ?? '';
+            if (rawQuartier.isNotEmpty) {
+              _quartierCtrl.text = rawQuartier.split(' ').map((str) => str.capitalizeFirst).join(' ');
+            }
+
+            // Remplir les détails d'adresse
+            String rawVille = location['rawVille']?.toString() ?? '';
+            String detailsText = '';
+            if (rawQuartier.isNotEmpty && rawVille.isNotEmpty) {
+              detailsText = '$rawQuartier, $rawVille';
+            } else if (rawQuartier.isNotEmpty) {
+              detailsText = rawQuartier;
+            } else if (rawVille.isNotEmpty) {
+              detailsText = rawVille;
+            }
+            if (detailsText.isNotEmpty && _addressCtrl.text.isEmpty) {
+              _addressCtrl.text = detailsText;
+              _data.address = detailsText;
+            }
+          });
+          AppToasts.success(context, "Position validée", "Votre zone a été pré-remplie.");
+        }
       }
     } catch (e) {
       if (mounted) {
-        AppToasts.error(context, "Erreur GPS", "Veuillez activer la localisation.");
+        AppToasts.error(context, "Erreur", "Impossible de récupérer la position.");
       }
     } finally {
       if (mounted) setState(() => _gpsLoading = false);

@@ -458,20 +458,24 @@ class _OrderCard extends StatelessWidget {
                           }
 
                           var myId = myUser.id.toString();
-                          final myName = myUser.nom ?? 'Moi';
-                          final myAvatar = myUser.avatarUrl ?? '';
+                          String myName = myUser.nom ?? 'Moi';
+                          String myAvatar = myUser.avatarUrl ?? '';
                           final boutiqueId = order.product?.boutiqueId;
 
                           String otherId;
                           String myEntityType = 'user';
                           String otherEntityType = 'user';
                           String conversationType = 'personal';
+                          String resolvedOtherAvatar = '';
 
                           if (isSale) {
                             // Vendeur → acheteur (myId = boutiqueId si produit boutique)
                             otherId = order.userId.toString();
+                            resolvedOtherAvatar = order.user?.avatar ?? '';
                             if (boutiqueId != null) {
                               myId = boutiqueId.toString();
+                              myName = order.product?.boutiqueNom ?? myName;
+                              myAvatar = order.product?.boutiqueLogo ?? myAvatar;
                               myEntityType = 'shop';
                               conversationType = 'shop';
                             }
@@ -480,6 +484,9 @@ class _OrderCard extends StatelessWidget {
                             otherId = boutiqueId != null
                                 ? boutiqueId.toString()
                                 : order.sellerId.toString();
+                            resolvedOtherAvatar = boutiqueId != null
+                                ? (order.product?.boutiqueLogo ?? '')
+                                : (order.seller?.avatar ?? '');
                             if (boutiqueId != null) {
                               otherEntityType = 'shop';
                               conversationType = 'shop';
@@ -498,7 +505,7 @@ class _OrderCard extends StatelessWidget {
                               otherEntityId: otherId,
                               otherEntityType: otherEntityType,
                               otherName: partnerName,
-                              otherAvatar: '',
+                              otherAvatar: resolvedOtherAvatar,
                               productId: order.productId.toString(),
                               productTitle: title,
                               productImage: order.product?.image ?? '',
