@@ -9,6 +9,7 @@ import '../../../utils/responsive.dart';
 import '../../../Api/model/category_model.dart';
 import '../../../utils/category_icon_helper.dart';
 import '../../../models/models.dart';
+import '../../../Api/provider/auth_controller.dart';
 
 class HomeBody extends StatelessWidget {
   final AppController ctrl;
@@ -21,6 +22,10 @@ class HomeBody extends StatelessWidget {
 
     return AnimationLimiter(
       child: Obx(() {
+        final isLoggedIn = ctrl.isLoggedIn.value;
+        final authCtrl = Get.find<AuthController>();
+        final user = authCtrl.currentUser.value;
+        final hasLocation = user != null && !user.needsOnboardingProfile;
         final selectedCat = ctrl.selectedCategory.value;
         final allProducts = ctrl.products.toList();
         final filteredProds = ctrl.getFilteredProducts(selectedCat);
@@ -31,6 +36,8 @@ class HomeBody extends StatelessWidget {
         final nearbyProds = ctrl.nearbyProducts.isNotEmpty
             ? ctrl.nearbyProducts.toList()
             : ctrl.getProductsByZone(selectedZone ?? '');
+        final boutiques = ctrl.boutiques.take(5).toList();
+        final nearbyBoutiques = ctrl.nearbyBoutiques.toList();
 
         return RefreshIndicator(
           onRefresh: () async {
@@ -83,7 +90,7 @@ class HomeBody extends StatelessWidget {
                 child: SizedBox(
                   height: r.s(44),
                   child: Builder(builder: (_) {
-                    final apiCats = ctrl.categories;
+                    final apiCats = ctrl.categories.toList();
                     final displayCats = [
                       Category(id: -1, name: 'Tout', slug: 'tout', icon: ''),
                       ...apiCats
@@ -151,125 +158,117 @@ class HomeBody extends StatelessWidget {
               // ── Contenu ────────────────────────────────────────────────────
               if (selectedCat == 'all') ...[
                 // ── Section Tendances ─────────────────────────────────────────
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: EdgeInsets.fromLTRB(r.hPad, 0, r.hPad, r.s(12)),
-                    child: SectionTitle(
-                      icon: Icons.local_fire_department_rounded,
-                      iconColor: Colors.orange,
-                      title: 'Tendances',
-                      actionLabel: 'Voir tout',
-                      onAction: () => Get.toNamed('/trends'),
+                if (isLoggedIn && trending.isNotEmpty) ...[
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: EdgeInsets.fromLTRB(r.hPad, 0, r.hPad, r.s(12)),
+                      child: SectionTitle(
+                        icon: Icons.local_fire_department_rounded,
+                        iconColor: Colors.orange,
+                        title: 'Tendances',
+                        actionLabel: 'Voir tout',
+                        onAction: () => Get.toNamed('/trends'),
+                      ),
                     ),
                   ),
-                ),
-                SliverToBoxAdapter(
-                  child: trending.isEmpty
-                      ? _buildEmptyZone(r, 'Aucun produit tendance')
-                      : SizedBox(
-                          height: hScrollHeight,
-                          child: ListView.separated(
-                            scrollDirection: Axis.horizontal,
-                            padding: EdgeInsets.symmetric(horizontal: r.hPad),
-                            itemCount: trending.length,
-                            separatorBuilder: (_, __) =>
-                                SizedBox(width: r.s(12)),
-                            itemBuilder: (_, i) =>
-                                AnimationConfiguration.staggeredList(
-                              position: i,
-                              duration: const Duration(milliseconds: 260),
-                              child: SlideAnimation(
-                                horizontalOffset: 28,
-                                curve: Curves.easeOutCubic,
-                                child: FadeInAnimation(
-                                  curve: Curves.easeOutCubic,
-                                  child: SizedBox(
-                                    width: r.cardW,
-                                    child: ProductCard(
-                                        product: trending[i],
-                                        isHorizontal: true),
-                                  ),
-                                ),
+                  SliverToBoxAdapter(
+                    child: SizedBox(
+                      height: hScrollHeight,
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        padding: EdgeInsets.symmetric(horizontal: r.hPad),
+                        itemCount: trending.length,
+                        separatorBuilder: (_, __) => SizedBox(width: r.s(12)),
+                        itemBuilder: (_, i) =>
+                            AnimationConfiguration.staggeredList(
+                          position: i,
+                          duration: const Duration(milliseconds: 260),
+                          child: SlideAnimation(
+                            horizontalOffset: 28,
+                            curve: Curves.easeOutCubic,
+                            child: FadeInAnimation(
+                              curve: Curves.easeOutCubic,
+                              child: SizedBox(
+                                width: r.cardW,
+                                child: ProductCard(
+                                    product: trending[i], isHorizontal: true),
                               ),
                             ),
                           ),
                         ),
-                ),
-
-                SliverToBoxAdapter(child: SizedBox(height: r.vGap)),
+                      ),
+                    ),
+                  ),
+                  SliverToBoxAdapter(child: SizedBox(height: r.vGap)),
+                ],
 
                 // Près de chez vous titre
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: EdgeInsets.fromLTRB(r.hPad, 0, r.hPad, r.s(12)),
-                    child: SectionTitle(
-                      icon: Icons.location_on_rounded,
-                      iconColor: AppTheme.primary,
-                      title: 'Près de chez vous',
-                      actionLabel: 'Voir tout',
-                      onAction: () => Get.toNamed('/nearby'),
+                if (isLoggedIn && hasLocation && nearbyProds.isNotEmpty) ...[
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: EdgeInsets.fromLTRB(r.hPad, 0, r.hPad, r.s(12)),
+                      child: SectionTitle(
+                        icon: Icons.location_on_rounded,
+                        iconColor: AppTheme.primary,
+                        title: 'Près de chez vous',
+                        actionLabel: 'Voir tout',
+                        onAction: () => Get.toNamed('/nearby'),
+                      ),
                     ),
                   ),
-                ),
-                // Près de chez vous scroll
-                SliverToBoxAdapter(
-                  child: nearbyProds.isEmpty
-                      ? _buildEmptyZone(r, 'Aucun produit près de chez vous')
-                      : SizedBox(
-                          height: hScrollHeight,
-                          child: ListView.separated(
-                            scrollDirection: Axis.horizontal,
-                            padding: EdgeInsets.symmetric(horizontal: r.hPad),
-                            itemCount: nearbyProds.length,
-                            separatorBuilder: (_, __) =>
-                                SizedBox(width: r.s(12)),
-                            itemBuilder: (_, i) {
-                              return AnimationConfiguration.staggeredList(
-                                position: i,
-                                duration: const Duration(milliseconds: 260),
-                                child: SlideAnimation(
-                                  horizontalOffset: 28,
-                                  curve: Curves.easeOutCubic,
-                                  child: FadeInAnimation(
-                                    curve: Curves.easeOutCubic,
-                                    child: SizedBox(
-                                      width: r.cardW,
-                                      child: ProductCard(
-                                          product: nearbyProds[i],
-                                          isHorizontal: true),
-                                    ),
-                                  ),
+                  // Près de chez vous scroll
+                  SliverToBoxAdapter(
+                    child: SizedBox(
+                      height: hScrollHeight,
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        padding: EdgeInsets.symmetric(horizontal: r.hPad),
+                        itemCount: nearbyProds.length,
+                        separatorBuilder: (_, __) => SizedBox(width: r.s(12)),
+                        itemBuilder: (_, i) {
+                          return AnimationConfiguration.staggeredList(
+                            position: i,
+                            duration: const Duration(milliseconds: 260),
+                            child: SlideAnimation(
+                              horizontalOffset: 28,
+                              curve: Curves.easeOutCubic,
+                              child: FadeInAnimation(
+                                curve: Curves.easeOutCubic,
+                                child: SizedBox(
+                                  width: r.cardW,
+                                  child: ProductCard(
+                                      product: nearbyProds[i],
+                                      isHorizontal: true),
                                 ),
-                              );
-                            },
-                          ),
-                        ),
-                ),
-
-                SliverToBoxAdapter(child: SizedBox(height: r.vGap)),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                  SliverToBoxAdapter(child: SizedBox(height: r.vGap)),
+                ],
 
                 // Boutiques tendances titre
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: EdgeInsets.fromLTRB(r.hPad, 0, r.hPad, r.s(12)),
-                    child: SectionTitle(
-                      icon: Icons.star_rounded,
-                      iconColor: Colors.amber,
-                      title: 'Boutiques en tendances',
-                      actionLabel: 'Voir tout',
-                      onAction: () => Get.toNamed('/trending-shops'),
+                if (isLoggedIn && boutiques.isNotEmpty) ...[
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: EdgeInsets.fromLTRB(r.hPad, 0, r.hPad, r.s(12)),
+                      child: SectionTitle(
+                        icon: Icons.star_rounded,
+                        iconColor: Colors.amber,
+                        title: 'Boutiques en tendances',
+                        actionLabel: 'Voir tout',
+                        onAction: () => Get.toNamed('/trending-shops'),
+                      ),
                     ),
                   ),
-                ),
-                // Boutiques tendances scroll
-                SliverToBoxAdapter(
-                  child: SizedBox(
-                    height: r.s(165),
-                    child: Obx(() {
-                      final boutiques = ctrl.boutiques.take(5).toList();
-                      if (boutiques.isEmpty) return const SizedBox.shrink();
-
-                      return ListView.separated(
+                  // Boutiques tendances scroll
+                  SliverToBoxAdapter(
+                    child: SizedBox(
+                      height: r.s(165),
+                      child: ListView.separated(
                         scrollDirection: Axis.horizontal,
                         padding: EdgeInsets.symmetric(horizontal: r.hPad),
                         itemCount: boutiques.length,
@@ -283,37 +282,33 @@ class HomeBody extends StatelessWidget {
                             child: ShopCarouselCard(boutique: boutiques[i]),
                           ),
                         ),
-                      );
-                    }),
-                  ),
-                ),
-
-                SliverToBoxAdapter(child: SizedBox(height: r.vGap)),
-
-                // Boutiques près de chez vous titre
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: EdgeInsets.fromLTRB(r.hPad, 0, r.hPad, r.s(12)),
-                    child: SectionTitle(
-                      icon: Icons.near_me_rounded,
-                      iconColor: AppTheme.secondary,
-                      title: 'Boutiques près de chez vous',
-                      actionLabel: 'Parcourir',
-                      onAction: () => Get.toNamed('/nearby-shops'),
+                      ),
                     ),
                   ),
-                ),
-                // Boutiques près de chez vous scroll
-                SliverToBoxAdapter(
-                  child: SizedBox(
-                    height: r.s(165),
-                    child: Obx(() {
-                      final nearbyBoutiques = ctrl.nearbyBoutiques.toList();
-                      if (nearbyBoutiques.isEmpty)
-                        return _buildEmptyZone(
-                            r, 'Aucune boutique près de chez vous');
+                  SliverToBoxAdapter(child: SizedBox(height: r.vGap)),
+                ],
 
-                      return ListView.separated(
+                // Boutiques près de chez vous titre
+                if (isLoggedIn &&
+                    hasLocation &&
+                    nearbyBoutiques.isNotEmpty) ...[
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: EdgeInsets.fromLTRB(r.hPad, 0, r.hPad, r.s(12)),
+                      child: SectionTitle(
+                        icon: Icons.near_me_rounded,
+                        iconColor: AppTheme.secondary,
+                        title: 'Boutiques près de chez vous',
+                        actionLabel: 'Parcourir',
+                        onAction: () => Get.toNamed('/nearby-shops'),
+                      ),
+                    ),
+                  ),
+                  // Boutiques près de chez vous scroll
+                  SliverToBoxAdapter(
+                    child: SizedBox(
+                      height: r.s(165),
+                      child: ListView.separated(
                         scrollDirection: Axis.horizontal,
                         padding: EdgeInsets.symmetric(horizontal: r.hPad),
                         itemCount: nearbyBoutiques.length,
@@ -329,12 +324,11 @@ class HomeBody extends StatelessWidget {
                             ),
                           );
                         },
-                      );
-                    }),
+                      ),
+                    ),
                   ),
-                ),
-
-                SliverToBoxAdapter(child: SizedBox(height: r.vGap)),
+                  SliverToBoxAdapter(child: SizedBox(height: r.vGap)),
+                ],
 
                 // ── Tous les articles ─────────────────────────────────────────
                 SliverToBoxAdapter(

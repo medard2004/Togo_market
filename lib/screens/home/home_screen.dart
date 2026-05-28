@@ -17,83 +17,101 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final r = R(context);
     return Obx(() => Scaffold(
-      backgroundColor: AppTheme.background,
-      body: SafeArea(
-        child: Stack(
-          children: [
-            Column(
+          backgroundColor: AppTheme.background,
+          body: SafeArea(
+            child: Stack(
               children: [
-                GetBuilder<AppController>(builder: (ctrl) => HomeTopBar(ctrl: ctrl)),
+                Column(
+                  children: [
+                    GetBuilder<AppController>(
+                        builder: (ctrl) => HomeTopBar(ctrl: ctrl)),
+                    Obx(() {
+                      final authCtrl = Get.find<AuthController>();
+                      final user = authCtrl.currentUser.value;
+
+                      // Inclut quartier / zone (API `adresses`) : indispensable après Google+téléphone sans finir l’assistant.
+                      final needsProfile =
+                          user == null || user.needsOnboardingProfile;
+
+                      if (user != null && needsProfile) {
+                        return Container(
+                          margin: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 8),
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: AppTheme.primaryLight,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.warning_amber_rounded,
+                                  color: AppTheme.primary),
+                              const SizedBox(width: 8),
+                              const Expanded(
+                                child: Text(
+                                  'Complétez votre profil pour une meilleure expérience.',
+                                  style: TextStyle(
+                                      fontSize: 13,
+                                      color: AppTheme.primary,
+                                      fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                              TextButton(
+                                onPressed: () {
+                                  if (user.telephone.startsWith('tmp_')) {
+                                    Get.toNamed('/auth');
+                                  } else {
+                                    Get.toNamed('/profile-setup');
+                                  }
+                                },
+                                style: TextButton.styleFrom(
+                                  foregroundColor: Colors.white,
+                                  backgroundColor: AppTheme.primary,
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8)),
+                                  minimumSize: const Size(60, 32),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12),
+                                ),
+                                child: const Text('Configurer',
+                                    style: TextStyle(fontSize: 12)),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+                      return const SizedBox.shrink();
+                    }),
+                    Expanded(
+                      child: GetBuilder<AppController>(
+                          builder: (ctrl) => HomeBody(ctrl: ctrl)),
+                    ),
+                  ],
+                ),
+
+                // Premium Floating Auth Prompt Banner
                 Obx(() {
                   final authCtrl = Get.find<AuthController>();
-                  final user = authCtrl.currentUser.value;
-
-                  // Inclut quartier / zone (API `adresses`) : indispensable après Google+téléphone sans finir l’assistant.
-                  final needsProfile = user == null || user.needsOnboardingProfile;
-
-                  if (user != null && needsProfile) {
-                    return Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: AppTheme.primaryLight,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.warning_amber_rounded, color: AppTheme.primary),
-                          const SizedBox(width: 8),
-                          const Expanded(
-                            child: Text(
-                              'Complétez votre profil pour une meilleure expérience.',
-                              style: TextStyle(fontSize: 13, color: AppTheme.primary, fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                          TextButton(
-                            onPressed: () => Get.toNamed('/profile-setup'),
-                            style: TextButton.styleFrom(
-                              foregroundColor: Colors.white,
-                              backgroundColor: AppTheme.primary,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                              minimumSize: const Size(60, 32),
-                              padding: const EdgeInsets.symmetric(horizontal: 12),
-                            ),
-                            child: const Text('Configurer', style: TextStyle(fontSize: 12)),
-                          ),
-                        ],
+                  final appCtrl = Get.find<AppController>();
+                  if (!authCtrl.isAuthenticated &&
+                      appCtrl.showAuthPrompt.value) {
+                    return Positioned(
+                      bottom: r.s(16),
+                      left: r.s(16),
+                      right: r.s(16),
+                      child: TogoSlideUp(
+                        delay: const Duration(milliseconds: 200),
+                        child: _buildAuthPrompt(context, r, appCtrl),
                       ),
                     );
                   }
                   return const SizedBox.shrink();
                 }),
-                Expanded(
-                  child: GetBuilder<AppController>(builder: (ctrl) => HomeBody(ctrl: ctrl)),
-                ),
               ],
             ),
-            
-            // Premium Floating Auth Prompt Banner
-            Obx(() {
-              final authCtrl = Get.find<AuthController>();
-              final appCtrl = Get.find<AppController>();
-              if (!authCtrl.isAuthenticated && appCtrl.showAuthPrompt.value) {
-                return Positioned(
-                  bottom: r.s(16),
-                  left: r.s(16),
-                  right: r.s(16),
-                  child: TogoSlideUp(
-                    delay: const Duration(milliseconds: 200),
-                    child: _buildAuthPrompt(context, r, appCtrl),
-                  ),
-                );
-              }
-              return const SizedBox.shrink();
-            }),
-          ],
-        ),
-      ),
-      bottomNavigationBar: const BottomNavBar(currentIndex: 0),
-    ));
+          ),
+          bottomNavigationBar: const BottomNavBar(currentIndex: 0),
+        ));
   }
 
   Widget _buildAuthPrompt(BuildContext context, R r, AppController appCtrl) {
@@ -212,7 +230,10 @@ class HomeScreen extends StatelessWidget {
                           height: r.s(40),
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
-                              colors: [AppTheme.primary, AppTheme.primary.withOpacity(0.85)],
+                              colors: [
+                                AppTheme.primary,
+                                AppTheme.primary.withOpacity(0.85)
+                              ],
                             ),
                             borderRadius: BorderRadius.circular(r.rad(12)),
                             boxShadow: [

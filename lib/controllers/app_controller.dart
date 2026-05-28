@@ -8,6 +8,7 @@ import '../Api/services/category_service.dart';
 import '../Api/services/favori_service.dart';
 import '../Api/provider/auth_controller.dart';
 import 'boutique_controller.dart';
+import 'package:geolocator/geolocator.dart';
 
 // ── AppController (global state) ──────────────────────────────────────────────
 class AppController extends GetxController {
@@ -172,10 +173,36 @@ class AppController extends GetxController {
 
   // ── Près de chez vous ────────────────────────────────────────────────────────
 
+  Future<Position?> _getUserPosition() async {
+    try {
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) return null;
+
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        return null;
+      }
+
+      Position? position = await Geolocator.getLastKnownPosition();
+      if (position != null) return position;
+
+      return await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.low,
+        timeLimit: const Duration(seconds: 3),
+      );
+    } catch (e) {
+      return null;
+    }
+  }
+
   Future<void> fetchNearbyProducts() async {
     try {
+      final pos = await _getUserPosition();
       final nearby = await ProduitService.to.getNearbyProducts(
         zone: selectedZone.value,
+        lat: pos?.latitude,
+        lng: pos?.longitude,
       );
       nearbyProducts.assignAll(nearby);
       _applyFavoriteFlagsToNearby();
@@ -197,8 +224,11 @@ class AppController extends GetxController {
 
   Future<void> fetchNearbyBoutiques() async {
     try {
+      final pos = await _getUserPosition();
       final nearby = await BoutiqueService.to.getNearbyBoutiques(
         zone: selectedZone.value,
+        lat: pos?.latitude,
+        lng: pos?.longitude,
       );
       nearbyBoutiques.assignAll(nearby);
       update();

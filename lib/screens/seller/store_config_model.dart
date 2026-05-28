@@ -22,6 +22,7 @@ class StoreConfigData {
   String phone = '';
   List<String> secondaryPhones = [];
   int? villeId;
+  String villeName = '';
   int? quartierId;
   String quartierName = ''; // Texte libre du quartier (comme le profil)
   String address = '';     // Adresse libre saisie par l'utilisateur
@@ -96,7 +97,8 @@ class StoreConfigData {
       'telephone': phone,
       if (secondaryPhones.isNotEmpty) 'contacts': secondaryPhones,
       'description': description.isNotEmpty ? description : null,
-      'adresse': address.isNotEmpty ? address : null,
+      'adresse': villeName.isNotEmpty ? villeName : 'Togo',
+      'details_adresse': address.isNotEmpty ? address : null,
       'quartier_id': quartierId, // if the backend can accept it
       if (quartierName.isNotEmpty) 'quartier': quartierName,
       'horaires': {

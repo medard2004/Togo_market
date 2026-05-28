@@ -881,6 +881,7 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
                         onTap: () {
                           setState(() {
                             _data.villeId = v.id;
+                            _data.villeName = v.nom;
                             _data.quartierId = null;
                           });
                           Get.back();
@@ -961,6 +962,9 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
     try {
       final result = await Get.to(() => const UnifiedMapScreen());
       if (result != null && result is Map<String, dynamic> && mounted) {
+        _data.latitude = result['latitude'];
+        _data.longitude = result['longitude'];
+        
         final location = await _authCtrl.getCurrentLocationAndMatch(
           lat: result['latitude'],
           lon: result['longitude'],
@@ -970,6 +974,9 @@ class _StoreConfigurationScreenState extends State<StoreConfigurationScreen> {
           setState(() {
             if (location['villeId'] != null) {
               _data.villeId = location['villeId'] as int?;
+            }
+            if (location['rawVille'] != null) {
+              _data.villeName = location['rawVille'].toString();
             }
 
             // Remplir le quartier texte depuis le GPS

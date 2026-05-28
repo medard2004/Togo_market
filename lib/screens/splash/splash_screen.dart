@@ -28,12 +28,19 @@ class _SplashScreenState extends State<SplashScreen> {
       if (i == 49) {
         // Wait a bit to ensure smooth transition
         await Future.delayed(const Duration(milliseconds: 200));
-        
+
         final authController = Get.find<AuthController>();
         // Wait for auth controller to finish checking initial state if it's still loading
         // (Usually it's fast enough, but just in case)
-        
-        if (authController.isFirstTime.value) {
+
+        if (authController.hasToken.value) {
+          final user = authController.currentUser.value;
+          if (user != null && user.telephone.startsWith('tmp_')) {
+            Get.offNamed('/auth');
+          } else {
+            Get.offNamed('/home');
+          }
+        } else if (authController.isFirstTime.value) {
           Get.offNamed('/onboarding');
         } else {
           Get.offNamed('/home');

@@ -36,6 +36,15 @@ class _AuthScreenState extends State<AuthScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_authController.isAuthenticated) {
+        final user = _authController.currentUser.value;
+        if (user != null && user.telephone.startsWith('tmp_')) {
+          _nameCtrl.text = user.nom ?? '';
+          setState(() => _step = 'phone');
+        }
+      }
+    });
   }
 
   /// Nom à envoyer avec la mise à jour du téléphone (flux Google + tmp_) : le backend exige `nom`.
@@ -58,7 +67,7 @@ class _AuthScreenState extends State<AuthScreen> {
     if (args is Map && args.containsKey('redirect')) {
       final String targetRoute = args['redirect'] as String;
       final dynamic targetArgs = args['arguments'];
-      
+
       if (targetRoute == 'vendre') {
         Get.offAllNamed('/home');
         Future.delayed(const Duration(milliseconds: 300), () {
@@ -70,23 +79,26 @@ class _AuthScreenState extends State<AuthScreen> {
           Get.offAllNamed('/home');
           return;
         }
-        
+
         Get.dialog(
           const Center(child: CircularProgressIndicator()),
           barrierDismissible: false,
         );
-        
+
         try {
           final currentUser = _authController.currentUser.value!;
           final myId = currentUser.id.toString();
           final myName = currentUser.nom ?? 'Utilisateur';
           final myAvatar = currentUser.avatarUrl ?? '';
-          
+
           final boutique = product.boutiqueObj;
-          final sellerId = boutique != null ? boutique.id.toString() : (product.userObj?.id.toString() ?? product.sellerId.toString());
+          final sellerId = boutique != null
+              ? boutique.id.toString()
+              : (product.userObj?.id.toString() ?? product.sellerId.toString());
           final sellerName = boutique?.nom ?? product.userObj?.nom ?? 'Vendeur';
-          final sellerAvatar = boutique?.logoUrl ?? product.userObj?.avatarUrl ?? '';
-          
+          final sellerAvatar =
+              boutique?.logoUrl ?? product.userObj?.avatarUrl ?? '';
+
           final chatId = await ChatService.to.getOrCreateChat(
             conversationType: boutique != null ? 'shop' : 'personal',
             myEntityId: myId,
@@ -102,18 +114,19 @@ class _AuthScreenState extends State<AuthScreen> {
             productImage: product.image,
             relatedShopId: boutique?.id.toString(),
           );
-          
+
           if (Get.isDialogOpen == true) {
             Get.back();
           }
-          
+
           Get.offAllNamed('/home');
           Get.toNamed('/chat/$chatId?asBoutique=false', arguments: product);
         } catch (e) {
           if (Get.isDialogOpen == true) {
             Get.back();
           }
-          AppToasts.error(context, 'Erreur Chat', 'Impossible de démarrer la discussion.');
+          AppToasts.error(
+              context, 'Erreur Chat', 'Impossible de démarrer la discussion.');
           Get.offAllNamed('/home');
         }
       } else {
@@ -178,7 +191,9 @@ class _AuthScreenState extends State<AuthScreen> {
             } catch (e) {
               print('Erreur Google Auth: $e');
               final errorStr = e.toString().toLowerCase();
-              if (!errorStr.contains('cancel') && !errorStr.contains('annul') && !errorStr.contains('abort')) {
+              if (!errorStr.contains('cancel') &&
+                  !errorStr.contains('annul') &&
+                  !errorStr.contains('abort')) {
                 AppToasts.error(context, "Erreur", "Connexion échouée: $e");
               }
             }
@@ -197,20 +212,25 @@ class _AuthScreenState extends State<AuthScreen> {
           onSend: () async {
             final phone = _phoneCtrl.text.trim();
             if (phone.isEmpty) {
-              AppToasts.error(context, "Erreur", "Veuillez entrer un numéro de téléphone.");
+              AppToasts.error(
+                  context, "Erreur", "Veuillez entrer un numéro de téléphone.");
               return;
             }
             if (!RegExp(r'^\d+$').hasMatch(phone)) {
-              AppToasts.error(context, "Erreur", "Le numéro ne doit contenir que des chiffres.");
+              AppToasts.error(context, "Erreur",
+                  "Le numéro ne doit contenir que des chiffres.");
               return;
             }
             if (phone.length != 8) {
-              AppToasts.warning(context, "Format incorrect", "Le numéro doit être composé de exactement 8 chiffres.");
+              AppToasts.warning(context, "Format incorrect",
+                  "Le numéro doit être composé de exactement 8 chiffres.");
               return;
             }
-            final RegExp prefixRegex = RegExp(r'^(90|91|92|93|96|97|98|99|70|71|79)');
+            final RegExp prefixRegex =
+                RegExp(r'^(90|91|92|93|96|97|98|99|70|71|79)');
             if (!prefixRegex.hasMatch(phone)) {
-              AppToasts.error(context, "Réseau inconnu", "Le numéro doit commencer par 90-93, 96-99 (Togocel) ou 70-71, 79 (Moov).");
+              AppToasts.error(context, "Réseau inconnu",
+                  "Le numéro doit commencer par 90-93, 96-99 (Togocel) ou 70-71, 79 (Moov).");
               return;
             }
 
@@ -289,7 +309,7 @@ class _AuthScreenState extends State<AuthScreen> {
                 String errorMsg = e.toString();
                 if (errorMsg.contains("taken") ||
                     errorMsg.toLowerCase().contains("déjà") ||
-                    errorMsg.contains("already") || 
+                    errorMsg.contains("already") ||
                     errorMsg.toLowerCase().contains("utilisé")) {
                   // Déjà utilisé -> Connexion
                   setState(() {
@@ -297,7 +317,8 @@ class _AuthScreenState extends State<AuthScreen> {
                     _step = 'password';
                   });
                 } else {
-                  String msg = errorMsg.replaceAll(RegExp(r'^(ValidationException: |Exception: )'), "");
+                  String msg = errorMsg.replaceAll(
+                      RegExp(r'^(ValidationException: |Exception: )'), "");
                   AppToasts.error(context, "Erreur", msg);
                 }
               }
@@ -326,17 +347,20 @@ class _AuthScreenState extends State<AuthScreen> {
                   message: 'Connexion en cours...',
                 );
                 _authController.markOnboardingComplete();
-                AppToasts.success(context, "Succès", "Connexion réussie ! Bienvenue sur Togo Market.");
+                AppToasts.success(context, "Succès",
+                    "Connexion réussie ! Bienvenue sur Togo Market.");
                 _handlePostLoginRedirect(context);
               } catch (loginError) {
                 // La connexion a échoué. Tentative d'inscription.
                 try {
                   await AppLoader.wrap(
                     context,
-                    () => _authController.register(phoneStr, _passwordCtrl.text),
+                    () =>
+                        _authController.register(phoneStr, _passwordCtrl.text),
                     message: 'Création de votre compte...',
                   );
-                  AppToasts.success(context, "Inscription réussie", "Compte créé ! Veuillez compléter votre profil.");
+                  AppToasts.success(context, "Inscription réussie",
+                      "Compte créé ! Veuillez compléter votre profil.");
                   Get.offAllNamed('/profile-setup');
                 } catch (registerError) {
                   // L'inscription a échoué (Probablement car le numéro existe déjà)
@@ -344,14 +368,21 @@ class _AuthScreenState extends State<AuthScreen> {
                   if (errorMsg.contains("taken") ||
                       errorMsg.toLowerCase().contains("déjà") ||
                       errorMsg.contains("already")) {
-                    AppToasts.error(context, "Accès refusé", "Mot de passe incorrect ou numéro déjà utilisé.");
+                    AppToasts.error(context, "Accès refusé",
+                        "Mot de passe incorrect ou numéro déjà utilisé.");
                   } else {
-                    AppToasts.error(context, "Erreur d'inscription", errorMsg.replaceAll(RegExp(r'^(ValidationException: |Exception: )'), ""));
+                    AppToasts.error(
+                        context,
+                        "Erreur d'inscription",
+                        errorMsg.replaceAll(
+                            RegExp(r'^(ValidationException: |Exception: )'),
+                            ""));
                   }
                 }
               }
             } catch (e) {
-              AppToasts.error(context, "Erreur", "Connexion/Inscription échouée");
+              AppToasts.error(
+                  context, "Erreur", "Connexion/Inscription échouée");
             }
           },
         );
@@ -1276,7 +1307,6 @@ class _InterestsStep extends StatelessWidget {
               actionLabel: 'Passer',
               onAction: onSkip),
           Container(height: 2, color: AppTheme.primary),
-
           Expanded(
             child: Padding(
               padding: EdgeInsets.symmetric(horizontal: r.s(24)),
@@ -1370,8 +1400,7 @@ class _InterestsStep extends StatelessWidget {
             ),
           ),
           Padding(
-            padding:
-                EdgeInsets.fromLTRB(r.s(24), r.s(12), r.s(24), r.s(24)),
+            padding: EdgeInsets.fromLTRB(r.s(24), r.s(12), r.s(24), r.s(24)),
             child: GestureDetector(
               onTap: onFinish,
               child: Container(
@@ -1397,7 +1426,6 @@ class _InterestsStep extends StatelessWidget {
     );
   }
 }
-
 
 // ╔══════════════════════════════════════════════════════╗
 // ║  COMPOSANTS PARTAGÉS (Remplacés pour _WelcomeStep)   ║
@@ -1502,18 +1530,25 @@ class _GooglePainter extends CustomPainter {
     final paint = Paint()..style = PaintingStyle.fill;
 
     paint.color = const Color(0xFF4285F4);
-    canvas.drawArc(Rect.fromCircle(center: center, radius: radius), -0.3, 3.77, true, paint);
+    canvas.drawArc(Rect.fromCircle(center: center, radius: radius), -0.3, 3.77,
+        true, paint);
     paint.color = const Color(0xFFEA4335);
-    canvas.drawArc(Rect.fromCircle(center: center, radius: radius), 3.47, 1.05, true, paint);
+    canvas.drawArc(Rect.fromCircle(center: center, radius: radius), 3.47, 1.05,
+        true, paint);
     paint.color = const Color(0xFFFBBC05);
-    canvas.drawArc(Rect.fromCircle(center: center, radius: radius), 4.52, 0.79, true, paint);
+    canvas.drawArc(Rect.fromCircle(center: center, radius: radius), 4.52, 0.79,
+        true, paint);
     paint.color = const Color(0xFF34A853);
-    canvas.drawArc(Rect.fromCircle(center: center, radius: radius), 5.31, 1.25, true, paint);
+    canvas.drawArc(Rect.fromCircle(center: center, radius: radius), 5.31, 1.25,
+        true, paint);
 
     paint.color = Colors.white;
     canvas.drawCircle(center, radius * 0.62, paint);
     paint.color = Colors.white;
-    canvas.drawRect(Rect.fromLTWH(center.dx, center.dy - radius * 0.25, radius * 0.9, radius * 0.5), paint);
+    canvas.drawRect(
+        Rect.fromLTWH(
+            center.dx, center.dy - radius * 0.25, radius * 0.9, radius * 0.5),
+        paint);
   }
 
   @override
@@ -1537,4 +1572,3 @@ class _Avatar extends StatelessWidget {
         ),
       );
 }
-
