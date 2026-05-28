@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -460,6 +461,34 @@ class ChatService extends GetxService {
     } catch (e) {
       debugPrint('ChatService: Erreur masquage conversations: $e');
       rethrow;
+    }
+  }
+
+  /// Met à jour le contenu (payload JSON) des messages de type 'order' liés à un order_id spécifique.
+  Future<void> updateOrderRecapMessages(String chatId, String orderId, Map<String, dynamic> updates) async {
+    try {
+      final messagesRef = _db.collection('chats').doc(chatId).collection('messages');
+      // On cherche les messages de type 'order'
+      final querySnapshot = await messagesRef.where('type', isEqualTo: 'order').get();
+
+      final batch = _db.batch();
+      for (var doc in querySnapshot.docs) {
+        final data = doc.data();
+        final content = data['content'] as String? ?? '';
+        try {
+          // On vérifie si ce message order concerne bien cet orderId
+          final decoded = jsonDecode(content) as Map<String, dynamic>;
+          if (decoded['order_id']?.toString() == orderId.toString()) {
+            // Fusionne les mises à jour en conservant les clés existantes comme is_modified
+            final newDecoded = Map<String, dynamic>.from(decoded);
+            newDecoded.addAll(updates);
+            batch.update(doc.reference, {'content': jsonEncode(newDecoded)});
+          }
+        } catch (_) {}
+      }
+      await batch.commit();
+    } catch (e) {
+      debugPrint('ChatService: Erreur lors de la mise à jour des messages de commande: $e');
     }
   }
 }

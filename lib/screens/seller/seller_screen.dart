@@ -12,6 +12,7 @@ import '../../Api/firebase/services/firebase_auth_bridge_service.dart';
 import '../../models/models.dart';
 import '../../utils/app_toasts.dart';
 import 'widgets/seller_product_card.dart';
+import '../../widgets/report_bottom_sheet.dart';
 
 class SellerScreen extends StatelessWidget {
   SellerScreen({super.key});
@@ -325,9 +326,8 @@ class SellerScreen extends StatelessWidget {
                         onPressed: () => isSearching.value = true,
                       ),
                     ),
-                    SizedBox(width: r.s(8)),
                     Padding(
-                      padding: EdgeInsets.only(right: r.s(16)),
+                      padding: EdgeInsets.only(right: r.s(8)),
                       child: Container(
                         width: r.s(40),
                         height: r.s(40),
@@ -341,6 +341,42 @@ class SellerScreen extends StatelessWidget {
                           icon: Icon(Icons.ios_share,
                               size: r.s(20), color: Colors.black),
                           onPressed: () {},
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding: EdgeInsets.only(right: r.s(16)),
+                      child: Container(
+                        width: r.s(40),
+                        height: r.s(40),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                          border:
+                              Border.all(color: Colors.black.withOpacity(0.05)),
+                        ),
+                        child: PopupMenuButton<String>(
+                          icon: Icon(Icons.more_vert, size: r.s(20), color: Colors.black),
+                          color: Colors.white,
+                          padding: EdgeInsets.zero,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(r.rad(12))),
+                          onSelected: (value) {
+                            if (value == 'report') {
+                              ReportBottomSheet.show(context, type: 'shop', targetId: boutique!.id.toString());
+                            }
+                          },
+                          itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                            PopupMenuItem<String>(
+                              value: 'report',
+                              child: Row(
+                                children: [
+                                  Icon(Icons.flag_outlined, size: r.s(18), color: Colors.red),
+                                  SizedBox(width: r.s(8)),
+                                  const Text('Signaler cette boutique', style: TextStyle(color: Colors.red, fontWeight: FontWeight.w600)),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),

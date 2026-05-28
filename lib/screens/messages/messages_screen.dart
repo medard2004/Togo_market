@@ -8,6 +8,7 @@ import 'widgets/conversation_tile.dart';
 import '../../Api/firebase/controllers/chat_controller.dart';
 import '../../Api/provider/auth_controller.dart';
 import '../../Api/config/api_constants.dart';
+import '../../widgets/report_bottom_sheet.dart';
 
 class MessagesScreen extends StatefulWidget {
   const MessagesScreen({super.key});
@@ -149,6 +150,111 @@ class _MessagesScreenState extends State<MessagesScreen> {
       _selectedMessages.clear();
       _isSelectionMode = false;
     });
+  }
+
+  void _showChatContextMenu(BuildContext context, String chatId) {
+    final r = R(context);
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return Container(
+          decoration: BoxDecoration(
+            color: AppTheme.cardColor,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(r.rad(24))),
+          ),
+          padding: EdgeInsets.fromLTRB(r.s(20), r.s(16), r.s(20), r.s(24) + MediaQuery.of(context).padding.bottom),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Handle
+              Container(
+                width: r.s(40),
+                height: r.s(4),
+                margin: EdgeInsets.only(bottom: r.s(24)),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(r.rad(2)),
+                ),
+              ),
+              // Option : Signaler
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: Container(
+                  padding: EdgeInsets.all(r.s(10)),
+                  decoration: BoxDecoration(
+                    color: AppTheme.muted.withOpacity(0.5),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(Icons.flag_outlined, color: AppTheme.foreground, size: r.s(22)),
+                ),
+                title: Text('Signaler la discussion', style: TextStyle(fontSize: r.fs(15), fontWeight: FontWeight.w600, color: AppTheme.foreground)),
+                onTap: () {
+                  Navigator.pop(context);
+                  ReportBottomSheet.show(context, type: 'chat', targetId: chatId);
+                },
+              ),
+              SizedBox(height: r.s(8)),
+              // Option : Supprimer
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: Container(
+                  padding: EdgeInsets.all(r.s(10)),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(Icons.delete_outline, color: Colors.red, size: r.s(22)),
+                ),
+                title: Text('Supprimer la discussion', style: TextStyle(fontSize: r.fs(15), fontWeight: FontWeight.w600, color: Colors.red)),
+                onTap: () {
+                  Navigator.pop(context);
+                  _confirmDeleteChat(context, chatId);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _confirmDeleteChat(BuildContext context, String chatId) {
+    final r = R(context);
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: AppTheme.cardColor,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(r.rad(16))),
+          title: Text('Supprimer la discussion ?', style: TextStyle(fontSize: r.fs(18), fontWeight: FontWeight.w800)),
+          content: Text('Cette action masquera la discussion de votre liste. Voulez-vous continuer ?', style: TextStyle(fontSize: r.fs(14), color: AppTheme.mutedForeground)),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('Annuler', style: TextStyle(color: AppTheme.foreground, fontWeight: FontWeight.w600)),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(r.rad(8))),
+                elevation: 0,
+              ),
+              onPressed: () {
+                ChatController.to.hideChats([chatId], 'user_$_currentUserId');
+                Navigator.pop(context);
+                if (mounted) {
+                  setState(() {
+                    _selectedMessages.remove(chatId);
+                  });
+                }
+              },
+              child: const Text('Supprimer', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -316,12 +422,18 @@ class _MessagesScreenState extends State<MessagesScreen> {
                       itemCount: _filtered.length,
                       separatorBuilder: (_, __) => SizedBox(height: r.s(8)),
                       itemBuilder: (_, i) => GestureDetector(
+                        behavior: HitTestBehavior.opaque,
                         onTap: () {
                           if (_isSelectionMode) {
-                            _toggleMessageSelection(_filtered[i].name);
+                            _toggleMessageSelection(_filtered[i].id);
                           } else {
                             Get.toNamed(
                                 '/chat/${_filtered[i].id}?asBoutique=false');
+                          }
+                        },
+                        onLongPress: () {
+                          if (!_isSelectionMode) {
+                            _showChatContextMenu(context, _filtered[i].id);
                           }
                         },
                         child: ConversationTile(

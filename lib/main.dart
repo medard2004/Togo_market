@@ -61,6 +61,7 @@ import 'Api/services/produit_service.dart';
 import 'Api/services/category_service.dart';
 import 'Api/services/favori_service.dart';
 import 'Api/services/user_service.dart';
+import 'Api/services/report_service.dart';
 import 'Api/provider/auth_controller.dart';
 import 'controllers/boutique_controller.dart';
 import 'controllers/my_products_controller.dart';
@@ -115,6 +116,7 @@ void main() async {
   Get.put(categoryService, permanent: true);
   Get.put(userService, permanent: true);
   Get.put(FavoriService(apiClient), permanent: true);
+  Get.put(ReportService(apiClient), permanent: true);
 
   Get.put(FirebaseAuthBridgeService(apiClient), permanent: true);
   Get.put(AuthController(authService), permanent: true);

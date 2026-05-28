@@ -1,4 +1,5 @@
 import '../utils/app_utils.dart';
+import 'refund_model.dart';
 // lib/models/order_model.dart
 // Modèle de commande utilisé pour l'affichage acheteur et vendeur.
 
@@ -23,6 +24,7 @@ class OrderModel {
   final OrderProduct? product;
   final OrderUser? user; // acheteur (visible pour le vendeur)
   final OrderUser? seller; // vendeur  (visible pour l'acheteur)
+  final RefundModel? refund;
 
   OrderModel({
     required this.id,
@@ -43,6 +45,7 @@ class OrderModel {
     this.product,
     this.user,
     this.seller,
+    this.refund,
   });
 
   factory OrderModel.fromJson(Map<String, dynamic> json) {
@@ -74,6 +77,7 @@ class OrderModel {
       user: json['user'] != null ? OrderUser.fromJson(json['user']) : null,
       seller:
           json['seller'] != null ? OrderUser.fromJson(json['seller']) : null,
+      refund: json['refund'] != null ? RefundModel.fromJson(json['refund']) : null,
     );
   }
 

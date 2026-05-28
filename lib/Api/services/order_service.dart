@@ -48,4 +48,27 @@ class OrderService extends BaseService {
     );
     return response.data;
   }
+
+  /// Mettre à jour les détails d'une commande (acheteur)
+  Future<Map<String, dynamic>> updateOrder(int orderId, Map<String, dynamic> data) async {
+    final response = await apiClient.put(
+      '/orders/$orderId',
+      data: data,
+    );
+    return response.data;
+  }
+
+  /// Demander un remboursement
+  Future<Map<String, dynamic>> requestRefund(int orderId, dynamic data) async {
+    final response = await apiClient.post(
+      '/orders/$orderId/refund',
+      data: data,
+    );
+    return response.data;
+  }
+
+  /// Annuler une commande (acheteur)
+  Future<Map<String, dynamic>> cancelOrder(int orderId) async {
+    return updateOrderStatus(orderId, 'Annulé');
+  }
 }

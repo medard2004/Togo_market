@@ -7,6 +7,7 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../provider/auth_controller.dart';
 import '../../core/api_client.dart';
 import '../../../controllers/notification_controller.dart';
+import '../../../controllers/order_controller.dart';
 import '../../../models/models.dart';
 import '../../../theme/app_theme.dart';
 
@@ -57,17 +58,40 @@ class FCMService extends GetxService {
           bool shouldMute = false;
           if (type == 'message' && chatId != null && chatId.isNotEmpty) {
             final currentRoute = Get.currentRoute;
-            // Si on est dans le chat actuel, on mute la notification pour éviter de déranger
-            if (currentRoute.startsWith('/chat/$chatId')) {
+            final receiverType = data['receiver_type']?.toString().toLowerCase();
+            final isSaleStr = data['is_sale']?.toString().toLowerCase();
+            
+            bool isShopContext = false;
+            if (receiverType == 'shop') {
+              isShopContext = true;
+            } else if (receiverType == 'user') {
+              isShopContext = false;
+            } else if (isSaleStr == 'true') {
+              isShopContext = true;
+            } else if (isSaleStr == 'false') {
+              isShopContext = false;
+            } else {
+              final hasBoutiqueId = data['boutique_id'] != null && data['boutique_id'].toString().isNotEmpty && data['boutique_id'].toString() != 'null';
+              isShopContext = (type == 'boutique' || type == 'shop') ? true : hasBoutiqueId;
+            }
+            
+            // Si on est dans le chat actuel AVEC le bon contexte, on mute la notification
+            if (currentRoute.startsWith('/chat/$chatId') && currentRoute.contains('asBoutique=$isShopContext')) {
               shouldMute = true;
-              debugPrint('FCM: Utilisateur déjà dans le chat $chatId, notification mutée.');
+              debugPrint('FCM: Utilisateur déjà dans le chat $chatId (Boutique: $isShopContext), notification mutée.');
             }
           }
 
           if (!shouldMute) {
-            // Ajouter au contrôleur pour persistance locale instantanée
             if (Get.isRegistered<NotificationController>()) {
               NotificationController.to.addForegroundNotification(notif);
+            }
+
+            // Rafraîchir silencieusement les commandes si c'est une notification de commande
+            if (['order', 'order_status', 'status'].contains(type)) {
+              if (Get.isRegistered<OrderController>()) {
+                Get.find<OrderController>().fetchOrders();
+              }
             }
 
             // Afficher une toast notification cliquable
@@ -104,7 +128,21 @@ class FCMService extends GetxService {
     
     // Détection du contexte (Boutique ou Particulier)
     final receiverType = data['receiver_type']?.toString().toLowerCase();
-    final isShopContext = receiverType == 'shop' || data.containsKey('boutique_id');
+    final isSaleStr = data['is_sale']?.toString().toLowerCase();
+    
+    bool isShopContext = false;
+    if (receiverType == 'shop') {
+      isShopContext = true;
+    } else if (receiverType == 'user') {
+      isShopContext = false;
+    } else if (isSaleStr == 'true') {
+      isShopContext = true;
+    } else if (isSaleStr == 'false') {
+      isShopContext = false;
+    } else {
+      final hasBoutiqueId = data['boutique_id'] != null && data['boutique_id'].toString().isNotEmpty && data['boutique_id'].toString() != 'null';
+      isShopContext = (type == 'boutique' || type == 'shop') ? true : hasBoutiqueId;
+    }
 
     // Choisir l'icône, la couleur et le label selon le contexte et le type
     IconData icon;
@@ -112,13 +150,13 @@ class FCMService extends GetxService {
     String contextLabel;
     
     if (isShopContext) {
-      icon = type == 'order' 
+      icon = (type == 'order' || type == 'order_status' || type == 'status')
           ? PhosphorIcons.shoppingBag(PhosphorIconsStyle.fill)
           : PhosphorIcons.storefront(PhosphorIconsStyle.fill);
       accentColor = Colors.orange.shade700;
       contextLabel = 'Boutique';
     } else {
-      icon = type == 'order'
+      icon = (type == 'order' || type == 'order_status' || type == 'status')
           ? PhosphorIcons.package(PhosphorIconsStyle.fill)
           : PhosphorIcons.user(PhosphorIconsStyle.fill);
       accentColor = AppTheme.primary;
@@ -269,7 +307,7 @@ class FCMService extends GetxService {
     final data = message.data;
 
     return AppNotification(
-      id: message.messageId ?? DateTime.now().millisecondsSinceEpoch.toString(),
+      id: data['notification_id']?.toString() ?? data['id']?.toString() ?? message.messageId ?? DateTime.now().millisecondsSinceEpoch.toString(),
       type: data['type']?.toString() ?? 'message',
       title: notification?.title ?? data['title']?.toString() ?? 'Nouvelle notification',
       body: notification?.body ?? data['body']?.toString() ?? '',

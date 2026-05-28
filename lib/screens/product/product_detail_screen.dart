@@ -15,6 +15,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import '../../utils/app_toasts.dart';
+import '../../widgets/report_bottom_sheet.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   const ProductDetailScreen({super.key});
@@ -100,6 +101,28 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       onPressed: () => ctrl.toggleFavorite(product.id),
                     );
                   }),
+                  PopupMenuButton<String>(
+                    icon: Icon(Icons.more_vert, size: r.s(22), color: AppTheme.foreground),
+                    color: AppTheme.cardColor,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(r.rad(12))),
+                    onSelected: (value) {
+                      if (value == 'report') {
+                        ReportBottomSheet.show(context, type: 'product', targetId: product.id.toString());
+                      }
+                    },
+                    itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                      PopupMenuItem<String>(
+                        value: 'report',
+                        child: Row(
+                          children: [
+                            Icon(Icons.flag_outlined, size: r.s(18), color: Colors.red),
+                            SizedBox(width: r.s(8)),
+                            const Text('Signaler ce produit', style: TextStyle(color: Colors.red, fontWeight: FontWeight.w600)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
 

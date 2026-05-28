@@ -24,6 +24,7 @@ import '../../models/models.dart';
 import '../../utils/responsive.dart';
 import '../../controllers/app_controller.dart';
 import '../../controllers/boutique_controller.dart';
+import '../../controllers/order_controller.dart';
 import '../../Api/config/api_constants.dart';
 import '../../utils/image_optimization_service.dart';
 import '../../Api/services/user_service.dart';
@@ -216,11 +217,18 @@ class _ChatScreenState extends State<ChatScreen> {
           int.tryParse(parts[0]).toString() == _actingUserId;
     }
 
-    _chatCtrl.loadConversation(
-      convId,
-      actingEntityId: _actingUserId,
-      actingEntityType: _isActingAsBoutique ? 'shop' : 'user',
-    );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _chatCtrl.loadConversation(
+        convId,
+        actingEntityId: _actingUserId,
+        actingEntityType: _isActingAsBoutique ? 'shop' : 'user',
+      );
+    });
+
+    if (Get.isRegistered<OrderController>()) {
+      Get.find<OrderController>().fetchOrders();
+    }
 
     _activeProduct =
         (Get.arguments is Product) ? Get.arguments as Product : null;
@@ -2243,21 +2251,50 @@ class _OrderRecapBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final data = _parseOrder();
-    if (data.isEmpty) {
-      return Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: AppTheme.cardColor,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppTheme.border),
-        ),
-        child: Text(content,
-            style: TextStyle(fontSize: 13, color: AppTheme.foreground)),
-      );
-    }
+    return Obx(() {
+      final parsedData = _parseOrder();
+      if (parsedData.isEmpty) {
+        return Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: AppTheme.cardColor,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppTheme.border),
+          ),
+          child: Text(content,
+              style: TextStyle(fontSize: 13, color: AppTheme.foreground)),
+        );
+      }
 
-    final orderId = data['order_id'] ?? '-';
+      final Map<String, dynamic> data = Map<String, dynamic>.from(parsedData);
+
+      if (Get.isRegistered<OrderController>()) {
+        final orderCtrl = Get.find<OrderController>();
+        final rawOrderId = data['order_id'];
+
+        if (rawOrderId != null) {
+          try {
+            final idStr = rawOrderId.toString().replaceAll('#', '');
+            final idInt = int.tryParse(idStr);
+            if (idInt != null) {
+              final buyers = orderCtrl.buyerOrders.where((o) => o.id == idInt);
+              final sellers = orderCtrl.sellerOrders.where((o) => o.id == idInt);
+              
+              if (buyers.isNotEmpty || sellers.isNotEmpty) {
+                final realtimeOrder = buyers.isNotEmpty ? buyers.first : sellers.first;
+                data['status'] = realtimeOrder.status;
+                data['quantity'] = realtimeOrder.quantity.toString();
+                data['total'] = '${realtimeOrder.totalPrice.toStringAsFixed(0)} FCFA';
+                if (realtimeOrder.deliveryAddress != null) data['address'] = realtimeOrder.deliveryAddress;
+                if (realtimeOrder.phone != null) data['phone'] = realtimeOrder.phone;
+                if (realtimeOrder.notes != null) data['note'] = realtimeOrder.notes;
+              }
+            }
+          } catch (_) {}
+        }
+      }
+
+      final orderId = data['order_id'] ?? '-';
     final date = data['date'] ?? '';
     final productTitle = data['product_title'] ?? '';
     final productImage = data['product_image'] ?? '';
@@ -2269,9 +2306,67 @@ class _OrderRecapBubble extends StatelessWidget {
     final phone = data['phone'] ?? '';
     final note = data['note'] ?? '';
     final status = data['status'] ?? 'En attente';
+    final isModified = data['is_modified'] == 'true';
 
     final timeStr =
         '${timestamp.hour.toString().padLeft(2, '0')}:${timestamp.minute.toString().padLeft(2, '0')}';
+
+    if (isModified) {
+      return GestureDetector(
+        onTap: () {
+          Get.toNamed('/order-details', arguments: {
+            'orderId': '#$orderId',
+            'title': productTitle,
+            'price': total,
+            'status': status,
+            'image': productImage.isNotEmpty
+                ? ApiConstants.resolveImageUrl(productImage)
+                : '',
+            'date': date,
+            'isSale': !isMe,
+          });
+        },
+        child: Container(
+          width: MediaQuery.of(context).size.width * 0.7,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: isMe ? AppTheme.primary.withOpacity(0.15) : Colors.orange.withOpacity(0.15),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: isMe ? AppTheme.primary.withOpacity(0.5) : Colors.orange.withOpacity(0.5)),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.edit_note_rounded, color: isMe ? AppTheme.primary : Colors.orange.shade700, size: 28),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Commande modifiée',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: isMe ? AppTheme.primary : Colors.orange.shade700,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'La commande #$orderId a été mise à jour. Cliquez pour voir.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppTheme.foreground,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right, color: isMe ? AppTheme.primary : Colors.orange.shade700),
+            ],
+          ),
+        ),
+      );
+    }
 
     // Couleurs adaptées selon l'expéditeur
     final bgGradient = isMe
@@ -2401,9 +2496,9 @@ class _OrderRecapBubble extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Commande #$orderId',
-                            style: const TextStyle(
-                                color: Colors.white,
+                            isModified ? 'Commande Modifiée #$orderId' : 'Commande #$orderId',
+                            style: TextStyle(
+                                color: isModified ? Colors.yellow : Colors.white,
                                 fontSize: 14,
                                 fontWeight: FontWeight.w800),
                           ),
@@ -2430,9 +2525,9 @@ class _OrderRecapBubble extends StatelessWidget {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Commande #$orderId',
+                        isModified ? 'Commande Modifiée #$orderId' : 'Commande #$orderId',
                         style: TextStyle(
-                            color: textPrimaryColor,
+                            color: isModified ? Colors.orange.shade700 : textPrimaryColor,
                             fontSize: 14,
                             fontWeight: FontWeight.w800),
                       ),
@@ -2552,6 +2647,7 @@ class _OrderRecapBubble extends StatelessWidget {
         ),
       ),
     );
+    });
   }
 }
 

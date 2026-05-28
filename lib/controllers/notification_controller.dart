@@ -113,8 +113,15 @@ class NotificationController extends GetxController {
   Future<void> markAsRead(AppNotification notif) async {
     if (notif.isRead) return;
 
-    // Mise à jour optimiste
+    // Mise à jour optimiste sur l'objet passé
     notif.isRead = true;
+    
+    // Mise à jour explicite de l'instance dans la liste (s'il s'agit d'une copie)
+    final index = notifications.indexWhere((n) => n.id == notif.id);
+    if (index != -1) {
+      notifications[index].isRead = true;
+    }
+    
     notifications.refresh();
     _updateUnreadCount();
     await _saveToLocal();
@@ -152,70 +159,103 @@ class NotificationController extends GetxController {
 
   /// Gérer l'action de clic sur une notification (navigation intelligente)
   void handleNotificationTap(AppNotification notif) {
-    markAsRead(notif);
-    
-    final String type = notif.type.toLowerCase();
-    final data = notif.customData ?? {};
+    // Décaler l'exécution à la prochaine frame pour éviter l'erreur "setState during build"
+    // qui arrive quand on rafraîchit l'Obx et qu'on navigue en même temps
+    Future.delayed(Duration.zero, () {
+      markAsRead(notif);
+      
+      final String type = notif.type.toLowerCase();
+      final data = notif.customData ?? {};
 
-    // Détection du contexte (Boutique ou Particulier)
-    final receiverType = data['receiver_type']?.toString().toLowerCase();
-    final isShopContext = receiverType == 'shop' || data.containsKey('boutique_id');
-
-    if (type == 'message') {
-      final String? chatId = data['chat_id']?.toString();
-      if (chatId != null && chatId.isNotEmpty) {
-        Get.toNamed('/chat/$chatId?asBoutique=$isShopContext');
+      // Détection stricte du contexte (Boutique ou Particulier)
+      final receiverType = data['receiver_type']?.toString().toLowerCase();
+      final isSaleStr = data['is_sale']?.toString().toLowerCase();
+      
+      bool isShopContext = false;
+      if (receiverType == 'shop') {
+        isShopContext = true;
+      } else if (receiverType == 'user') {
+        isShopContext = false;
+      } else if (isSaleStr == 'true') {
+        isShopContext = true;
+      } else if (isSaleStr == 'false') {
+        isShopContext = false;
       } else {
-        // Rediriger vers l'espace messages général ou dashboard
-        if (isShopContext) {
+        final hasBoutiqueId = data['boutique_id'] != null && data['boutique_id'].toString().isNotEmpty && data['boutique_id'].toString() != 'null';
+        isShopContext = (type == 'boutique' || type == 'shop') ? true : hasBoutiqueId;
+      }
+
+      if (type == 'message') {
+        final String? chatId = data['chat_id']?.toString();
+        if (chatId != null && chatId.isNotEmpty) {
+          // Redirection vers la bonne conversation avec le bon contexte
+          final targetRoute = '/chat/$chatId?asBoutique=$isShopContext';
+          final currentRoute = Get.currentRoute;
+          
+          // Si on est DÉJÀ sur la page du chat concerné, on ne navigue pas !
+          // Cela évite de recharger la page et de causer l'erreur "setState during build"
+          if (currentRoute.startsWith('/chat/$chatId')) {
+            return;
+          } else {
+            Get.toNamed(targetRoute);
+          }
+        } else {
+          // Rediriger vers l'espace messages général correspondant
+          if (isShopContext) {
+            Get.toNamed('/dashboard'); // Tab Messages de la boutique géré dans le dashboard
+          } else {
+            Get.toNamed('/messages');
+          }
+        }
+      } else if (type == 'order' || type == 'order_status' || type == 'status') {
+        _handleOrderNotificationTap(data, isShopContext);
+      } else if (type == 'product') {
+        final String? productId = data['product_id']?.toString();
+        if (productId != null && productId.isNotEmpty && productId != 'null') {
+          Get.toNamed('/product/$productId'); // Détail du produit
+        }
+      } else if (type == 'boutique' || type == 'shop') {
+        // Redirection intelligente vers la boutique
+        final String? boutiqueId = data['boutique_id']?.toString() ?? data['id']?.toString();
+        if (boutiqueId != null && boutiqueId.isNotEmpty) {
+          final myBoutiqueId = BoutiqueController.to.myBoutique.value?.id?.toString();
+          if (myBoutiqueId == boutiqueId) {
+            Get.toNamed('/dashboard');
+          } else {
+            Get.toNamed('/seller/$boutiqueId');
+          }
+        } else if (isShopContext) {
           BoutiqueController.to.goToMyBoutique();
-        } else {
-          Get.toNamed('/messages');
         }
-      }
-    } else if (type == 'order') {
-      _handleOrderNotificationTap(data, isShopContext);
-    } else if (type == 'like') {
-      final String? productId = data['product_id']?.toString();
-      if (productId != null && productId.isNotEmpty) {
-        Get.toNamed('/product/$productId');
-      } else {
-        Get.toNamed('/favorites');
-      }
-    } else if (type == 'boutique' || type == 'shop' || isShopContext) {
-      // Redirection intelligente vers la boutique
-      final String? boutiqueId = data['boutique_id']?.toString() ?? data['id']?.toString();
-      if (boutiqueId != null && boutiqueId.isNotEmpty) {
-        final myBoutiqueId = BoutiqueController.to.myBoutique.value?.id?.toString();
-        if (myBoutiqueId == boutiqueId) {
-          Get.toNamed('/dashboard');
-        } else {
-          Get.toNamed('/seller/$boutiqueId');
-        }
-      } else {
+      } else if (isShopContext) {
+        // Fallback global pour une notification boutique non reconnue
         BoutiqueController.to.goToMyBoutique();
       }
-    }
+    });
   }
 
-  /// Navigation intelligente pour les notifications de commande
+  /// Navigation stricte pour les notifications de commande
   void _handleOrderNotificationTap(Map<String, dynamic> data, bool isShopContext) {
     final String? orderId = data['order_id']?.toString();
     final String? productId = data['product_id']?.toString();
-    // Déduire isSale soit explicitement du payload, soit du contexte Boutique
+    // Vente (Boutique) ou Achat (Particulier)
     final bool isSale = data['is_sale']?.toString().toLowerCase() == 'true' || isShopContext;
     
     if (orderId != null && orderId.isNotEmpty && orderId != 'null') {
-      // Rediriger vers le détail exact de la commande
-      Get.toNamed('/order-details', arguments: {
-        'orderId': orderId,
-        'isSale': isSale,
-      });
-    } else if (isShopContext && productId != null && productId.isNotEmpty && productId != 'null') {
-      // Fallback: rediriger vers le détail du produit si la commande n'a pas d'ID explicite mais qu'on a le produit
+      // Rediriger vers le détail exact de la commande, en respectant strictement le contexte
+      Get.toNamed(
+        '/order-details',
+        preventDuplicates: false,
+        arguments: {
+          'orderId': orderId,
+          'isSale': isSale,
+        },
+      );
+    } else if (productId != null && productId.isNotEmpty && productId != 'null') {
+      // Fallback : Rediriger vers le détail du produit
       Get.toNamed('/product/$productId');
     } else {
-      // Rediriger vers l'espace global
+      // Fallback final : Rediriger vers la bonne liste de commandes
       if (isSale) {
         Get.toNamed('/dashboard'); // Redirection vers le tableau de bord vendeur
       } else {

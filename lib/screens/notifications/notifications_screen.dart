@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../../theme/app_theme.dart';
 import '../../../controllers/notification_controller.dart';
+import '../../../models/models.dart';
 
 class NotificationsScreen extends StatelessWidget {
   const NotificationsScreen({super.key});
@@ -105,129 +106,193 @@ class NotificationsScreen extends StatelessWidget {
             separatorBuilder: (_, __) => const SizedBox(height: 10),
             itemBuilder: (_, i) {
               final notif = controller.notifications[i];
-              final String type = notif.type.toLowerCase();
-              final data = notif.customData ?? {};
-              
-              final receiverType = data['receiver_type']?.toString().toLowerCase();
-              final isShopContext = receiverType == 'shop' || data.containsKey('boutique_id');
-
-              IconData icon;
-              Color iconColor;
-              String contextLabel;
-              
-              if (isShopContext) {
-                icon = type == 'order' 
-                    ? PhosphorIcons.shoppingBag(PhosphorIconsStyle.regular)
-                    : PhosphorIcons.storefront(PhosphorIconsStyle.regular);
-                iconColor = Colors.orange.shade700;
-                contextLabel = 'Boutique';
-              } else {
-                icon = type == 'order'
-                    ? PhosphorIcons.package(PhosphorIconsStyle.regular)
-                    : PhosphorIcons.user(PhosphorIconsStyle.regular);
-                iconColor = AppTheme.primary;
-                contextLabel = 'Personnel';
-              }
-
-              return InkWell(
-                onTap: () => controller.handleNotificationTap(notif),
-                borderRadius: BorderRadius.circular(16),
-                child: Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: notif.isRead ? AppTheme.cardColor : iconColor.withValues(alpha: 0.05),
-                    borderRadius: BorderRadius.circular(16),
-                    border: notif.isRead
-                        ? Border.all(color: AppTheme.border)
-                        : Border.all(color: iconColor.withValues(alpha: 0.3)),
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        width: 48,
-                        height: 48,
-                        decoration: BoxDecoration(
-                          color: iconColor.withValues(alpha: 0.1),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(icon, color: iconColor, size: 24),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                  decoration: BoxDecoration(
-                                    color: iconColor.withValues(alpha: 0.15),
-                                    borderRadius: BorderRadius.circular(4),
-                                    border: Border.all(color: iconColor.withValues(alpha: 0.3)),
-                                  ),
-                                  child: Text(
-                                    contextLabel,
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.bold,
-                                      color: iconColor,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 6),
-                            Text(
-                              notif.title,
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: notif.isRead ? FontWeight.w600 : FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              notif.body,
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: AppTheme.mutedForeground,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text(
-                            notif.time,
-                            style: TextStyle(
-                              fontSize: 10,
-                              color: AppTheme.mutedForeground,
-                            ),
-                          ),
-                          if (!notif.isRead)
-                            Container(
-                              margin: const EdgeInsets.only(top: 8),
-                              width: 8,
-                              height: 8,
-                              decoration: BoxDecoration(
-                                color: AppTheme.primary,
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
+              return NotificationCard(
+                notif: notif,
+                controller: controller,
               );
             },
           ),
         );
       }),
+    );
+  }
+}
+
+class NotificationCard extends StatefulWidget {
+  final AppNotification notif;
+  final NotificationController controller;
+
+  const NotificationCard({
+    super.key,
+    required this.notif,
+    required this.controller,
+  });
+
+  @override
+  State<NotificationCard> createState() => _NotificationCardState();
+}
+
+class _NotificationCardState extends State<NotificationCard> {
+  bool _isExpanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final notif = widget.notif;
+    final String type = notif.type.toLowerCase();
+    final data = notif.customData ?? {};
+    
+    final receiverType = data['receiver_type']?.toString().toLowerCase();
+    final isSaleStr = data['is_sale']?.toString().toLowerCase();
+    
+    bool isShopContext = false;
+    if (receiverType == 'shop') {
+      isShopContext = true;
+    } else if (receiverType == 'user') {
+      isShopContext = false;
+    } else if (isSaleStr == 'true') {
+      isShopContext = true;
+    } else if (isSaleStr == 'false') {
+      isShopContext = false;
+    } else {
+      final hasBoutiqueId = data['boutique_id'] != null && data['boutique_id'].toString().isNotEmpty && data['boutique_id'].toString() != 'null';
+      isShopContext = (type == 'boutique' || type == 'shop') ? true : hasBoutiqueId;
+    }
+
+    IconData icon;
+    Color iconColor;
+    String contextLabel;
+    
+    if (isShopContext) {
+      icon = (type == 'order' || type == 'order_status' || type == 'status')
+          ? PhosphorIcons.shoppingBag(PhosphorIconsStyle.regular)
+          : PhosphorIcons.storefront(PhosphorIconsStyle.regular);
+      iconColor = Colors.orange.shade700;
+      contextLabel = 'Boutique';
+    } else {
+      icon = (type == 'order' || type == 'order_status' || type == 'status')
+          ? PhosphorIcons.package(PhosphorIconsStyle.regular)
+          : PhosphorIcons.user(PhosphorIconsStyle.regular);
+      iconColor = AppTheme.primary;
+      contextLabel = 'Personnel';
+    }
+
+    return InkWell(
+      onTap: () => widget.controller.handleNotificationTap(notif),
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: notif.isRead ? AppTheme.cardColor : iconColor.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(16),
+          border: notif.isRead
+              ? Border.all(color: AppTheme.border)
+              : Border.all(color: iconColor.withValues(alpha: 0.3)),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: iconColor.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: iconColor, size: 24),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: iconColor.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(color: iconColor.withValues(alpha: 0.3)),
+                        ),
+                        child: Text(
+                          contextLabel,
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: iconColor,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    notif.title,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: notif.isRead ? FontWeight.w600 : FontWeight.bold,
+                    ),
+                  ),
+                  if (_isExpanded) ...[
+                    const SizedBox(height: 6),
+                    Text(
+                      notif.body,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: AppTheme.mutedForeground,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  notif.time,
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: AppTheme.mutedForeground,
+                  ),
+                ),
+                if (!notif.isRead)
+                  Container(
+                    margin: const EdgeInsets.only(top: 8),
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: AppTheme.primary,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                const SizedBox(height: 12),
+                GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _isExpanded = !_isExpanded;
+                    });
+                  },
+                  behavior: HitTestBehavior.opaque,
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: iconColor.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      _isExpanded ? PhosphorIcons.caretUp(PhosphorIconsStyle.bold) : PhosphorIcons.caretDown(PhosphorIconsStyle.bold),
+                      size: 14,
+                      color: iconColor,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

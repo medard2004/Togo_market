@@ -136,9 +136,21 @@ class ProductCard extends StatelessWidget {
                               ),
                             ),
                           ),
-                          SizedBox(width: r.s(4)),
-                          GestureDetector(
-                            onTap: () async {
+                          Builder(
+                            builder: (context) {
+                              final authCtrl = Get.isRegistered<AuthController>() ? Get.find<AuthController>() : null;
+                              final currentUser = authCtrl?.currentUser.value;
+                              final isOwnProductAsUser = currentUser != null && product.boutiqueObj == null && 
+                                  (product.userObj?.id.toString() == currentUser.id.toString() || product.sellerId.toString() == currentUser.id.toString());
+                                  
+                              if (isOwnProductAsUser) return const SizedBox.shrink();
+
+                              return Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  SizedBox(width: r.s(4)),
+                                  GestureDetector(
+                                    onTap: () async {
                               final authCtrl = Get.isRegistered<AuthController>() ? Get.find<AuthController>() : null;
                               if (authCtrl == null || !authCtrl.isAuthenticated) {
                                 Get.toNamed('/auth', arguments: {
@@ -183,6 +195,10 @@ class ProductCard extends StatelessWidget {
                               size: r.s(15),
                               color: AppTheme.primary,
                             ),
+                                  ),
+                                ],
+                              );
+                            }
                           ),
                         ],
                       ),

@@ -11,6 +11,8 @@ import '../../controllers/order_controller.dart';
 import '../../models/order_model.dart';
 import '../../utils/app_toasts.dart';
 import '../map/unified_map_screen.dart';
+import 'edit_order_screen.dart';
+import 'refund_request_screen.dart';
 
 class OrderDetailsScreen extends StatefulWidget {
   const OrderDetailsScreen({super.key});
@@ -44,16 +46,19 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
               ctrl.buyerOrders.firstWhereOrNull((o) => o.id == orderIdInt))
           : (ctrl.buyerOrders.firstWhereOrNull((o) => o.id == orderIdInt) ??
               ctrl.sellerOrders.firstWhereOrNull((o) => o.id == orderIdInt));
-      if (foundOrder == null) {
-        ctrl.fetchOrders().then((_) {
-          if (mounted) {
-            setState(() {
-              _hasFetched = true;
-            });
-          }
-        });
-      } else {
-        _hasFetched = true;
+
+      // Toujours lancer le rafraîchissement en arrière-plan pour s'assurer
+      // que les données sont à jour (surtout après une notification)
+      ctrl.fetchOrders().then((_) {
+        if (mounted) {
+          setState(() {
+            _hasFetched = true;
+          });
+        }
+      });
+
+      if (foundOrder != null) {
+        _hasFetched = true; // Permet l'affichage immédiat du cache
       }
     } else {
       _hasFetched = true;
@@ -891,6 +896,42 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                                 fontSize: r.fs(14))),
                       ),
                     )
+                  else if (status == 'Annulation demandée')
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () => ctrl.rejectCancellation(context, order!),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.destructive.withOpacity(0.1),
+                              foregroundColor: AppTheme.destructive,
+                              elevation: 0,
+                              padding: EdgeInsets.symmetric(vertical: r.s(16)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(r.rad(16)),
+                              ),
+                            ),
+                            child: Text('Refuser\nl\'annulation', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.w700, fontSize: r.fs(13))),
+                          ),
+                        ),
+                        SizedBox(width: r.s(16)),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () => ctrl.approveCancellation(context, order!),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.primary,
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              padding: EdgeInsets.symmetric(vertical: r.s(16)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(r.rad(16)),
+                              ),
+                            ),
+                            child: Text('Accepter\nl\'annulation', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.w700, fontSize: r.fs(13))),
+                          ),
+                        ),
+                      ],
+                    )
                   else
                     SizedBox(
                       width: double.infinity,
@@ -918,10 +959,27 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                       children: [
                         Expanded(
                           child: ElevatedButton(
-                            onPressed: () {},
+                            onPressed: () {
+                              showDialog(
+                                context: context,
+                                builder: (ctx) => AlertDialog(
+                                  title: const Text('Confirmer l\'annulation'),
+                                  content: const Text('Êtes-vous sûr de vouloir annuler cette commande ?'),
+                                  actions: [
+                                    TextButton(onPressed: () => Get.back(), child: const Text('Non')),
+                                    TextButton(
+                                      onPressed: () {
+                                        Get.back();
+                                        ctrl.cancelBuyerOrder(context, order!);
+                                      },
+                                      child: const Text('Oui, annuler', style: TextStyle(color: AppTheme.destructive)),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
                             style: ElevatedButton.styleFrom(
-                              backgroundColor:
-                                  AppTheme.destructive.withOpacity(0.1),
+                              backgroundColor: AppTheme.destructive.withOpacity(0.1),
                               foregroundColor: AppTheme.destructive,
                               elevation: 0,
                               padding: EdgeInsets.symmetric(vertical: r.s(16)),
@@ -929,16 +987,15 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                                 borderRadius: BorderRadius.circular(r.rad(16)),
                               ),
                             ),
-                            child: Text('Annuler',
-                                style: TextStyle(
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: r.fs(14))),
+                            child: Text('Annuler', style: TextStyle(fontWeight: FontWeight.w700, fontSize: r.fs(14))),
                           ),
                         ),
                         SizedBox(width: r.s(16)),
                         Expanded(
                           child: ElevatedButton(
-                            onPressed: () {},
+                            onPressed: () {
+                              Get.to(() => EditOrderScreen(order: order!));
+                            },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppTheme.primary,
                               foregroundColor: Colors.white,
@@ -948,16 +1005,197 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                                 borderRadius: BorderRadius.circular(r.rad(16)),
                               ),
                             ),
-                            child: Text(
-                              'Modifier',
-                              style: TextStyle(
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: r.fs(14)),
-                            ),
+                            child: Text('Modifier', style: TextStyle(fontWeight: FontWeight.w700, fontSize: r.fs(14))),
                           ),
                         ),
                       ],
                     )
+                  else if (status == 'Acceptée' || status == 'Confirmé')
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          showDialog(
+                            context: context,
+                            builder: (ctx) => AlertDialog(
+                              title: const Text('Demander l\'annulation'),
+                              content: const Text('La commande a déjà été acceptée par le vendeur. Voulez-vous lui envoyer une demande d\'annulation ?'),
+                              actions: [
+                                TextButton(onPressed: () => Get.back(), child: const Text('Non')),
+                                TextButton(
+                                  onPressed: () {
+                                    Get.back();
+                                    ctrl.requestCancellation(context, order!);
+                                  },
+                                  child: const Text('Oui, demander', style: TextStyle(color: AppTheme.destructive)),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.destructive.withOpacity(0.1),
+                          foregroundColor: AppTheme.destructive,
+                          elevation: 0,
+                          padding: EdgeInsets.symmetric(vertical: r.s(16)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(r.rad(16)),
+                          ),
+                        ),
+                        child: Text('Demander l\'annulation', style: TextStyle(fontWeight: FontWeight.w700, fontSize: r.fs(14))),
+                      ),
+                    )
+                  else if (status == 'Annulation demandée')
+                    Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.all(r.s(16)),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFF3CD), // Bootstrap warning bg
+                        borderRadius: BorderRadius.circular(r.rad(16)),
+                        border: Border.all(color: const Color(0xFFFFECB5)),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.hourglass_top_outlined, color: const Color(0xFF664D03), size: r.s(20)),
+                          SizedBox(width: r.s(12)),
+                          Expanded(
+                            child: Text(
+                              'Votre demande d\'annulation a été envoyée au vendeur. En attente de sa réponse.',
+                              style: TextStyle(
+                                color: const Color(0xFF664D03),
+                                fontWeight: FontWeight.w600,
+                                fontSize: r.fs(13),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  else if (status == 'Terminée' || status == 'Terminé' || status == 'Livrée')
+                    if (order.refund == null)
+                      Column(
+                        children: [
+                          Container(
+                            width: double.infinity,
+                            padding: EdgeInsets.all(r.s(16)),
+                            decoration: BoxDecoration(
+                              color: AppTheme.muted.withOpacity(0.5),
+                              borderRadius: BorderRadius.circular(r.rad(16)),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(Icons.lock_outline, color: AppTheme.mutedForeground, size: r.s(20)),
+                                SizedBox(width: r.s(12)),
+                                Expanded(
+                                  child: Text(
+                                    'Cette commande est terminée et ne peut plus être modifiée.',
+                                    style: TextStyle(
+                                      color: AppTheme.mutedForeground,
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: r.fs(13),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          SizedBox(height: r.s(16)),
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton(
+                              onPressed: () {
+                                Get.to(() => RefundRequestScreen(order: order!));
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppTheme.destructive.withOpacity(0.1),
+                                foregroundColor: AppTheme.destructive,
+                                elevation: 0,
+                                padding: EdgeInsets.symmetric(vertical: r.s(16)),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(r.rad(16)),
+                                ),
+                              ),
+                              child: Text('Demander un remboursement', style: TextStyle(fontWeight: FontWeight.w700, fontSize: r.fs(14))),
+                            ),
+                          ),
+                        ],
+                      )
+                    else
+                      Container(
+                        width: double.infinity,
+                        padding: EdgeInsets.all(r.s(16)),
+                        decoration: BoxDecoration(
+                          color: order.refund!.status == 'remboursée' 
+                              ? Colors.green.shade50 
+                              : order.refund!.status == 'refusée' 
+                                  ? Colors.red.shade50 
+                                  : Colors.orange.shade50,
+                          borderRadius: BorderRadius.circular(r.rad(16)),
+                          border: Border.all(
+                            color: order.refund!.status == 'remboursée' 
+                                ? Colors.green.shade200 
+                                : order.refund!.status == 'refusée' 
+                                    ? Colors.red.shade200 
+                                    : Colors.orange.shade200,
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(
+                                  order.refund!.status == 'remboursée' 
+                                      ? Icons.check_circle 
+                                      : order.refund!.status == 'refusée' 
+                                          ? Icons.cancel 
+                                          : Icons.info_outline,
+                                  color: order.refund!.status == 'remboursée' 
+                                      ? Colors.green.shade700 
+                                      : order.refund!.status == 'refusée' 
+                                          ? Colors.red.shade700 
+                                          : Colors.orange.shade700,
+                                  size: r.s(20),
+                                ),
+                                SizedBox(width: r.s(8)),
+                                Text(
+                                  'Remboursement',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                    color: order.refund!.status == 'remboursée' 
+                                        ? Colors.green.shade700 
+                                        : order.refund!.status == 'refusée' 
+                                            ? Colors.red.shade700 
+                                            : Colors.orange.shade700,
+                                    fontSize: r.fs(14),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: r.s(8)),
+                            Text(
+                              order.refund!.status.toUpperCase(),
+                              style: TextStyle(
+                                fontWeight: FontWeight.w800,
+                                color: order.refund!.status == 'remboursée' 
+                                    ? Colors.green.shade800 
+                                    : order.refund!.status == 'refusée' 
+                                        ? Colors.red.shade800 
+                                        : Colors.orange.shade800,
+                                fontSize: r.fs(16),
+                              ),
+                            ),
+                            SizedBox(height: r.s(4)),
+                            Text(
+                              'Motif: ${order.refund!.reason}',
+                              style: TextStyle(
+                                color: Colors.black87,
+                                fontSize: r.fs(13),
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
                   else
                     SizedBox(
                       width: double.infinity,
@@ -972,10 +1210,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                             borderRadius: BorderRadius.circular(r.rad(16)),
                           ),
                         ),
-                        child: Text('Besoin d\'aide ?',
-                            style: TextStyle(
-                                fontWeight: FontWeight.w700,
-                                fontSize: r.fs(14))),
+                        child: Text('Besoin d\'aide ?', style: TextStyle(fontWeight: FontWeight.w700, fontSize: r.fs(14))),
                       ),
                     ),
                 ]

@@ -231,6 +231,12 @@ class PublicProfileScreen extends StatelessWidget {
         final user = ctrl.user.value;
         if (user == null) return const SizedBox();
 
+        final auth = Get.isRegistered<AuthController>() ? Get.find<AuthController>() : null;
+        final me = auth?.currentUser.value;
+        if (me != null && me.id.toString() == user.id.toString()) {
+          return const SizedBox.shrink();
+        }
+
         return Container(
           padding: EdgeInsets.fromLTRB(
             r.s(20),

@@ -23,10 +23,7 @@ class ConversationTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasUnread = item.unread > 0;
-    return GestureDetector(
-      onTap:
-          isSelectionMode ? onSelectionChanged : null,
-      child: Container(
+    return Container(
         padding: EdgeInsets.all(r.s(12)),
         decoration: BoxDecoration(
           color: AppTheme.cardColor,
@@ -160,7 +157,6 @@ class ConversationTile extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
+      );
   }
 }
