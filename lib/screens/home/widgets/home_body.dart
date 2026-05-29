@@ -28,7 +28,7 @@ class HomeBody extends StatelessWidget {
         final hasLocation = user != null && !user.needsOnboardingProfile;
         final selectedCat = ctrl.selectedCategory.value;
         final allProducts = ctrl.products.toList();
-        final filteredProds = ctrl.getFilteredProducts(selectedCat);
+        final filteredProds = allProducts; // The backend now filters this list directly
         final trending = ctrl.trendingProducts.isNotEmpty
             ? ctrl.trendingProducts.toList()
             : allProducts.take(8).toList();
@@ -48,9 +48,16 @@ class HomeBody extends StatelessWidget {
           },
           color: AppTheme.primary,
           backgroundColor: AppTheme.cardColor,
-          child: CustomScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            slivers: [
+          child: NotificationListener<ScrollNotification>(
+            onNotification: (ScrollNotification scrollInfo) {
+              if (scrollInfo.metrics.pixels >= scrollInfo.metrics.maxScrollExtent - 1000) {
+                ctrl.loadMoreProduits();
+              }
+              return false;
+            },
+            child: CustomScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              slivers: [
               // ── Barre de recherche ──────────────────────────────────────────
               SliverToBoxAdapter(
                 child: Padding(
@@ -109,7 +116,7 @@ class HomeBody extends StatelessWidget {
 
                         return GestureDetector(
                           onTap: () {
-                            ctrl.selectedCategory.value = catIdStr;
+                            ctrl.selectCategory(catIdStr);
                           },
                           child: AnimatedContainer(
                             duration: const Duration(milliseconds: 200),
@@ -158,7 +165,7 @@ class HomeBody extends StatelessWidget {
               // ── Contenu ────────────────────────────────────────────────────
               if (selectedCat == 'all') ...[
                 // ── Section Tendances ─────────────────────────────────────────
-                if (isLoggedIn && trending.isNotEmpty) ...[
+                if (isLoggedIn && (ctrl.isTrendingLoading.value || trending.isNotEmpty)) ...[
                   SliverToBoxAdapter(
                     child: Padding(
                       padding: EdgeInsets.fromLTRB(r.hPad, 0, r.hPad, r.s(12)),
@@ -177,25 +184,32 @@ class HomeBody extends StatelessWidget {
                       child: ListView.separated(
                         scrollDirection: Axis.horizontal,
                         padding: EdgeInsets.symmetric(horizontal: r.hPad),
-                        itemCount: trending.length,
+                        itemCount: ctrl.isTrendingLoading.value ? 4 : trending.length,
                         separatorBuilder: (_, __) => SizedBox(width: r.s(12)),
-                        itemBuilder: (_, i) =>
-                            AnimationConfiguration.staggeredList(
-                          position: i,
-                          duration: const Duration(milliseconds: 260),
-                          child: SlideAnimation(
-                            horizontalOffset: 28,
-                            curve: Curves.easeOutCubic,
-                            child: FadeInAnimation(
+                        itemBuilder: (_, i) {
+                          if (ctrl.isTrendingLoading.value) {
+                            return SizedBox(
+                              width: r.cardW,
+                              child: const ProductCardSkeleton(isHorizontal: true),
+                            );
+                          }
+                          return AnimationConfiguration.staggeredList(
+                            position: i,
+                            duration: const Duration(milliseconds: 260),
+                            child: SlideAnimation(
+                              horizontalOffset: 28,
                               curve: Curves.easeOutCubic,
-                              child: SizedBox(
-                                width: r.cardW,
-                                child: ProductCard(
-                                    product: trending[i], isHorizontal: true),
+                              child: FadeInAnimation(
+                                curve: Curves.easeOutCubic,
+                                child: SizedBox(
+                                  width: r.cardW,
+                                  child: ProductCard(
+                                      product: trending[i], isHorizontal: true),
+                                ),
                               ),
                             ),
-                          ),
-                        ),
+                          );
+                        },
                       ),
                     ),
                   ),
@@ -203,7 +217,7 @@ class HomeBody extends StatelessWidget {
                 ],
 
                 // Près de chez vous titre
-                if (isLoggedIn && hasLocation && nearbyProds.isNotEmpty) ...[
+                if (isLoggedIn && hasLocation && (ctrl.isNearbyProductsLoading.value || nearbyProds.isNotEmpty)) ...[
                   SliverToBoxAdapter(
                     child: Padding(
                       padding: EdgeInsets.fromLTRB(r.hPad, 0, r.hPad, r.s(12)),
@@ -223,9 +237,15 @@ class HomeBody extends StatelessWidget {
                       child: ListView.separated(
                         scrollDirection: Axis.horizontal,
                         padding: EdgeInsets.symmetric(horizontal: r.hPad),
-                        itemCount: nearbyProds.length,
+                        itemCount: ctrl.isNearbyProductsLoading.value ? 4 : nearbyProds.length,
                         separatorBuilder: (_, __) => SizedBox(width: r.s(12)),
                         itemBuilder: (_, i) {
+                          if (ctrl.isNearbyProductsLoading.value) {
+                            return SizedBox(
+                              width: r.cardW,
+                              child: const ProductCardSkeleton(isHorizontal: true),
+                            );
+                          }
                           return AnimationConfiguration.staggeredList(
                             position: i,
                             duration: const Duration(milliseconds: 260),
@@ -251,7 +271,7 @@ class HomeBody extends StatelessWidget {
                 ],
 
                 // Boutiques tendances titre
-                if (isLoggedIn && boutiques.isNotEmpty) ...[
+                if (isLoggedIn && (ctrl.isBoutiquesLoading.value || boutiques.isNotEmpty)) ...[
                   SliverToBoxAdapter(
                     child: Padding(
                       padding: EdgeInsets.fromLTRB(r.hPad, 0, r.hPad, r.s(12)),
@@ -271,17 +291,21 @@ class HomeBody extends StatelessWidget {
                       child: ListView.separated(
                         scrollDirection: Axis.horizontal,
                         padding: EdgeInsets.symmetric(horizontal: r.hPad),
-                        itemCount: boutiques.length,
+                        itemCount: ctrl.isBoutiquesLoading.value ? 4 : boutiques.length,
                         separatorBuilder: (_, __) => SizedBox(width: r.s(12)),
-                        itemBuilder: (_, i) =>
-                            AnimationConfiguration.staggeredList(
-                          position: i,
-                          duration: const Duration(milliseconds: 260),
-                          child: FadeInAnimation(
-                            curve: Curves.easeOutCubic,
-                            child: ShopCarouselCard(boutique: boutiques[i]),
-                          ),
-                        ),
+                        itemBuilder: (_, i) {
+                          if (ctrl.isBoutiquesLoading.value) {
+                            return const ShopCarouselCardSkeleton();
+                          }
+                          return AnimationConfiguration.staggeredList(
+                            position: i,
+                            duration: const Duration(milliseconds: 260),
+                            child: FadeInAnimation(
+                              curve: Curves.easeOutCubic,
+                              child: ShopCarouselCard(boutique: boutiques[i]),
+                            ),
+                          );
+                        },
                       ),
                     ),
                   ),
@@ -291,7 +315,7 @@ class HomeBody extends StatelessWidget {
                 // Boutiques près de chez vous titre
                 if (isLoggedIn &&
                     hasLocation &&
-                    nearbyBoutiques.isNotEmpty) ...[
+                    (ctrl.isNearbyBoutiquesLoading.value || nearbyBoutiques.isNotEmpty)) ...[
                   SliverToBoxAdapter(
                     child: Padding(
                       padding: EdgeInsets.fromLTRB(r.hPad, 0, r.hPad, r.s(12)),
@@ -311,9 +335,12 @@ class HomeBody extends StatelessWidget {
                       child: ListView.separated(
                         scrollDirection: Axis.horizontal,
                         padding: EdgeInsets.symmetric(horizontal: r.hPad),
-                        itemCount: nearbyBoutiques.length,
+                        itemCount: ctrl.isNearbyBoutiquesLoading.value ? 4 : nearbyBoutiques.length,
                         separatorBuilder: (_, __) => SizedBox(width: r.s(12)),
                         itemBuilder: (_, i) {
+                          if (ctrl.isNearbyBoutiquesLoading.value) {
+                            return const ShopCarouselCardSkeleton();
+                          }
                           return AnimationConfiguration.staggeredList(
                             position: i,
                             duration: const Duration(milliseconds: 260),
@@ -347,25 +374,46 @@ class HomeBody extends StatelessWidget {
                       childAspectRatio: _gridAspectRatio(context),
                     ),
                     delegate: SliverChildBuilderDelegate(
-                      (_, i) => AnimationConfiguration.staggeredGrid(
-                        position: i,
-                        columnCount: 2,
-                        duration: const Duration(milliseconds: 280),
-                        child: SlideAnimation(
-                          verticalOffset: 22,
-                          curve: Curves.easeOutCubic,
-                          child: FadeInAnimation(
+                      (_, i) {
+                        if (ctrl.isProductsLoading.value) {
+                          return const ProductCardSkeleton();
+                        }
+                        return AnimationConfiguration.staggeredGrid(
+                          position: i,
+                          columnCount: 2,
+                          duration: const Duration(milliseconds: 280),
+                          child: SlideAnimation(
+                            verticalOffset: 22,
                             curve: Curves.easeOutCubic,
-                            child: ProductCard(product: allProducts[i]),
+                            child: FadeInAnimation(
+                              curve: Curves.easeOutCubic,
+                              child: ProductCard(product: allProducts[i]),
+                            ),
                           ),
-                        ),
-                      ),
-                      childCount: allProducts.length,
+                        );
+                      },
+                      childCount: ctrl.isProductsLoading.value ? 6 : allProducts.length,
                     ),
                   ),
                 ),
               ] else ...[
-                if (filteredProds.isEmpty)
+                if (ctrl.isProductsLoading.value)
+                  SliverPadding(
+                    padding: EdgeInsets.symmetric(horizontal: r.hPad),
+                    sliver: SliverGrid(
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        mainAxisSpacing: r.s(12),
+                        crossAxisSpacing: r.s(12),
+                        childAspectRatio: _gridAspectRatio(context),
+                      ),
+                      delegate: SliverChildBuilderDelegate(
+                        (_, i) => const ProductCardSkeleton(),
+                        childCount: 6,
+                      ),
+                    ),
+                  )
+                else if (filteredProds.isEmpty)
                   SliverToBoxAdapter(
                     child: Padding(
                       padding: EdgeInsets.only(top: r.s(60)),
@@ -416,12 +464,30 @@ class HomeBody extends StatelessWidget {
                   ),
               ],
 
+              if (ctrl.isLoadingMoreProducts.value)
+                SliverPadding(
+                  padding: EdgeInsets.symmetric(horizontal: r.hPad, vertical: r.s(12)),
+                  sliver: SliverGrid(
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      mainAxisSpacing: r.s(12),
+                      crossAxisSpacing: r.s(12),
+                      childAspectRatio: _gridAspectRatio(context),
+                    ),
+                    delegate: SliverChildBuilderDelegate(
+                      (_, i) => const ProductCardSkeleton(),
+                      childCount: 4,
+                    ),
+                  ),
+                ),
+
               SliverToBoxAdapter(child: SizedBox(height: r.s(100))),
             ],
-          ),
-        );
-      }),
-    );
+          ), // End CustomScrollView
+        ), // End NotificationListener
+      ); // End RefreshIndicator
+    }),
+  );
   }
 
   // ── Sélecteur de zone (BottomSheet) ────────────────────────────────────────

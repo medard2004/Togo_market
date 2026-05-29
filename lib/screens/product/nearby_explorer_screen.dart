@@ -87,6 +87,9 @@ class _NearbyExplorerScreenState extends State<NearbyExplorerScreen> {
                 ),
                 delegate: SliverChildBuilderDelegate(
                   (context, i) {
+                    if (ctrl.isNearbyProductsLoading.value) {
+                      return const ProductCardSkeleton();
+                    }
                     final product = nearbyProds[i];
                     return AnimationConfiguration.staggeredGrid(
                       position: i,
@@ -105,7 +108,7 @@ class _NearbyExplorerScreenState extends State<NearbyExplorerScreen> {
                       ),
                     );
                   },
-                  childCount: nearbyProds.length,
+                  childCount: ctrl.isNearbyProductsLoading.value ? 6 : nearbyProds.length,
                 ),
               ),
             ),

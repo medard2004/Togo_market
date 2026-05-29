@@ -1,190 +1,100 @@
 🎯 Objectif
 
-Refondre complètement la logique des notifications afin qu’elles soient correctement catégorisées, bien redirigées et cohérentes avec l’architecture Boutique vs Particulier du projet.
+Améliorer complètement l’expérience de chargement des produits dans l’application afin qu’elle soit ultra fluide, rapide et moderne, sans temps mort visible pour l’utilisateur.
 
 🧩 Problème actuel
 
-Le système de notifications est mal géré :
+Actuellement, l’affichage des produits utilise un système de pagination/chargement progressif type Facebook/TikTok.
 
-tout est mélangé,
-les notifications particulier sont parfois traitées comme des notifications boutique,
-les redirections sont incorrectes,
-certaines notifications ouvrent le mauvais écran,
-les détails commande/boutique/particulier sont confondus.
+Le problème est qu’à un certain moment :
 
-Je veux une logique propre, claire et fiable.
+l’utilisateur atteint la fin de la liste visible,
+il doit attendre plusieurs secondes pendant le chargement,
+un loader/spinner tourne trop longtemps,
+cela donne une impression de lenteur et casse l’expérience utilisateur.
 
-⚠️ Très important
+Je veux éviter cette sensation d’attente.
 
-L’application possède deux contextes totalement indépendants :
+Je veux une expérience beaucoup plus fluide et premium.
 
-Compte particulier
-Boutique
+Comportement attendu
 
-La logique des notifications doit absolument respecter cette séparation.
+Je veux un système inspiré de YouTube, avec une UX plus intelligente.
 
-Aucune confusion ne doit exister.
+Quand l’utilisateur scroll :
 
-1. Séparer clairement les types de notifications
+Au lieu de voir un spinner ou attendre un chargement vide :
 
-Je veux une vraie catégorisation des notifications.
-
-Exemples de types :
-
-Notifications particulier
-nouveau message particulier,
-commande particulier,
-mise à jour commande particulier,
-statut commande particulier.
-Notifications boutique
-nouveau message boutique,
-nouvelle commande boutique,
-commande boutique mise à jour,
-activité boutique.
-
-Je veux que chaque notification sache clairement :
-
-dans quel contexte elle appartient
-
-et
-
-où elle doit rediriger.
-
-2. Corriger complètement les redirections
-
-Aujourd’hui les redirections sont mal gérées.
-
-Je veux une logique intelligente et fiable.
-
-Cas 1 : Notification message boutique
+✅ afficher immédiatement des cards placeholders/skeleton loading à la place des futurs produits.
 
 Exemple :
 
-Quelqu’un écrit à ma boutique.
+L’utilisateur scroll → avant même récupération complète des données :
 
-Quand je clique :
+des cartes vides réalistes apparaissent,
+avec structure produit simulée,
+image placeholder,
+faux texte/loading state,
+effet fluide.
 
-➡️ ouvrir directement :
+Je veux donner l’impression que le contenu arrive instantanément.
 
-Messagerie boutique → bonne conversation
+Je veux éviter les écrans vides et les loaders qui tournent longtemps.
 
-Et jamais la messagerie particulier.
+Chargement intelligent
 
-Cas 2 : Notification message particulier
+Je veux aussi une logique plus performante.
 
-Quand quelqu’un écrit à mon compte particulier :
-
-➡️ ouvrir :
-
-Messagerie particulier → bonne discussion
-
-Jamais boutique.
-
-Cas 3 : Nouvelle commande boutique
-
-Quand quelqu’un commande dans ma boutique :
-
-Quand je clique :
-
-➡️ ouvrir directement :
-
-Détail exact de la commande boutique concernée
-
-Je ne veux pas juste ouvrir :
-
-❌ liste commandes
-
-Je veux le détail exact.
-
-Cas 4 : Commande particulier
-
-Même logique :
-
-➡️ ouvrir :
-
-détail exact de la commande particulier
-
-Et jamais détail boutique.
-
-Cas 5 : Statut commande modifié
+Je veux que le système anticipe le chargement avant que l’utilisateur atteigne complètement la fin de la liste.
 
 Exemple :
 
-Commande acceptée ou livrée.
+Quand l’utilisateur approche de la fin :
 
-Quand utilisateur clique :
+➡️ commencer discrètement à précharger les prochains produits.
 
-➡️ ouvrir directement :
+Ainsi :
 
-le détail exact de cette commande
+le contenu est déjà presque prêt,
+l’utilisateur ne ressent presque aucun temps d’attente.
 
-dans le bon contexte.
+Je veux quelque chose de beaucoup plus fluide que le système actuel.
 
-Cas 6 : Notification produit
+Performance & UX
 
-Si notification liée à un produit :
+Je veux une expérience qui donne l’impression :
 
-➡️ redirection vers le bon détail produit.
+d’une app rapide,
+moderne,
+premium,
+sans freeze,
+sans attente frustrante.
 
-Très important :
+Je préfère :
 
-Produit boutique
+✅ préchargement intelligent
+✅ skeleton loading moderne
+✅ rendu progressif fluide
 
-→ détail produit boutique
+plutôt que :
 
-Produit particulier
+❌ spinner long
+❌ écran vide
+❌ attente visible
 
-→ détail produit particulier
+Uniformité
 
-Je veux supprimer toute confusion actuelle.
+Je veux appliquer cette logique partout où il y a chargement de listes importantes :
 
-3. Identifier le contexte avant navigation
+produits accueil,
+produits près de chez vous,
+boutiques près de chez vous,
+résultats recherche,
+catégories,
+favoris si pertinent.
 
-Avant toute redirection, je veux que le système vérifie intelligemment :
-
-type notification,
-contexte (boutique ou particulier),
-conversation concernée,
-commande concernée,
-produit concerné.
-
-Puis redirige vers le bon écran.
-
-Je veux une logique centralisée et propre.
-
-4. Distinction visuelle
-
-Je veux aussi une différence visible entre :
-
-notifications boutique
-
-et
-
-notifications particulier
-
-Afin qu’on comprenne immédiatement le contexte.
-
-5. Lecture notification
-
-Quand je clique sur une notification :
-
-✅ marquer automatiquement comme lue
-
-et mettre à jour :
-
-badge compteur,
-page notifications,
-état global.
+Je veux une UX cohérente dans toute l’application.
 
 📦 Résultat attendu
 
-Je veux un système de notifications :
-
-✅ propre
-✅ non confus
-✅ boutique ≠ particulier
-✅ bonnes redirections
-✅ détail commande correct
-✅ détail produit correct
-✅ messagerie correcte
-✅ fiable et cohérent partout dans l’application.
+Une expérience de chargement moderne type YouTube avec cards skeleton intelligentes + préchargement fluide, afin de réduire fortement la sensation d’attente et améliorer la perception de performance de l’application.

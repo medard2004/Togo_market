@@ -32,13 +32,22 @@ class AppController extends GetxController {
   final isDarkMode = false.obs;
 
   // Products
+  final isProductsLoading = true.obs;
   final products = <Product>[].obs;
+  final currentProductsPage = 1.obs;
+  final isLastProductsPage = false.obs;
+  final isLoadingMoreProducts = false.obs;
+
   final favorites = <Product>[].obs;
+  final isTrendingLoading = true.obs;
   final trendingProducts = <Product>[].obs;
+  final isNearbyProductsLoading = true.obs;
   final nearbyProducts = <Product>[].obs;
 
   // Boutiques
+  final isBoutiquesLoading = true.obs;
   final boutiques = <Boutique>[].obs;
+  final isNearbyBoutiquesLoading = true.obs;
   final nearbyBoutiques = <Boutique>[].obs;
 
   // Zone
@@ -52,6 +61,7 @@ class AppController extends GetxController {
   final selectedCategory = 'all'.obs;
 
   // Categories
+  final isCategoriesLoading = true.obs;
   final categories = <Category>[].obs;
 
   @override
@@ -101,11 +111,14 @@ class AppController extends GetxController {
   // ── Categories ──────────────────────────────────────────────────────────────
 
   Future<void> fetchCategories() async {
+    isCategoriesLoading.value = true;
     try {
       final apiCategories = await CategoryService.to.getCategories();
       categories.assignAll(apiCategories);
     } catch (e) {
       debugPrint("Error fetching categories: $e");
+    } finally {
+      isCategoriesLoading.value = false;
     }
   }
 
@@ -128,16 +141,24 @@ class AppController extends GetxController {
   // ── Products ────────────────────────────────────────────────────────────────
 
   Future<void> fetchProduits() async {
+    isProductsLoading.value = true;
     try {
-      final apiProducts = await ProduitService.to.getPublicProducts();
-      // Toujours refléter la réponse API (pagination : souvent une seule page).
-      products.assignAll(apiProducts);
+      currentProductsPage.value = 1;
+      isLastProductsPage.value = false;
+      isLoadingMoreProducts.value = false;
+
+      final page = await ProduitService.to.getPublicProducts(
+        page: currentProductsPage.value,
+        categoryId: selectedCategory.value,
+      );
+      
+      products.assignAll(page.items);
+      isLastProductsPage.value = !page.hasMore;
 
       final auth = Get.isRegistered<AuthController>()
           ? Get.find<AuthController>()
           : null;
       if (auth != null && auth.isAuthenticated) {
-        // is_favoris sur /produits ne couvre que la page courante : on resynchronise via /favoris
         await fetchFavorites();
       } else {
         favorites.clear();
@@ -153,12 +174,61 @@ class AppController extends GetxController {
       update();
     } catch (e) {
       debugPrint("Error fetching products: $e");
+    } finally {
+      isProductsLoading.value = false;
+    }
+  }
+
+  Future<void> loadMoreProduits() async {
+    if (isLoadingMoreProducts.value || isLastProductsPage.value) return;
+
+    isLoadingMoreProducts.value = true;
+    update();
+
+    try {
+      currentProductsPage.value++;
+      final page = await ProduitService.to.getPublicProducts(
+        page: currentProductsPage.value,
+        categoryId: selectedCategory.value,
+      );
+
+      products.addAll(page.items);
+      isLastProductsPage.value = !page.hasMore;
+
+      // Resynchroniser les favoris pour les nouveaux produits
+      _applyFavoriteFlagsToProducts();
+
+      products.refresh();
+      update();
+    } catch (e) {
+      debugPrint("Error loading more products: $e");
+      currentProductsPage.value--; // Revert page increment
+    } finally {
+      isLoadingMoreProducts.value = false;
+      update();
+    }
+  }
+
+  void _applyFavoriteFlagsToProducts() {
+    final favIds = favorites.map((f) => f.id.toString()).toSet();
+    for (final p in products) {
+      if (favIds.contains(p.id.toString())) {
+        p.isFavorite = true;
+      }
+    }
+  }
+
+  void selectCategory(String catId) {
+    if (selectedCategory.value != catId) {
+      selectedCategory.value = catId;
+      fetchProduits(); // Re-fetch from backend with new category filter
     }
   }
 
   // ── Tendances ────────────────────────────────────────────────────────────────
 
   Future<void> fetchTrendingProducts() async {
+    isTrendingLoading.value = true;
     try {
       final trending = await ProduitService.to.getTrendingProducts();
       trendingProducts.assignAll(trending);
@@ -168,6 +238,8 @@ class AppController extends GetxController {
     } catch (e) {
       debugPrint("Error fetching trending products: $e");
       // Ne pas remplacer par products.take(8) : ordre = latest API, pas score tendance.
+    } finally {
+      isTrendingLoading.value = false;
     }
   }
 
@@ -197,6 +269,7 @@ class AppController extends GetxController {
   }
 
   Future<void> fetchNearbyProducts() async {
+    isNearbyProductsLoading.value = true;
     try {
       final pos = await _getUserPosition();
       final nearby = await ProduitService.to.getNearbyProducts(
@@ -210,6 +283,8 @@ class AppController extends GetxController {
       update();
     } catch (e) {
       debugPrint("Error fetching nearby products: $e");
+    } finally {
+      isNearbyProductsLoading.value = false;
     }
   }
 
@@ -223,6 +298,7 @@ class AppController extends GetxController {
   }
 
   Future<void> fetchNearbyBoutiques() async {
+    isNearbyBoutiquesLoading.value = true;
     try {
       final pos = await _getUserPosition();
       final nearby = await BoutiqueService.to.getNearbyBoutiques(
@@ -234,6 +310,8 @@ class AppController extends GetxController {
       update();
     } catch (e) {
       debugPrint("Error fetching nearby boutiques: $e");
+    } finally {
+      isNearbyBoutiquesLoading.value = false;
     }
   }
 
@@ -264,11 +342,14 @@ class AppController extends GetxController {
   // ── Boutiques ───────────────────────────────────────────────────────────────
 
   Future<void> fetchBoutiques() async {
+    isBoutiquesLoading.value = true;
     try {
       final bts = await BoutiqueService.to.getBoutiques();
       boutiques.assignAll(bts);
     } catch (e) {
       debugPrint("Error fetching boutiques: $e");
+    } finally {
+      isBoutiquesLoading.value = false;
     }
   }
 

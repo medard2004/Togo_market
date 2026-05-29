@@ -50,7 +50,7 @@ class _TrendingExplorerScreenState extends State<TrendingExplorerScreen> {
     if (!_scroll.hasClients || _loadingMore || !_hasMore || _requestBusy) return;
     if (_items.isEmpty) return;
     final pos = _scroll.position;
-    if (pos.pixels >= pos.maxScrollExtent - 480) {
+    if (pos.pixels >= pos.maxScrollExtent - 1000) {
       _loadPage(_nextPage, reset: false);
     }
   }
@@ -212,7 +212,7 @@ class _TrendingExplorerScreenState extends State<TrendingExplorerScreen> {
                       ),
                     ),
                   ),
-                  if (visible.isNotEmpty)
+                  if (visible.isNotEmpty || _firstLoad)
                     SliverPadding(
                       padding: const EdgeInsets.fromLTRB(16, 12, 16, 40),
                       sliver: SliverGrid(
@@ -224,6 +224,9 @@ class _TrendingExplorerScreenState extends State<TrendingExplorerScreen> {
                         ),
                         delegate: SliverChildBuilderDelegate(
                           (context, i) {
+                            if (_firstLoad) {
+                              return const ProductCardSkeleton();
+                            }
                             final product = visible[i];
                             return AnimationConfiguration.staggeredGrid(
                               position: i,
@@ -252,7 +255,23 @@ class _TrendingExplorerScreenState extends State<TrendingExplorerScreen> {
                               ),
                             );
                           },
-                          childCount: visible.length,
+                          childCount: _firstLoad ? 6 : visible.length,
+                        ),
+                      ),
+                    ),
+                  if (_loadingMore)
+                    SliverPadding(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 40),
+                      sliver: SliverGrid(
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          mainAxisSpacing: 12,
+                          crossAxisSpacing: 12,
+                          childAspectRatio: _gridAspectRatio(context),
+                        ),
+                        delegate: SliverChildBuilderDelegate(
+                          (context, i) => const ProductCardSkeleton(),
+                          childCount: 4,
                         ),
                       ),
                     ),
@@ -260,12 +279,7 @@ class _TrendingExplorerScreenState extends State<TrendingExplorerScreen> {
               ),
             ),
           ),
-          if (_firstLoad && _items.isEmpty)
-            const LinearProgressIndicator(
-              minHeight: 2,
-              color: Colors.orange,
-              backgroundColor: Colors.transparent,
-            ),
+          // Supprimé: LinearProgressIndicator
         ],
       ),
     );

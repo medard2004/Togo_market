@@ -22,11 +22,18 @@ class ProduitService extends GetxService {
     return [];
   }
 
-  /// Get public list of products (paginated or not)
-  Future<List<Product>> getPublicProducts() async {
-    final response = await _apiClient.get(ApiConstants.productsEndpoint);
-    final list = _parseList(response.data);
-    return list.map((json) => Product.fromJson(json)).toList();
+  /// Get public list of products (paginated)
+  Future<TrendingProductsPage> getPublicProducts({int page = 1, String? categoryId}) async {
+    final params = <String, dynamic>{'page': page};
+    if (categoryId != null && categoryId != 'all') {
+      params['categorie_id'] = categoryId;
+    }
+    final response = await _apiClient.get(ApiConstants.productsEndpoint, queryParameters: params);
+    final data = response.data;
+    if (data is! Map<String, dynamic>) {
+      return TrendingProductsPage(items: [], currentPage: 1, lastPage: 1);
+    }
+    return TrendingProductsPage.fromJson(data);
   }
 
   /// Get products belonging to the authenticated user's boutique
